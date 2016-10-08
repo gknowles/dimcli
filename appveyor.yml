@@ -1,0 +1,36 @@
+version: 0.1.{build}
+
+platform:
+  - x64
+configuration:
+  - Debug
+
+build:
+  parallel: true
+  project: dimapp.sln
+  verbosity: minimal
+
+after_build:
+  - 7z a dimapp-v%appveyor_build_version%.zip bin\*.exe bin\*.pdb
+
+artifacts:
+  - path: dimapp-v$(appveyor_build_version).zip
+    name: dimapp
+    type: zip
+#  - path: bin\*.exe
+#  - path: bin\*.pdb
+
+test_script:
+  - bin\cli
+  - bin\hpack
+  - bin\http
+  - bin\pargen --test
+
+deploy:
+  tag: dimapp-v$(appveyor_build_version)
+  description: continuous trunk build
+  provider: GitHub
+  auth_token:
+    secure: yheCA/FJ+f7CL84HoPf9MapOlDZQmrGyiqlwFeeIhxvdOudQisUdOyZuWfwq3lUU
+  prerelease: true
+  draft: true
