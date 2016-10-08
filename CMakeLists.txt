@@ -40,12 +40,14 @@ source_group("" FILES ${clitest_sources})
 write_user_file(clitest)
 
 set(sln_path ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
-file(RELATIVE_PATH prefix ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-file(READ ${sln_path} sln_content)
-string(REGEX REPLACE 
-    "\"([^\"\.]+).vcxproj\""
-    "\"${prefix}/\\1.vcxproj\"" 
-    sln_content
-    ${sln_content})
-file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln ${sln_content})
+if(EXISTS ${sln_path})
+    file(RELATIVE_PATH prefix ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+    file(READ ${sln_path} sln_content)
+    string(REGEX REPLACE 
+        "\"([^\"\.]+).vcxproj\""
+        "\"${prefix}/\\1.vcxproj\"" 
+        sln_content
+        "${sln_content}")
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln ${sln_content})
+endif()
 
