@@ -6,7 +6,10 @@ configuration:
   - Debug
 
 before_build:
+  - echo %cd%
   - md build\x64 & cd build\x64 & cmake -G "Visual Studio 14 2015 Win64" ..\.. & cmake .
+  - echo %cd%
+  - cd ..\..
 
 build:
   parallel: true
@@ -14,6 +17,7 @@ build:
   verbosity: minimal
 
 after_build:
+  - echo %cd%
   - 7z a dimcli-v%appveyor_build_version%.zip
       include 
       build\bin\%configuration%\dimcli.*
