@@ -5,6 +5,9 @@ platform:
 configuration:
   - Debug
 
+before_build:
+  - md build\x64 & cd build\x64 & cmake -G "Visual Studio 14 2015 Win64" ..\.. & cmake .
+
 build:
   parallel: true
   project: dimcli.sln
