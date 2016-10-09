@@ -19,7 +19,7 @@ namespace Dim {
 //===========================================================================
 template <typename T>
 auto stringTo_impl(T & out, const std::string & src, int)
-    -> decltype(out = src, bool()) {
+    -> decltype(out = src, bool) {
     out = src;
     return true;
 }

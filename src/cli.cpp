@@ -13,8 +13,7 @@ using namespace Dim;
 ***/
 
 //===========================================================================
-Cli::ValueBase::ValueBase(
-    const std::string & names, bool boolean)
+Cli::ValueBase::ValueBase(const std::string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
 
@@ -259,7 +258,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
 
 //===========================================================================
 bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
-    if (parse(argc, argv)) 
+    if (parse(argc, argv))
         return true;
     if (exitCode())
         os << argv[0] << ": " << errMsg() << endl;

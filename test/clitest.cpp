@@ -8,7 +8,7 @@ using namespace std;
 //===========================================================================
 bool parseTest(Cli & cli, vector<char *> args) {
     args.insert(args.begin(), "test.exe");
-    if (cli.parse(size(args), data(args))) 
+    if (cli.parse(size(args), data(args)))
         return true;
     cerr << cli.errMsg();
     return false;
