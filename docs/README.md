@@ -1,6 +1,6 @@
 # dim-cli
 
-Module for making unix style command line interfaces.
+Making command line interfaces fun for kids of all ages.
 
 Main features:
 - parses directly to c++ variables (or makes proxies for them)

@@ -1,6 +1,6 @@
-# dimcli
+﻿# dimcli
 
-Making command line interfaces fun to write.
+Making command line interfaces fun for kids of all ages.
 
 Main features:
 - parses directly to c++ variables (or makes proxies for them)
