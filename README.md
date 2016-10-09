@@ -1,4 +1,4 @@
-# dim-cli
+# dimcli
 
 Making command line interfaces fun to write.
 
@@ -19,15 +19,5 @@ Main features:
 - Copy the source files
 
 ## Documentation
-Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be 
-glad you did!
-
-## Aspirational Roadmap
-- callbacks
-- help text and formatting options
-- load from environment variables?
-- support /name:value syntax
-- composable subcommands
-- access to unrecognized named options?
-- tuple arguments
-
+Check out the [wiki](https://github.com/gknowles/dimcli/wiki), keep the 
+"Pages" widget closed and look at the Contents, you'll be glad you did!

@@ -6,9 +6,10 @@ configuration:
   - Debug
 
 before_build:
-  - echo %cd%
-  - md build\x64 & cd build\x64 & cmake -G "Visual Studio 14 2015 Win64" ..\.. & cmake .
-  - echo %cd%
+  - md build\x64 
+  - cd build\x64 
+  - cmake -G "Visual Studio 14 2015 Win64" ..\.. 
+  - cmake .
   - cd ..\..
 
 build:
@@ -20,7 +21,7 @@ after_build:
   - echo %cd%
   - 7z a dimcli-v%appveyor_build_version%.zip
       include 
-      build\bin\%configuration%\dimcli.*
+      build\x64\bin\%configuration%\dimcli.*
 
 artifacts:
   - path: dimcli-v$(appveyor_build_version).zip
@@ -28,7 +29,7 @@ artifacts:
     type: zip
 
 test_script:
-  - bin\clitest
+  - build\x64\bin\clitest
 
 deploy:
   tag: dimcli-v$(appveyor_build_version)
