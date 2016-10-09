@@ -18,5 +18,5 @@ Main features:
 - Copy the source files
 
 ## Documentation
-Check out the [wiki](https://github.com/gknowles/dimcli/wiki), keep the 
-"Pages" widget closed and look at the Contents, you'll be glad you did!
+Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
+you did!
