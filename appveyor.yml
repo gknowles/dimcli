@@ -4,7 +4,6 @@ platform:
   - x64
 configuration:
   - Debug
-  - RelWithDebInfo
 
 before_build:
   - md build\Win64 
@@ -18,10 +17,15 @@ build:
   project: dimcli.sln
   verbosity: minimal
 
+build_script:
+  - msbuild dimcli.sln /m /v:minimal /p:Configuration=Debug
+  - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
+
 after_build:
   - 7z a dimcli-v%appveyor_build_version%.zip
       include 
-      build\Win64\%configuration%\dimcli.*
+      build\Win64\Debug\dimcli.*
+      build\Win64\RelWithDebInfo\dimcli.*
 
 artifacts:
   - path: dimcli-v$(appveyor_build_version).zip

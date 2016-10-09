@@ -11,8 +11,7 @@ Main features:
 - light weight
 
 ## Download
-[build status]
-[link to latest]
+[![Build status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master)
 
 ## Include in your project
 - Make the library
