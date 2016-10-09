@@ -18,10 +18,9 @@ build:
   verbosity: minimal
 
 after_build:
-  - echo %cd%
   - 7z a dimcli-v%appveyor_build_version%.zip
       include 
-      build\x64\bin\%configuration%\dimcli.*
+      build\x64\%configuration%\dimcli.*
 
 artifacts:
   - path: dimcli-v$(appveyor_build_version).zip
