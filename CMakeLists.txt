@@ -31,7 +31,7 @@ set(meta_sources
     LICENSE
     README.md
     docs/README.md)
-add_custom_target(".meta" SOURCES ${meta_sources})
+add_custom_target("_meta" SOURCES ${meta_sources})
 source_group("docs" FILES docs/README.md)
 
 set(dimcli_sources 
@@ -49,8 +49,10 @@ target_link_libraries(clitest dimcli)
 source_group("" FILES ${clitest_sources})
 write_user_file(clitest)
 
-# Only consider updating the source path sln if the one in the bin
-# path exists.
+# The solution file isn't generated until after this script finishes, 
+# which means that:
+#   - it might not exist (if this is the first run)
+#   - you need to run cmake twice to ensure any new solution was copied
 set(sln_binpath ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
 if(EXISTS ${sln_binpath})
     # Load solution file from bin-dir and change the relative references to 
