@@ -1,4 +1,8 @@
-// cli.h - dim services
+// cli.h - dim cli
+//
+// For documentation and examples follow the links at:
+// https://github.com/gknowles/dimcli
+
 #pragma once
 
 #include "config.h"

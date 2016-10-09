@@ -1,4 +1,8 @@
 // cli.cpp - dim cli
+//
+// For documentation and examples follow the links at:
+// https://github.com/gknowles/dimcli
+
 #include "pch.h"
 #pragma hdrstop
 
