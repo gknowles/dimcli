@@ -49,8 +49,13 @@ target_link_libraries(clitest dimcli)
 source_group("" FILES ${clitest_sources})
 write_user_file(clitest)
 
+# Only consider updating the source path sln if the one in the bin
+# path exists.
 set(sln_binpath ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
 if(EXISTS ${sln_binpath})
+    # Load solution file from bin-dir and change the relative references to 
+    # project files so that the in memory copy is as if it had been built in 
+    # the source dir.
     file(RELATIVE_PATH prefix 
         ${CMAKE_CURRENT_SOURCE_DIR} 
         ${CMAKE_CURRENT_BINARY_DIR})
@@ -61,6 +66,8 @@ if(EXISTS ${sln_binpath})
         sln_content
         "${sln_content}")
 
+    # Compare the updated contents with the existing source path sln, if it
+    # exists and is the same we don't want to disturb VS by touching it.
     set(sln_srcpath ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln)
     set(old_content "")
     if(EXISTS ${sln_srcpath})

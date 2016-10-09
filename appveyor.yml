@@ -4,10 +4,11 @@ platform:
   - x64
 configuration:
   - Debug
+  - RelWithDebInfo
 
 before_build:
-  - md build\x64 
-  - cd build\x64 
+  - md build\Win64 
+  - cd build\Win64
   - cmake -G "Visual Studio 14 2015 Win64" ..\.. 
   - cmake .
   - cd ..\..
@@ -20,7 +21,7 @@ build:
 after_build:
   - 7z a dimcli-v%appveyor_build_version%.zip
       include 
-      build\x64\%configuration%\dimcli.*
+      build\Win64\%configuration%\dimcli.*
 
 artifacts:
   - path: dimcli-v$(appveyor_build_version).zip
@@ -28,7 +29,7 @@ artifacts:
     type: zip
 
 test_script:
-  - build\x64\bin\clitest
+  - build\Win64\bin\clitest
 
 deploy:
   tag: dimcli-v$(appveyor_build_version)
