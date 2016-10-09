@@ -7,27 +7,24 @@ configuration:
 
 build:
   parallel: true
-  project: dimapp.sln
+  project: dimcli.sln
   verbosity: minimal
 
 after_build:
-  - 7z a dimapp-v%appveyor_build_version%.zip bin\*.exe bin\*.pdb
+  - 7z a dimcli-v%appveyor_build_version%.zip
+      include 
+      build\bin\%configuration%\dimcli.*
 
 artifacts:
-  - path: dimapp-v$(appveyor_build_version).zip
-    name: dimapp
+  - path: dimcli-v$(appveyor_build_version).zip
+    name: dimcli
     type: zip
-#  - path: bin\*.exe
-#  - path: bin\*.pdb
 
 test_script:
-  - bin\cli
-  - bin\hpack
-  - bin\http
-  - bin\pargen --test
+  - bin\clitest
 
 deploy:
-  tag: dimapp-v$(appveyor_build_version)
+  tag: dimcli-v$(appveyor_build_version)
   description: continuous trunk build
   provider: GitHub
   auth_token:
