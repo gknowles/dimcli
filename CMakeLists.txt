@@ -9,7 +9,8 @@ function(write_user_file prjname)
     set(user_file "${CMAKE_CURRENT_BINARY_DIR}/${prjname}.vcxproj.user")
     file(WRITE ${user_file} [=[
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" 
+        xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 ]=])
     foreach(cfgname ${CMAKE_CONFIGURATION_TYPES})
         file(APPEND ${user_file} [=[
@@ -23,6 +24,15 @@ function(write_user_file prjname)
 </Project>
 ]=])
 endfunction(write_user_file)
+
+set(meta_sources 
+    .clang-format
+    appveyor.yml
+    LICENSE
+    README.md
+    docs/README.md)
+add_custom_target(".meta" SOURCES ${meta_sources})
+source_group("docs" FILES docs/README.md)
 
 set(dimcli_sources 
     include/cli.h include/util.h
@@ -39,15 +49,24 @@ target_link_libraries(clitest dimcli)
 source_group("" FILES ${clitest_sources})
 write_user_file(clitest)
 
-set(sln_path ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
-if(EXISTS ${sln_path})
-    file(RELATIVE_PATH prefix ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-    file(READ ${sln_path} sln_content)
+set(sln_binpath ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
+if(EXISTS ${sln_binpath})
+    file(RELATIVE_PATH prefix 
+        ${CMAKE_CURRENT_SOURCE_DIR} 
+        ${CMAKE_CURRENT_BINARY_DIR})
+    file(READ ${sln_binpath} sln_content)
     string(REGEX REPLACE 
-        "\"([^\"\.]+).vcxproj\""
+        "\"([^\"]+).vcxproj\""
         "\"${prefix}/\\1.vcxproj\"" 
         sln_content
         "${sln_content}")
-    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln ${sln_content})
-endif()
 
+    set(sln_srcpath ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln)
+    set(old_content "")
+    if(EXISTS ${sln_srcpath})
+        file(READ ${sln_srcpath} old_content)
+    endif()
+    if(NOT old_content STREQUAL sln_content)
+        file(WRITE ${sln_srcpath} ${sln_content})
+    endif()
+endif()
