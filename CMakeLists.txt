@@ -1,9 +1,12 @@
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
-include_directories(include)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO bin)
-set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
+
+include_directories(include)
+# add_compile_options(/std:c++latest)
 
 function(write_user_file prjname)
     set(user_file "${CMAKE_CURRENT_BINARY_DIR}/${prjname}.vcxproj.user")
