@@ -27,10 +27,13 @@ namespace Dim {
 
 class Cli {
 public:
-    class ValueBase;
-    template <typename T> class ValueShim;
-    template <typename T> class Value;
-    template <typename T> class ValueVec;
+    class ArgBase;
+    template <typename T> class ArgShim;
+    template <typename T> class Arg;
+    template <typename T> class ArgVec;
+
+    template <typename T> struct Value;
+    template <typename T> struct ValueVec;
 
 public:
     void resetValues();
@@ -38,35 +41,38 @@ public:
     bool parse(std::ostream & os, size_t argc, char * argv[]);
 
     template <typename T>
-    Value<T> & arg(T * value, const std::string & keys, const T & def = {});
+    Arg<T> & arg(T * value, const std::string & keys, const T & def = {});
     template <typename T>
-    ValueVec<T> &
+    ArgVec<T> &
     argVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
 
     template <typename T>
-    Value<T> & arg(const std::string & keys, const T & def = {});
+    Arg<T> & arg(const std::string & keys, const T & def = {});
     template <typename T>
-    ValueVec<T> & argVec(const std::string & keys, int nargs = -1);
+    ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
     int exitCode() const { return m_exitCode; };
     const std::string & errMsg() const { return m_errMsg; }
 
 private:
     bool badUsage(const std::string & msg);
-    void addKey(const std::string & name, ValueBase * val);
-    void addValue(std::unique_ptr<ValueBase> ptr);
-    bool parseValue(ValueBase & out, const char src[]);
+    void addKey(const std::string & name, ArgBase * val);
+    void addValue(std::unique_ptr<ArgBase> ptr);
+    bool parseValue(ArgBase & out, const std::string & name, const char src[]);
 
-    struct ValueKey {
-        ValueBase * val;
+    template <typename Arg, typename Value, typename Ptr>
+    std::shared_ptr<Value> getProxy(Ptr * ptr);
+
+    struct ArgName {
+        ArgBase * val;
         bool invert;      // set to false instead of true (only for bools)
         bool optional;    // value doesn't have to be present? (non-bools only)
         std::string name; // name of argument (only for positionals)
     };
-    std::list<std::unique_ptr<ValueBase>> m_values;
-    std::map<char, ValueKey> m_shortNames;
-    std::map<std::string, ValueKey> m_longNames;
-    std::vector<ValueKey> m_args;
+    std::list<std::unique_ptr<ArgBase>> m_args;
+    std::map<char, ArgName> m_shortNames;
+    std::map<std::string, ArgName> m_longNames;
+    std::vector<ArgName> m_argNames;
 
     int m_exitCode{0};
     std::string m_errMsg;
@@ -74,8 +80,9 @@ private:
 
 //===========================================================================
 template <typename T>
-Cli::Value<T> & Cli::arg(T * value, const std::string & keys, const T & def) {
-    auto ptr = std::make_unique<Value<T>>(value, keys, def);
+Cli::Arg<T> & Cli::arg(T * value, const std::string & keys, const T & def) {
+    auto proxy = getProxy<Arg<T>, Value<T>>(value);
+    auto ptr = std::make_unique<Arg<T>>(proxy, keys, def);
     auto & opt = *ptr;
     addValue(std::move(ptr));
     return opt;
@@ -83,9 +90,10 @@ Cli::Value<T> & Cli::arg(T * value, const std::string & keys, const T & def) {
 
 //===========================================================================
 template <typename T>
-Cli::ValueVec<T> &
+Cli::ArgVec<T> &
 Cli::argVec(std::vector<T> * values, const std::string & keys, int nargs) {
-    auto ptr = std::make_unique<ValueVec<T>>(values, keys, nargs);
+    auto proxy = getProxy<ArgVec<T>, ValueVec<T>>(values);
+    auto ptr = std::make_unique<ArgVec<T>>(proxy, keys, nargs);
     auto & opt = *ptr;
     addValue(std::move(ptr));
     return opt;
@@ -93,36 +101,86 @@ Cli::argVec(std::vector<T> * values, const std::string & keys, int nargs) {
 
 //===========================================================================
 template <typename T>
-Cli::Value<T> & Cli::arg(const std::string & keys, const T & def) {
+Cli::Arg<T> & Cli::arg(const std::string & keys, const T & def) {
     return arg<T>(nullptr, keys, def);
 }
 
 //===========================================================================
 template <typename T>
-Cli::ValueVec<T> & Cli::argVec(const std::string & keys, int nargs) {
+Cli::ArgVec<T> & Cli::argVec(const std::string & keys, int nargs) {
     return argVec<T>(nullptr, keys, nargs);
+}
+
+//===========================================================================
+template <typename Arg, typename Value, typename Ptr>
+std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
+    if (ptr) {
+        for (auto && a : m_args) {
+            auto ap = dynamic_cast<Arg *>(a.get());
+            if (ap && &**ap == ptr)
+                return ap->m_proxy;
+        }
+    }
+
+    // Since there was no pre-existing proxy to raw value, create new proxy.
+    return std::make_shared<Value>(ptr);
 }
 
 
 /****************************************************************************
 *
-*   Cli::ValueBase
+*   Cli::Value
 *
 ***/
 
-class Cli::ValueBase {
-public:
-    ValueBase(const std::string & keys, bool boolean);
-    virtual ~ValueBase() {}
-
+template <typename T> struct Cli::Value {
     // name of the argument that populated the value, or an empty
     // string if it wasn't populated.
-    const std::string & name() const { return m_refName; }
+    std::string m_from;
+    bool m_explicit{false};
 
-    explicit operator bool() const { return m_explicit; }
+    T * m_value;
+    T m_internal;
+
+    Value(T * value) : m_value(value ? value : &m_internal) {}
+};
+
+
+/****************************************************************************
+*
+*   Cli::ValueVec
+*
+***/
+
+template <typename T> struct Cli::ValueVec {
+    // name of the argument that populated the value, or an empty
+    // string if it wasn't populated.
+    std::string m_from;
+    bool m_explicit{false}; // the value was explicitly set
+
+    std::vector<T> * m_values;
+    std::vector<T> m_internal;
+
+    ValueVec(std::vector<T> * value) : m_values(value ? value : &m_internal) {}
+};
+
+
+/****************************************************************************
+*
+*   Cli::ArgBase
+*
+***/
+
+class Cli::ArgBase {
+public:
+    ArgBase(const std::string & keys, bool boolean);
+    virtual ~ArgBase() {}
+
+    virtual const std::string & from() const = 0;
 
 protected:
-    virtual bool parseValue(const std::string & value) = 0;
+    virtual bool parseValue(
+        const std::string & name, const std::string & value) = 0;
     virtual void resetValue() = 0;       // set to passed in default
     virtual void unspecifiedValue() = 0; // set to default constructed
     virtual size_t size() = 0; // number of values, non-vecs are always 1
@@ -133,23 +191,21 @@ protected:
 private:
     friend class Cli;
     std::string m_names;
-    std::string m_refName;
-    bool m_explicit{false}; // the value was explicitly set
     bool m_bool{false};     // the value is a bool (no separate value)
 };
 
 
 /****************************************************************************
 *
-*   Cli::ValueShim
+*   Cli::ArgShim
 *
 ***/
 
-template <typename T> class Cli::ValueShim : public ValueBase {
+template <typename T> class Cli::ArgShim : public ArgBase {
 public:
-    using ValueBase::ValueBase;
-    ValueShim(const ValueShim &) = delete;
-    ValueShim & operator=(const ValueShim &) = delete;
+    using ArgBase::ArgBase;
+    ArgShim(const ArgShim &) = delete;
+    ArgShim & operator=(const ArgShim &) = delete;
 
     T & desc(const std::string & val) {
         m_desc = val;
@@ -160,113 +216,146 @@ public:
 
 /****************************************************************************
 *
-*   Cli::Value
+*   Cli::Arg
 *
 ***/
 
-template <typename T> class Cli::Value : public ValueShim<Value<T>> {
+template <typename T> class Cli::Arg : public ArgShim<Arg<T>> {
 public:
-    Value(T * value, const std::string & keys, const T & def = T{});
+    Arg(
+        std::shared_ptr<Value<T>> value, 
+        const std::string & keys, 
+        const T & def = T{});
 
-    T & operator*() { return *m_value; }
-    T * operator->() { return m_value; }
+    T & operator*() { return *m_proxy->m_value; }
+    T * operator->() { return m_proxy->m_value; }
+
+    // name of the argument that populated the value, or an empty
+    // string if it wasn't populated.
+    const std::string & from() const override { return m_proxy->m_from; }
+    explicit operator bool() const { return m_proxy->m_explicit; }
 
 private:
-    bool parseValue(const std::string & value) override;
+    friend class Cli;
+    bool parseValue(
+        const std::string & name, 
+        const std::string & value) override;
     void resetValue() override;
     void unspecifiedValue() override;
     size_t size() override;
 
-    T * m_value;
-    T m_internal;
+    std::shared_ptr<Value<T>> m_proxy;
     T m_defValue;
 };
 
 //===========================================================================
 template <typename T>
-inline Cli::Value<T>::Value(T * value, const std::string & keys, const T & def)
-    : ValueShim<Value>{keys, std::is_same<T, bool>::value}
-    , m_value{value ? value : &m_internal}
+inline Cli::Arg<T>::Arg(
+    std::shared_ptr<Value<T>> value, const std::string & keys, const T & def)
+    : ArgShim<Arg>{keys, std::is_same<T, bool>::value}
+    , m_proxy{value}
     , m_defValue{def} {}
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Value<T>::parseValue(const std::string & value) {
-    return stringTo(*m_value, value);
+inline bool Cli::Arg<T>::parseValue(
+    const std::string & name, 
+    const std::string & value) {
+    m_proxy->m_from = name;
+    m_proxy->m_explicit = true;
+    return stringTo(*m_proxy->m_value, value);
 }
 
 //===========================================================================
-template <typename T> inline void Cli::Value<T>::resetValue() {
-    *m_value = m_defValue;
+template <typename T> inline void Cli::Arg<T>::resetValue() {
+    *m_proxy->m_value = m_defValue;
+    m_proxy->m_explicit = false;
+    m_proxy->m_from.clear();
 }
 
 //===========================================================================
-template <typename T> inline void Cli::Value<T>::unspecifiedValue() {
-    *m_value = {};
+template <typename T> inline void Cli::Arg<T>::unspecifiedValue() {
+    *m_proxy->m_value = {};
 }
 
 //===========================================================================
-template <typename T> inline size_t Cli::Value<T>::size() {
+template <typename T> inline size_t Cli::Arg<T>::size() {
     return 1;
 }
 
 
 /****************************************************************************
 *
-*   Cli::ValueVec
+*   Cli::ArgVec
 *
 ***/
 
-template <typename T> class Cli::ValueVec : public ValueShim<ValueVec<T>> {
+template <typename T> class Cli::ArgVec : public ArgShim<ArgVec<T>> {
 public:
-    ValueVec(std::vector<T> * values, const std::string & keys, int nargs);
+    ArgVec(
+        std::shared_ptr<ValueVec<T>> values, 
+        const std::string & keys, 
+        int nargs);
 
-    std::vector<T> & operator*() { return *m_values; }
-    std::vector<T> * operator->() { return m_values; }
+    std::vector<T> & operator*() { return *m_proxy->m_values; }
+    std::vector<T> * operator->() { return m_proxy->m_values; }
+
+    // name of the argument that populated the value, or an empty
+    // string if it wasn't populated.
+    const std::string & from() const override { return m_proxy->m_from; }
+    explicit operator bool() const { return m_proxy->m_explicit; }
 
 private:
-    bool parseValue(const std::string & value) override;
+    friend class Cli;
+    bool parseValue(
+        const std::string & name, 
+        const std::string & value) override;
     void resetValue() override;
     void unspecifiedValue() override;
     size_t size() override;
 
-    std::vector<T> * m_values;
-    std::vector<T> m_internal;
+    std::shared_ptr<ValueVec<T>> m_proxy;
 };
 
 //===========================================================================
 template <typename T>
-inline Cli::ValueVec<T>::ValueVec(
-    std::vector<T> * values, const std::string & keys, int nargs)
-    : ValueShim<ValueVec>{keys, std::is_same<T, bool>::value}
-    , m_values(values ? values : &m_internal) {
+inline Cli::ArgVec<T>::ArgVec(
+    std::shared_ptr<ValueVec<T>> values, const std::string & keys, int nargs)
+    : ArgShim<ArgVec>{keys, std::is_same<T, bool>::value}
+    , m_proxy(values) {
     m_multiple = true;
     m_nargs = nargs;
 }
 
 //===========================================================================
 template <typename T>
-inline bool Cli::ValueVec<T>::parseValue(const std::string & value) {
+inline bool Cli::ArgVec<T>::parseValue(
+    const std::string & name, 
+    const std::string & value) {
+    m_proxy->m_from = name;
+    m_proxy->m_explicit = true;
     T tmp;
     if (!stringTo(tmp, value))
         return false;
-    m_values->push_back(std::move(tmp));
+    m_proxy->m_values->push_back(std::move(tmp));
     return true;
 }
 
 //===========================================================================
-template <typename T> inline void Cli::ValueVec<T>::resetValue() {
-    m_values->clear();
+template <typename T> inline void Cli::ArgVec<T>::resetValue() {
+    m_proxy->m_values->clear();
+    m_proxy->m_explicit = false;
+    m_proxy->m_from.clear();
 }
 
 //===========================================================================
-template <typename T> inline void Cli::ValueVec<T>::unspecifiedValue() {
-    m_values->emplace_back();
+template <typename T> inline void Cli::ArgVec<T>::unspecifiedValue() {
+    m_proxy->m_values->emplace_back();
 }
 
 //===========================================================================
-template <typename T> inline size_t Cli::ValueVec<T>::size() {
-    return m_values->size();
+template <typename T> inline size_t Cli::ArgVec<T>::size() {
+    return m_proxy->m_values->size();
 }
 
 
@@ -276,6 +365,6 @@ template <typename T> inline size_t Cli::ValueVec<T>::size() {
 *
 ***/
 
-std::ostream & operator<<(std::ostream & os, const Cli::ValueBase & val);
+std::ostream & operator<<(std::ostream & os, const Cli::ArgBase & val);
 
 } // namespace

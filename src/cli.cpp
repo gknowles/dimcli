@@ -12,12 +12,12 @@ using namespace Dim;
 
 /****************************************************************************
 *
-*   Cli::ValueBase
+*   Cli::ArgBase
 *
 ***/
 
 //===========================================================================
-Cli::ValueBase::ValueBase(const std::string & names, bool boolean)
+Cli::ArgBase::ArgBase(const std::string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
 
@@ -32,22 +32,16 @@ Cli::ValueBase::ValueBase(const std::string & names, bool boolean)
 void Cli::resetValues() {
     for (auto && kv : m_shortNames) {
         auto val = kv.second.val;
-        val->m_explicit = false;
-        val->m_refName.clear();
         val->resetValue();
     }
     for (auto && kv : m_longNames) {
         auto val = kv.second.val;
-        val->m_explicit = false;
-        val->m_refName.clear();
         val->resetValue();
     }
-    for (unsigned i = 0; i < size(m_args); ++i) {
-        auto & key = m_args[i];
+    for (unsigned i = 0; i < size(m_argNames); ++i) {
+        auto & key = m_argNames[i];
         if (key.name.empty())
             key.name = "arg" + to_string(i + 1);
-        key.val->m_explicit = false;
-        key.val->m_refName = key.name;
         key.val->resetValue();
     }
     m_exitCode = EX_OK;
@@ -55,9 +49,9 @@ void Cli::resetValues() {
 }
 
 //===========================================================================
-void Cli::addValue(std::unique_ptr<ValueBase> src) {
-    ValueBase * val = src.get();
-    m_values.push_back(std::move(src));
+void Cli::addValue(std::unique_ptr<ArgBase> src) {
+    ArgBase * val = src.get();
+    m_args.push_back(std::move(src));
     const char * ptr = val->m_names.data();
     string name;
     char close;
@@ -88,20 +82,20 @@ void Cli::addValue(std::unique_ptr<ValueBase> src) {
 }
 
 //===========================================================================
-void Cli::addKey(const string & name, ValueBase * val) {
+void Cli::addKey(const string & name, ArgBase * val) {
     const bool invert = true;
     const bool optional = true;
 
     switch (name[0]) {
     case '-': assert(name[0] != '-' && "bad argument name"); return;
     case '[':
-        m_args.push_back({val, !invert, optional, name.data() + 1});
+        m_argNames.push_back({val, !invert, optional, name.data() + 1});
         return;
     case '<':
-        auto where = find_if(m_args.begin(), m_args.end(), [](auto && key) {
+        auto where = find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
             return key.optional;
         });
-        m_args.insert(where, {val, !invert, !optional, name.data() + 1});
+        m_argNames.insert(where, {val, !invert, !optional, name.data() + 1});
         return;
     }
     if (name.size() == 1) {
@@ -136,9 +130,8 @@ void Cli::addKey(const string & name, ValueBase * val) {
 }
 
 //===========================================================================
-bool Cli::parseValue(ValueBase & val, const char ptr[]) {
-    val.m_explicit = true;
-    return val.parseValue(ptr);
+bool Cli::parseValue(ArgBase & val, const std::string & name, const char ptr[]) {
+    return val.parseValue(name, ptr);
 }
 
 //===========================================================================
@@ -155,13 +148,14 @@ bool Cli::parse(size_t argc, char * argv[]) {
     // the 0th (name of this program) arg should always be present
     assert(argc && *argv);
 
+    string name;
     unsigned pos = 0;
     bool moreOpts = true;
     argc -= 1;
     argv += 1;
 
     for (; argc; --argc, ++argv) {
-        ValueKey vkey;
+        ArgName vkey;
         const char * ptr = *argv;
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
@@ -171,9 +165,9 @@ bool Cli::parse(size_t argc, char * argv[]) {
                     return badUsage("Unknown option: - "s + *ptr);
                 }
                 vkey = it->second;
-                vkey.val->m_refName = "-"s + *ptr;
+                name = "-"s + *ptr;
                 if (vkey.val->m_bool) {
-                    parseValue(*vkey.val, vkey.invert ? "0" : "1");
+                    parseValue(*vkey.val, name, vkey.invert ? "0" : "1");
                     continue;
                 }
                 ptr += 1;
@@ -208,27 +202,27 @@ bool Cli::parse(size_t argc, char * argv[]) {
                 return badUsage("Unknown option: --"s + key);
             }
             vkey = it->second;
-            vkey.val->m_refName = "--" + key;
+            name = "--" + key;
             if (vkey.val->m_bool) {
                 if (equal) {
-                    return badUsage("Unknown option: --" + key + "=");
+                    return badUsage("Unknown option: " + name + "=");
                 }
-                parseValue(*vkey.val, (hasNo ^ vkey.invert) ? "0" : "1");
+                parseValue(*vkey.val, name, (hasNo ^ vkey.invert) ? "0" : "1");
                 continue;
             } else if (hasNo) {
-                return badUsage("Unknown option: --" + key);
+                return badUsage("Unknown option: " + name);
             }
             goto option_value;
         }
 
         // positional
-        if (pos >= size(m_args)) {
+        if (pos >= size(m_argNames)) {
             return badUsage("Unexpected argument: "s + ptr);
         }
-        vkey = m_args[pos];
-        vkey.val->m_refName = vkey.name;
-        if (!parseValue(*vkey.val, ptr)) {
-            return badUsage("Invalid " + vkey.val->m_refName + ": " + ptr);
+        vkey = m_argNames[pos];
+        name = vkey.name;
+        if (!parseValue(*vkey.val, name, ptr)) {
+            return badUsage("Invalid " + name + ": " + ptr);
         }
         if (!vkey.val->m_multiple)
             pos += 1;
@@ -236,8 +230,8 @@ bool Cli::parse(size_t argc, char * argv[]) {
 
     option_value:
         if (*ptr) {
-            if (!parseValue(*vkey.val, ptr)) {
-                return badUsage("Invalid option value: "s + ptr);
+            if (!parseValue(*vkey.val, name, ptr)) {
+                return badUsage("Invalid option value: " + name + "=" + ptr);
             }
             continue;
         }
@@ -247,15 +241,15 @@ bool Cli::parse(size_t argc, char * argv[]) {
         argc -= 1;
         argv += 1;
         if (!argc) {
-            return badUsage("No value given for " + vkey.val->m_refName);
+            return badUsage("No value given for " + name);
         }
-        if (!parseValue(*vkey.val, *argv)) {
-            return badUsage("Invalid option value: "s + *argv);
+        if (!parseValue(*vkey.val, name, *argv)) {
+            return badUsage("Invalid option value: " + name + "=" + *argv);
         }
     }
 
-    if (pos < size(m_args) && !m_args[pos].optional) {
-        return badUsage("No value given for " + m_args[pos].name);
+    if (pos < size(m_argNames) && !m_argNames[pos].optional) {
+        return badUsage("No value given for " + m_argNames[pos].name);
     }
     return true;
 }
@@ -277,6 +271,6 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
 ***/
 
 //===========================================================================
-ostream & Dim::operator<<(ostream & os, const Cli::ValueBase & val) {
-    return os << val.name();
+ostream & Dim::operator<<(ostream & os, const Cli::ArgBase & val) {
+    return os << val.from();
 }
