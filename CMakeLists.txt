@@ -5,9 +5,6 @@ set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO bin)
 
-include_directories(include)
-# add_compile_options(/std:c++latest)
-
 # Compare the new contents with the existing file, if it exists and is the 
 # same we don't want to trigger a make by changing its timestamp.
 function(update_file path content)
@@ -65,6 +62,9 @@ function(write_user_file prjname)
 ]=])
 endfunction(write_user_file)
 
+include_directories(include)
+# add_compile_options(/std:c++latest)
+
 file(GLOB meta_sources LIST_DIRECTORIES false 
     .clang-format
     appveyor.yml
@@ -88,8 +88,8 @@ if(EXISTS ${sln_binpath})
     # project files so that the in memory copy is as if it had been built in 
     # the source dir.
     file(RELATIVE_PATH prefix 
-        ${CMAKE_CURRENT_SOURCE_DIR} 
-        ${CMAKE_CURRENT_BINARY_DIR})
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}")
     file(READ ${sln_binpath} sln_content)
     string(REGEX REPLACE 
         "\"([^\"]+).vcxproj\""
