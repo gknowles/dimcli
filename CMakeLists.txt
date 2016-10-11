@@ -61,7 +61,7 @@ function(write_user_file prjname)
 endfunction(write_user_file)
 
 include_directories(include)
-# add_compile_options(/std:c++latest)
+add_compile_options(/std:c++latest /W4 /WX)
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
     .clang-format
