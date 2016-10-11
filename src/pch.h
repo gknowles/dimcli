@@ -1,4 +1,4 @@
 // pch.h - dim cli
-#include "cli.h"
+#include "dim/cli.h"
 
 #include <algorithm>

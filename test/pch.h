@@ -1,4 +1,4 @@
 // pch.h - dim test cli
-#include "cli.h"
+#include "dim/cli.h"
 
 #include <iostream>

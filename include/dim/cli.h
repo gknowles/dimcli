@@ -227,6 +227,8 @@ public:
         const std::string & keys, 
         const T & def = T{});
 
+    Arg & optional(const T & implicit = T{});
+
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
 
