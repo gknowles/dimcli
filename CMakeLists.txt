@@ -28,14 +28,14 @@ function(write_user_file prjname)
 ]=])
 endfunction(write_user_file)
 
-set(meta_sources 
+file(GLOB meta_sources LIST_DIRECTORIES false 
     .clang-format
     appveyor.yml
     LICENSE
     README.md
-    docs/README.md)
+    docs/*)
 add_custom_target("_meta" SOURCES ${meta_sources})
-source_group("docs" FILES docs/README.md)
+source_group("docs" REGULAR_EXPRESSION "docs/.*")
 
 set(dimcli_sources 
     include/cli.h include/util.h
