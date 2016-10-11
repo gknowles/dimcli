@@ -27,7 +27,7 @@ after_build:
   - xcopy ..\Win64\lib lib\Win64\ /s
   - copy 
       ..\Win64\src\dimcli.dir\RelWithDebInfo\dimcli.pdb 
-      lib\Win64\RelWithDepInfo
+      lib\Win64\RelWithDebInfo
   - 7z a dimcli-v%appveyor_build_version%.zip include lib
   - cd ..\..
 
