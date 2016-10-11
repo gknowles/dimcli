@@ -22,10 +22,9 @@ build_script:
   - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
 
 after_build:
-  - md build\publish
+  - xcopy include build\publish\include\ /s
   - cd build\publish
-  - robocopy ..\..\include include /e /log:copy.out
-  - robocopy ..\Win64\lib lib\Win64 /e /log+:copy.out
+  - xcopy ..\Win64\lib lib\Win64\ /s
   - copy 
       ..\Win64\src\dimcli.dir\RelWithDebInfo\dimcli.pdb 
       lib\Win64\RelWithDepInfo
