@@ -22,13 +22,19 @@ build_script:
   - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
 
 after_build:
-  - md lib\Win64
-  - copy build\Win64\lib\*.* lib\Win64
-  - copy build\Win64\src\dimcli.dir\RelWithDebInfo\dimcli.pdb lib\Win64
-  - 7z a dimcli-v%appveyor_build_version%.zip include lib
+  - 7z a dimcli-v%appveyor_build_version%.zip include
+  - md build\publish
+  - cd build\publish
+  - robocopy ..\..\include include /e /log:copy.out
+  - robocopy ..\Win64\lib lib\Win64 /e /log+:copy.out
+  - copy 
+      ..\Win64\src\dimcli.dir\RelWithDebInfo\dimcli.pdb 
+      lib\Win64\RelWithDepInfo
+  - 7z a dimcli-v%appveyor_build_version%.zip lib
+  - cd ..\..
 
 artifacts:
-  - path: dimcli-v$(appveyor_build_version).zip
+  - path: build\publish\dimcli-v$(appveyor_build_version).zip
     name: dimcli
     type: zip
 
