@@ -61,7 +61,16 @@ function(write_user_file prjname)
 endfunction(write_user_file)
 
 include_directories(include)
-add_compile_options(/std:c++latest /W4 /WX)
+if(MSVC)
+    add_compile_options(/std:c++latest /W4 /WX)
+    foreach(cfgname ${CMAKE_CONFIGURATION_TYPES})
+        set(flags CMAKE_CXX_FLAGS_${cfgname})
+        string(TOUPPER ${flags} flags)
+        if(${flags} MATCHES "/MD")
+            string(REGEX REPLACE "/MD" "/MT" ${flags} "${${flags}}")
+        endif()
+    endforeach(cfgname)
+endif()
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
     .clang-format
