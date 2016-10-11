@@ -17,7 +17,7 @@ How does it feel?
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     auto & count = cli.arg<int>("c count", 1).desc("times to say hello");
     auto & name = cli.arg<string>("name", "Unknown").desc("who to greet");
     if (!cli.parse(cerr, argc, argv))
@@ -71,8 +71,12 @@ should exit. cli.exitCode() will be set to either EX_OK (because of an early
 exit like --help) or EX_USAGE for bad arguments.
 
 ~~~ c++
+#include "dim/cli.h"
+#include <iostream>
+using namespace std;
+
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Does the apple have a worm? No!";
@@ -99,7 +103,7 @@ Windows if they don't exist.
 
 
 ## Arguments
-Cli is used by declaring variables to receive arguments. Either via pointer
+Dim::Cli is used by declaring variables to receive arguments. Either via pointer
 to a predefined external variable or by implicitly creating the variable as 
 part of declaring it.
 
@@ -109,7 +113,7 @@ to access the target directly.
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     auto & fruit = cli.arg<string>("fruit", "apple");
     if (!cli.parse(cerr, argc, argv)) {
         return cli.exitCode();
@@ -162,7 +166,7 @@ For example:
 ~~~ c++
 int main(int argc, char * argv[]) {
     bool worm;
-    Cli cli;
+    Dim::Cli cli;
     cli.arg(&worm, "w worm").desc("make it icky");
     auto & fruit = cli.arg<string>("fruit", "apple").desc("type of fruit");
     if (!cli.parse(cerr, argc, argv))
@@ -214,7 +218,7 @@ For example:
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     cli.arg<string>("a apple [apple]").desc("apples are red");
     cli.arg<bool>("!o orange").desc("oranges are orange");
     cli.arg<string>("<pear>").desc("pears are yellow");
@@ -274,7 +278,7 @@ be changed in two ways:
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     auto & shout = cli.arg<bool>("shout !whisper").desc("I can't hear you!");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -328,7 +332,7 @@ ostream & operator<< (ostream & os, const vector<T> & v) {
 }
 
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     vector<string> oranges;
     cli.argVec(&oranges, "o orange").desc("oranges");
     auto & apples = cli.argVec<string>("[apple]").desc("red fruit");
@@ -374,7 +378,7 @@ For example:
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     auto & v1 = cli.arg<string>("o optional", "default").optional();
     auto & v2 = cli.arg<string>("i with-implicit", "default");
     v2.optional("implicit");
@@ -410,7 +414,7 @@ the option that should be the default.
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     string fruit;
     cli.arg(&fruit, "o orange", "orange").desc("oranges").flagValue();
     cli.arg(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
@@ -447,7 +451,7 @@ instance:
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     auto & v = cli.argVec<bool>("v verbose");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -479,13 +483,13 @@ Verbosity: 3
 If you are using external varaibles you can just access them directly after 
 using cli.parse() to populate them.
 
-If you use the argument object returned from cli.arg\<T>() you dereference it 
+If you use the proxy object returned from cli.arg\<T>() you can dereference it 
 like a smart pointer to get at the value. In addition, you can test whether 
-it was explicitly set and get the name that was used.
+it was explicitly set and get the argument name that populated it.
 
 ~~~ c++
 int main(int argc, char * argv[]) {
-    Cli cli;
+    Dim::Cli cli;
     auto & name = cli.arg<string>("n name", "Unknown");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -514,12 +518,11 @@ Hello Mary!
 
 ## Keep it quiet
 For some applications, such as Windows services, it's important not to 
-interact with the console. There some simple steps to stop parse() from doing 
-any console IO:
+interact with the console. Simple steps to avoid parse() doing console IO:
 
 1. Don't use options (such as arg.prompt()) that explicitly ask for IO.
 2. Add your own "help" argument to override the default, you can still 
 turn around and call cli.writeHelp(ostream&) if desired.
 3. Use the two argument version of cli.parse() so it doesn't output errors 
 immediately. The text of any error that may have occurred during a parse is 
-available via cli.errMsg()
+still available via cli.errMsg()
