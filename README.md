@@ -1,4 +1,6 @@
-﻿# dimcli
+﻿[![Build status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master)
+
+# dimcli
 
 Making command line interfaces fun for kids of all ages.
 
@@ -10,13 +12,10 @@ Main features:
 - help page generation
 - light weight
 
-## Download
-[![Build status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master)
+## Documentation
+Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
+you did!
 
 ## Include in your project
 - Make the library
 - Copy the source files
-
-## Documentation
-Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
-you did!
