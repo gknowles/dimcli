@@ -24,9 +24,7 @@ build_script:
 after_build:
   - 7z a dimcli-v%appveyor_build_version%.zip include
   - cd build\Win64
-  - 7z a ..\..\dimcli-v%appveyor_build_version%.zip
-      lib\Debug\dimcli.*
-      lib\RelWithDebInfo\dimcli.*
+  - 7z a ..\..\dimcli-v%appveyor_build_version%.zip lib
   - cd ..\..
 
 artifacts:
