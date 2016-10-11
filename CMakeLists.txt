@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO bin)
 
 # Compare the new contents with the existing file, if it exists and is the 
 # same we don't want to trigger a make by changing its timestamp.

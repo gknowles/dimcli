@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.6)
 project (test)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ../bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ../bin)
 
 file(GLOB_RECURSE sources LIST_DIRECTORIES false *.h *.cpp)
 update_deps_file("${sources}")
