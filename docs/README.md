@@ -1,4 +1,8 @@
 # dim-cli
+{:.no_toc}
+
+* Will be replaced with the ToC
+{:toc}
 
 Making command line interfaces fun for kids of all ages.
 
@@ -10,7 +14,8 @@ Main features:
 - help page generation
 
 How does it feel?
-```C++
+
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     auto & count = cli.arg<int>("c count", 1).desc("times to say hello");
@@ -23,10 +28,11 @@ int main(int argc, char * argv[]) {
         cout << "Hello " << *name << "!" << endl;
     return EX_OK;
 }
-```
+~~~
 
 What it looks like when run: 
-```console
+
+~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS]
 
@@ -40,7 +46,7 @@ Using the unknown name.
 Hello Unknown!
 Hello Unknown!
 Hello Unknown!
-```
+~~~
 
 
 ## Terminology
@@ -60,11 +66,11 @@ and position.
 
 
 ## Basic Usage
-After inspecting args Cli::parser() returns false if it thinks the program 
-should exit. Cli::exitCode() will be set to either EX_OK (because of an early 
+After inspecting args cli.parser() returns false if it thinks the program 
+should exit. cli.exitCode() will be set to either EX_OK (because of an early 
 exit like --help) or EX_USAGE for bad arguments.
 
-```C++
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     if (!cli.parse(cerr, argc, argv))
@@ -72,10 +78,11 @@ int main(int argc, char * argv[]) {
     cout << "Does the apple have a worm? No!";
     return EX_OK;
 }
-```
+~~~
 
 And what it looks like:
-```console
+
+~~~ console
 $ a.out --help  
 Usage: a.out [OPTIONS]  
 
@@ -84,7 +91,7 @@ Options:
 
 $ a.out
 Does the apple have a worm? No!
-```
+~~~
 
 The EX_* constants (along with standard values) are in sysexits.h on most 
 unixes, althrough it may not be in any standard. dimcli defines them on 
@@ -96,11 +103,11 @@ Cli is used by declaring variables to receive arguments. Either via pointer
 to a predefined external variable or by implicitly creating the variable as 
 part of declaring it.
 
-Use arg<T>(names, defaultValue) to link argument names to a target variable. 
-It returns a proxy object that can be used like a pointer (* and ->) to 
-access the target directly.
+Use cli.arg\<T>(names, defaultValue) to link argument names to a target 
+variable. It returns a proxy object that can be used like a pointer (* and ->) 
+to access the target directly.
 
-```C++
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     auto & fruit = cli.arg<string>("fruit", "apple");
@@ -110,10 +117,11 @@ int main(int argc, char * argv[]) {
     cout << "Does the " << *fruit << " have a worm? No!";
     return EX_OK;
 }
-```
+~~~
 
 And what you get:
-```console
+
+~~~ console
 $ a.out --help  
 Usage: a.out [OPTIONS]  
 
@@ -123,21 +131,23 @@ Options:
 
 $ a.out --fruit=orange
 Does the orange have a worm? No!
-```
+~~~
 
 Add a description:
-```C++
+
+~~~ c++
 auto & fruit = cli.arg<string>("fruit", apple").desc("type of fruit");
-```
+~~~
 And you get:
-```console
+
+~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
   --help          Show this message and exit.  
   --fruit STRING  type of fruit
-```
+~~~
 
 ## External Variables
 In addition to using the variable proxies you can bind the arguments directly 
@@ -148,7 +158,8 @@ You can also point multiple arguments at the same variable, as is common with
 [feature switches](#feature-switches).
 
 For example:
-```C++
+
+~~~ c++
 int main(int argc, char * argv[]) {
     bool worm;
     Cli cli;
@@ -160,9 +171,10 @@ int main(int argc, char * argv[]) {
         << worm ? "Yes :(" : "No!";
     return EX_OK;
 }
-```
+~~~
 And what it looks like:
-```console
+
+~~~ console
 $ a.out --help  
 Usage: a.out [OPTIONS]  
 
@@ -175,18 +187,18 @@ $ a.out --fruit=orange
 Does the orange have a worm? No!
 $ a.out -w
 Does the apple have a worm? Yes :(
-```
+~~~
 
 ## Argument Names
 Names are passed in as a space separated list of argument names that look 
 like these:
 
-| Type of name                        | Example     |
-|-------------------------------------|-------------|
-| short name (single character)       | f           |
-| long name (more than one character) | file        |
-| optional positional                 | [file name] |
-| required positional                 | \<file\>    |
+| Type of name                        | Example      |
+|-------------------------------------|--------------|
+| short name (single character)       | f            |
+| long name (more than one character) | file         |
+| optional positional                 | \[file name] |
+| required positional                 | \<file\>     |
 
 Names for positionals (inside angled or square brackets) may contain spaces, 
 and all names may be preceded by modifier flags:
@@ -199,7 +211,8 @@ Long names for boolean values get a second "no-" version implicitly
 created for them.
 
 For example:
-```C++
+
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     cli.arg<string>("a apple [apple]").desc("apples are red");
@@ -208,10 +221,11 @@ int main(int argc, char * argv[]) {
     cli.parse(cerr, argc, argv);
     return EX_OK;
 }
-```
+~~~
 Ends up looking like this (note: required positionals are **always** placed 
 before any optional ones):
-```console
+
+~~~ console
 $ a.out --help  
 Usage: a.out [OPTIONS] <pear> [apple]  
   pear      pears are yellow
@@ -221,18 +235,20 @@ Options:
   --help              Show this message and exit.  
   -a, --apple STRING  apples are red
   -o, --[no-]orange   oranges are orange
-```
+~~~
 
 When named arguments are added they replace any previous rule with the same 
 name, therefore these args declare '-n' an inverted bool:
-```C++
+
+~~~ c++
 cli.arg<bool>("n !n");
-```
+~~~
 But with these it becomes '-n STRING', a string:
-```C++
+
+~~~ c++
 cli.arg<bool>("n !n");
 cli.arg<string>("n");
-```
+~~~
 
 ## Positional Arguments
 A few things to keep in mind about positional arguments:
@@ -253,10 +269,10 @@ be changed in two ways:
 - make it an inverted bool, which will set it to false
   - explicitly using the "!" modifier
   - define a long name and use the implicitly created "no-" prefix version
-- use Arg<T>::flagValue() to set the value, see 
+- use arg.flagValue() to set the value, see 
   [feature switches](#feature-switches).
 
-```C++
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     auto & shout = cli.arg<bool>("shout !whisper").desc("I can't hear you!");
@@ -270,9 +286,10 @@ int main(int argc, char * argv[]) {
     }
     cout << "I am " << prog;
 }
-```
+~~~
 What you see:
-```console
+
+~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS]
 
@@ -287,16 +304,17 @@ $ a.out --shout
 I am A.OUT!!!!111
 $ a.out --no-whisper
 I am A.OUT!!!!111
-```
+~~~
 
 
 ## Variadic Arguments
 Allows for a specific (or unlimited) number of arguments to be returned in a 
-vector. Variadic arguments are declared using Cli::argVec() which binds 
-to a std::vector<T>.
+vector. Variadic arguments are declared using cli.argVec() which binds 
+to a std::vector\<T>.
 
 Example: 
-```C++
+
+~~~ c++
 // printing vectors as comma separated is annoying...
 template<typename T> 
 ostream & operator<< (ostream & os, const vector<T> & v) {
@@ -320,9 +338,10 @@ int main(int argc, char * argv[]) {
     cout << "(" << *apples << ") and (" << *oranges << ") don't compare.";
     return EX_OK;
 }
-```
+~~~
 And from the command line:
-```console
+
+~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS] [apple...]
   apple     red fruit
@@ -333,10 +352,11 @@ Options:
 
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 (red delicious, honeycrisp) and (mandarin, navel) don't compare.
-```
+~~~
 
 
 ## Special Arguments
+
 | Value | Description                                               |
 |-------|-----------------------------------------------------------|
 | "-"   | Passed in as a positional argument.                       |
@@ -345,13 +365,14 @@ $ a.out -o mandarin -onavel "red delicious" honeycrisp
 
 ## Optional Values
 When an optional argument is not passed in the variable is still set to the 
-default in the Cli::arg() call. In order to set an optional value it must be 
-connected (no space) to the name, otherwise it is interpreted as not present 
-and the implicit value is used instead. The implicit value can be set in the 
-same Arg<T>::optional() call you use to make it optional.
+default given in the cli.arg\<T>() call. In order to set an optional value it 
+must be connected (no space) to the name, otherwise it is interpreted as not 
+present and the implicit value is used instead. The implicit value can be set 
+in the same arg.optional() call you use to make it optional.
 
 For example:
-```C++
+
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     auto & v1 = cli.arg<string>("o optional", "default").optional();
@@ -363,9 +384,10 @@ int main(int argc, char * argv[]) {
     cout << "v1 = " << *v1 << ", v2 = " << *v2 << ", p = " << *p;
     return EX_OK;
 }
-```
+~~~
 What happens: 
-```console
+
+~~~ console
 $ a.out
 v1 = default, v2 = default, p = default
 $ a.out -oone -i two
@@ -376,7 +398,7 @@ $ a.out --optional=one --with-implicit two
 v1 = one, v2 = implicit, p = two
 $ a.out --optional one --with-implicit=two
 v1 =, v2 = two, p = one
-```
+~~~
 
 
 ## Feature Switches
@@ -386,7 +408,7 @@ variables that reference the same target and marking them flag values.
 To set the default, pass in a value of true to the flagValue() function of 
 the option that should be the default.
 
-```C++
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     string fruit;
@@ -398,9 +420,10 @@ int main(int argc, char * argv[]) {
     cout << "Does the " << fruit << " have a worm? No!";
     return EX_OK;
 }
-```
+~~~
 Which looks like:
-```console
+
+~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS]
 
@@ -413,14 +436,16 @@ $ a.out
 Does the apple have a worm? No!
 $ a.out -o
 Does the orange have a worm? No!
-```
+~~~
 
 
 ## Counting
 In very rare circumstances, it is interesting to use repetition to increase
 an integer. There is no special handling for it, but counting can be done
-easily enough with a vector. This can be used for verbosity flags, for instance:
-```C++
+easily enough with a vector. This can be used for verbosity flags, for 
+instance:
+
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     auto & v = cli.argVec<bool>("v verbose");
@@ -429,12 +454,13 @@ int main(int argc, char * argv[]) {
     cout << "Verbosity: " << v.size();
     return EX_OK;
 }
-```
+~~~
 And on the command line:
-```console
+
+~~~ console
 $ a.out -vvv
 Verbosity: 3
-```
+~~~
 
 
 ## Variable Modifiers
@@ -443,7 +469,7 @@ Verbosity: 3
 |----------|------|-------------|
 | choice | - | value from vector? index in vec for enum? or vector<pair<string, T>>? |
 | prompt | - | prompt(string&, bool hide, bool confirm)
-| argPassword | - | arg<string>("password").prompt("Password", true, true) |
+| argPassword | - | arg("password").prompt("Password", true, true) |
 | yes | - | are you sure? fail if not y |
 | range | - | min/max allowed for variable |
 | clamp | - | clamp variable so it is between min/max |
@@ -451,13 +477,13 @@ Verbosity: 3
 
 ## Life After Parsing
 If you are using external varaibles you can just access them directly after 
-using Cli::parse() to populate them.
+using cli.parse() to populate them.
 
-If you use the argument object returned from Cli::arg() you dereference it 
+If you use the argument object returned from cli.arg\<T>() you dereference it 
 like a smart pointer to get at the value. In addition, you can test whether 
 it was explicitly set and get the name that was used.
 
-```C++
+~~~ c++
 int main(int argc, char * argv[]) {
     Cli cli;
     auto & name = cli.arg<string>("n name", "Unknown");
@@ -471,9 +497,10 @@ int main(int argc, char * argv[]) {
     cout << "Hello " << *name << "!" << endl;
     return EX_OK;
 }
-```
+~~~
 What it does: 
-```console
+
+~~~ console
 $ a.out  
 Using the unknown name.  
 Hello Unknown!  
@@ -483,27 +510,16 @@ Hello John!
 $ a.out --name Mary
 Name selected using --name
 Hello Mary!
-```
+~~~
 
 ## Keep it quiet
 For some applications, such as Windows services, it's important not to 
 interact with the console. There some simple steps to stop parse() from doing 
 any console IO:
 
-1. Don't use options (such as Arg<T>::prompt()) that explicitly ask for IO.
+1. Don't use options (such as arg.prompt()) that explicitly ask for IO.
 2. Add your own "help" argument to override the default, you can still 
-turn around and call Cli::writeHelp(ostream&) if desired.
-3. Use the two argument version of Cli::parse() so it doesn't output errors 
+turn around and call cli.writeHelp(ostream&) if desired.
+3. Use the two argument version of cli.parse() so it doesn't output errors 
 immediately. The text of any error that may have occurred during a parse is 
-available via Cli::errMsg()
-
-
-## Aspirational Roadmap
-- callbacks
-- help text and formatting options
-- load from environment variables?
-- support /name:value syntax
-- composable subcommands
-- access to unrecognized named options?
-- tuple arguments
-
+available via cli.errMsg()

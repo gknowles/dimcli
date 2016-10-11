@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>dimcli help</title>
+  <link rel="stylesheet" href="friendly.css"/>
+</head>
+<body>
+  <h1 class="no_toc" id="dim-cli">dim-cli</h1>
+
+<ul id="markdown-toc">
+  <li><a href="#terminology" id="markdown-toc-terminology">Terminology</a></li>
+  <li><a href="#basic-usage" id="markdown-toc-basic-usage">Basic Usage</a></li>
+  <li><a href="#arguments" id="markdown-toc-arguments">Arguments</a></li>
+  <li><a href="#external-variables" id="markdown-toc-external-variables">External Variables</a></li>
+  <li><a href="#argument-names" id="markdown-toc-argument-names">Argument Names</a></li>
+  <li><a href="#positional-arguments" id="markdown-toc-positional-arguments">Positional Arguments</a></li>
+  <li><a href="#flag-arguments" id="markdown-toc-flag-arguments">Flag Arguments</a></li>
+  <li><a href="#variadic-arguments" id="markdown-toc-variadic-arguments">Variadic Arguments</a></li>
+  <li><a href="#special-arguments" id="markdown-toc-special-arguments">Special Arguments</a></li>
+  <li><a href="#optional-values" id="markdown-toc-optional-values">Optional Values</a></li>
+  <li><a href="#feature-switches" id="markdown-toc-feature-switches">Feature Switches</a></li>
+  <li><a href="#counting" id="markdown-toc-counting">Counting</a></li>
+  <li><a href="#variable-modifiers" id="markdown-toc-variable-modifiers">Variable Modifiers</a></li>
+  <li><a href="#life-after-parsing" id="markdown-toc-life-after-parsing">Life After Parsing</a></li>
+  <li><a href="#keep-it-quiet" id="markdown-toc-keep-it-quiet">Keep it quiet</a></li>
+</ul>
+
+<p>Making command line interfaces fun for kids of all ages.</p>
+
+<p>Main features:</p>
+<ul>
+  <li>parses directly to c++ variables (or makes proxies for them)</li>
+  <li>supports parsing to any type that is:
+    <ul>
+      <li>default constructable</li>
+      <li>assignable from std::string or has an istream extraction operator</li>
+    </ul>
+  </li>
+  <li>help page generation</li>
+</ul>
+
+<p>How does it feel?</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">count</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"c count"</span><span class="p">,</span> <span class="mi">1</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"times to say hello"</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"name"</span><span class="p">,</span> <span class="s">"Unknown"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"who to greet"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Using the unknown name."</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">count</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Hello "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">name</span> <span class="o">&lt;&lt;</span> <span class="s">"!"</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+
+<p>What it looks like when run:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help
+</span>Usage: a.out [OPTIONS]
+
+Options:
+  --help               Show this message and exit.
+  -c, --count INTEGER  times to say hello
+  --name STRING        who to greet
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --count=3
+</span>Using the unknown name.
+Hello Unknown!
+Hello Unknown!
+Hello Unknown!
+</div>
+
+<h2 id="terminology">Terminology</h2>
+<ul>
+  <li>Argument
+    <ul>
+      <li>something appearing in a command line, probably typed by a user, <br />
+consisting of a name and/or value.</li>
+    </ul>
+  </li>
+  <li>Positional argument
+    <ul>
+      <li>argument identified by their position in the command line</li>
+    </ul>
+  </li>
+  <li>Named argument
+    <ul>
+      <li>argument identifiable by name (e.g. &#8211;name, -n)</li>
+    </ul>
+  </li>
+  <li>Variable
+    <ul>
+      <li>object that receives values and contains rules about what values<br />
+can be given to it.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>The command line interface (Cli) maps arguments to variables by name<br />
+and position.</p>
+
+<h2 id="basic-usage">Basic Usage</h2>
+<p>After inspecting args cli.parser() returns false if it thinks the program <br />
+should exit. cli.exitCode() will be set to either EX_OK (because of an early <br />
+exit like &#8211;help) or EX_USAGE for bad arguments.</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Does the apple have a worm? No!"</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+
+<p>And what it looks like:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help  
+</span>Usage: a.out [OPTIONS]  
+
+Options:  
+  --help    Show this message and exit.
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv">
+</span>Does the apple have a worm? No!
+</div>
+
+<p>The EX_* constants (along with standard values) are in sysexits.h on most <br />
+unixes, althrough it may not be in any standard. dimcli defines them on <br />
+Windows if they don&#8217;t exist.</p>
+
+<h2 id="arguments">Arguments</h2>
+<p>Cli is used by declaring variables to receive arguments. Either via pointer<br />
+to a predefined external variable or by implicitly creating the variable as <br />
+part of declaring it.</p>
+
+<p>Use cli.arg&lt;T&gt;(names, defaultValue) to link argument names to a target <br />
+variable. It returns a proxy object that can be used like a pointer (* and -&gt;) <br />
+to access the target directly.</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Does the "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">fruit</span> <span class="o">&lt;&lt;</span> <span class="s">" have a worm? No!"</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+
+<p>And what you get:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help  
+</span>Usage: a.out [OPTIONS]  
+
+Options:  
+  --help          Show this message and exit.  
+  --fruit STRING  
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --fruit=orange
+</span>Does the orange have a worm? No!
+</div>
+
+<p>Add a description:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="n">apple</span><span class="s">").desc("</span><span class="n">type</span> <span class="n">of</span> <span class="n">fruit</span><span class="s">");</span><span class="err">
+</span></div>
+<p>And you get:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help
+</span>Usage: a.out [OPTIONS]
+
+Options:
+  --help          Show this message and exit.  
+  --fruit STRING  type of fruit
+</div>
+
+<h2 id="external-variables">External Variables</h2>
+<p>In addition to using the variable proxies you can bind the arguments directly <br />
+to predefined variables. This can be used to set a global flag, or populate an<br />
+options struct that you access later.</p>
+
+<p>You can also point multiple arguments at the same variable, as is common with<br />
+<a href="#feature-switches">feature switches</a>.</p>
+
+<p>For example:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="kt">bool</span> <span class="n">worm</span><span class="p">;</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">worm</span><span class="p">,</span> <span class="s">"w worm"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"make it icky"</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"type of fruit"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Does the "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">fruit</span> <span class="o">&lt;&lt;</span> <span class="s">" have a worm? "</span> 
+        <span class="o">&lt;&lt;</span> <span class="n">worm</span> <span class="o">?</span> <span class="s">"Yes :("</span> <span class="o">:</span> <span class="s">"No!"</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>And what it looks like:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help  
+</span>Usage: a.out [OPTIONS]  
+
+Options:  
+  --help          Show this message and exit.  
+  --fruit STRING  type of fruit
+  -w, --worm      make it icky
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --fruit=orange
+</span>Does the orange have a worm? No!
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -w
+</span>Does the apple have a worm? Yes :(
+</div>
+
+<h2 id="argument-names">Argument Names</h2>
+<p>Names are passed in as a space separated list of argument names that look <br />
+like these:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type of name</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>short name (single character)</td>
+      <td>f</td>
+    </tr>
+    <tr>
+      <td>long name (more than one character)</td>
+      <td>file</td>
+    </tr>
+    <tr>
+      <td>optional positional</td>
+      <td>[file name]</td>
+    </tr>
+    <tr>
+      <td>required positional</td>
+      <td>&lt;file&gt;</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Names for positionals (inside angled or square brackets) may contain spaces, <br />
+and all names may be preceded by modifier flags:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Flag</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>!</td>
+      <td>for boolean values, when setting the value it is first inverted</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Long names for boolean values get a second &#8220;no-&#8220; version implicitly<br />
+created for them.</p>
+
+<p>For example:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"a apple [apple]"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"apples are red"</span><span class="p">);</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"!o orange"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"oranges are orange"</span><span class="p">);</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"&lt;pear&gt;"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"pears are yellow"</span><span class="p">);</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>Ends up looking like this (note: required positionals are <strong>always</strong> placed <br />
+before any optional ones):</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help  
+</span>Usage: a.out [OPTIONS] &lt;pear&gt; [apple]  
+  pear      pears are yellow
+  apple     apples are red
+
+Options:  
+  --help              Show this message and exit.  
+  -a, --apple STRING  apples are red
+  -o, --[no-]orange   oranges are orange
+</div>
+
+<p>When named arguments are added they replace any previous rule with the same <br />
+name, therefore these args declare &#8216;-n&#8217; an inverted bool:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n !n"</span><span class="p">);</span>
+</div>
+<p>But with these it becomes &#8216;-n STRING&#8217;, a string:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n !n"</span><span class="p">);</span>
+<span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n"</span><span class="p">);</span>
+</div>
+
+<h2 id="positional-arguments">Positional Arguments</h2>
+<p>A few things to keep in mind about positional arguments:</p>
+<ul>
+  <li>Arguments are mapped by the order they are added, except that all required <br />
+positionals appear before optional ones.</li>
+  <li>If there are multiple variadic positionals with unlimited (nargs = -1) <br />
+arity all but the first will be treated as if they had nargs = 1.</li>
+  <li>If the unlimited one is required it will prevent any optional positionals <br />
+from getting populated, since it eats up all the arguments before they get <br />
+a turn.</li>
+</ul>
+
+<h2 id="flag-arguments">Flag Arguments</h2>
+<p>Some (most?) arguments are flags with no associated value, they just set<br />
+a variable to a predefined value. This is the default when you create a <br />
+variable of type bool. Normally flags set the variable to true, but this can<br />
+be changed in two ways:</p>
+<ul>
+  <li>make it an inverted bool, which will set it to false
+    <ul>
+      <li>explicitly using the &#8220;!&#8221; modifier</li>
+      <li>define a long name and use the implicitly created &#8220;no-&#8220; prefix version</li>
+    </ul>
+  </li>
+  <li>use arg.flagValue() to set the value, see <br />
+<a href="#feature-switches">feature switches</a>.</li>
+</ul>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">shout</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"shout !whisper"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"I can't hear you!"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="n">string</span> <span class="n">prog</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">shout</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">use_facet</span><span class="o">&lt;</span><span class="n">ctype</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">cout</span><span class="p">.</span><span class="n">getloc</span><span class="p">());</span>
+        <span class="n">f</span><span class="p">.</span><span class="n">toupper</span><span class="p">(</span><span class="n">prog</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">prog</span><span class="p">.</span><span class="n">data</span><span class="p">()</span> <span class="o">+</span> <span class="n">prog</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+        <span class="n">prog</span> <span class="o">+=</span> <span class="s">"!!!!111"</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"I am "</span> <span class="o">&lt;&lt;</span> <span class="n">prog</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>What you see:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help
+</span>Usage: a.out [OPTIONS]
+
+Options:
+  --help    Show this message and exit. 
+  --shout, --no-whisper / --no-shout, --whisper
+            I can't hear you!
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv">
+</span>I am a.out
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --shout
+</span>I am A.OUT!!!!111
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --no-whisper
+</span>I am A.OUT!!!!111
+</div>
+
+<h2 id="variadic-arguments">Variadic Arguments</h2>
+<p>Allows for a specific (or unlimited) number of arguments to be returned in a <br />
+vector. Variadic arguments are declared using cli.argVec() which binds <br />
+to a std::vector&lt;T&gt;.</p>
+
+<p>Example:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="c1">// printing vectors as comma separated is annoying...
+</span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> 
+<span class="n">ostream</span> <span class="o">&amp;</span> <span class="k">operator</span><span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">ostream</span> <span class="o">&amp;</span> <span class="n">os</span><span class="p">,</span> <span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">b</span> <span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">e</span> <span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">b</span> <span class="o">!=</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">os</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">b</span><span class="o">++</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(;</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">e</span><span class="p">;</span> <span class="o">++</span><span class="n">b</span><span class="p">)</span> <span class="n">os</span> <span class="o">&lt;&lt;</span> <span class="s">", "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">b</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">os</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">oranges</span><span class="p">;</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">argVec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">oranges</span><span class="p">,</span> <span class="s">"o orange"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"oranges"</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">apples</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">argVec</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"[apple]"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"red fruit"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"("</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">apples</span> <span class="o">&lt;&lt;</span> <span class="s">") and ("</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">oranges</span> <span class="o">&lt;&lt;</span> <span class="s">") don't compare."</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>And from the command line:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help
+</span>Usage: a.out [OPTIONS] [apple...]
+  apple     red fruit
+
+Options:
+  --help               Show this message and exit.
+  -o, --orange STRING  oranges
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -o mandarin -onavel "red delicious" honeycrisp
+</span>(red delicious, honeycrisp) and (mandarin, navel) don't compare.
+</div>
+
+<h2 id="special-arguments">Special Arguments</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Value</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>&#8221;-&#8220;</td>
+      <td>Passed in as a positional argument.</td>
+    </tr>
+    <tr>
+      <td>&#8221;&#8211;&#8221;</td>
+      <td>Thrown away, but makes all remaining arguments positional</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="optional-values">Optional Values</h2>
+<p>When an optional argument is not passed in the variable is still set to the <br />
+default given in the cli.arg&lt;T&gt;() call. In order to set an optional value it <br />
+must be connected (no space) to the name, otherwise it is interpreted as not <br />
+present and the implicit value is used instead. The implicit value can be set <br />
+in the same arg.optional() call you use to make it optional.</p>
+
+<p>For example:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"o optional"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">).</span><span class="n">optional</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"i with-implicit"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">);</span>
+    <span class="n">v2</span><span class="p">.</span><span class="n">optional</span><span class="p">(</span><span class="s">"implicit"</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"[positional]"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"v1 = "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">v1</span> <span class="o">&lt;&lt;</span> <span class="s">", v2 = "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">v2</span> <span class="o">&lt;&lt;</span> <span class="s">", p = "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>What happens:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv">
+</span>v1 = default, v2 = default, p = default
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -oone -i two
+</span>v1 = one, v2 = implicit, p = two
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -o one -itwo
+</span>v1 =, v2 = two, p = one
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --optional=one --with-implicit two
+</span>v1 = one, v2 = implicit, p = two
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --optional one --with-implicit=two
+</span>v1 =, v2 = two, p = one
+</div>
+
+<h2 id="feature-switches">Feature Switches</h2>
+<p>Using flag arguments, feature switches are implemented by setting multiple<br />
+variables that reference the same target and marking them flag values.</p>
+
+<p>To set the default, pass in a value of true to the flagValue() function of <br />
+the option that should be the default.</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="n">string</span> <span class="n">fruit</span><span class="p">;</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fruit</span><span class="p">,</span> <span class="s">"o orange"</span><span class="p">,</span> <span class="s">"orange"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"oranges"</span><span class="p">).</span><span class="n">flagValue</span><span class="p">();</span>
+    <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fruit</span><span class="p">,</span> <span class="s">"a"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"red fruit"</span><span class="p">).</span><span class="n">flagValue</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span> 
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Does the "</span> <span class="o">&lt;&lt;</span> <span class="n">fruit</span> <span class="o">&lt;&lt;</span> <span class="s">" have a worm? No!"</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>Which looks like:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help
+</span>Usage: a.out [OPTIONS]
+
+Options:
+  --help        Show this message and exit.
+  -a            red fruit
+  -o, --orange  oranges
+
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv">
+</span>Does the apple have a worm? No!
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -o
+</span>Does the orange have a worm? No!
+</div>
+
+<h2 id="counting">Counting</h2>
+<p>In very rare circumstances, it is interesting to use repetition to increase<br />
+an integer. There is no special handling for it, but counting can be done<br />
+easily enough with a vector. This can be used for verbosity flags, for <br />
+instance:</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">argVec</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"v verbose"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Verbosity: "</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>And on the command line:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -vvv
+</span>Verbosity: 3
+</div>
+
+<h2 id="variable-modifiers">Variable Modifiers</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Modifier</th>
+      <th>Done</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>choice</td>
+      <td>-</td>
+      <td>value from vector? index in vec for enum? or vector&lt;pair&lt;string, T¯?</td>
+    </tr>
+    <tr>
+      <td>prompt</td>
+      <td>-</td>
+      <td>prompt(string&amp;, bool hide, bool confirm)</td>
+    </tr>
+    <tr>
+      <td>argPassword</td>
+      <td>-</td>
+      <td>arg(&#8220;password&#8221;).prompt(&#8220;Password&#8221;, true, true)</td>
+    </tr>
+    <tr>
+      <td>yes</td>
+      <td>-</td>
+      <td>are you sure? fail if not y</td>
+    </tr>
+    <tr>
+      <td>range</td>
+      <td>-</td>
+      <td>min/max allowed for variable</td>
+    </tr>
+    <tr>
+      <td>clamp</td>
+      <td>-</td>
+      <td>clamp variable so it is between min/max</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="life-after-parsing">Life After Parsing</h2>
+<p>If you are using external varaibles you can just access them directly after <br />
+using cli.parse() to populate them.</p>
+
+<p>If you use the argument object returned from cli.arg&lt;T&gt;() you dereference it <br />
+like a smart pointer to get at the value. In addition, you can test whether <br />
+it was explicitly set and get the name that was used.</p>
+
+<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n name"</span><span class="p">,</span> <span class="s">"Unknown"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Using the unknown name."</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Name selected using "</span> <span class="o">&lt;&lt;</span> <span class="n">name</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Hello "</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">name</span> <span class="o">&lt;&lt;</span> <span class="s">"!"</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">EX_OK</span><span class="p">;</span>
+<span class="p">}</span>
+</div>
+<p>What it does:</p>
+
+<div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv">  
+</span>Using the unknown name.  
+Hello Unknown!  
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> -n John
+</span>Name selected using -n
+Hello John!
+<span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --name Mary
+</span>Name selected using --name
+Hello Mary!
+</div>
+
+<h2 id="keep-it-quiet">Keep it quiet</h2>
+<p>For some applications, such as Windows services, it&#8217;s important not to <br />
+interact with the console. There some simple steps to stop parse() from doing <br />
+any console IO:</p>
+
+<ol>
+  <li>Don&#8217;t use options (such as arg.prompt()) that explicitly ask for IO.</li>
+  <li>Add your own &#8220;help&#8221; argument to override the default, you can still <br />
+turn around and call cli.writeHelp(ostream&amp;) if desired.</li>
+  <li>Use the two argument version of cli.parse() so it doesn&#8217;t output errors <br />
+immediately. The text of any error that may have occurred during a parse is <br />
+available via cli.errMsg()</li>
+</ol>
+
+</body>
+</html>
