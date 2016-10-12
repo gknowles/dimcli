@@ -35,7 +35,7 @@ function(update_deps_file)
     endforeach(dep)
     # Update the deps file
     update_file("${deps_file}" "${content}")
-    # Include the file so it's tracked as a generation dependency we don't
+    # Include the file so it's tracked as a generation dependency; we don't
     # need the content.
     include(${deps_file})
 endfunction(update_deps_file)
@@ -62,15 +62,31 @@ endfunction(write_user_file)
 
 include_directories(include)
 if(MSVC)
-    add_compile_options(/std:c++latest /W4 /WX)
-    foreach(cfgname ${CMAKE_CONFIGURATION_TYPES})
-        set(flags CMAKE_CXX_FLAGS_${cfgname})
-        string(TOUPPER ${flags} flags)
-        if(${flags} MATCHES "/MD")
-            string(REGEX REPLACE "/MD" "/MT" ${flags} "${${flags}}")
-        endif()
-    endforeach(cfgname)
+    # /std:c++latest - allow constructs still pending standardization
+    # /W4 - warning level 4
+    # /WX - treat warnings as errors
+    # /Zi - debug info format - defaults to no info
+    # /Zc:inline - all inline functions must have definition available
+    # /GF - string pooling
+    # /EHsc - exceptions from c++ only (not from structure or "C")
+    # /Yu - use precompiled header
+    set(CMAKE_CXX_FLAGS "/W4 /WX /Zi /Zc:inline /GF /EHsc /Yupch.h")
+
+    # /Od - disables optimization
+    # /RTC1 - runtime checks (stack frame over/under run and uninit var use)
+    # /MTd - multithread static debug runtime
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /D_DEBUG /RTC1 /MTd")
+    
+    # /Ox - maximum optimization
+    # /MT - multithread static release runtime
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Ox /DNDEBUG /MT")
+
+    set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 endif()
+
+# TODO: find a way to change:
+#   Out = $(Platform)\$(Configuration)\
+#   Int = $(ProjectName).dir\$(Configuration)\
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
     .clang-format
