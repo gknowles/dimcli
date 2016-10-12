@@ -210,6 +210,7 @@ and all names may be preceded by modifier flags:
 | Flag | Description                                                     |
 |------|-----------------------------------------------------------------|
 | !    | for boolean values, when setting the value it is first inverted |
+| ?    | for non-boolean named arguments, makes the value [optional](#optional-values) |
 
 Long names for boolean values get a second "no-" version implicitly
 created for them.
@@ -368,20 +369,24 @@ $ a.out -o mandarin -onavel "red delicious" honeycrisp
 
 
 ## Optional Values
-When an optional argument is not passed in the variable is still set to the 
-default given in the cli.arg\<T>() call. In order to set an optional value it 
-must be connected (no space) to the name, otherwise it is interpreted as not 
-present and the implicit value is used instead. The implicit value can be set 
-in the same arg.optional() call you use to make it optional.
+You use the '?' [flag](#argument_names) on an argument name to indicate that
+it can be optional. Only non-booleans can have optional values, booleans just 
+work off of their present or absent.
+
+When an optional argument is not passed in the variable is left with the 
+default given in the cli.arg\<T>() call. For a user to set an optional value 
+on the command line it must be connected (no space) to the name, otherwise it 
+is interpreted as not present and the implicit value is used instead. The 
+implicit value can be changed using arg.implicitValue().
 
 For example:
 
 ~~~ c++
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & v1 = cli.arg<string>("o optional", "default").optional();
-    auto & v2 = cli.arg<string>("i with-implicit", "default");
-    v2.optional("implicit");
+    auto & v1 = cli.arg<string>("?o ?optional", "default");
+    auto & v2 = cli.arg<string>("?i ?with-implicit", "default");
+    v2.implicitValue("implicit");
     auto & p = cli.arg<string>("[positional]", "default");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();

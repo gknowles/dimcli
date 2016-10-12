@@ -36,9 +36,10 @@ int main(int argc, char * argv[]) {
     cli = {};
     int count;
     bool help;
-    cli.arg(&count, "c count");
+    cli.arg(&count, "c ?count").implicitValue(3);
     cli.arg(&help, "? h help");
     parseTest(cli, {"-hc2", "-?"});
+    parseTest(cli, {"--count"});
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

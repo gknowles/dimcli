@@ -236,6 +236,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
             continue;
         }
         if (vkey.optional) {
+            vkey.val->unspecifiedValue(name);
             continue;
         }
         argc -= 1;
