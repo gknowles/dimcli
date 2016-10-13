@@ -171,10 +171,11 @@ bool Cli::parse(size_t argc, char * argv[]) {
                     continue;
                 }
                 ptr += 1;
-                goto option_value;
+                goto OPTION_VALUE;
             }
             if (!*ptr) {
-                continue;
+                ptr -= 1;
+                goto POSITIONAL_VALUE;
             }
             ptr += 1;
             if (!*ptr) {
@@ -212,10 +213,10 @@ bool Cli::parse(size_t argc, char * argv[]) {
             } else if (hasNo) {
                 return badUsage("Unknown option: " + name);
             }
-            goto option_value;
+            goto OPTION_VALUE;
         }
 
-        // positional
+    POSITIONAL_VALUE:
         if (pos >= size(m_argNames)) {
             return badUsage("Unexpected argument: "s + ptr);
         }
@@ -228,7 +229,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
             pos += 1;
         continue;
 
-    option_value:
+    OPTION_VALUE:
         if (*ptr) {
             if (!parseValue(*vkey.val, name, ptr)) {
                 return badUsage("Invalid option value: " + name + "=" + ptr);

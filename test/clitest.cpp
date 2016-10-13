@@ -30,6 +30,7 @@ int main(int argc, char * argv[]) {
     parseTest(cli, {"--name=three"});
     parseTest(cli, {"-s-name=four", "key", "--name", "four"});
     parseTest(cli, {"key", "extra"});
+    parseTest(cli, {"-", "--", "-s"});
     *num += 2;
     *special = name->empty();
 
