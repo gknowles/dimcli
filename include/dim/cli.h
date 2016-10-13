@@ -40,14 +40,21 @@ public:
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
 
+    template <typename T, typename U,
+        typename = enable_if<is_convertible<U, T>::value>::type
+    >
+    Arg<T> & arg(T * value, const std::string & keys, const U & def);
+
     template <typename T>
-    Arg<T> & arg(T * value, const std::string & keys, const T & def = {});
+    Arg<T> & arg(T * value, const std::string & keys);
+
     template <typename T>
     ArgVec<T> &
     argVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
 
     template <typename T>
     Arg<T> & arg(const std::string & keys, const T & def = {});
+
     template <typename T>
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
@@ -79,13 +86,19 @@ private:
 };
 
 //===========================================================================
-template <typename T>
-inline Cli::Arg<T> & Cli::arg(T * value, const std::string & keys, const T & def) {
+template <typename T, typename U, typename>
+inline Cli::Arg<T> & Cli::arg(T * value, const std::string & keys, const U & def) {
     auto proxy = getProxy<Arg<T>, Value<T>>(value);
     auto ptr = std::make_unique<Arg<T>>(proxy, keys, def);
     auto & opt = *ptr;
     addValue(std::move(ptr));
     return opt;
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::Arg<T> & Cli::arg(T * value, const std::string & keys) {
+    return arg<T>(value, keys, T{});
 }
 
 //===========================================================================

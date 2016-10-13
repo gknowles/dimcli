@@ -36,8 +36,8 @@ int main(int argc, char * argv[]) {
 
     cli = {};
     string fruit;
-    cli.arg(&fruit, "o", "orange"s).flagValue();
-    cli.arg(&fruit, "a", "apple"s).flagValue(true);
+    cli.arg(&fruit, "o", "orange").flagValue();
+    cli.arg(&fruit, "a", "apple").flagValue(true);
     parseTest(cli, {"-o"});
 
     cli = {};
