@@ -479,12 +479,14 @@ Verbosity: 3
 
 | Modifier | Done | Description |
 |----------|------|-------------|
-| choice | - | value from vector? index in vec for enum? or vector<pair<string, T>>? |
+| choice | - | value from vector? index in vec for enum? or vector\<pair\<string, T>>? |
 | prompt | - | prompt(string&, bool hide, bool confirm)
 | argPassword | - | arg("password").prompt("Password", true, true) |
 | yes | - | are you sure? fail if not y |
 | range | - | min/max allowed for variable |
 | clamp | - | clamp variable so it is between min/max |
+
+... none of these have been implemented.
 
 
 ## Life After Parsing
