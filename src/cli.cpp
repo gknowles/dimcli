@@ -30,19 +30,13 @@ Cli::ArgBase::ArgBase(const std::string & names, bool boolean)
 
 //===========================================================================
 void Cli::resetValues() {
-    for (auto && kv : m_shortNames) {
-        auto val = kv.second.val;
-        val->resetValue();
-    }
-    for (auto && kv : m_longNames) {
-        auto val = kv.second.val;
-        val->resetValue();
+    for (auto && arg : m_args) {
+        arg->resetValue();
     }
     for (unsigned i = 0; i < size(m_argNames); ++i) {
         auto & key = m_argNames[i];
         if (key.name.empty())
             key.name = "arg" + to_string(i + 1);
-        key.val->resetValue();
     }
     m_exitCode = EX_OK;
     m_errMsg.clear();
@@ -173,10 +167,9 @@ bool Cli::parse(size_t argc, char * argv[]) {
                 ptr += 1;
                 goto OPTION_VALUE;
             }
-            if (!*ptr) {
-                ptr -= 1;
-                goto POSITIONAL_VALUE;
-            }
+            if (!*ptr)
+                continue;
+
             ptr += 1;
             if (!*ptr) {
                 // bare "--" found, all remaining args are positional
@@ -216,7 +209,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
             goto OPTION_VALUE;
         }
 
-    POSITIONAL_VALUE:
+        // positional value
         if (pos >= size(m_argNames)) {
             return badUsage("Unexpected argument: "s + ptr);
         }

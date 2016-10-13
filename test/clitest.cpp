@@ -35,6 +35,12 @@ int main(int argc, char * argv[]) {
     *special = name->empty();
 
     cli = {};
+    string fruit;
+    cli.arg(&fruit, "o", "orange"s).flagValue();
+    cli.arg(&fruit, "a", "apple"s).flagValue(true);
+    parseTest(cli, {"-o"});
+
+    cli = {};
     int count;
     bool help;
     cli.arg(&count, "c ?count").implicitValue(3);
