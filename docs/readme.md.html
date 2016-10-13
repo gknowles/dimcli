@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html>
+<title>dimcli help</title>
+
+<textarea theme="cosmo" style="display:none;" toc="true">
 ## Overview
 
 Making command line interfaces fun for kids of all ages.
@@ -314,7 +319,7 @@ I am A.OUT!!!!111
 ## Variadic Arguments
 Allows for a specific (or unlimited) number of arguments to be returned in a 
 vector. Variadic arguments are declared using cli.argVec() which binds 
-to a std::vector\<T>.
+to a ```std::vector<T>```.
 
 Example: 
 
@@ -525,7 +530,6 @@ Name selected using --name
 Hello Mary!
 ~~~
 
-
 ## Keep it quiet
 For some applications, such as Windows services, it's important not to 
 interact with the console. Simple steps to avoid parse() doing console IO:
@@ -535,3 +539,8 @@ interact with the console. Simple steps to avoid parse() doing console IO:
 turn around and call cli.writeHelp(ostream&) if desired.
 3. Use the two argument version of cli.parse() and get the error message from
 cli.errMsg() if it fails.
+
+</textarea>
+
+<script src="strapdown.js"></script>
+</html>

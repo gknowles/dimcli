@@ -5,29 +5,12 @@
   <link rel="stylesheet" href="friendly.css"/>
 </head>
 <body>
-  <h1 class="no_toc" id="dim-cli">dim-cli</h1>
-
-<ul id="markdown-toc">
-  <li><a href="#terminology" id="markdown-toc-terminology">Terminology</a></li>
-  <li><a href="#basic-usage" id="markdown-toc-basic-usage">Basic Usage</a></li>
-  <li><a href="#arguments" id="markdown-toc-arguments">Arguments</a></li>
-  <li><a href="#external-variables" id="markdown-toc-external-variables">External Variables</a></li>
-  <li><a href="#argument-names" id="markdown-toc-argument-names">Argument Names</a></li>
-  <li><a href="#positional-arguments" id="markdown-toc-positional-arguments">Positional Arguments</a></li>
-  <li><a href="#flag-arguments" id="markdown-toc-flag-arguments">Flag Arguments</a></li>
-  <li><a href="#variadic-arguments" id="markdown-toc-variadic-arguments">Variadic Arguments</a></li>
-  <li><a href="#special-arguments" id="markdown-toc-special-arguments">Special Arguments</a></li>
-  <li><a href="#optional-values" id="markdown-toc-optional-values">Optional Values</a></li>
-  <li><a href="#feature-switches" id="markdown-toc-feature-switches">Feature Switches</a></li>
-  <li><a href="#counting" id="markdown-toc-counting">Counting</a></li>
-  <li><a href="#variable-modifiers" id="markdown-toc-variable-modifiers">Variable Modifiers</a></li>
-  <li><a href="#life-after-parsing" id="markdown-toc-life-after-parsing">Life After Parsing</a></li>
-  <li><a href="#keep-it-quiet" id="markdown-toc-keep-it-quiet">Keep it quiet</a></li>
-</ul>
+  <h2 id="overview">Overview</h2>
 
 <p>Making command line interfaces fun for kids of all ages.</p>
 
 <p>Main features:</p>
+
 <ul>
   <li>parses directly to c++ variables (or makes proxies for them)</li>
   <li>supports parsing to any type that is:
@@ -41,8 +24,8 @@
 
 <p>How does it feel?</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">count</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"c count"</span><span class="p">,</span> <span class="mi">1</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"times to say hello"</span><span class="p">);</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"name"</span><span class="p">,</span> <span class="s">"Unknown"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"who to greet"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
@@ -106,8 +89,12 @@ and position.</p>
 should exit. cli.exitCode() will be set to either EX_OK (because of an early <br />
 exit like &#8211;help) or EX_USAGE for bad arguments.</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="cp">#include "dim/cli.h"
+#include &lt;iostream&gt;
+</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
     <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Does the apple have a worm? No!"</span><span class="p">;</span>
@@ -132,7 +119,7 @@ unixes, althrough it may not be in any standard. dimcli defines them on <br />
 Windows if they don&#8217;t exist.</p>
 
 <h2 id="arguments">Arguments</h2>
-<p>Cli is used by declaring variables to receive arguments. Either via pointer<br />
+<p>Dim::Cli is used by declaring variables to receive arguments. Either via pointer<br />
 to a predefined external variable or by implicitly creating the variable as <br />
 part of declaring it.</p>
 
@@ -140,8 +127,8 @@ part of declaring it.</p>
 variable. It returns a proxy object that can be used like a pointer (* and -&gt;) <br />
 to access the target directly.</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span> <span class="p">{</span>
         <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
@@ -166,8 +153,8 @@ Options:
 
 <p>Add a description:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="n">apple</span><span class="s">").desc("</span><span class="n">type</span> <span class="n">of</span> <span class="n">fruit</span><span class="s">");</span><span class="err">
-</span></div>
+<div class="language-cpp highlighter-rouge"><span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"type of fruit"</span><span class="p">);</span>
+</div>
 <p>And you get:</p>
 
 <div class="language-console highlighter-rouge"><span class="w">$ </span><span class="nc">a.out</span><span class="kv"> --help
@@ -188,9 +175,9 @@ options struct that you access later.</p>
 
 <p>For example:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
     <span class="kt">bool</span> <span class="n">worm</span><span class="p">;</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">worm</span><span class="p">,</span> <span class="s">"w worm"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"make it icky"</span><span class="p">);</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">fruit</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"fruit"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"type of fruit"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
@@ -262,6 +249,10 @@ and all names may be preceded by modifier flags:</p>
       <td>!</td>
       <td>for boolean values, when setting the value it is first inverted</td>
     </tr>
+    <tr>
+      <td>?</td>
+      <td>for non-boolean named arguments, makes the value <a href="#optional-values">optional</a></td>
+    </tr>
   </tbody>
 </table>
 
@@ -270,8 +261,8 @@ created for them.</p>
 
 <p>For example:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"a apple [apple]"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"apples are red"</span><span class="p">);</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"!o orange"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"oranges are orange"</span><span class="p">);</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"&lt;pear&gt;"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"pears are yellow"</span><span class="p">);</span>
@@ -296,16 +287,17 @@ Options:
 <p>When named arguments are added they replace any previous rule with the same <br />
 name, therefore these args declare &#8216;-n&#8217; an inverted bool:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n !n"</span><span class="p">);</span>
+<div class="language-cpp highlighter-rouge"><span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n !n"</span><span class="p">);</span>
 </div>
 <p>But with these it becomes &#8216;-n STRING&#8217;, a string:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n !n"</span><span class="p">);</span>
+<div class="language-cpp highlighter-rouge"><span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n !n"</span><span class="p">);</span>
 <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n"</span><span class="p">);</span>
 </div>
 
 <h2 id="positional-arguments">Positional Arguments</h2>
 <p>A few things to keep in mind about positional arguments:</p>
+
 <ul>
   <li>Arguments are mapped by the order they are added, except that all required <br />
 positionals appear before optional ones.</li>
@@ -321,6 +313,7 @@ a turn.</li>
 a variable to a predefined value. This is the default when you create a <br />
 variable of type bool. Normally flags set the variable to true, but this can<br />
 be changed in two ways:</p>
+
 <ul>
   <li>make it an inverted bool, which will set it to false
     <ul>
@@ -332,8 +325,8 @@ be changed in two ways:</p>
 <a href="#feature-switches">feature switches</a>.</li>
 </ul>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">shout</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"shout !whisper"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"I can't hear you!"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
@@ -371,7 +364,7 @@ to a std::vector&lt;T&gt;.</p>
 
 <p>Example:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="c1">// printing vectors as comma separated is annoying...
+<div class="language-cpp highlighter-rouge"><span class="c1">// printing vectors as comma separated is annoying...
 </span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> 
 <span class="n">ostream</span> <span class="o">&amp;</span> <span class="k">operator</span><span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">ostream</span> <span class="o">&amp;</span> <span class="n">os</span><span class="p">,</span> <span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">auto</span> <span class="n">b</span> <span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
@@ -384,7 +377,7 @@ to a std::vector&lt;T&gt;.</p>
 <span class="p">}</span>
 
 <span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">oranges</span><span class="p">;</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">argVec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">oranges</span><span class="p">,</span> <span class="s">"o orange"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"oranges"</span><span class="p">);</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">apples</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">argVec</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"[apple]"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"red fruit"</span><span class="p">);</span>
@@ -431,19 +424,26 @@ Options:
 </table>
 
 <h2 id="optional-values">Optional Values</h2>
-<p>When an optional argument is not passed in the variable is still set to the <br />
-default given in the cli.arg&lt;T&gt;() call. In order to set an optional value it <br />
-must be connected (no space) to the name, otherwise it is interpreted as not <br />
-present and the implicit value is used instead. The implicit value can be set <br />
-in the same arg.optional() call you use to make it optional.</p>
+<p>You use the &#8216;?&#8217; <a href="#argument_names">flag</a> on an argument name to indicate that<br />
+it is optional. Only non-booleans can have optional values, booleans are<br />
+evaluated just on their presence or absence.</p>
+
+<p>For a user to set an optional value on the command line it must be connected <br />
+(no space) to the argument name, otherwise the value is interpreted as not <br />
+present and the arguments implicit value is used instead. If the name is not <br />
+present at all the variable is left with the default given in the <br />
+cli.arg&lt;T&gt;() call.</p>
+
+<p>The implicit value defaults to T{}, and can be changed using <br />
+arg.implicitValue().</p>
 
 <p>For example:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
-    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"o optional"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">).</span><span class="n">optional</span><span class="p">();</span>
-    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"i with-implicit"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">);</span>
-    <span class="n">v2</span><span class="p">.</span><span class="n">optional</span><span class="p">(</span><span class="s">"implicit"</span><span class="p">);</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"?o ?optional"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"?i ?with-implicit"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">);</span>
+    <span class="n">v2</span><span class="p">.</span><span class="n">implicitValue</span><span class="p">(</span><span class="s">"implicit"</span><span class="p">);</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"[positional]"</span><span class="p">,</span> <span class="s">"default"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
@@ -472,8 +472,8 @@ variables that reference the same target and marking them flag values.</p>
 <p>To set the default, pass in a value of true to the flagValue() function of <br />
 the option that should be the default.</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="n">string</span> <span class="n">fruit</span><span class="p">;</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fruit</span><span class="p">,</span> <span class="s">"o orange"</span><span class="p">,</span> <span class="s">"orange"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"oranges"</span><span class="p">).</span><span class="n">flagValue</span><span class="p">();</span>
     <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fruit</span><span class="p">,</span> <span class="s">"a"</span><span class="p">,</span> <span class="s">"apple"</span><span class="p">).</span><span class="n">desc</span><span class="p">(</span><span class="s">"red fruit"</span><span class="p">).</span><span class="n">flagValue</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span> 
@@ -506,8 +506,8 @@ an integer. There is no special handling for it, but counting can be done<br />
 easily enough with a vector. This can be used for verbosity flags, for <br />
 instance:</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">v</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">argVec</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"v verbose"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
@@ -565,16 +565,18 @@ instance:</p>
   </tbody>
 </table>
 
+<p>&#8230; none of these have been implemented.</p>
+
 <h2 id="life-after-parsing">Life After Parsing</h2>
 <p>If you are using external varaibles you can just access them directly after <br />
 using cli.parse() to populate them.</p>
 
-<p>If you use the argument object returned from cli.arg&lt;T&gt;() you dereference it <br />
+<p>If you use the proxy object returned from cli.arg&lt;T&gt;() you can dereference it <br />
 like a smart pointer to get at the value. In addition, you can test whether <br />
-it was explicitly set and get the name that was used.</p>
+it was explicitly set and get the argument name that populated it.</p>
 
-<div class="language-c++ highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
-    <span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
+<div class="language-cpp highlighter-rouge"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">Dim</span><span class="o">::</span><span class="n">Cli</span> <span class="n">cli</span><span class="p">;</span>
     <span class="k">auto</span> <span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">cli</span><span class="p">.</span><span class="n">arg</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"n name"</span><span class="p">,</span> <span class="s">"Unknown"</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cli</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cerr</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">cli</span><span class="p">.</span><span class="n">exitCode</span><span class="p">();</span>
@@ -602,16 +604,14 @@ Hello Mary!
 
 <h2 id="keep-it-quiet">Keep it quiet</h2>
 <p>For some applications, such as Windows services, it&#8217;s important not to <br />
-interact with the console. There some simple steps to stop parse() from doing <br />
-any console IO:</p>
+interact with the console. Simple steps to avoid parse() doing console IO:</p>
 
 <ol>
   <li>Don&#8217;t use options (such as arg.prompt()) that explicitly ask for IO.</li>
   <li>Add your own &#8220;help&#8221; argument to override the default, you can still <br />
 turn around and call cli.writeHelp(ostream&amp;) if desired.</li>
-  <li>Use the two argument version of cli.parse() so it doesn&#8217;t output errors <br />
-immediately. The text of any error that may have occurred during a parse is <br />
-available via cli.errMsg()</li>
+  <li>Use the two argument version of cli.parse() and get the error message from<br />
+cli.errMsg() if it fails.</li>
 </ol>
 
 </body>
