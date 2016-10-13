@@ -370,14 +370,17 @@ $ a.out -o mandarin -onavel "red delicious" honeycrisp
 
 ## Optional Values
 You use the '?' [flag](#argument_names) on an argument name to indicate that
-it can be optional. Only non-booleans can have optional values, booleans just 
-work off of their present or absent.
+it is optional. Only non-booleans can have optional values, booleans are
+evaluated just on their presence or absence.
 
-When an optional argument is not passed in the variable is left with the 
-default given in the cli.arg\<T>() call. For a user to set an optional value 
-on the command line it must be connected (no space) to the name, otherwise it 
-is interpreted as not present and the implicit value is used instead. The 
-implicit value can be changed using arg.implicitValue().
+For a user to set an optional value on the command line it must be connected 
+(no space) to the argument name, otherwise the value is interpreted as not 
+present and the arguments implicit value is used instead. If the name is not 
+present at all the variable is left with the default given in the 
+cli.arg\<T>() call. 
+
+The implicit value defaults to T{}, and can be changed using 
+arg.implicitValue().
 
 For example:
 
