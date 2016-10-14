@@ -60,7 +60,13 @@ public:
     int exitCode() const { return m_exitCode; };
     const std::string & errMsg() const { return m_errMsg; }
 
+    void writeHelp(std::ostream & os, const std::string & progName) const;
+    void writeCliFormat(std::ostream & os) const;
+
 private:
+    void positionalHelp(std::ostream & os) const;
+    void namedHelp(std::ostream & os) const;
+
     bool badUsage(const std::string & msg);
     void addKey(const std::string & name, ArgBase * val);
     void addValue(std::unique_ptr<ArgBase> ptr);

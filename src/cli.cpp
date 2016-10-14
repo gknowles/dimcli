@@ -260,6 +260,29 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
     return false;
 }
 
+//===========================================================================
+void Cli::writeHelp(ostream & os, const string & progName) const {
+    os << "usage: " << progName << ' ';
+    writeCliFormat(os);
+    os << '\n';
+    positionalHelp(os);
+    namedHelp(os);
+}
+
+//===========================================================================
+void Cli::writeCliFormat(ostream & os) const {
+    if (!m_shortNames.empty() || !m_longNames.empty())
+        os << "[OPTIONS]";
+}
+
+//===========================================================================
+void Cli::positionalHelp(ostream & os) const {
+}
+
+//===========================================================================
+void Cli::namedHelp(ostream & os) const {
+}
+
 
 /****************************************************************************
 *
