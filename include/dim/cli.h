@@ -40,13 +40,12 @@ public:
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
 
-    template <typename T, typename U,
-        typename = enable_if<is_convertible<U, T>::value>::type
-    >
+    template <typename T,
+              typename U,
+              typename = enable_if<is_convertible<U, T>::value>::type>
     Arg<T> & arg(T * value, const std::string & keys, const U & def);
 
-    template <typename T>
-    Arg<T> & arg(T * value, const std::string & keys);
+    template <typename T> Arg<T> & arg(T * value, const std::string & keys);
 
     template <typename T>
     ArgVec<T> &
@@ -87,7 +86,8 @@ private:
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline Cli::Arg<T> & Cli::arg(T * value, const std::string & keys, const U & def) {
+inline Cli::Arg<T> &
+Cli::arg(T * value, const std::string & keys, const U & def) {
     auto proxy = getProxy<Arg<T>, Value<T>>(value);
     auto ptr = std::make_unique<Arg<T>>(proxy, keys, def);
     auto & opt = *ptr;
@@ -154,27 +154,27 @@ public:
     virtual const std::string & from() const = 0;
 
 protected:
-    virtual bool parseValue(
-        const std::string & name, const std::string & value) = 0;
+    virtual bool
+    parseValue(const std::string & name, const std::string & value) = 0;
 
     // set to default constructed
-    virtual void unspecifiedValue(const std::string & name) = 0; 
+    virtual void unspecifiedValue(const std::string & name) = 0;
 
     // set to passed in default
-    virtual void resetValue() = 0; 
-    
+    virtual void resetValue() = 0;
+
     // number of values, non-vecs are always 1
-    virtual size_t size() const = 0; 
-    
+    virtual size_t size() const = 0;
+
     std::string m_desc;
 
-    // Are multiple values are allowed, and how many there can be (-1 for 
+    // Are multiple values are allowed, and how many there can be (-1 for
     // unlimited).
-    bool m_multiple{false}; 
+    bool m_multiple{false};
     int m_nargs{1};
 
     // the value is a bool on the command line (no separate value)?
-    bool m_bool{false}; 
+    bool m_bool{false};
 
     bool m_flagValue{false};
     bool m_flagDefault{false};
@@ -273,7 +273,8 @@ template <typename T> struct Cli::Value {
     T * m_value{nullptr};
     T m_internal;
 
-    Value(T * value) : m_value(value ? value : &m_internal) {}
+    Value(T * value)
+        : m_value(value ? value : &m_internal) {}
 };
 
 
@@ -288,9 +289,8 @@ public:
     typedef T value_type;
 
 public:
-    Arg(
-        std::shared_ptr<Value<T>> value, 
-        const std::string & keys, 
+    Arg(std::shared_ptr<Value<T>> value,
+        const std::string & keys,
         const T & def = {});
 
     T & operator*() { return *m_proxy->m_value; }
@@ -306,9 +306,8 @@ public:
 
 private:
     friend class Cli;
-    bool parseValue(
-        const std::string & name, 
-        const std::string & value) override;
+    bool
+    parseValue(const std::string & name, const std::string & value) override;
     void unspecifiedValue(const std::string & name) override;
     void resetValue() override;
     size_t size() const override;
@@ -321,16 +320,14 @@ template <typename T>
 inline Cli::Arg<T>::Arg(
     std::shared_ptr<Value<T>> value, const std::string & keys, const T & def)
     : ArgShim<Arg, T>{keys, std::is_same<T, bool>::value}
-    , m_proxy{value}
-{
+    , m_proxy{value} {
     m_defValue = def;
 }
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Arg<T>::parseValue(
-    const std::string & name, 
-    const std::string & value) {
+inline bool
+Cli::Arg<T>::parseValue(const std::string & name, const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
@@ -343,7 +340,7 @@ inline bool Cli::Arg<T>::parseValue(
         return true;
     }
 
-    if (!stringTo(*m_proxy->m_value, value)) 
+    if (!stringTo(*m_proxy->m_value, value))
         return false;
     m_proxy->m_from = name;
     m_proxy->m_explicit = true;
@@ -359,7 +356,7 @@ template <typename T> inline void Cli::Arg<T>::resetValue() {
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 inline void Cli::Arg<T>::unspecifiedValue(const std::string & name) {
     *m_proxy->m_value = m_implicitValue;
     m_proxy->m_from = name;
@@ -389,7 +386,8 @@ template <typename T> struct Cli::ValueVec {
     std::vector<T> * m_values{nullptr};
     std::vector<T> m_internal;
 
-    ValueVec(std::vector<T> * value) : m_values(value ? value : &m_internal) {}
+    ValueVec(std::vector<T> * value)
+        : m_values(value ? value : &m_internal) {}
 };
 
 
@@ -405,8 +403,8 @@ public:
 
 public:
     ArgVec(
-        std::shared_ptr<ValueVec<T>> values, 
-        const std::string & keys, 
+        std::shared_ptr<ValueVec<T>> values,
+        const std::string & keys,
         int nargs);
 
     std::vector<T> & operator*() { return *m_proxy->m_values; }
@@ -421,9 +419,8 @@ public:
 
 private:
     friend class Cli;
-    bool parseValue(
-        const std::string & name, 
-        const std::string & value) override;
+    bool
+    parseValue(const std::string & name, const std::string & value) override;
     void unspecifiedValue(const std::string & name) override;
     void resetValue() override;
     size_t size() const override;
@@ -444,8 +441,7 @@ inline Cli::ArgVec<T>::ArgVec(
 //===========================================================================
 template <typename T>
 inline bool Cli::ArgVec<T>::parseValue(
-    const std::string & name, 
-    const std::string & value) {
+    const std::string & name, const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
@@ -456,7 +452,7 @@ inline bool Cli::ArgVec<T>::parseValue(
         }
         return true;
     }
-    
+
     T tmp;
     if (!stringTo(tmp, value))
         return false;
@@ -472,7 +468,7 @@ template <typename T> inline void Cli::ArgVec<T>::resetValue() {
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 inline void Cli::ArgVec<T>::unspecifiedValue(const std::string & name) {
     m_proxy->m_values->push_back(m_implicitValue);
     m_proxy->m_from = name;

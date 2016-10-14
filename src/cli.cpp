@@ -86,9 +86,10 @@ void Cli::addKey(const string & name, ArgBase * val) {
         m_argNames.push_back({val, !invert, optional, name.data() + 1});
         return;
     case '<':
-        auto where = find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
-            return key.optional;
-        });
+        auto where =
+            find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
+                return key.optional;
+            });
         m_argNames.insert(where, {val, !invert, !optional, name.data() + 1});
         return;
     }
@@ -124,7 +125,8 @@ void Cli::addKey(const string & name, ArgBase * val) {
 }
 
 //===========================================================================
-bool Cli::parseValue(ArgBase & val, const std::string & name, const char ptr[]) {
+bool Cli::parseValue(
+    ArgBase & val, const std::string & name, const char ptr[]) {
     return val.parseValue(name, ptr);
 }
 
