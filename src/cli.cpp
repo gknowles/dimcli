@@ -49,6 +49,7 @@ void Cli::addValue(std::unique_ptr<ArgBase> src) {
     const char * ptr = val->m_names.data();
     string name;
     char close;
+    bool hasPos = false;
     for (;; ++ptr) {
         switch (*ptr) {
         case 0: return;
@@ -65,8 +66,12 @@ void Cli::addValue(std::unique_ptr<ArgBase> src) {
             ptr += 1;
         }
         if (hasEqual && close == ' ') {
-            assert(hasEqual && "bad argument name");
+            assert(!hasEqual && "bad argument name");
+        } else if (hasPos && close != ' ') {
+            assert(!hasPos && "argument with multiple positional names");
         } else {
+            if (close != ' ')
+                hasPos = true;
             name = string(b, ptr - b);
             addKey(name, val);
         }
