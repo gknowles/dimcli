@@ -18,11 +18,14 @@ using namespace Dim;
 
 namespace {
 struct WrapPos {
-    size_t pos;
-    size_t maxWidth;
+    size_t pos{0};
+    size_t maxWidth{79};
     std::string prefix;
 };
 } // namespace
+
+// column where description text starts
+static const int kDescCol = 25;
 
 
 /****************************************************************************
@@ -58,7 +61,7 @@ void Cli::resetValues() {
 }
 
 //===========================================================================
-void Cli::addValue(std::unique_ptr<ArgBase> src) {
+void Cli::addArg(std::unique_ptr<ArgBase> src) {
     ArgBase * val = src.get();
     m_args.push_back(std::move(src));
     const char * ptr = val->m_names.data();
@@ -88,7 +91,7 @@ void Cli::addValue(std::unique_ptr<ArgBase> src) {
             if (close != ' ')
                 hasPos = true;
             name = string(b, ptr - b);
-            addKey(name, val);
+            addArgName(name, val);
         }
         if (!*ptr)
             return;
@@ -96,7 +99,14 @@ void Cli::addValue(std::unique_ptr<ArgBase> src) {
 }
 
 //===========================================================================
-void Cli::addKey(const string & name, ArgBase * val) {
+void Cli::addLongName(const string & key, ArgBase * val, bool invert, bool optional) {
+    m_longNames[key] = {val, invert, optional};
+    if (val->m_bool) 
+        m_longNames["no-" + key] = {val, !invert, optional};
+}
+
+//===========================================================================
+void Cli::addArgName(const string & name, ArgBase * val) {
     const bool invert = true;
     const bool optional = true;
 
@@ -126,7 +136,7 @@ void Cli::addKey(const string & name, ArgBase * val) {
         if (name.size() == 2) {
             m_shortNames[name[1]] = {val, invert, !optional};
         } else {
-            m_longNames[name.data() + 1] = {val, invert, !optional};
+            addLongName(name.substr(1), val, invert, !optional);
         }
         return;
     case '?':
@@ -137,11 +147,11 @@ void Cli::addKey(const string & name, ArgBase * val) {
         if (name.size() == 2) {
             m_shortNames[name[1]] = {val, !invert, optional};
         } else {
-            m_longNames[name.data() + 1] = {val, !invert, optional};
+            addLongName(name.substr(1), val, !invert, optional);
         }
         return;
     }
-    m_longNames[name] = {val, !invert, !optional};
+    addLongName(name, val, !invert, !optional);
 }
 
 //===========================================================================
@@ -209,13 +219,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
                 ptr = "";
             }
             auto it = m_longNames.find(key);
-            bool hasNo = false;
-            while (it == m_longNames.end()) {
-                if (key.size() > 3 && key.compare(0, 3, "no-") == 0) {
-                    hasNo = true;
-                    it = m_longNames.find(key.data() + 3);
-                    continue;
-                }
+            if (it == m_longNames.end()) {
                 return badUsage("Unknown option: --"s + key);
             }
             vkey = it->second;
@@ -224,10 +228,8 @@ bool Cli::parse(size_t argc, char * argv[]) {
                 if (equal) {
                     return badUsage("Unknown option: " + name + "=");
                 }
-                parseValue(*vkey.val, name, (hasNo ^ vkey.invert) ? "0" : "1");
+                parseValue(*vkey.val, name, vkey.invert ? "0" : "1");
                 continue;
-            } else if (hasNo) {
-                return badUsage("Unknown option: " + name);
             }
             goto OPTION_VALUE;
         }
@@ -315,7 +317,7 @@ void Cli::writeUsage(ostream & os, const string & progName) const {
         if (pa.val->m_multiple)
             token += "...";
         if (pa.optional) {
-            writeToken(os, wp, "[" + token + "]");
+            writeToken(os, wp, "[<" + token + ">]");
         } else {
             writeToken(os, wp, "<" + token + ">");
         }
@@ -324,14 +326,113 @@ void Cli::writeUsage(ostream & os, const string & progName) const {
 }
 
 //===========================================================================
-void Cli::positionalHelp(ostream & os) const {
-    for (auto && pa : m_argNames) {
-        
+static void writeText(ostream & os, WrapPos & wp, const string & text) {
+    const char * base = text.c_str();
+    for (;;) {
+        while (*base == ' ')
+            base += 1;
+        if (!*base)
+            return;
+        const char * ptr = strchr(base, ' ');
+        if (!ptr) {
+            ptr = text.c_str() + text.size();
+        }
+        writeToken(os, wp, string(base, ptr));
+        base = ptr;
     }
 }
 
 //===========================================================================
+static void writeDesc(ostream & os, WrapPos & wp, const string & text) {
+    if (wp.pos < kDescCol) {
+        writeToken(os, wp, string(kDescCol - wp.pos - 1, ' '));
+    } else if (wp.pos < kDescCol + 4) {
+        writeToken(os, wp, " ");
+    } else {
+        wp.pos = wp.maxWidth;
+    }
+    wp.prefix.assign(kDescCol, ' ');
+    writeText(os, wp, text);
+}
+
+//===========================================================================
+void Cli::positionalHelp(ostream & os) const {
+    if (m_argNames.empty())
+        return;
+    WrapPos wp;
+    for (auto && pa : m_argNames) {
+        wp.prefix.assign(4, ' ');
+        writeToken(os, wp, " <" + pa.name + ">");
+        writeDesc(os, wp, pa.val->m_desc);
+        os << '\n';
+        wp.pos = 0;
+    }
+}
+
+//===========================================================================
+string Cli::optionList(ArgBase & arg, bool enableOptions) const {
+    string list;
+    bool foundLong = false;
+    bool optional = false;
+
+    // names
+    for (auto && sn : m_shortNames) {
+        if (sn.second.val != &arg ||
+            arg.m_bool && sn.second.invert == enableOptions) {
+            continue;
+        }
+        optional = sn.second.optional;
+        if (!list.empty())
+            list += ", ";
+        list += '-';
+        list += sn.first;
+    }
+    for (auto && ln : m_longNames) {
+        if (ln.second.val != &arg ||
+            arg.m_bool && ln.second.invert == enableOptions) {
+            continue;
+        }
+        optional = ln.second.optional;
+        if (!list.empty())
+            list += ", ";
+        foundLong = true;
+        list += "--" + ln.first;
+    }
+    if (arg.m_bool || list.empty())
+        return list;
+
+    // value
+    if (foundLong) {
+        list += '=';
+    } else {
+        list += ' ';
+    }
+    if (optional) {
+        list += "[" + arg.m_valueName + "]";
+    } else {
+        list += arg.m_valueName;
+    }
+    return list;
+}
+
+//===========================================================================
 void Cli::namedHelp(ostream & os) const {
+    if (m_shortNames.empty() && m_longNames.empty())
+        return;
+    WrapPos wp;
+    os << "Options:\n";
+    for (auto && arg : m_args) {
+        wp.prefix.assign(4, ' ');
+        string list = optionList(*arg, true);
+        if (list.empty())
+            continue;
+        os << ' ';
+        wp.pos = 1;
+        writeText(os, wp, list);
+        writeDesc(os, wp, arg->m_desc);
+        os << '\n';
+        wp.pos = 0;
+    }
 }
 
 

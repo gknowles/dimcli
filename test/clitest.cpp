@@ -21,10 +21,12 @@ int main(int argc, char * argv[]) {
     _set_error_mode(_OUT_TO_MSGBOX);
 
     Dim::Cli cli;
-    auto & num = cli.arg<int>("n number", 1);
-    auto & special = cli.arg<bool>("s special", false);
+    auto & num = cli.arg<int>("n number", 1).desc("number is an int");
+    auto & special = cli.arg<bool>("s special !S", false);
     auto & name = cli.argVec<string>("name");
-    cli.argVec<string>("[key]");
+    cli.argVec<string>("[key]").desc(
+        "it's the key argument with a very "
+        "long description that wraps the line at least once, maybe more.");
     parseTest(cli, {"-n3"});
     parseTest(cli, {"--name", "two"});
     parseTest(cli, {"--name=three"});
@@ -33,7 +35,7 @@ int main(int argc, char * argv[]) {
     parseTest(cli, {"-", "--", "-s"});
     *num += 2;
     *special = name->empty();
-    cli.writeUsage(cout);
+    cli.writeHelp(cout);
 
     cli = {};
     string fruit;

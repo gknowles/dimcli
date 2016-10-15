@@ -16,6 +16,10 @@
 #include <utility>
 #include <vector>
 
+namespace std::experimental::filesystem {
+    class path;
+};
+
 namespace Dim {
 
 
@@ -66,10 +70,12 @@ public:
 private:
     void positionalHelp(std::ostream & os) const;
     void namedHelp(std::ostream & os) const;
+    std::string Cli::optionList(ArgBase & arg, bool disableOptions) const;
 
     bool badUsage(const std::string & msg);
-    void addKey(const std::string & name, ArgBase * val);
-    void addValue(std::unique_ptr<ArgBase> ptr);
+    void addLongName(const std::string & name, ArgBase * val, bool invert, bool optional);
+    void addArgName(const std::string & name, ArgBase * val);
+    void addArg(std::unique_ptr<ArgBase> ptr);
     bool parseValue(ArgBase & out, const std::string & name, const char src[]);
 
     template <typename Arg, typename Value, typename Ptr>
@@ -98,7 +104,7 @@ Cli::arg(T * value, const std::string & keys, const U & def) {
     auto proxy = getProxy<Arg<T>, Value<T>>(value);
     auto ptr = std::make_unique<Arg<T>>(proxy, keys, def);
     auto & opt = *ptr;
-    addValue(std::move(ptr));
+    addArg(std::move(ptr));
     return opt;
 }
 
@@ -115,7 +121,7 @@ Cli::argVec(std::vector<T> * values, const std::string & keys, int nargs) {
     auto proxy = getProxy<ArgVec<T>, ValueVec<T>>(values);
     auto ptr = std::make_unique<ArgVec<T>>(proxy, keys, nargs);
     auto & opt = *ptr;
-    addValue(std::move(ptr));
+    addArg(std::move(ptr));
     return opt;
 }
 
@@ -173,7 +179,11 @@ protected:
     // number of values, non-vecs are always 1
     virtual size_t size() const = 0;
 
+    template <typename T>
+    void setValueName();
+
     std::string m_desc;
+    std::string m_valueName;
 
     // Are multiple values are allowed, and how many there can be (-1 for
     // unlimited).
@@ -191,6 +201,24 @@ private:
     std::string m_names;
 };
 
+//===========================================================================
+template <typename T>
+inline void Cli::ArgBase::setValueName() {
+    if (is_integral<T>::value) {
+        m_valueName = "NUM";
+    } else if (is_convertible<T, std::string>::value) {
+        m_valueName = "STRING";
+    } else {
+        m_valueName = "VALUE";
+    }
+}
+
+//===========================================================================
+template <>
+inline void Cli::ArgBase::setValueName<std::experimental::filesystem::path>() {
+    m_valueName = "FILE";
+}
+
 
 /****************************************************************************
 *
@@ -200,7 +228,7 @@ private:
 
 template <typename A, typename T> class Cli::ArgShim : public ArgBase {
 public:
-    using ArgBase::ArgBase;
+    ArgShim(const std::string & keys, bool boolean);
     ArgShim(const ArgShim &) = delete;
     ArgShim & operator=(const ArgShim &) = delete;
 
@@ -213,6 +241,13 @@ protected:
     T m_implicitValue{};
     T m_defValue{};
 };
+
+//===========================================================================
+template <typename A, typename T>
+inline Cli::ArgShim<A, T>::ArgShim(const std::string & keys, bool boolean)
+    : ArgBase(keys, boolean) {
+    setValueName<T>();
+}
 
 //===========================================================================
 template <typename A, typename T>
