@@ -33,6 +33,7 @@ int main(int argc, char * argv[]) {
     parseTest(cli, {"-", "--", "-s"});
     *num += 2;
     *special = name->empty();
+    cli.writeUsage(cout);
 
     cli = {};
     string fruit;

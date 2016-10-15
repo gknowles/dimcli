@@ -60,8 +60,8 @@ public:
     int exitCode() const { return m_exitCode; };
     const std::string & errMsg() const { return m_errMsg; }
 
-    void writeHelp(std::ostream & os, const std::string & progName) const;
-    void writeCliFormat(std::ostream & os) const;
+    void writeHelp(std::ostream & os, const std::string & progName = {}) const;
+    void writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
 private:
     void positionalHelp(std::ostream & os) const;
@@ -88,6 +88,7 @@ private:
 
     int m_exitCode{0};
     std::string m_errMsg;
+    std::string m_progName;
 };
 
 //===========================================================================

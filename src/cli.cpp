@@ -12,6 +12,21 @@ using namespace Dim;
 
 /****************************************************************************
 *
+*   Internal
+*
+***/
+
+namespace {
+struct WrapPos {
+    size_t pos;
+    size_t maxWidth;
+    std::string prefix;
+};
+} // namespace
+
+
+/****************************************************************************
+*
 *   Cli::ArgBase
 *
 ***/
@@ -152,6 +167,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
     string name;
     unsigned pos = 0;
     bool moreOpts = true;
+    m_progName = *argv;
     argc -= 1;
     argv += 1;
 
@@ -267,21 +283,51 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
 
 //===========================================================================
 void Cli::writeHelp(ostream & os, const string & progName) const {
-    os << "usage: " << progName << ' ';
-    writeCliFormat(os);
-    os << '\n';
+    writeUsage(os, progName);
     positionalHelp(os);
     namedHelp(os);
 }
 
 //===========================================================================
-void Cli::writeCliFormat(ostream & os) const {
+static void writeToken(ostream & os, WrapPos & wp, const std::string token) {
+    if (wp.pos + token.size() + 1 > wp.maxWidth) {
+        if (wp.pos > wp.prefix.size()) {
+            os << '\n' << wp.prefix;
+            wp.pos = wp.prefix.size();
+        }
+    }
+    os << ' ' << token;
+    wp.pos += token.size() + 1;
+}
+
+//===========================================================================
+void Cli::writeUsage(ostream & os, const string & progName) const {
+    streampos base = os.tellp();
+    os << "usage: " << (progName.empty() ? m_progName : progName);
+    WrapPos wp;
+    wp.maxWidth = 79;
+    wp.pos = os.tellp() - base;
+    wp.prefix = string(wp.pos, ' ');
     if (!m_shortNames.empty() || !m_longNames.empty())
-        os << "[OPTIONS]";
+        writeToken(os, wp, "[OPTIONS]");
+    for (auto && pa : m_argNames) {
+        string token = pa.name;
+        if (pa.val->m_multiple)
+            token += "...";
+        if (pa.optional) {
+            writeToken(os, wp, "[" + token + "]");
+        } else {
+            writeToken(os, wp, "<" + token + ">");
+        }
+    }
+    os << '\n';
 }
 
 //===========================================================================
 void Cli::positionalHelp(ostream & os) const {
+    for (auto && pa : m_argNames) {
+        
+    }
 }
 
 //===========================================================================
