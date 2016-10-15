@@ -70,7 +70,7 @@ if(MSVC)
     # /GF - string pooling
     # /EHsc - exceptions from c++ only (not from structure or "C")
     # /Yu - use precompiled header
-    set(CMAKE_CXX_FLAGS "/W4 /WX /Zi /Zc:inline /GF /EHsc /Yupch.h")
+    set(CMAKE_CXX_FLAGS "/std:c++latest /W4 /WX /Zi /Zc:inline /GF /EHsc /Yupch.h")
 
     # /Od - disables optimization
     # /RTC1 - runtime checks (stack frame over/under run and uninit var use)
