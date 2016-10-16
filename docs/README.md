@@ -479,6 +479,65 @@ Verbosity: 3
 ~~~
 
 
+## Parsing Actions
+Sometimes, you want an argument to completely change the execution flow. For 
+instance, if you want --version to print the version and immediately exit the 
+program. Or provide more detailed errors about badly formatted arguments.
+
+Parsing actions are attached to arguments and get invoked when a value becomes 
+available for it. Any std::function compatible object that has a accepts the 
+references to the cli, argument, and source value as parameters can be used. 
+The function should:
+
+- Parse the source string and use the result to set the value (or push back 
+  the new value for vectors).
+- Call cli.badUsage() with an error message if there's a problem.
+- Return false if the program should stop, otherwise true. You may want to 
+  stop due to error or just to early out like "--version" and "--help".
+
+Other things to keep in mind:
+
+- You can use arg.from() to get the argument name that the value was attached
+  to on the command line.
+- For bool arguments the source value string will always be either "0" or "1".
+
+Here's an action that multiples multiple values together:
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & sum = cli.arg<int>("n number", 1)
+        .desc("numbers to multiply")
+        .action([](auto & cli, auto & arg, const string & val) {
+            int tmp = *arg; // save the old value
+            if (!arg.parseValue(val)) // parse the new value into arg
+                return cli.badUsage("Bad '" + arg.from() + "' value: " + val);
+            *arg *= tmp; // multiply old and new together
+            return true;
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "The product is: " << *sum << endl;
+    return EX_OK;
+}
+~~~
+
+Now let's do some math!
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+Options:
+  --help            Show this message and exit.
+  -n, --number=NUM  numbers to multiply
+
+$ a.out
+The product is: 1
+$ a.out -n3 -n2
+The product is: 6
+$ a.out -nx
+a.out: Bad '-n' value: x
+~~~
+
+
 ## Variable Modifiers
 
 | Modifier | Done | Description |

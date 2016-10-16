@@ -177,15 +177,14 @@ public:
     ArgBase(const std::string & keys, bool boolean);
     virtual ~ArgBase() {}
 
+    // Name of the argument that populated the value, or an empty
+    // string if it wasn't populated.
     virtual const std::string & from() const = 0;
-
-protected:
-    virtual bool parseAction(Cli & cli, const std::string & value) = 0;
-    virtual void set(const std::string & name) = 0;
 
     // set to passed in default
     virtual void reset() = 0;
 
+    // parses the string into the value, returns false on error
     virtual bool parseValue(const std::string & value) = 0;
 
     // set to (or add to vec) value for missing optional
@@ -193,6 +192,10 @@ protected:
 
     // number of values, non-vecs are always 1
     virtual size_t size() const = 0;
+
+protected:
+    virtual bool parseAction(Cli & cli, const std::string & value) = 0;
+    virtual void set(const std::string & name) = 0;
 
     template <typename T> void setValueName();
 
@@ -246,12 +249,28 @@ public:
     ArgShim & operator=(const ArgShim &) = delete;
 
     A & desc(const std::string & val);
-    A & valueName(const std::string & val);
+    A & descValue(const std::string & val);
     A & defaultValue(const T & val);
     A & implicitValue(const T & val);
     A & flagValue(bool isDefault = false);
 
-    using ActionFn = bool(Cli &, A &, const std::string &);
+    // Change the action to take when parsing this argument. The function
+    // should:
+    //  - parse the src string and use the result to set the value (or 
+    //    push_back the new value for vectors).
+    //  - call cli.badUsage() with an error message if there's a problem
+    //  - return false if the program should stop, otherwise true. This 
+    //    could be due to error or just to early out like "--version" and 
+    //    "--help".
+    //
+    // You can use arg.from() to get the argument name that the value was 
+    // attached to on the command line. For bool arguments the source value
+    // string will always be either "0" or "1".
+    // 
+    // If you just need support for a new type you can provide a std::istream
+    // extraction (>>) or assignment from std::string operator and use the 
+    // default action.
+    using ActionFn = bool (Cli & cli, A & arg, const std::string & src);
     A & action(std::function<ActionFn> fn);
 
 protected:
@@ -286,7 +305,7 @@ inline A & Cli::ArgShim<A, T>::desc(const std::string & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::ArgShim<A, T>::valueName(const std::string & val) {
+inline A & Cli::ArgShim<A, T>::descValue(const std::string & val) {
     m_valueName = val;
     return static_cast<A &>(*this);
 }
@@ -380,21 +399,20 @@ public:
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
 
-    // Name of the argument that populated the value, or an empty
-    // string if it wasn't populated.
-    const std::string & from() const override { return m_proxy->m_from; }
-
     // True if the value was populated from the command line and while the
     // value may be the same as the default it wasn't simply left that way.
     explicit operator bool() const { return m_proxy->m_explicit; }
 
-private:
-    friend class Cli;
-    void set(const std::string & name) override;
+    // ArgBase
+    const std::string & from() const override { return m_proxy->m_from; }
     void reset() override;
     bool parseValue(const std::string & value) override;
     void unspecifiedValue() override;
     size_t size() const override;
+
+private:
+    friend class Cli;
+    void set(const std::string & name) override;
 
     std::shared_ptr<Value<T>> m_proxy;
 };
@@ -489,20 +507,19 @@ public:
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
-    // name of the argument that populated the value, or an empty
-    // string if it wasn't populated.
-    const std::string & from() const override { return m_proxy->m_from; }
-
     // True if values where added from the command line.
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
 
-private:
-    friend class Cli;
-    void set(const std::string & name) override;
+    // ArgBase
+    const std::string & from() const override { return m_proxy->m_from; }
     void reset() override;
     bool parseValue(const std::string & value) override;
     void unspecifiedValue() override;
     size_t size() const override;
+
+private:
+    friend class Cli;
+    void set(const std::string & name) override;
 
     std::shared_ptr<ValueVec<T>> m_proxy;
 };
