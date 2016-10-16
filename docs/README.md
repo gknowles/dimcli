@@ -7,6 +7,7 @@ Main features:
 - parses directly to c++ variables (or makes proxies for them)
 - supports parsing to any type that is:
   - default constructable
+  - copyable
   - assignable from std::string or has an istream extraction operator
 - help page generation
 
@@ -134,10 +135,12 @@ $ a.out --fruit=orange
 Does the orange have a worm? No!
 ~~~
 
-Add a description:
+Add a description and change the value's name in the description:
 
 ~~~ cpp
-auto & fruit = cli.arg<string>("fruit", "apple").desc("type of fruit");
+auto & fruit = cli.arg<string>("fruit", "apple")
+    .desc("type of fruit")
+    .descValue("FRUIT");
 ~~~
 And you get:
 
@@ -146,8 +149,8 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --help          Show this message and exit.  
-  --fruit STRING  type of fruit
+  --help         Show this message and exit.  
+  --fruit FRUIT  type of fruit
 ~~~
 
 ## External Variables
