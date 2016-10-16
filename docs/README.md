@@ -353,7 +353,7 @@ And from the command line:
 ~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS] [apple...]
-  apple     red fruit
+  apple                red fruit
 
 Options:
   --help               Show this message and exit.
@@ -479,18 +479,18 @@ Verbosity: 3
 ~~~
 
 
-## Parsing Actions
+## Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For 
-instance, if you want --version to print the version and immediately exit the 
-program. Or provide more detailed errors about badly formatted arguments.
+instance, if you want "--version" to print the version and immediately exit 
+the program. Or provide more detailed errors about badly formatted arguments.
 
 Parsing actions are attached to arguments and get invoked when a value becomes 
-available for it. Any std::function compatible object that has a accepts the 
-references to the cli, argument, and source value as parameters can be used. 
-The function should:
+available for it. Any std::function compatible object that accepts references 
+to cli, argument, and source value as parameters can be used. The function 
+should:
 
 - Parse the source string and use the result to set the value (or push back 
-  the new value for vectors).
+  the additional value for vectors).
 - Call cli.badUsage() with an error message if there's a problem.
 - Return false if the program should stop, otherwise true. You may want to 
   stop due to error or just to early out like "--version" and "--help".
