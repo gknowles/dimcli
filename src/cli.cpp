@@ -39,7 +39,7 @@ helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val);
 
 //===========================================================================
 Cli::Cli() {
-    arg<bool>("help").desc("Show this message and exit.").action(helpAction);
+    arg<bool>("help.").desc("Show this message and exit.").action(helpAction);
 }
 
 //===========================================================================
@@ -82,9 +82,19 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
 
 //===========================================================================
 void Cli::addLongName(
-    const string & key, ArgBase * val, bool invert, bool optional) {
+    const string & src, ArgBase * val, bool invert, bool optional) {
+    bool allowNo = true;
+    string key{src};
+    if (key.back() == '.') {
+        allowNo = false;
+        if (key.size() == 2) {
+            assert(key.size() > 2 && "bad modifier '.' for short name");
+            return;
+        }
+        key.pop_back();
+    }
     m_longNames[key] = {val, invert, optional};
-    if (val->m_bool)
+    if (val->m_bool && allowNo)
         m_longNames["no-" + key] = {val, !invert, optional};
 }
 

@@ -191,7 +191,7 @@ Does the apple have a worm? Yes :(
 ~~~
 
 ## Argument Names
-Names are passed in as a space separated list of argument names that look 
+Names are passed in as a space separated list where the individual names look 
 like these:
 
 | Type of name                        | Example      |
@@ -202,12 +202,13 @@ like these:
 | required positional                 | \<file\>     |
 
 Names for positionals (inside angled or square brackets) may contain spaces, 
-and all names may be preceded by modifier flags:
+and all names may have modifier flags:
 
-| Flag | Description                                                     |
-|------|-----------------------------------------------------------------|
-| !    | for boolean values, when setting the value it is first inverted |
-| ?    | for non-boolean named arguments, makes the value [optional](#optional-values) |
+| Flag | Type   | Description                                                     |
+| :--: |--------|-----------------------------------------------------------------|
+| !    | prefix | for boolean values, when setting the value it is first inverted |
+| ?    | prefix | for non-boolean named arguments, makes the value [optional](#optional-values) |
+| .    | suffix | for long names, suppresses the implicit "no-" version           |
 
 Long names for boolean values get a second "no-" version implicitly
 created for them.
@@ -218,7 +219,7 @@ For example:
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.arg<string>("a apple [apple]").desc("apples are red");
-    cli.arg<bool>("!o orange").desc("oranges are orange");
+    cli.arg<bool>("!o orange apricot.").desc("oranges are orange");
     cli.arg<string>("<pear>").desc("pears are yellow");
     cli.parse(cerr, argc, argv);
     return EX_OK;
@@ -230,13 +231,14 @@ before any optional ones):
 ~~~ console
 $ a.out --help  
 Usage: a.out [OPTIONS] <pear> [apple]  
-  pear      pears are yellow
-  apple     apples are red
+  pear                        pears are yellow
+  apple                       apples are red
 
 Options:  
-  --help              Show this message and exit.  
-  -a, --apple STRING  apples are red
-  -o, --[no-]orange   oranges are orange
+  --help                      Show this message and exit.  
+  -a, --apple STRING          apples are red
+  --apricot, --orange / -o, --no-orange  
+                              oranges are orange
 ~~~
 
 When named arguments are added they replace any previous rule with the same 
