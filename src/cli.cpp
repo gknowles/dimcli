@@ -12,6 +12,17 @@ using namespace Dim;
 
 /****************************************************************************
 *
+*   Tuning parameters
+*
+***/
+
+// column where description text starts
+const size_t kMinDescCol = 11;
+const size_t kMaxDescCol = 28;
+
+
+/****************************************************************************
+*
 *   Cli::ArgBase
 *
 ***/
@@ -343,9 +354,6 @@ struct WrapPos {
 };
 } // namespace
 
-// column where description text starts
-static const size_t kMaxDescCol = 25;
-
 //===========================================================================
 static void writeToken(ostream & os, WrapPos & wp, const std::string token) {
     if (wp.pos + token.size() + 1 > wp.maxWidth) {
@@ -402,7 +410,7 @@ void Cli::writeHelp(ostream & os, const string & progName) const {
         string list = optionList(*arg);
         colWidth = max(colWidth, list.size());
     }
-    colWidth = min(colWidth + 3, kMaxDescCol);
+    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
 
     // positional args
     WrapPos wp;
