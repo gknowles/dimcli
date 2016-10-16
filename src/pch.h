@@ -2,3 +2,4 @@
 #include "dim/cli.h"
 
 #include <algorithm>
+#include <iostream>

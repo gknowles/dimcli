@@ -9,6 +9,7 @@
 #include "util.h"
 
 #include <cassert>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -17,7 +18,7 @@
 #include <vector>
 
 namespace std::experimental::filesystem {
-    class path;
+class path;
 };
 
 namespace Dim {
@@ -40,6 +41,8 @@ public:
     template <typename T> struct ValueVec;
 
 public:
+    Cli();
+
     void resetValues();
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
@@ -67,19 +70,25 @@ public:
     void writeHelp(std::ostream & os, const std::string & progName = {}) const;
     void writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
+    // Intended for use from return statements in action callbacks. Sets
+    // exit code (to EX_USAGE) and error msg, then returns false.
+    bool badUsage(const std::string & msg);
+
 private:
-    void positionalHelp(std::ostream & os) const;
-    void namedHelp(std::ostream & os) const;
+    std::string Cli::optionList(ArgBase & arg) const;
     std::string Cli::optionList(ArgBase & arg, bool disableOptions) const;
 
-    bool badUsage(const std::string & msg);
-    void addLongName(const std::string & name, ArgBase * val, bool invert, bool optional);
+    bool defaultAction(ArgBase & arg, const std::string & val);
+
+    void addLongName(
+        const std::string & name, ArgBase * val, bool invert, bool optional);
     void addArgName(const std::string & name, ArgBase * val);
     void addArg(std::unique_ptr<ArgBase> ptr);
-    bool parseValue(ArgBase & out, const std::string & name, const char src[]);
+    bool parseAction(ArgBase & out, const std::string & name, const char src[]);
 
     template <typename Arg, typename Value, typename Ptr>
     std::shared_ptr<Value> getProxy(Ptr * ptr);
+    template <typename A> A & addArg(std::unique_ptr<A> ptr);
 
     struct ArgName {
         ArgBase * val;
@@ -103,9 +112,7 @@ inline Cli::Arg<T> &
 Cli::arg(T * value, const std::string & keys, const U & def) {
     auto proxy = getProxy<Arg<T>, Value<T>>(value);
     auto ptr = std::make_unique<Arg<T>>(proxy, keys, def);
-    auto & opt = *ptr;
-    addArg(std::move(ptr));
-    return opt;
+    return addArg(std::move(ptr));
 }
 
 //===========================================================================
@@ -120,9 +127,7 @@ inline Cli::ArgVec<T> &
 Cli::argVec(std::vector<T> * values, const std::string & keys, int nargs) {
     auto proxy = getProxy<ArgVec<T>, ValueVec<T>>(values);
     auto ptr = std::make_unique<ArgVec<T>>(proxy, keys, nargs);
-    auto & opt = *ptr;
-    addArg(std::move(ptr));
-    return opt;
+    return addArg(std::move(ptr));
 }
 
 //===========================================================================
@@ -152,6 +157,14 @@ inline std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
     return std::make_shared<Value>(ptr);
 }
 
+//===========================================================================
+template <typename A> inline A & Cli::addArg(std::unique_ptr<A> ptr) {
+    auto & opt = *ptr;
+    opt.action(&Cli::defaultAction);
+    addArg(std::unique_ptr<ArgBase>(ptr.release()));
+    return opt;
+}
+
 
 /****************************************************************************
 *
@@ -167,20 +180,21 @@ public:
     virtual const std::string & from() const = 0;
 
 protected:
-    virtual bool
-    parseValue(const std::string & name, const std::string & value) = 0;
-
-    // set to default constructed
-    virtual void unspecifiedValue(const std::string & name) = 0;
+    virtual bool parseAction(Cli & cli, const std::string & value) = 0;
+    virtual void set(const std::string & name) = 0;
 
     // set to passed in default
-    virtual void resetValue() = 0;
+    virtual void reset() = 0;
+
+    virtual bool parseValue(const std::string & value) = 0;
+
+    // set to (or add to vec) value for missing optional
+    virtual void unspecifiedValue() = 0;
 
     // number of values, non-vecs are always 1
     virtual size_t size() const = 0;
 
-    template <typename T>
-    void setValueName();
+    template <typename T> void setValueName();
 
     std::string m_desc;
     std::string m_valueName;
@@ -202,8 +216,7 @@ private:
 };
 
 //===========================================================================
-template <typename T>
-inline void Cli::ArgBase::setValueName() {
+template <typename T> inline void Cli::ArgBase::setValueName() {
     if (is_integral<T>::value) {
         m_valueName = "NUM";
     } else if (is_convertible<T, std::string>::value) {
@@ -233,11 +246,18 @@ public:
     ArgShim & operator=(const ArgShim &) = delete;
 
     A & desc(const std::string & val);
+    A & valueName(const std::string & val);
     A & defaultValue(const T & val);
     A & implicitValue(const T & val);
     A & flagValue(bool isDefault = false);
 
+    using ActionFn = bool(Cli &, A &, const std::string &);
+    A & action(std::function<ActionFn> fn);
+
 protected:
+    bool parseAction(Cli & cli, const std::string & value) override;
+
+    std::function<ActionFn> m_action;
     T m_implicitValue{};
     T m_defValue{};
 };
@@ -251,8 +271,23 @@ inline Cli::ArgShim<A, T>::ArgShim(const std::string & keys, bool boolean)
 
 //===========================================================================
 template <typename A, typename T>
+inline bool
+Cli::ArgShim<A, T>::parseAction(Cli & cli, const std::string & val) {
+    auto self = static_cast<A *>(this);
+    return m_action(cli, *self, val);
+}
+
+//===========================================================================
+template <typename A, typename T>
 inline A & Cli::ArgShim<A, T>::desc(const std::string & val) {
     m_desc = val;
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::ArgShim<A, T>::valueName(const std::string & val) {
+    m_valueName = val;
     return static_cast<A &>(*this);
 }
 
@@ -292,6 +327,13 @@ inline A & Cli::ArgShim<A, T>::flagValue(bool isDefault) {
     }
     m_bool = true;
     return *self;
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::ArgShim<A, T>::action(std::function<ActionFn> fn) {
+    m_action = fn;
+    return static_cast<A &>(*this);
 }
 
 
@@ -348,10 +390,10 @@ public:
 
 private:
     friend class Cli;
-    bool
-    parseValue(const std::string & name, const std::string & value) override;
-    void unspecifiedValue(const std::string & name) override;
-    void resetValue() override;
+    void set(const std::string & name) override;
+    void reset() override;
+    bool parseValue(const std::string & value) override;
+    void unspecifiedValue() override;
     size_t size() const override;
 
     std::shared_ptr<Value<T>> m_proxy;
@@ -367,30 +409,13 @@ inline Cli::Arg<T>::Arg(
 }
 
 //===========================================================================
-template <typename T>
-inline bool
-Cli::Arg<T>::parseValue(const std::string & name, const std::string & value) {
-    if (m_flagValue) {
-        bool flagged;
-        if (!stringTo(flagged, value))
-            return false;
-        if (flagged) {
-            *m_proxy->m_value = m_defValue;
-            m_proxy->m_from = name;
-            m_proxy->m_explicit = true;
-        }
-        return true;
-    }
-
-    if (!stringTo(*m_proxy->m_value, value))
-        return false;
+template <typename T> inline void Cli::Arg<T>::set(const std::string & name) {
     m_proxy->m_from = name;
     m_proxy->m_explicit = true;
-    return true;
 }
 
 //===========================================================================
-template <typename T> inline void Cli::Arg<T>::resetValue() {
+template <typename T> inline void Cli::Arg<T>::reset() {
     if (!m_flagValue || m_flagDefault)
         *m_proxy->m_value = m_defValue;
     m_proxy->m_from.clear();
@@ -399,10 +424,22 @@ template <typename T> inline void Cli::Arg<T>::resetValue() {
 
 //===========================================================================
 template <typename T>
-inline void Cli::Arg<T>::unspecifiedValue(const std::string & name) {
+inline bool Cli::Arg<T>::parseValue(const std::string & value) {
+    if (m_flagValue) {
+        bool flagged;
+        if (!stringTo(flagged, value))
+            return false;
+        if (flagged)
+            *m_proxy->m_value = m_defValue;
+        return true;
+    }
+
+    return stringTo(*m_proxy->m_value, value);
+}
+
+//===========================================================================
+template <typename T> inline void Cli::Arg<T>::unspecifiedValue() {
     *m_proxy->m_value = m_implicitValue;
-    m_proxy->m_from = name;
-    m_proxy->m_explicit = true;
 }
 
 //===========================================================================
@@ -461,10 +498,10 @@ public:
 
 private:
     friend class Cli;
-    bool
-    parseValue(const std::string & name, const std::string & value) override;
-    void unspecifiedValue(const std::string & name) override;
-    void resetValue() override;
+    void set(const std::string & name) override;
+    void reset() override;
+    bool parseValue(const std::string & value) override;
+    void unspecifiedValue() override;
     size_t size() const override;
 
     std::shared_ptr<ValueVec<T>> m_proxy;
@@ -482,16 +519,25 @@ inline Cli::ArgVec<T>::ArgVec(
 
 //===========================================================================
 template <typename T>
-inline bool Cli::ArgVec<T>::parseValue(
-    const std::string & name, const std::string & value) {
+inline void Cli::ArgVec<T>::set(const std::string & name) {
+    m_proxy->m_from = name;
+}
+
+//===========================================================================
+template <typename T> inline void Cli::ArgVec<T>::reset() {
+    m_proxy->m_values->clear();
+    m_proxy->m_from.clear();
+}
+
+//===========================================================================
+template <typename T>
+inline bool Cli::ArgVec<T>::parseValue(const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
             return false;
-        if (flagged) {
+        if (flagged)
             m_proxy->m_values->push_back(m_defValue);
-            m_proxy->m_from = name;
-        }
         return true;
     }
 
@@ -499,21 +545,12 @@ inline bool Cli::ArgVec<T>::parseValue(
     if (!stringTo(tmp, value))
         return false;
     m_proxy->m_values->push_back(std::move(tmp));
-    m_proxy->m_from = name;
     return true;
 }
 
 //===========================================================================
-template <typename T> inline void Cli::ArgVec<T>::resetValue() {
-    m_proxy->m_values->clear();
-    m_proxy->m_from.clear();
-}
-
-//===========================================================================
-template <typename T>
-inline void Cli::ArgVec<T>::unspecifiedValue(const std::string & name) {
+template <typename T> inline void Cli::ArgVec<T>::unspecifiedValue() {
     m_proxy->m_values->push_back(m_implicitValue);
-    m_proxy->m_from = name;
 }
 
 //===========================================================================

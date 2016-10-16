@@ -11,7 +11,8 @@ bool parseTest(Dim::Cli & cli, vector<char *> args) {
     args.insert(args.begin(), "test.exe");
     if (cli.parse(cerr, size(args), data(args)))
         return true;
-    s_errors += 1;
+    if (cli.exitCode())
+        s_errors += 1;
     return false;
 }
 
@@ -22,7 +23,7 @@ int main(int argc, char * argv[]) {
 
     Dim::Cli cli;
     auto & num = cli.arg<int>("n number", 1).desc("number is an int");
-    auto & special = cli.arg<bool>("s special !S", false);
+    auto & special = cli.arg<bool>("s special !S", false).desc("snowflake");
     auto & name = cli.argVec<string>("name");
     cli.argVec<string>("[key]").desc(
         "it's the key argument with a very "
@@ -35,7 +36,7 @@ int main(int argc, char * argv[]) {
     parseTest(cli, {"-", "--", "-s"});
     *num += 2;
     *special = name->empty();
-    cli.writeHelp(cout);
+    parseTest(cli, {"--help"});
 
     cli = {};
     string fruit;
