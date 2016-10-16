@@ -8,6 +8,7 @@ Main features:
 - parses directly to c++ variables (or makes proxies for them)
 - supports parsing to any type that is:
   - default constructable
+  - copyable
   - assignable from std::string or has an istream extraction operator
 - help page generation
 - light weight
@@ -16,6 +17,24 @@ Main features:
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
 you did!
 
-## Include in your project
+## Build
+- Prerequisites
+  - install cmake >= 3.6
+  - install Visual Studio 2015 
+    - include the "Github Extension for Visual Studio"
+    - include git
 - Make the library
+  - git clone https://github.com/gknowles/dimcli.git
+  - cd dimcli
+  - md build & cd build
+  - cmake -G "Visual Studio 14 2015 Win64" ..
+  - cmake --build .
+- Test
+  - cd bin
+  - clitest 
+    - should print some random stuff ending with "All tests passed"
+- Visual Studio 2015
+  - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln)
+
+## Include in your project
 - Copy the source files
