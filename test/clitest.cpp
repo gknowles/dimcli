@@ -23,14 +23,15 @@ int main(int argc, char * argv[]) {
 
     Dim::Cli cli;
     auto & sum = cli.arg<int>("n number", 1)
-        .desc("numbers to multiply")
-        .action([](auto & cli, auto & arg, const string & val) {
-            int tmp = *arg;
-            if (!arg.parseValue(val))
-                return cli.badUsage("Bad '" + arg.from() + "' value: " + val);
-            *arg *= tmp;
-            return true;
-        });
+                     .desc("numbers to multiply")
+                     .action([](auto & cli, auto & arg, const string & val) {
+                         int tmp = *arg;
+                         if (!arg.parseValue(val))
+                             return cli.badUsage(
+                                 "Bad '" + arg.from() + "' value: " + val);
+                         *arg *= tmp;
+                         return true;
+                     });
     parseTest(cli, {"-n2", "-n3"});
     cout << "The sum is: " << *sum << endl;
 

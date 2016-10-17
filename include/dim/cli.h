@@ -6,9 +6,11 @@
 #pragma once
 
 #include "config.h"
+
 #include "util.h"
 
 #include <cassert>
+#include <experimental/filesystem>
 #include <functional>
 #include <list>
 #include <map>
@@ -16,10 +18,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace std::experimental::filesystem {
-class path;
-};
 
 namespace Dim {
 
@@ -256,21 +254,21 @@ public:
 
     // Change the action to take when parsing this argument. The function
     // should:
-    //  - parse the src string and use the result to set the value (or 
+    //  - parse the src string and use the result to set the value (or
     //    push_back the new value for vectors).
     //  - call cli.badUsage() with an error message if there's a problem
-    //  - return false if the program should stop, otherwise true. This 
-    //    could be due to error or just to early out like "--version" and 
+    //  - return false if the program should stop, otherwise true. This
+    //    could be due to error or just to early out like "--version" and
     //    "--help".
     //
-    // You can use arg.from() to get the argument name that the value was 
+    // You can use arg.from() to get the argument name that the value was
     // attached to on the command line. For bool arguments the source value
     // string will always be either "0" or "1".
-    // 
+    //
     // If you just need support for a new type you can provide a std::istream
-    // extraction (>>) or assignment from std::string operator and use the 
+    // extraction (>>) or assignment from std::string operator and use the
     // default action.
-    using ActionFn = bool (Cli & cli, A & arg, const std::string & src);
+    using ActionFn = bool(Cli & cli, A & arg, const std::string & src);
     A & action(std::function<ActionFn> fn);
 
 protected:
