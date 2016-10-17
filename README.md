@@ -30,7 +30,7 @@ you did!
   - cmake -G "Visual Studio 14 2015 Win64" ..
   - cmake --build .
 - Test
-  - cd bin
+  - cd dimcli\build\bin
   - clitest 
     - should print some random stuff ending with "All tests passed"
 - Visual Studio 2015
