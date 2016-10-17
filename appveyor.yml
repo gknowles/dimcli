@@ -28,11 +28,11 @@ after_build:
   - copy 
       ..\Win64\src\dimcli.dir\RelWithDebInfo\dimcli.pdb 
       lib\Win64\RelWithDebInfo
-  - 7z a dimcli-v%appveyor_build_version%.zip include lib
+  - 7z a dimcli-latest.zip include lib
   - cd ..\..
 
 artifacts:
-  - path: build\publish\dimcli-v$(appveyor_build_version).zip
+  - path: build\publish\dimcli-latest.zip
     name: dimcli
     type: zip
 
@@ -40,7 +40,7 @@ test_script:
   - build\Win64\bin\clitest
 
 deploy:
-  tag: dimcli-v$(appveyor_build_version)
+  tag: dimcli-latest
   description: continuous trunk build
   provider: GitHub
   auth_token:
