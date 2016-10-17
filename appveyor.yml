@@ -46,4 +46,4 @@ deploy:
   auth_token:
     secure: yheCA/FJ+f7CL84HoPf9MapOlDZQmrGyiqlwFeeIhxvdOudQisUdOyZuWfwq3lUU
   prerelease: true
-  draft: true
+  draft: false
