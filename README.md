@@ -19,7 +19,7 @@ you did!
 - Prerequisites
   - install cmake >= 3.6
   - install Visual Studio 2015 
-    - include the "Github Extension for Visual Studio"
+    - include the "Github Extension for Visual Studio" (if you care)
     - include git
 - Make the library
   - git clone https://github.com/gknowles/dimcli.git
