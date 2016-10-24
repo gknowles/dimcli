@@ -9,6 +9,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ALL_BUILD", "build/ALL_BUIL
 		{333FB7BD-FFA2-3BE0-8325-8E3D3A4F36BA} = {333FB7BD-FFA2-3BE0-8325-8E3D3A4F36BA}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RUN_TESTS", "build/RUN_TESTS.vcxproj", "{4658E541-443A-3928-8341-CFD075A995BF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5CCC3E22-B27E-3482-B55A-D279E331D678} = {5CCC3E22-B27E-3482-B55A-D279E331D678}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZERO_CHECK", "build/ZERO_CHECK.vcxproj", "{5CCC3E22-B27E-3482-B55A-D279E331D678}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
@@ -37,6 +42,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{04503CED-5679-33D1-A258-DF870A513F01}.Debug|x64.ActiveCfg = Debug|x64
 		{04503CED-5679-33D1-A258-DF870A513F01}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{4658E541-443A-3928-8341-CFD075A995BF}.Debug|x64.ActiveCfg = Debug|x64
+		{4658E541-443A-3928-8341-CFD075A995BF}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
 		{5CCC3E22-B27E-3482-B55A-D279E331D678}.Debug|x64.ActiveCfg = Debug|x64
 		{5CCC3E22-B27E-3482-B55A-D279E331D678}.Debug|x64.Build.0 = Debug|x64
 		{5CCC3E22-B27E-3482-B55A-D279E331D678}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
@@ -54,6 +61,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{04503CED-5679-33D1-A258-DF870A513F01} = {30784CF4-3999-3D9B-A064-347EE5AC46DF}
+		{4658E541-443A-3928-8341-CFD075A995BF} = {30784CF4-3999-3D9B-A064-347EE5AC46DF}
 		{5CCC3E22-B27E-3482-B55A-D279E331D678} = {30784CF4-3999-3D9B-A064-347EE5AC46DF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

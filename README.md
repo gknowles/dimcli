@@ -4,14 +4,12 @@
 
 Making command line interfaces fun for kids of all ages.
 
-Main features:
 - parses directly to c++ variables (or makes proxies for them)
 - supports parsing to any type that is:
   - default constructable
   - copyable
   - assignable from std::string or has an istream extraction operator
 - help page generation
-- light weight
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
@@ -30,11 +28,11 @@ you did!
   - cmake -G "Visual Studio 14 2015 Win64" ..
   - cmake --build .
 - Test
-  - cd dimcli\build\bin
-  - clitest 
-    - should print some random stuff ending with "All tests passed"
+  - ctest -C Debug
 - Visual Studio 2015
-  - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln)
+  - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln) for github
+    integration to work
 
 ## Include in your project
-- Copy the source files
+- Copy the includes files
+- Link to the library, or just add "cli.cpp" to your project

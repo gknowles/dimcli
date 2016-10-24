@@ -98,6 +98,7 @@ update_deps_file(${meta_sources})
 add_custom_target("_meta" SOURCES ${meta_sources})
 source_group("docs" REGULAR_EXPRESSION "docs/.*")
 
+enable_testing()
 add_subdirectory(src)
 add_subdirectory(test)
 

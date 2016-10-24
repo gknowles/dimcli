@@ -11,3 +11,5 @@ add_executable(clitest ${sources})
 target_link_libraries(clitest dimcli)
 source_group("" FILES ${sources})
 write_user_file(clitest)
+
+add_test(NAME clitest COMMAND clitest)
