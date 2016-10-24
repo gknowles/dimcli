@@ -16,7 +16,7 @@ How does it feel?
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & count = cli.arg<int>("c count", 1).desc("times to say hello");
+    auto & count = cli.arg<int>("c n count", 1).desc("times to say hello");
     auto & name = cli.arg<string>("name", "Unknown").desc("who to greet");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -35,9 +35,9 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --help               Show this message and exit.
-  -c, --count INTEGER  times to say hello
-  --name STRING        who to greet
+  --help                   Show this message and exit.
+  -c, -n, --count INTEGER  times to say hello
+  --name STRING            who to greet
 
 $ a.out --count=3
 Using the unknown name.
