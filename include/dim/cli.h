@@ -65,8 +65,9 @@ public:
     int exitCode() const { return m_exitCode; };
     const std::string & errMsg() const { return m_errMsg; }
 
-    void writeHelp(std::ostream & os, const std::string & progName = {}) const;
-    void writeUsage(std::ostream & os, const std::string & progName = {}) const;
+    // writeHelp & writeUsage return the current exitCode()
+    int writeHelp(std::ostream & os, const std::string & progName = {}) const;
+    int writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
@@ -246,10 +247,24 @@ public:
     ArgShim(const ArgShim &) = delete;
     ArgShim & operator=(const ArgShim &) = delete;
 
+    // Set desciption to associate with the argument in writeHelp()
     A & desc(const std::string & val);
+
+    // Set name of meta-variable in writeHelp. For example, in "--count NUM"
+    // this is used to change "NUM" to something else.
     A & descValue(const std::string & val);
+
+    // Allows the default to be changed after the arg has been created.
     A & defaultValue(const T & val);
+
+    // The implicit value is used for arguments with optional values when
+    // the argument was specified in the command line without a value.
     A & implicitValue(const T & val);
+
+    // Turns the argument into a feature switch, there are normally multiple
+    // switches pointed at a single external value, one of which should be
+    // flagged as the default. If none (or many) are set marked as the default
+    // a default will be choosen for you.
     A & flagValue(bool isDefault = false);
 
     // Change the action to take when parsing this argument. The function
@@ -266,8 +281,8 @@ public:
     // string will always be either "0" or "1".
     //
     // If you just need support for a new type you can provide a std::istream
-    // extraction (>>) or assignment from std::string operator and use the
-    // default action.
+    // extraction (>>) or assignment from std::string operator and the
+    // default action will pick it up.
     using ActionFn = bool(Cli & cli, A & arg, const std::string & src);
     A & action(std::function<ActionFn> fn);
 

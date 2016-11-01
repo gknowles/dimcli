@@ -399,7 +399,7 @@ writeDesc(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 }
 
 //===========================================================================
-void Cli::writeHelp(ostream & os, const string & progName) const {
+int Cli::writeHelp(ostream & os, const string & progName) const {
     writeUsage(os, progName);
 
     // size arg column
@@ -443,10 +443,12 @@ void Cli::writeHelp(ostream & os, const string & progName) const {
             wp.pos = 0;
         }
     }
+
+    return exitCode();
 }
 
 //===========================================================================
-void Cli::writeUsage(ostream & os, const string & progName) const {
+int Cli::writeUsage(ostream & os, const string & progName) const {
     streampos base = os.tellp();
     os << "usage: " << (progName.empty() ? m_progName : progName);
     WrapPos wp;
@@ -466,6 +468,7 @@ void Cli::writeUsage(ostream & os, const string & progName) const {
         }
     }
     os << '\n';
+    return exitCode();
 }
 
 //===========================================================================
