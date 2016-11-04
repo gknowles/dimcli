@@ -41,10 +41,8 @@ public:
 public:
     Cli();
 
-    void resetValues();
-    bool parse(size_t argc, char * argv[]);
-    bool parse(std::ostream & os, size_t argc, char * argv[]);
-
+    //-----------------------------------------------------------------------
+    // Configuration
     template <typename T,
               typename U,
               typename = enable_if<is_convertible<U, T>::value>::type>
@@ -62,16 +60,28 @@ public:
     template <typename T>
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
-    int exitCode() const { return m_exitCode; };
-    const std::string & errMsg() const { return m_errMsg; }
+    //-----------------------------------------------------------------------
+    // Parsing
+    bool parse(size_t argc, char * argv[]);
+    bool parse(std::ostream & os, size_t argc, char * argv[]);
 
-    // writeHelp & writeUsage return the current exitCode()
-    int writeHelp(std::ostream & os, const std::string & progName = {}) const;
-    int writeUsage(std::ostream & os, const std::string & progName = {}) const;
+    void resetValues();
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
     bool badUsage(const std::string & msg);
+
+    //-----------------------------------------------------------------------
+    // Inspection after parsing
+    int exitCode() const { return m_exitCode; };
+    const std::string & errMsg() const { return m_errMsg; }
+
+    // Program name received in argv[0]
+    const std::string & progName() const { return m_progName; }
+
+    // writeHelp & writeUsage return the current exitCode()
+    int writeHelp(std::ostream & os, const std::string & progName = {}) const;
+    int writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
 private:
     std::string Cli::optionList(ArgBase & arg) const;
