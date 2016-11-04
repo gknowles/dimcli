@@ -202,6 +202,7 @@ void Cli::resetValues() {
     }
     m_exitCode = EX_OK;
     m_errMsg.clear();
+    m_progName.clear();
 }
 
 //===========================================================================
@@ -424,7 +425,7 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
 
     // named args
     if (!m_shortNames.empty() || !m_longNames.empty()) {
-        os << "Options:\n";
+        os << "\nOptions:\n";
         for (auto && arg : m_args) {
             wp.prefix.assign(4, ' ');
             string list = optionList(*arg, true);
