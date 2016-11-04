@@ -32,8 +32,10 @@ int main(int argc, char * argv[]) {
                          *arg *= tmp;
                          return true;
                      });
+    cli.versionArg("1.0");
     parseTest(cli, {"-n2", "-n3"});
     cout << "The sum is: " << *sum << endl;
+    parseTest(cli, {"--version"});
 
     cli = {};
     auto & num = cli.arg<int>("n number", 1).desc("number is an int");

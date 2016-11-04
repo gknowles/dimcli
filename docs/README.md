@@ -2,8 +2,8 @@
 
 Making command line interface implementation fun for kids of all ages.
 
-- focus on ease of programmatic access to arguments 
-- parses directly to c++ variables (or makes proxies for them)
+- contained completely within namespace "Dim"
+- parses directly to supplied (or implicitly created) variables
 - supports parsing to any type that is:
   - default constructable
   - copyable
@@ -13,6 +13,10 @@ Making command line interface implementation fun for kids of all ages.
 How does it feel?
 
 ~~~ cpp
+#include "dim/cli.h"
+#include <iostream>
+using namespace std;
+
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & count = cli.arg<int>("c n count", 1).desc("times to say hello");
@@ -483,8 +487,9 @@ Verbosity: 3
 
 ## Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For 
-instance, if you want "--version" to print the version and immediately exit 
-the program. Or provide more detailed errors about badly formatted arguments.
+instance, provide more detailed errors about badly formatted arguments. Or if 
+you want "--version" to print some crazy ascii artwork and exit the program 
+(for a non-crazy version use [versionArg](#version_action)).
 
 Parsing actions are attached to arguments and get invoked when a value becomes 
 available for it. Any std::function compatible object that accepts references 
@@ -537,6 +542,35 @@ $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
 a.out: Bad '-n' value: x
+~~~
+
+
+## Version Action
+Use cli.versionArg() to add simple --version processing.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionArg("1.0");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Hello world!" << endl;
+    return EX_OK;
+}
+~~~
+
+Is version 1.0 ready to ship?
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+Options:
+  --help     Show this message and exit.
+  --version  Show version and exit.  
+
+$ a.out --version
+a version 1.0
+$ a.out
+Hello world!
 ~~~
 
 

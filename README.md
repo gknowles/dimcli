@@ -4,8 +4,8 @@
 
 Making command line interface implementation fun for kids of all ages.
 
-- focus on ease of programmatic access to arguments 
-- parses directly to c++ variables (or makes proxies for them)
+- contained completely within namespace "Dim"
+- parses directly to supplied (or implicitly created) variables
 - supports parsing to any type that is:
   - default constructable
   - copyable

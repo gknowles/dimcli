@@ -60,6 +60,11 @@ public:
     template <typename T>
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
+    // Add --version argument that shows "${progName.stem()} version ${ver}"
+    // and exits.
+    Arg<bool> & 
+    versionArg(const std::string & ver, const std::string & progName = {});
+
     //-----------------------------------------------------------------------
     // Parsing
     bool parse(size_t argc, char * argv[]);

@@ -158,6 +158,23 @@ void Cli::addArgName(const string & name, ArgBase * val) {
     addLongName(name, val, !invert, !optional);
 }
 
+//===========================================================================
+Cli::Arg<bool> & 
+Cli::versionArg(const std::string & version, const std::string & progName) {
+    auto verAction = [version,progName](auto & cli, auto & arg, auto & val) {
+        experimental::filesystem::path prog = progName;
+        if (prog.empty()) {
+            prog = cli.progName();
+            prog = prog.stem();
+        }
+        cout << prog << " version " << version << endl;
+        return false;
+    };
+    auto & ver = arg<bool>("version.").desc("Show version and exit.");
+    ver.action(verAction);
+    return ver;
+}
+
 
 /****************************************************************************
 *
