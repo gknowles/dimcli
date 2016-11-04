@@ -32,12 +32,6 @@ Cli::ArgBase::ArgBase(const std::string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
 
-//===========================================================================
-// free function
-ostream & Dim::operator<<(ostream & os, const Cli::ArgBase & val) {
-    return os << val.from();
-}
-
 
 /****************************************************************************
 *

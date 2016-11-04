@@ -603,13 +603,4 @@ template <typename T> inline size_t Cli::ArgVec<T>::size() const {
     return m_proxy->m_values->size();
 }
 
-
-/****************************************************************************
-*
-*   General
-*
-***/
-
-std::ostream & operator<<(std::ostream & os, const Cli::ArgBase & val);
-
 } // namespace
