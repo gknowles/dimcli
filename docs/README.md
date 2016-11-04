@@ -1,9 +1,8 @@
 ## Overview
 
-Making command line interfaces fun for kids of all ages.
+Making command line interface implementation fun for kids of all ages.
 
-Main features:
-
+- focus on ease of programmatic access to arguments 
 - parses directly to c++ variables (or makes proxies for them)
 - supports parsing to any type that is:
   - default constructable
@@ -64,9 +63,11 @@ and position.
 
 
 ## Basic Usage
-After inspecting args cli.parser() returns false if it thinks the program 
-should exit. cli.exitCode() will be set to either EX_OK (because of an early 
-exit like --help) or EX_USAGE for bad arguments.
+After inspecting args cli.parse() returns false if it thinks the program 
+should exit, in which case cli.exitCode() is either EX_OK (because of an 
+early exit like --help) or EX_USAGE for bad arguments. Otherwise the command 
+line was valid, arguments have been parsed to their variables, and 
+cli.exitCode() is EX_OK.
 
 ~~~ cpp
 #include "dim/cli.h"
@@ -158,9 +159,6 @@ In addition to using the variable proxies you can bind the arguments directly
 to predefined variables. This can be used to set a global flag, or populate an
 options struct that you access later.
 
-You can also point multiple arguments at the same variable, as is common with
-[feature switches](#feature-switches).
-
 For example:
 
 ~~~ cpp
@@ -193,6 +191,9 @@ $ a.out -w
 Does the apple have a worm? Yes :(
 ~~~
 
+You can also point multiple arguments at the same variable, as is common with
+[feature switches](#feature-switches).
+
 ## Argument Names
 Names are passed in as a space separated list where the individual names look 
 like these:
@@ -213,7 +214,7 @@ and all names may have modifier flags:
 | ?    | prefix | for non-boolean named arguments, makes the value [optional](#optional-values) |
 | .    | suffix | for long names, suppresses the implicit "no-" version           |
 
-Long names for boolean values get a second "no-" version implicitly
+By default, long names for boolean values get a second "no-" version implicitly
 created for them.
 
 For example:
@@ -317,7 +318,7 @@ I am A.OUT!!!!111
 
 
 ## Variadic Arguments
-Allows for a specific (or unlimited) number of arguments to be returned in a 
+Allows for an unlimited (or specific) number of arguments to be returned in a 
 vector. Variadic arguments are declared using cli.argVec() which binds 
 to a std::vector\<T>.
 
@@ -344,11 +345,11 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(cerr, argc, argv)) {
         return cli.exitCode();
     }
-    cout << "(" << *apples << ") and (" << *oranges << ") don't compare.";
+    cout << "Comparing (" << *apples << ") and (" << *oranges << ").";
     return EX_OK;
 }
 ~~~
-And from the command line:
+View from the command line:
 
 ~~~ console
 $ a.out --help
@@ -360,7 +361,7 @@ Options:
   -o, --orange STRING  oranges
 
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
-(red delicious, honeycrisp) and (mandarin, navel) don't compare.
+Comparing (red delicious, honeycrisp) and (mandarin, navel).
 ~~~
 
 
@@ -374,16 +375,17 @@ $ a.out -o mandarin -onavel "red delicious" honeycrisp
 
 ## Optional Values
 You use the '?' [flag](#argument_names) on an argument name to indicate that
-it is optional. Only non-booleans can have optional values, booleans are
-evaluated just on their presence or absence.
+its value is optional. Only non-booleans can have optional values, booleans 
+are evaluated just on their presence or absence and don't otherwise have 
+values.
 
-For a user to set an optional value on the command line it must be connected 
-(no space) to the argument name, otherwise the value is interpreted as not 
-present and the arguments implicit value is used instead. If the name is not 
-present at all the variable is left with the default given in the 
+For a user to set a value on the command line when it is optional the value 
+must be connected (no space) to the argument name, otherwise it is interpreted 
+as not present and the arguments implicit value is used instead. If the name 
+is not present at all the variable is set to the default given in the 
 cli.arg\<T>() call. 
 
-The implicit value defaults to T{}, and can be changed using 
+By default the implicit value is T{}, but can be changed using 
 arg.implicitValue().
 
 For example:
@@ -521,7 +523,7 @@ int main(int argc, char * argv[]) {
 }
 ~~~
 
-Now let's do some math!
+Let's do some math!
 ~~~ console
 $ a.out --help
 usage: a.out [OPTIONS]
@@ -544,7 +546,7 @@ a.out: Bad '-n' value: x
 |----------|------|-------------|
 | choice | - | value from vector? index in vec for enum? or vector\<pair\<string, T>>? |
 | prompt | - | prompt(string&, bool hide, bool confirm)
-| argPassword | - | arg("password").prompt("Password", true, true) |
+| passwordArg | - | arg("password").prompt("Password", true, true) |
 | yes | - | are you sure? fail if not y |
 | range | - | min/max allowed for variable |
 | clamp | - | clamp variable so it is between min/max |
@@ -553,8 +555,8 @@ a.out: Bad '-n' value: x
 
 
 ## Life After Parsing
-If you are using external varaibles you can just access them directly after 
-using cli.parse() to populate them.
+If you are using external varaibles you just access them directly after using 
+cli.parse() to populate them.
 
 If you use the proxy object returned from cli.arg\<T>() you can dereference it 
 like a smart pointer to get at the value. In addition, you can test whether 
@@ -569,7 +571,7 @@ int main(int argc, char * argv[]) {
     if (!name) {
         cout << "Using the unknown name." << endl;
     } else {
-        cout << "Name selected using " << name << endl;
+        cout << "Name selected using " << name.from() << endl;
     }
     cout << "Hello " << *name << "!" << endl;
     return EX_OK;

@@ -2,8 +2,9 @@
 
 # dimcli
 
-Making command line interfaces fun for kids of all ages.
+Making command line interface implementation fun for kids of all ages.
 
+- focus on ease of programmatic access to arguments 
 - parses directly to c++ variables (or makes proxies for them)
 - supports parsing to any type that is:
   - default constructable
@@ -13,7 +14,7 @@ Making command line interfaces fun for kids of all ages.
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
-you did!
+you did! Includes many examples.
 
 ## Build
 - Prerequisites
