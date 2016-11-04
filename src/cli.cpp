@@ -153,9 +153,9 @@ void Cli::addArgName(const string & name, ArgBase * val) {
 }
 
 //===========================================================================
-Cli::Arg<bool> & 
+Cli::Arg<bool> &
 Cli::versionArg(const std::string & version, const std::string & progName) {
-    auto verAction = [version,progName](auto & cli, auto & arg, auto & val) {
+    auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
         experimental::filesystem::path prog = progName;
         if (prog.empty()) {
             prog = cli.progName();

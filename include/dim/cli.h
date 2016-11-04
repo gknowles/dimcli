@@ -62,7 +62,7 @@ public:
 
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits.
-    Arg<bool> & 
+    Arg<bool> &
     versionArg(const std::string & ver, const std::string & progName = {});
 
     //-----------------------------------------------------------------------
