@@ -14,7 +14,7 @@ Making command line interface implementation fun for kids of all ages.
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
-you did! Includes many examples.
+you did! It contains thorough documentation with many examples.
 
 ## Build
 - Prerequisites
