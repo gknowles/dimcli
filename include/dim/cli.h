@@ -245,7 +245,7 @@ protected:
     template <typename T> void setValueName();
 
     std::string m_desc;
-    std::string m_valueName;
+    std::string m_valueDesc;
 
     // Are multiple values are allowed, and how many there can be (-1 for
     // unlimited).
@@ -266,18 +266,18 @@ private:
 //===========================================================================
 template <typename T> inline void Cli::ArgBase::setValueName() {
     if (is_integral<T>::value) {
-        m_valueName = "NUM";
+        m_valueDesc = "NUM";
     } else if (is_convertible<T, std::string>::value) {
-        m_valueName = "STRING";
+        m_valueDesc = "STRING";
     } else {
-        m_valueName = "VALUE";
+        m_valueDesc = "VALUE";
     }
 }
 
 //===========================================================================
 template <>
 inline void Cli::ArgBase::setValueName<std::experimental::filesystem::path>() {
-    m_valueName = "FILE";
+    m_valueDesc = "FILE";
 }
 
 
@@ -298,7 +298,7 @@ public:
 
     // Set name of meta-variable in writeHelp. For example, in "--count NUM"
     // this is used to change "NUM" to something else.
-    A & descValue(const std::string & val);
+    A & valueDesc(const std::string & val);
 
     // Allows the default to be changed after the arg has been created.
     A & defaultValue(const T & val);
@@ -364,8 +364,8 @@ inline A & Cli::ArgShim<A, T>::desc(const std::string & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::ArgShim<A, T>::descValue(const std::string & val) {
-    m_valueName = val;
+inline A & Cli::ArgShim<A, T>::valueDesc(const std::string & val) {
+    m_valueDesc = val;
     return static_cast<A &>(*this);
 }
 

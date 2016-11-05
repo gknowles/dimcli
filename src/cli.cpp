@@ -533,9 +533,9 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         list += ' ';
     }
     if (optional) {
-        list += "[" + arg.m_valueName + "]";
+        list += "[" + arg.m_valueDesc + "]";
     } else {
-        list += arg.m_valueName;
+        list += arg.m_valueDesc;
     }
     return list;
 }

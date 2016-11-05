@@ -145,7 +145,7 @@ Add a description and change the value's name in the description:
 ~~~ cpp
 auto & fruit = cli.arg<string>("fruit", "apple")
     .desc("type of fruit")
-    .descValue("FRUIT");
+    .valueDesc("FRUIT");
 ~~~
 And you get:
 
