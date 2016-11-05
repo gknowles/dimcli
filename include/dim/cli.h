@@ -60,6 +60,17 @@ public:
     template <typename T>
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
+    template <typename T,
+        typename U,
+        typename = enable_if<is_convertible<U, T>::value>::type>
+        Arg<T> & arg(Arg<T> & value, const std::string & keys, const U & def);
+
+    template <typename T> Arg<T> & arg(Arg<T> & value, const std::string & keys);
+
+    template <typename T>
+    ArgVec<T> &
+        argVec(ArgVec<T> & values, const std::string & keys, int nargs = -1);
+
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits.
     Arg<bool> &
@@ -132,7 +143,7 @@ Cli::arg(T * value, const std::string & keys, const U & def) {
 //===========================================================================
 template <typename T>
 inline Cli::Arg<T> & Cli::arg(T * value, const std::string & keys) {
-    return arg<T>(value, keys, T{});
+    return arg(value, keys, T{});
 }
 
 //===========================================================================
@@ -142,6 +153,26 @@ Cli::argVec(std::vector<T> * values, const std::string & keys, int nargs) {
     auto proxy = getProxy<ArgVec<T>, ValueVec<T>>(values);
     auto ptr = std::make_unique<ArgVec<T>>(proxy, keys, nargs);
     return addArg(std::move(ptr));
+}
+
+//===========================================================================
+template <typename T, typename U, typename>
+inline Cli::Arg<T> &
+Cli::arg(Cli::Arg<T> & alias, const std::string & keys, const U & def) {
+    return arg(&*alias, keys, def);
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::Arg<T> & Cli::arg(Cli::Arg<T> & alias, const std::string & keys) {
+    return arg(&*alias, keys, T{});
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::ArgVec<T> &
+Cli::argVec(ArgVec<T> & alias, const std::string & keys, int nargs) {
+    return argVec(&*alias, keys, nargs);
 }
 
 //===========================================================================
@@ -417,9 +448,6 @@ template <typename T> struct Cli::Value {
 
 template <typename T> class Cli::Arg : public ArgShim<Arg<T>, T> {
 public:
-    typedef T value_type;
-
-public:
     Arg(std::shared_ptr<Value<T>> value,
         const std::string & keys,
         const T & def = {});
@@ -523,9 +551,6 @@ template <typename T> struct Cli::ValueVec {
 ***/
 
 template <typename T> class Cli::ArgVec : public ArgShim<ArgVec<T>, T> {
-public:
-    using value_type = T;
-
 public:
     ArgVec(
         std::shared_ptr<ValueVec<T>> values,

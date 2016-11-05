@@ -39,6 +39,7 @@ int main(int argc, char * argv[]) {
 
     cli = {};
     auto & num = cli.arg<int>("n number", 1).desc("number is an int");
+    cli.arg(num, "c").desc("alias for number");
     auto & special = cli.arg<bool>("s special !S", false).desc("snowflake");
     auto & name = cli.argVec<string>("name");
     cli.argVec<string>("[key]").desc(
@@ -57,14 +58,16 @@ int main(int argc, char * argv[]) {
     cli = {};
     parseTest(cli, {"--help"});
     string fruit;
-    cli.arg(&fruit, "o", "orange").flagValue();
+    auto & orange = cli.arg(&fruit, "o", "orange").flagValue();
     cli.arg(&fruit, "a", "apple").flagValue(true);
+    cli.arg(orange, "p", "pear").flagValue();
     parseTest(cli, {"-o"});
 
     cli = {};
     int count;
     bool help;
     cli.arg(&count, "c ?count").implicitValue(3);
+
     cli.arg(&help, "? h help");
     parseTest(cli, {"-hc2", "-?"});
     parseTest(cli, {"--count"});
