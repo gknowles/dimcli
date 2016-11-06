@@ -49,9 +49,9 @@ Cli::Cli() {
 
 //===========================================================================
 void Cli::addArg(std::unique_ptr<ArgBase> src) {
-    ArgBase * val = src.get();
+    ArgBase * arg = src.get();
     m_args.push_back(std::move(src));
-    const char * ptr = val->m_names.data();
+    const char * ptr = arg->m_names.data();
     string name;
     char close;
     bool hasPos = false;
@@ -78,7 +78,7 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
             if (close != ' ')
                 hasPos = true;
             name = string(b, ptr - b);
-            addArgName(name, val);
+            addArgName(name, arg);
         }
         if (!*ptr)
             return;
@@ -87,7 +87,7 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
 
 //===========================================================================
 void Cli::addLongName(
-    const string & src, ArgBase * val, bool invert, bool optional) {
+    const string & src, ArgBase * arg, bool invert, bool optional) {
     bool allowNo = true;
     string key{src};
     if (key.back() == '.') {
@@ -98,58 +98,58 @@ void Cli::addLongName(
         }
         key.pop_back();
     }
-    m_longNames[key] = {val, invert, optional};
-    if (val->m_bool && allowNo)
-        m_longNames["no-" + key] = {val, !invert, optional};
+    m_longNames[key] = {arg, invert, optional};
+    if (arg->m_bool && allowNo)
+        m_longNames["no-" + key] = {arg, !invert, optional};
 }
 
 //===========================================================================
-void Cli::addArgName(const string & name, ArgBase * val) {
+void Cli::addArgName(const string & name, ArgBase * arg) {
     const bool invert = true;
     const bool optional = true;
 
     switch (name[0]) {
     case '-': assert(name[0] != '-' && "bad argument name"); return;
     case '[':
-        m_argNames.push_back({val, !invert, optional, name.data() + 1});
+        m_argNames.push_back({arg, !invert, optional, name.data() + 1});
         return;
     case '<':
         auto where =
             find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
                 return key.optional;
             });
-        m_argNames.insert(where, {val, !invert, !optional, name.data() + 1});
+        m_argNames.insert(where, {arg, !invert, !optional, name.data() + 1});
         return;
     }
     if (name.size() == 1) {
-        m_shortNames[name[0]] = {val, !invert, !optional};
+        m_shortNames[name[0]] = {arg, !invert, !optional};
         return;
     }
     switch (name[0]) {
     case '!':
-        if (!val->m_bool) {
-            assert(!val->m_bool && "bad modifier '!' for non-bool argument");
+        if (!arg->m_bool) {
+            assert(!arg->m_bool && "bad modifier '!' for non-bool argument");
             return;
         }
         if (name.size() == 2) {
-            m_shortNames[name[1]] = {val, invert, !optional};
+            m_shortNames[name[1]] = {arg, invert, !optional};
         } else {
-            addLongName(name.substr(1), val, invert, !optional);
+            addLongName(name.substr(1), arg, invert, !optional);
         }
         return;
     case '?':
-        if (val->m_bool) {
-            assert(!val->m_bool && "bad modifier '?' for bool argument");
+        if (arg->m_bool) {
+            assert(!arg->m_bool && "bad modifier '?' for bool argument");
             return;
         }
         if (name.size() == 2) {
-            m_shortNames[name[1]] = {val, !invert, optional};
+            m_shortNames[name[1]] = {arg, !invert, optional};
         } else {
-            addLongName(name.substr(1), val, !invert, optional);
+            addLongName(name.substr(1), arg, !invert, optional);
         }
         return;
     }
-    addLongName(name, val, !invert, !optional);
+    addLongName(name, arg, !invert, !optional);
 }
 
 //===========================================================================
@@ -219,12 +219,12 @@ void Cli::resetValues() {
 
 //===========================================================================
 bool Cli::parseAction(
-    ArgBase & val, const std::string & name, const char ptr[]) {
-    val.set(name);
+    ArgBase & arg, const std::string & name, const char ptr[]) {
+    arg.set(name);
     if (ptr) {
-        return val.parseAction(*this, ptr);
+        return arg.parseAction(*this, ptr);
     } else {
-        val.unspecifiedValue();
+        arg.unspecifiedValue();
         return true;
     }
 }
@@ -251,7 +251,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
     argv += 1;
 
     for (; argc; --argc, ++argv) {
-        ArgName vkey;
+        ArgName argName;
         const char * ptr = *argv;
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
@@ -260,10 +260,11 @@ bool Cli::parse(size_t argc, char * argv[]) {
                 if (it == m_shortNames.end()) {
                     return badUsage("Unknown option: -"s + *ptr);
                 }
-                vkey = it->second;
+                argName = it->second;
                 name = "-"s + *ptr;
-                if (vkey.val->m_bool) {
-                    if (!parseAction(*vkey.val, name, vkey.invert ? "0" : "1"))
+                if (argName.arg->m_bool) {
+                    if (!parseAction(
+                            *argName.arg, name, argName.invert ? "0" : "1"))
                         return false;
                     continue;
                 }
@@ -292,13 +293,14 @@ bool Cli::parse(size_t argc, char * argv[]) {
             if (it == m_longNames.end()) {
                 return badUsage("Unknown option: --"s + key);
             }
-            vkey = it->second;
+            argName = it->second;
             name = "--" + key;
-            if (vkey.val->m_bool) {
+            if (argName.arg->m_bool) {
                 if (equal) {
                     return badUsage("Unknown option: " + name + "=");
                 }
-                if (!parseAction(*vkey.val, name, vkey.invert ? "0" : "1"))
+                if (!parseAction(
+                        *argName.arg, name, argName.invert ? "0" : "1"))
                     return false;
                 continue;
             }
@@ -309,22 +311,22 @@ bool Cli::parse(size_t argc, char * argv[]) {
         if (pos >= size(m_argNames)) {
             return badUsage("Unexpected argument: "s + ptr);
         }
-        vkey = m_argNames[pos];
-        name = vkey.name;
-        if (!parseAction(*vkey.val, name, ptr))
+        argName = m_argNames[pos];
+        name = argName.name;
+        if (!parseAction(*argName.arg, name, ptr))
             return false;
-        if (!vkey.val->m_multiple)
+        if (!argName.arg->m_multiple)
             pos += 1;
         continue;
 
     OPTION_VALUE:
         if (*ptr) {
-            if (!parseAction(*vkey.val, name, ptr))
+            if (!parseAction(*argName.arg, name, ptr))
                 return false;
             continue;
         }
-        if (vkey.optional) {
-            if (!parseAction(*vkey.val, name, nullptr))
+        if (argName.optional) {
+            if (!parseAction(*argName.arg, name, nullptr))
                 return false;
             continue;
         }
@@ -333,7 +335,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
         if (!argc) {
             return badUsage("No value given for " + name);
         }
-        if (!parseAction(*vkey.val, name, *argv))
+        if (!parseAction(*argName.arg, name, *argv))
             return false;
     }
 
@@ -430,7 +432,7 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
     for (auto && pa : m_argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, " <" + pa.name + ">");
-        writeDesc(os, wp, pa.val->m_desc, colWidth);
+        writeDesc(os, wp, pa.arg->m_desc, colWidth);
         os << '\n';
         wp.pos = 0;
     }
@@ -472,7 +474,7 @@ int Cli::writeUsage(ostream & os, const string & progName) const {
         writeToken(os, wp, "[OPTIONS]");
     for (auto && pa : m_argNames) {
         string token = pa.name;
-        if (pa.val->m_multiple)
+        if (pa.arg->m_multiple)
             token += "...";
         if (pa.optional) {
             writeToken(os, wp, "[<" + token + ">]");
@@ -503,7 +505,7 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
 
     // names
     for (auto && sn : m_shortNames) {
-        if (sn.second.val != &arg ||
+        if (sn.second.arg != &arg ||
             arg.m_bool && sn.second.invert == enableOptions) {
             continue;
         }
@@ -514,7 +516,7 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         list += sn.first;
     }
     for (auto && ln : m_longNames) {
-        if (ln.second.val != &arg ||
+        if (ln.second.arg != &arg ||
             arg.m_bool && ln.second.invert == enableOptions) {
             continue;
         }

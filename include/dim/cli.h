@@ -121,8 +121,8 @@ private:
     bool defaultAction(ArgBase & arg, const std::string & val);
 
     void addLongName(
-        const std::string & name, ArgBase * val, bool invert, bool optional);
-    void addArgName(const std::string & name, ArgBase * val);
+        const std::string & name, ArgBase * arg, bool invert, bool optional);
+    void addArgName(const std::string & name, ArgBase * arg);
     void addArg(std::unique_ptr<ArgBase> ptr);
     bool parseAction(ArgBase & out, const std::string & name, const char src[]);
 
@@ -131,7 +131,7 @@ private:
     template <typename A> A & addArg(std::unique_ptr<A> ptr);
 
     struct ArgName {
-        ArgBase * val;
+        ArgBase * arg;
         bool invert;      // set to false instead of true (only for bools)
         bool optional;    // value doesn't have to be present? (non-bools only)
         std::string name; // name of argument (only for positionals)
