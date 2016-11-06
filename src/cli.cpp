@@ -156,6 +156,7 @@ void Cli::addArgName(const string & name, ArgBase * val) {
 Cli::Arg<bool> &
 Cli::versionArg(const std::string & version, const std::string & progName) {
     auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
+        ignore = arg, val;
         experimental::filesystem::path prog = progName;
         if (prog.empty()) {
             prog = cli.progName();
@@ -211,7 +212,7 @@ void Cli::resetValues() {
         if (key.name.empty())
             key.name = "arg" + to_string(i + 1);
     }
-    m_exitCode = EX_OK;
+    m_exitCode = kExitOk;
     m_errMsg.clear();
     m_progName.clear();
 }
@@ -231,7 +232,7 @@ bool Cli::parseAction(
 //===========================================================================
 bool Cli::badUsage(const string & msg) {
     m_errMsg = msg;
-    m_exitCode = EX_USAGE;
+    m_exitCode = kExitUsage;
     return false;
 }
 

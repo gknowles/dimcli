@@ -24,6 +24,20 @@ namespace Dim {
 
 /****************************************************************************
 *
+*   Exit codes
+*
+***/
+
+// These mirror the program exit codes defined in <sysexits.h>
+enum {
+    kExitOk = 0,        // EX_OK
+    kExitUsage = 64,    // EX_USAGE     - bad command line
+    kExitSoftware = 70, // EX_SOFTWARE  - internal software error
+};
+
+
+/****************************************************************************
+*
 *   Cli
 *
 ***/

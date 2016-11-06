@@ -15,6 +15,7 @@ How does it feel?
 ~~~ cpp
 #include "dim/cli.h"
 #include <iostream>
+#include <sysexits.h>
 using namespace std;
 
 int main(int argc, char * argv[]) {
@@ -27,7 +28,6 @@ int main(int argc, char * argv[]) {
         cout << "Using the unknown name." << endl;
     for (unsigned i = 0; i < *count; ++i)
         cout << "Hello " << *name << "!" << endl;
-    return EX_OK;
 }
 ~~~
 
@@ -68,14 +68,15 @@ and position.
 
 ## Basic Usage
 After inspecting args cli.parse() returns false if it thinks the program 
-should exit, in which case cli.exitCode() is either EX_OK (because of an 
-early exit like --help) or EX_USAGE for bad arguments. Otherwise the command 
-line was valid, arguments have been parsed to their variables, and 
+should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64) 
+for early exit (like --help) or bad arguments respectively. Otherwise the 
+command line was valid, arguments have been parsed to their variables, and 
 cli.exitCode() is EX_OK.
 
 ~~~ cpp
 #include "dim/cli.h"
 #include <iostream>
+#include <sysexits.h>
 using namespace std;
 
 int main(int argc, char * argv[]) {
@@ -101,8 +102,9 @@ Does the apple have a worm? No!
 ~~~
 
 The EX_* constants (along with standard values) are in sysexits.h on most 
-unixes, althrough it may not be in any standard. dimcli defines them on 
-Windows if they don't exist.
+unixes, althrough it may not be in any standard. Equivalent enum values
+Dim::kExitOk and Dim::kExitUsage are defined, which can be useful on Windows
+where \<sysexits.h> doesn't exist.
 
 
 ## Arguments
@@ -299,6 +301,7 @@ int main(int argc, char * argv[]) {
         prog += "!!!!111";
     }
     cout << "I am " << prog;
+    return EX_OK;
 }
 ~~~
 What you see:

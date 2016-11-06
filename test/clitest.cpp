@@ -17,7 +17,7 @@ bool parseTest(Dim::Cli & cli, vector<char *> args) {
 }
 
 //===========================================================================
-int main(int argc, char * argv[]) {
+int main() {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
 
@@ -39,7 +39,7 @@ int main(int argc, char * argv[]) {
 
     cli = {};
     auto & num = cli.arg<int>("n number", 1).desc("number is an int");
-    cli.arg(num, "c").desc("alias for number");
+    cli.arg(num, "c").desc("alias for number").valueDesc("COUNT");
     auto & special = cli.arg<bool>("s special !S", false).desc("snowflake");
     auto & name = cli.argVec<string>("name");
     cli.argVec<string>("[key]").desc(
@@ -74,8 +74,8 @@ int main(int argc, char * argv[]) {
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
-        return EX_SOFTWARE;
+        return Dim::kExitSoftware;
     }
     cout << "All tests passed" << endl;
-    return EX_OK;
+    return 0;
 }
