@@ -492,7 +492,7 @@ Verbosity: 3
 Sometimes, you want an argument to completely change the execution flow. For 
 instance, provide more detailed errors about badly formatted arguments. Or if 
 you want "--version" to print some crazy ascii artwork and exit the program 
-(for a non-crazy version use [versionArg](#version_action)).
+(for a non-crazy --version use [arg.versionArg()](#version_action)).
 
 Parsing actions are attached to arguments and get invoked when a value becomes 
 available for it. Any std::function compatible object that accepts references 
@@ -507,8 +507,8 @@ should:
 
 Other things to keep in mind:
 
-- You can use arg.from() to get the argument name that the value was attached
-  to on the command line.
+- You can use arg.from() and arg.pos() to get the argument name that the value 
+  was attached to on the command line and its position in argv\[].
 - For bool arguments the source value string will always be either "0" or "1".
 
 Here's an action that multiples multiple values together:
@@ -592,12 +592,13 @@ Hello world!
 
 
 ## Life After Parsing
-If you are using external varaibles you just access them directly after using 
+If you are using external variables you just access them directly after using 
 cli.parse() to populate them.
 
 If you use the proxy object returned from cli.arg\<T>() you can dereference it 
 like a smart pointer to get at the value. In addition, you can test whether 
-it was explicitly set and get the argument name that populated it.
+it was explicitly set, find the argument name that populated it, and get the 
+position in argv\[] it came from.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -608,7 +609,8 @@ int main(int argc, char * argv[]) {
     if (!name) {
         cout << "Using the unknown name." << endl;
     } else {
-        cout << "Name selected using " << name.from() << endl;
+        cout << "Name selected using " << name.from()
+            << " from argv[" << name.pos() << "]" << endl;
     }
     cout << "Hello " << *name << "!" << endl;
     return EX_OK;
@@ -624,7 +626,7 @@ $ a.out -n John
 Name selected using -n
 Hello John!
 $ a.out --name Mary
-Name selected using --name
+Name selected using --name from argv[2]
 Hello Mary!
 ~~~
 

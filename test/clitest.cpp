@@ -9,7 +9,8 @@ static int s_errors;
 //===========================================================================
 bool parseTest(Dim::Cli & cli, vector<char *> args) {
     args.insert(args.begin(), "test.exe");
-    if (cli.parse(cerr, size(args), data(args)))
+    args.push_back(nullptr);
+    if (cli.parse(cerr, size(args) - 1, data(args)))
         return true;
     if (cli.exitCode())
         s_errors += 1;
@@ -62,12 +63,13 @@ int main() {
     cli.arg(&fruit, "a", "apple").flagValue(true);
     cli.arg(orange, "p", "pear").flagValue();
     parseTest(cli, {"-o"});
+    cout << "orange '" << *orange << "' from '" << orange.from() << "' at "
+         << orange.pos() << endl;
 
     cli = {};
     int count;
     bool help;
     cli.arg(&count, "c ?count").implicitValue(3);
-
     cli.arg(&help, "? h help");
     parseTest(cli, {"-hc2", "-?"});
     parseTest(cli, {"--count"});

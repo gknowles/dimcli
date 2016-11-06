@@ -124,7 +124,8 @@ private:
         const std::string & name, ArgBase * arg, bool invert, bool optional);
     void addArgName(const std::string & name, ArgBase * arg);
     void addArg(std::unique_ptr<ArgBase> ptr);
-    bool parseAction(ArgBase & out, const std::string & name, const char src[]);
+    bool parseAction(
+        ArgBase & out, const std::string & name, int pos, const char src[]);
 
     template <typename Arg, typename Value, typename Ptr>
     std::shared_ptr<Value> getProxy(Ptr * ptr);
@@ -237,9 +238,14 @@ public:
     ArgBase(const std::string & keys, bool boolean);
     virtual ~ArgBase() {}
 
-    // Name of the argument that populated the value, or an empty
-    // string if it wasn't populated.
+    // Name of the argument that populated the value, or an empty string if
+    // it wasn't populated. For vectors, it's what populated the last value.
     virtual const std::string & from() const = 0;
+
+    // Absolute position in argv[] of the argument that populated the value,
+    // or an empty string if it wasn't populated. For vectors, it's what
+    // populated the last value.
+    virtual int pos() const = 0;
 
     // set to passed in default
     virtual void reset() = 0;
@@ -255,7 +261,7 @@ public:
 
 protected:
     virtual bool parseAction(Cli & cli, const std::string & value) = 0;
-    virtual void set(const std::string & name) = 0;
+    virtual void set(const std::string & name, int pos) = 0;
 
     template <typename T> void setValueName();
 
@@ -337,9 +343,9 @@ public:
     //    could be due to error or just to early out like "--version" and
     //    "--help".
     //
-    // You can use arg.from() to get the argument name that the value was
-    // attached to on the command line. For bool arguments the source value
-    // string will always be either "0" or "1".
+    // You can use arg.from() and arg.pos() to get the argument name that the
+    // value was attached to and its position on the command line. For bool
+    // arguments the source value string will always be either "0" or "1".
     //
     // If you just need support for a new type you can provide a std::istream
     // extraction (>>) or assignment from std::string operator and the
@@ -440,6 +446,7 @@ template <typename T> struct Cli::Value {
     // name of the argument that populated the value, or an empty
     // string if it wasn't populated.
     std::string m_from;
+    int m_pos{0};
 
     // the value was explicitly set
     bool m_explicit{false};
@@ -476,6 +483,7 @@ public:
 
     // ArgBase
     const std::string & from() const override { return m_proxy->m_from; }
+    int pos() const override { return m_proxy->m_pos; }
     void reset() override;
     bool parseValue(const std::string & value) override;
     void unspecifiedValue() override;
@@ -483,7 +491,7 @@ public:
 
 private:
     friend class Cli;
-    void set(const std::string & name) override;
+    void set(const std::string & name, int pos) override;
 
     std::shared_ptr<Value<T>> m_proxy;
 };
@@ -498,8 +506,10 @@ inline Cli::Arg<T>::Arg(
 }
 
 //===========================================================================
-template <typename T> inline void Cli::Arg<T>::set(const std::string & name) {
+template <typename T>
+inline void Cli::Arg<T>::set(const std::string & name, int pos) {
     m_proxy->m_from = name;
+    m_proxy->m_pos = pos;
     m_proxy->m_explicit = true;
 }
 
@@ -547,6 +557,7 @@ template <typename T> struct Cli::ValueVec {
     // name of the last argument to append to the value, or an empty
     // string if it wasn't populated.
     std::string m_from;
+    int m_pos{0};
 
     // points to the arg with the default flag value
     Cli::ArgVec<T> * m_defFlagArg{nullptr};
@@ -580,6 +591,7 @@ public:
 
     // ArgBase
     const std::string & from() const override { return m_proxy->m_from; }
+    int pos() const override { return m_proxy->m_pos; }
     void reset() override;
     bool parseValue(const std::string & value) override;
     void unspecifiedValue() override;
@@ -587,7 +599,7 @@ public:
 
 private:
     friend class Cli;
-    void set(const std::string & name) override;
+    void set(const std::string & name, int pos) override;
 
     std::shared_ptr<ValueVec<T>> m_proxy;
 };
@@ -604,8 +616,9 @@ inline Cli::ArgVec<T>::ArgVec(
 
 //===========================================================================
 template <typename T>
-inline void Cli::ArgVec<T>::set(const std::string & name) {
+inline void Cli::ArgVec<T>::set(const std::string & name, int pos) {
     m_proxy->m_from = name;
+    m_proxy->m_pos = pos;
 }
 
 //===========================================================================

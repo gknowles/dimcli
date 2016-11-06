@@ -219,8 +219,8 @@ void Cli::resetValues() {
 
 //===========================================================================
 bool Cli::parseAction(
-    ArgBase & arg, const std::string & name, const char ptr[]) {
-    arg.set(name);
+    ArgBase & arg, const std::string & name, int pos, const char ptr[]) {
+    arg.set(name, pos);
     if (ptr) {
         return arg.parseAction(*this, ptr);
     } else {
@@ -238,6 +238,8 @@ bool Cli::badUsage(const string & msg) {
 
 //===========================================================================
 bool Cli::parse(size_t argc, char * argv[]) {
+    ignore = argc;
+
     resetValues();
 
     // the 0th (name of this program) arg should always be present
@@ -247,10 +249,10 @@ bool Cli::parse(size_t argc, char * argv[]) {
     unsigned pos = 0;
     bool moreOpts = true;
     m_progName = *argv;
-    argc -= 1;
+    int argPos = 1;
     argv += 1;
 
-    for (; argc; --argc, ++argv) {
+    for (; *argv; ++argPos, ++argv) {
         ArgName argName;
         const char * ptr = *argv;
         if (*ptr == '-' && ptr[1] && moreOpts) {
@@ -264,7 +266,10 @@ bool Cli::parse(size_t argc, char * argv[]) {
                 name = "-"s + *ptr;
                 if (argName.arg->m_bool) {
                     if (!parseAction(
-                            *argName.arg, name, argName.invert ? "0" : "1"))
+                            *argName.arg,
+                            name,
+                            argPos,
+                            argName.invert ? "0" : "1"))
                         return false;
                     continue;
                 }
@@ -300,7 +305,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
                     return badUsage("Unknown option: " + name + "=");
                 }
                 if (!parseAction(
-                        *argName.arg, name, argName.invert ? "0" : "1"))
+                        *argName.arg, name, argPos, argName.invert ? "0" : "1"))
                     return false;
                 continue;
             }
@@ -313,7 +318,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
         }
         argName = m_argNames[pos];
         name = argName.name;
-        if (!parseAction(*argName.arg, name, ptr))
+        if (!parseAction(*argName.arg, name, argPos, ptr))
             return false;
         if (!argName.arg->m_multiple)
             pos += 1;
@@ -321,23 +326,24 @@ bool Cli::parse(size_t argc, char * argv[]) {
 
     OPTION_VALUE:
         if (*ptr) {
-            if (!parseAction(*argName.arg, name, ptr))
+            if (!parseAction(*argName.arg, name, argPos, ptr))
                 return false;
             continue;
         }
         if (argName.optional) {
-            if (!parseAction(*argName.arg, name, nullptr))
+            if (!parseAction(*argName.arg, name, argPos, nullptr))
                 return false;
             continue;
         }
-        argc -= 1;
+        argPos += 1;
         argv += 1;
-        if (!argc) {
+        if (!*argv) {
             return badUsage("No value given for " + name);
         }
-        if (!parseAction(*argName.arg, name, *argv))
+        if (!parseAction(*argName.arg, name, argPos, *argv))
             return false;
     }
+    assert(argPos == argc);
 
     if (pos < size(m_argNames) && !m_argNames[pos].optional) {
         return badUsage("No value given for " + m_argNames[pos].name);
