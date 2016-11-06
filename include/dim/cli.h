@@ -75,15 +75,16 @@ public:
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
     template <typename T,
-        typename U,
-        typename = enable_if<is_convertible<U, T>::value>::type>
-        Arg<T> & arg(Arg<T> & value, const std::string & keys, const U & def);
+              typename U,
+              typename = enable_if<is_convertible<U, T>::value>::type>
+    Arg<T> & arg(Arg<T> & value, const std::string & keys, const U & def);
 
-    template <typename T> Arg<T> & arg(Arg<T> & value, const std::string & keys);
+    template <typename T>
+    Arg<T> & arg(Arg<T> & value, const std::string & keys);
 
     template <typename T>
     ArgVec<T> &
-        argVec(ArgVec<T> & values, const std::string & keys, int nargs = -1);
+    argVec(ArgVec<T> & values, const std::string & keys, int nargs = -1);
 
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits.
