@@ -49,6 +49,7 @@ public:
     template <typename T> class Arg;
     template <typename T> class ArgVec;
 
+    struct ArgMatch;
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
 
@@ -115,8 +116,8 @@ public:
     int writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
 private:
-    std::string Cli::optionList(ArgBase & arg) const;
-    std::string Cli::optionList(ArgBase & arg, bool disableOptions) const;
+    std::string optionList(ArgBase & arg) const;
+    std::string optionList(ArgBase & arg, bool disableOptions) const;
 
     bool defaultAction(ArgBase & arg, const std::string & val);
 
@@ -344,8 +345,9 @@ public:
     //    "--help".
     //
     // You can use arg.from() and arg.pos() to get the argument name that the
-    // value was attached to and its position on the command line. For bool
-    // arguments the source value string will always be either "0" or "1".
+    // value was attached to on the command line and its position in argv[]. 
+    // For bool arguments the source value string will always be either "0" 
+    // or "1".
     //
     // If you just need support for a new type you can provide a std::istream
     // extraction (>>) or assignment from std::string operator and the
@@ -438,15 +440,29 @@ inline A & Cli::ArgShim<A, T>::action(std::function<ActionFn> fn) {
 
 /****************************************************************************
 *
+*   Cli::ArgMatch
+*
+***/
+
+struct Cli::ArgMatch {
+    // name of the argument that populated the value, or an empty
+    // string if it wasn't populated.
+    std::string name;
+
+    // member of argv[] that populated the value or 0 if it wasn't.
+    int pos{0};
+};
+
+
+/****************************************************************************
+*
 *   Cli::Value
 *
 ***/
 
 template <typename T> struct Cli::Value {
-    // name of the argument that populated the value, or an empty
-    // string if it wasn't populated.
-    std::string m_from;
-    int m_pos{0};
+    // where the value came from
+    Cli::ArgMatch m_match;
 
     // the value was explicitly set
     bool m_explicit{false};
@@ -482,8 +498,8 @@ public:
     explicit operator bool() const { return m_proxy->m_explicit; }
 
     // ArgBase
-    const std::string & from() const override { return m_proxy->m_from; }
-    int pos() const override { return m_proxy->m_pos; }
+    const std::string & from() const override { return m_proxy->m_match.name; }
+    int pos() const override { return m_proxy->m_match.pos; }
     void reset() override;
     bool parseValue(const std::string & value) override;
     void unspecifiedValue() override;
@@ -508,8 +524,8 @@ inline Cli::Arg<T>::Arg(
 //===========================================================================
 template <typename T>
 inline void Cli::Arg<T>::set(const std::string & name, int pos) {
-    m_proxy->m_from = name;
-    m_proxy->m_pos = pos;
+    m_proxy->m_match.name = name;
+    m_proxy->m_match.pos = pos;
     m_proxy->m_explicit = true;
 }
 
@@ -517,7 +533,8 @@ inline void Cli::Arg<T>::set(const std::string & name, int pos) {
 template <typename T> inline void Cli::Arg<T>::reset() {
     if (!m_flagValue || m_flagDefault)
         *m_proxy->m_value = m_defValue;
-    m_proxy->m_from.clear();
+    m_proxy->m_match.name.clear();
+    m_proxy->m_match.pos = 0;
     m_proxy->m_explicit = false;
 }
 
@@ -554,10 +571,8 @@ template <typename T> inline size_t Cli::Arg<T>::size() const {
 ***/
 
 template <typename T> struct Cli::ValueVec {
-    // name of the last argument to append to the value, or an empty
-    // string if it wasn't populated.
-    std::string m_from;
-    int m_pos{0};
+    // where the values came from
+    std::vector<ArgMatch> m_matches;
 
     // points to the arg with the default flag value
     Cli::ArgVec<T> * m_defFlagArg{nullptr};
@@ -586,22 +601,27 @@ public:
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
-    // True if values where added from the command line.
+    // True if values where added from the command line
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
 
     // ArgBase
-    const std::string & from() const override { return m_proxy->m_from; }
-    int pos() const override { return m_proxy->m_pos; }
+    const std::string & from() const override { return from(size() - 1); }
+    int pos() const override { return pos(size() - 1); }
     void reset() override;
     bool parseValue(const std::string & value) override;
     void unspecifiedValue() override;
     size_t size() const override;
+
+    // Information about a specific member of the vector of values
+    const std::string & from(size_t index) const;
+    int pos(size_t index) const;
 
 private:
     friend class Cli;
     void set(const std::string & name, int pos) override;
 
     std::shared_ptr<ValueVec<T>> m_proxy;
+    std::string m_empty;
 };
 
 //===========================================================================
@@ -617,14 +637,28 @@ inline Cli::ArgVec<T>::ArgVec(
 //===========================================================================
 template <typename T>
 inline void Cli::ArgVec<T>::set(const std::string & name, int pos) {
-    m_proxy->m_from = name;
-    m_proxy->m_pos = pos;
+    ArgMatch match;
+    match.name = name;
+    match.pos = pos;
+    m_proxy->m_matches.push_back(match);
+}
+
+//===========================================================================
+template <typename T> 
+inline const std::string & Cli::ArgVec<T>::from(size_t index) const { 
+    return index >= size() ? m_empty : m_proxy->m_matches[index].name;
+}
+
+//===========================================================================
+template <typename T>
+inline int Cli::ArgVec<T>::pos(size_t index) const { 
+    return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
 //===========================================================================
 template <typename T> inline void Cli::ArgVec<T>::reset() {
     m_proxy->m_values->clear();
-    m_proxy->m_from.clear();
+    m_proxy->m_matches.clear();
 }
 
 //===========================================================================
