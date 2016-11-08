@@ -101,8 +101,9 @@ public:
     bool parse(const std::vector<std::string> & args);
     bool parse(std::ostream & os, const std::vector<std::string> & args);
 
-    std::vector<std::string> split_glib(const std::string & cmdline) const;
-    std::vector<std::string> split_windows(const std::string & cmdline) const;
+    // Split command line into args using platform specific rules
+    std::vector<std::string> splitGlib(const std::string & cmdline) const;
+    std::vector<std::string> splitWindows(const std::string & cmdline) const;
 
     void resetValues();
 

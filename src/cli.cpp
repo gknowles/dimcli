@@ -362,12 +362,20 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
 
 //===========================================================================
 bool Cli::parse(const string & cmdline) {
-    return parse(split_windows(cmdline));
+#if defined(_WIN32) || defined(_WIN64)
+    return parse(splitWindows(cmdline));
+#else
+    return parse(splitGlib(cmdline));
+#endif
 }
 
 //===========================================================================
 bool Cli::parse(std::ostream & os, const string & cmdline) {
-    return parse(os, split_windows(cmdline));
+#if defined(_WIN32) || defined(_WIN64)
+    return parse(os, splitWindows(cmdline));
+#else
+    return parse(os, splitGlib(cmdline));
+#endif
 }
 
 //===========================================================================
@@ -411,7 +419,7 @@ bool Cli::parse(std::ostream & os, const vector<string> & args) {
 // When escaping it's simplest to not quote and just escape the following:
 //   Must: | & ; < > ( ) $ ` \ " ' SP TAB LF
 //   Should: * ? [ # ~ = %
-vector<string> Cli::split_glib(const string & cmdline) const {
+vector<string> Cli::splitGlib(const string & cmdline) const {
     vector<string> out;
     const char * cur = cmdline.c_str();
     const char * last = cur + cmdline.size();
@@ -520,7 +528,7 @@ IN_DQUOTE:
 }
 
 //===========================================================================
-vector<string> Cli::split_windows(const string & cmdline) const {
+vector<string> Cli::splitWindows(const string & cmdline) const {
     vector<string> out;
     const char * cur = cmdline.c_str();
     const char * last = cur + cmdline.size();
@@ -608,76 +616,6 @@ IN_QUOTED:
     out.push_back(move(arg));
     return out;
 }
-
-#if 0
-//===========================================================================
-vector<string> Cli::split_windows(const string & cmdline) const {
-    vector<string> out;
-    const char * cur = cmdline.c_str();
-    const char * last = cur + cmdline.size();
-
-    string arg;
-    int backslashes = 0;
-    enum { kGap, kUnquoted, kQuoted } state = kGap;
-
-    for (; cur < last; ++cur) {
-        char ch = *cur;
-        switch (ch) {
-        case '\\':
-            if (state == kGap)
-                state = kUnquoted;
-            backslashes += 1;
-            break;
-        case '"':
-            if (int num = backslashes) {
-                backslashes = 0;
-                arg.append(num / 2, '\\');
-                if (num % 2 == 1) {
-                    arg += ch;
-                    break;
-                }
-            }
-            state = (state == kQuoted) ? kUnquoted : kQuoted;
-            break;
-        case ' ':
-        case '\t':
-        case '\r':
-        case '\n':
-            if (backslashes) {
-                arg.append(backslashes, '\\');
-                backslashes = 0;
-            }
-            switch (state) {
-            case kGap: break;
-            case kUnquoted:
-                state = kGap;
-                out.push_back(move(arg));
-                arg.clear();
-                break;
-            case kQuoted: arg += ch; break;
-            }
-            break;
-        default:
-            if (state == kGap) {
-                state = kUnquoted;
-            } else if (backslashes) {
-                arg.append(backslashes, '\\');
-                backslashes = 0;
-            }
-            arg += ch;
-            break;
-        }
-    }
-
-    if (state != kGap) {
-        if (backslashes)
-            arg.append(backslashes, '\\');
-        out.push_back(move(arg));
-    }
-
-    return out;
-}
-#endif
 
 
 /****************************************************************************
