@@ -18,6 +18,16 @@ using namespace Dim;
 
 //===========================================================================
 // static
+vector<string> Cli::toArgv(const string & cmdline) {
+#if defined(_WIN32)
+    return toWindowsArgv(cmdline);
+#else
+    return splitGlib(cmdline);
+#endif
+}
+
+//===========================================================================
+// static
 vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
     vector<const char *> argv;
     for (auto && arg : args)
@@ -47,6 +57,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
 //   Must: | & ; < > ( ) $ ` \ " ' SP TAB LF
 //   Should: * ? [ # ~ = %
 //
+//===========================================================================
 // static
 vector<string> Cli::toGlibArgv(const string & cmdline) {
     vector<string> out;
@@ -157,6 +168,89 @@ IN_DQUOTE:
 }
 
 //===========================================================================
+// Rules from libiberty's buildargv(). 
+//
+// Arguments split on unquoted whitespace (" \t\r\n\f\v")
+//  - backslashes: always escapes the following character.
+//  - single quotes and double quotes: escape each other and whitespace.
+//
+//===========================================================================
+// static
+vector<string> Cli::toGnuArgv(const string & cmdline) {
+    vector<string> out;
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
+
+    string arg;
+    char quote;
+
+IN_GAP:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\':
+            if (cur < last) 
+                ch = *cur++;
+            arg += ch;
+            goto IN_UNQUOTED;
+        default: arg += ch; goto IN_UNQUOTED;
+        case '\'':
+        case '"':
+            quote = ch;
+            goto IN_QUOTED;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+        case '\f':
+        case '\v': break;
+        }
+    }        
+    return out;
+
+IN_UNQUOTED:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\':
+            if (cur < last)
+                ch = *cur++;
+            arg += ch;
+            break;
+        default: arg += ch; break;
+        case '"': 
+        case '\'': 
+            quote = ch;
+            goto IN_QUOTED;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+        case '\f':
+        case '\v':
+            out.push_back(move(arg));
+            arg.clear();
+            goto IN_GAP;
+        }
+    }
+    out.push_back(move(arg));
+    return out;
+
+
+IN_QUOTED:
+    while (cur < last) {
+        char ch = *cur++;
+        if (ch == quote)
+            goto IN_UNQUOTED;
+        if (ch == '\\' && cur < last) 
+            ch = *cur++;
+        arg += ch;
+    }
+    out.push_back(move(arg));
+    return out;
+}
+
+//===========================================================================
 // Rules defined in the "Parsing C++ Command-Line Arguments" article on MSDN.
 //
 // Arguments are split on whitespace (" \t") unless the whitespace is quoted.
@@ -169,6 +263,7 @@ IN_DQUOTE:
 //     pair, the last one is tossed, and the quote is added to the argument.
 //   - any number not followed by a double quote are literals.
 //
+//===========================================================================
 // static
 vector<string> Cli::toWindowsArgv(const string & cmdline) {
     vector<string> out;

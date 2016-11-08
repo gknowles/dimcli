@@ -237,13 +237,12 @@ bool Cli::badUsage(const string & msg) {
 }
 
 //===========================================================================
-bool Cli::parse(size_t argc, char * argv[]) {
-    ignore = argc;
-
+bool Cli::parse(const vector<const char *> & args) {
     resetValues();
+    const char * const * argv = args.data();
 
     // the 0th (name of this program) arg should always be present
-    assert(argc && *argv);
+    assert(*argv);
 
     string name;
     unsigned pos = 0;
@@ -343,7 +342,7 @@ bool Cli::parse(size_t argc, char * argv[]) {
         if (!parseAction(*argName.arg, name, argPos, *argv))
             return false;
     }
-    assert(argPos == argc);
+    assert(argPos == args.size() - 1);
 
     if (pos < size(m_argNames) && !m_argNames[pos].optional) {
         return badUsage("No value given for " + m_argNames[pos].name);
@@ -352,51 +351,34 @@ bool Cli::parse(size_t argc, char * argv[]) {
 }
 
 //===========================================================================
-bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
-    if (parse(argc, argv))
+bool Cli::parse(ostream & os, const vector<const char *> & args) {
+    if (parse(args))
         return true;
     if (exitCode())
-        os << argv[0] << ": " << errMsg() << endl;
+        os << args[0] << ": " << errMsg() << endl;
     return false;
 }
 
 //===========================================================================
-bool Cli::parse(const string & cmdline) {
-#if defined(_WIN32)
-    return parse(toWindowsArgv(cmdline));
-#else
-    return parse(splitGlib(cmdline));
-#endif
+bool Cli::parse(size_t argc, char * argv[]) {
+    vector<const char *> args(argv, argv + argc + 1);
+    return parse(args);
 }
 
 //===========================================================================
-bool Cli::parse(std::ostream & os, const string & cmdline) {
-#if defined(_WIN32)
-    return parse(os, toWindowsArgv(cmdline));
-#else
-    return parse(os, splitGlib(cmdline));
-#endif
-}
-
-//===========================================================================
-static vector<const char *> copyToArgv(const vector<string> & args) {
-    vector<const char *> argv;
-    for (auto && arg : args)
-        argv.push_back(arg.data());
-    argv.push_back(nullptr);
-    return argv;
+bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
+    vector<const char *> args(argv, argv + argc + 1);
+    return parse(os, args);
 }
 
 //===========================================================================
 bool Cli::parse(const vector<string> & args) {
-    auto argv = copyToArgv(args);
-    return parse(argv.size() - 1, const_cast<char **>(argv.data()));
+    return parse(toPtrArgv(args));
 }
 
 //===========================================================================
 bool Cli::parse(std::ostream & os, const vector<string> & args) {
-    auto argv = copyToArgv(args);
-    return parse(os, argv.size() - 1, const_cast<char **>(argv.data()));
+    return parse(os, toPtrArgv(args));
 }
 
 

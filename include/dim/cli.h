@@ -96,18 +96,27 @@ public:
     // Parsing
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
-    bool parse(const std::string & args);
-    bool parse(std::ostream & os, const std::string & args);
+    bool parse(const std::vector<const char *> & args);
+    bool parse(std::ostream & os, const std::vector<const char *> & args);
     bool parse(const std::vector<std::string> & args);
     bool parse(std::ostream & os, const std::vector<std::string> & args);
 
-    // Parse according to glib conventions, based on the UNIX98 spec
-    static std::vector<std::string> toGlibArgv(const std::string & cmdline);
-    // Parse using Windows rules
-    static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
-    // Create vector of pointers suitable for use with argc/argv APIs
+    // Parse cmdline into vector of args, using the default conventions 
+    // (Gnu or Windows) of the platform.
+    static std::vector<std::string> toArgv(const std::string & cmdline);
+    // Create vector of pointers suitable for use with argc/argv APIs, includes
+    // trailing null, so use "size() - 1" for argc. The return values point
+    // into the source string vector and are only valid until that vector is
+    // resized or destroyed.
     static std::vector<const char *>
     toPtrArgv(const std::vector<std::string> & args);
+
+    // Parse according to glib conventions, based on the UNIX98 shell spec
+    static std::vector<std::string> toGlibArgv(const std::string & cmdline);
+    // Parse using GNU conventions, same rules as buildargv()
+    static std::vector<std::string> toGnuArgv(const std::string & cmdline);
+    // Parse using Windows rules
+    static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
     void resetValues();
 
