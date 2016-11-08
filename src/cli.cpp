@@ -8,6 +8,7 @@
 
 using namespace std;
 using namespace Dim;
+namespace fs = experimental::filesystem;
 
 
 /****************************************************************************
@@ -157,7 +158,7 @@ Cli::Arg<bool> &
 Cli::versionArg(const std::string & version, const std::string & progName) {
     auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
         ignore = arg, val;
-        experimental::filesystem::path prog = progName;
+        fs::path prog = progName;
         if (prog.empty()) {
             prog = cli.progName();
             prog = prog.stem();
@@ -203,6 +204,34 @@ bool Cli::defaultAction(ArgBase & arg, const std::string & val) {
 ***/
 
 //===========================================================================
+static bool expandResponseFile(
+    Cli & cli, 
+    vector<string> & args, 
+    int & pos, 
+    set<fs::path> & expanded) {
+    ignore = expanded;
+    error_code err;
+    fs::path fn = args[pos].substr(1);
+    fs::path cfn = fs::canonical(fn, err);
+    if (err) 
+        return cli.badUsage("Invalid response file: '" + fn.string() + "'");
+
+    return true;
+}
+
+//===========================================================================
+static bool expandResponseFiles(Cli & cli, vector<string> & args) {
+    set<fs::path> expanded;
+    for (int pos = 0; pos < args.size(); ++pos) {
+        if (!args[pos].empty() && args[pos][0] == '@') {
+            if (!expandResponseFile(cli, args, pos, expanded))
+                return false;
+        }
+    }
+    return true;
+}
+
+//===========================================================================
 void Cli::resetValues() {
     for (auto && arg : m_args) {
         arg->reset();
@@ -230,30 +259,34 @@ bool Cli::parseAction(
 }
 
 //===========================================================================
-bool Cli::badUsage(const string & msg) {
+bool Cli::fail(int code, const string & msg) {
     m_errMsg = msg;
-    m_exitCode = kExitUsage;
+    m_exitCode = code;
     return false;
 }
 
 //===========================================================================
-bool Cli::parse(const vector<const char *> & args) {
-    resetValues();
-    const char * const * argv = args.data();
-
+bool Cli::parse(vector<string> & args) {
     // the 0th (name of this program) arg should always be present
-    assert(*argv);
+    assert(!args.empty());
+
+    resetValues();
+    if (!expandResponseFiles(*this, args))
+        return false;
+
+    auto arg = args.data();
+    auto argc = args.size();
 
     string name;
     unsigned pos = 0;
     bool moreOpts = true;
-    m_progName = *argv;
+    m_progName = *arg;
     int argPos = 1;
-    argv += 1;
+    arg += 1;
 
-    for (; *argv; ++argPos, ++argv) {
+    for (; argPos < argc; ++argPos, ++arg) {
         ArgName argName;
-        const char * ptr = *argv;
+        const char * ptr = arg->c_str();
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
             for (; *ptr && *ptr != '-'; ++ptr) {
@@ -335,14 +368,13 @@ bool Cli::parse(const vector<const char *> & args) {
             continue;
         }
         argPos += 1;
-        argv += 1;
-        if (!*argv) {
+        arg += 1;
+        if (argPos == argc) {
             return badUsage("No value given for " + name);
         }
-        if (!parseAction(*argName.arg, name, argPos, *argv))
+        if (!parseAction(*argName.arg, name, argPos, arg->c_str()))
             return false;
     }
-    assert(argPos == args.size() - 1);
 
     if (pos < size(m_argNames) && !m_argNames[pos].optional) {
         return badUsage("No value given for " + m_argNames[pos].name);
@@ -351,7 +383,7 @@ bool Cli::parse(const vector<const char *> & args) {
 }
 
 //===========================================================================
-bool Cli::parse(ostream & os, const vector<const char *> & args) {
+bool Cli::parse(ostream & os, vector<string> & args) {
     if (parse(args))
         return true;
     if (exitCode())
@@ -361,24 +393,14 @@ bool Cli::parse(ostream & os, const vector<const char *> & args) {
 
 //===========================================================================
 bool Cli::parse(size_t argc, char * argv[]) {
-    vector<const char *> args(argv, argv + argc + 1);
+    auto args = toArgv(argc, argv);
     return parse(args);
 }
 
 //===========================================================================
 bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
-    vector<const char *> args(argv, argv + argc + 1);
+    auto args = toArgv(argc, argv);
     return parse(os, args);
-}
-
-//===========================================================================
-bool Cli::parse(const vector<string> & args) {
-    return parse(toPtrArgv(args));
-}
-
-//===========================================================================
-bool Cli::parse(std::ostream & os, const vector<string> & args) {
-    return parse(os, toPtrArgv(args));
 }
 
 

@@ -22,8 +22,18 @@ vector<string> Cli::toArgv(const string & cmdline) {
 #if defined(_WIN32)
     return toWindowsArgv(cmdline);
 #else
-    return splitGlib(cmdline);
+    return toGnuArgv(cmdline);
 #endif
+}
+
+//===========================================================================
+// static
+std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
+    vector<string> out;
+    for (; *argv; ++argv)
+        out.push_back(*argv);
+    assert(argc == out.size());
+    return out;
 }
 
 //===========================================================================

@@ -58,6 +58,7 @@ public:
 
     //-----------------------------------------------------------------------
     // Configuration
+
     template <typename T,
               typename U,
               typename = enable_if<is_convertible<U, T>::value>::type>
@@ -94,16 +95,19 @@ public:
 
     //-----------------------------------------------------------------------
     // Parsing
+
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
-    bool parse(const std::vector<const char *> & args);
-    bool parse(std::ostream & os, const std::vector<const char *> & args);
-    bool parse(const std::vector<std::string> & args);
-    bool parse(std::ostream & os, const std::vector<std::string> & args);
+
+    // "args" is non-const so response files can be expanded in place
+    bool parse(std::vector<std::string> & args);
+    bool parse(std::ostream & os, std::vector<std::string> & args);
 
     // Parse cmdline into vector of args, using the default conventions 
     // (Gnu or Windows) of the platform.
     static std::vector<std::string> toArgv(const std::string & cmdline);
+    // Copy array of pointers into vector of args 
+    static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Create vector of pointers suitable for use with argc/argv APIs, includes
     // trailing null, so use "size() - 1" for argc. The return values point
     // into the source string vector and are only valid until that vector is
@@ -122,10 +126,11 @@ public:
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
-    bool badUsage(const std::string & msg);
+    bool badUsage(const std::string & msg) { return fail(kExitUsage, msg); }
 
     //-----------------------------------------------------------------------
     // Inspection after parsing
+
     int exitCode() const { return m_exitCode; };
     const std::string & errMsg() const { return m_errMsg; }
 
@@ -137,21 +142,23 @@ public:
     int writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
 private:
-    std::string optionList(ArgBase & arg) const;
-    std::string optionList(ArgBase & arg, bool disableOptions) const;
-
     bool defaultAction(ArgBase & arg, const std::string & val);
 
     void addLongName(
         const std::string & name, ArgBase * arg, bool invert, bool optional);
     void addArgName(const std::string & name, ArgBase * arg);
     void addArg(std::unique_ptr<ArgBase> ptr);
-    bool parseAction(
-        ArgBase & out, const std::string & name, int pos, const char src[]);
 
     template <typename Arg, typename Value, typename Ptr>
     std::shared_ptr<Value> getProxy(Ptr * ptr);
     template <typename A> A & addArg(std::unique_ptr<A> ptr);
+
+    bool parseAction(
+        ArgBase & out, const std::string & name, int pos, const char src[]);
+    bool fail(int code, const std::string & msg);
+
+    std::string optionList(ArgBase & arg) const;
+    std::string optionList(ArgBase & arg, bool disableOptions) const;
 
     struct ArgName {
         ArgBase * arg;

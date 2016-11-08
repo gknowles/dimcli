@@ -18,11 +18,14 @@ bool parseTest(Dim::Cli & cli, vector<char *> args) {
 }
 
 //===========================================================================
-int main() {
+int main(int argc, char * argv[]) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
 
     Dim::Cli cli;
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+
     auto & sum = cli.arg<int>("n number", 1)
                      .desc("numbers to multiply")
                      .action([](auto & cli, auto & arg, const string & val) {
