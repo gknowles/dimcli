@@ -362,7 +362,7 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
 
 //===========================================================================
 bool Cli::parse(const string & cmdline) {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
     return parse(splitWindows(cmdline));
 #else
     return parse(splitGlib(cmdline));
@@ -371,7 +371,7 @@ bool Cli::parse(const string & cmdline) {
 
 //===========================================================================
 bool Cli::parse(std::ostream & os, const string & cmdline) {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
     return parse(os, splitWindows(cmdline));
 #else
     return parse(os, splitGlib(cmdline));
@@ -528,6 +528,17 @@ IN_DQUOTE:
 }
 
 //===========================================================================
+// Rules defined in the "Parsing C++ Command-Line Arguments" article on MSDN.
+//
+// Arguments are split on whitespace (" \t") unless the whitespace is quoted.
+// - double quotes: preserves whitespace that would otherwise end the 
+//   argument, can occur in the midst of an argument.
+// - backslashes: 
+//   - an even number followed by a double quote adds one backslash for each 
+//     pair and the quote is a delimiter.
+//   - an odd number followed by a double quote adds one backslash for each 
+//     pair, the last one is tossed, and the quote is added to the argument.
+//   - any number not followed by a double quote are literals.
 vector<string> Cli::splitWindows(const string & cmdline) const {
     vector<string> out;
     const char * cur = cmdline.c_str();
