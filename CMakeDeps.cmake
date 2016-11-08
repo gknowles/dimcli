@@ -4,10 +4,3 @@
 # README.md
 # appveyor.yml
 # docs/README.md
-# docs/build.bat
-# docs/friendly.css
-# docs/index.erb
-# docs/index.html
-# docs/readme.md.html
-# docs/strapdown.css
-# docs/strapdown.js
