@@ -75,12 +75,12 @@ int main() {
     parseTest(cli, {"--count"});
 
     vector<string> args;
-    args = cli.splitWindows(R"( a "" "c )");
-    args = cli.splitWindows(R"(a"" b ")");
-    args = cli.splitWindows(R"("abc" d e)");
-    args = cli.splitWindows(R"(a\\\b d"e f"g h)");
-    args = cli.splitWindows(R"(a\\\"b c d)");
-    args = cli.splitWindows(R"(a\\\\"b c" d e)");
+    args = cli.toWindowsArgv(R"( a "" "c )");
+    args = cli.toWindowsArgv(R"(a"" b ")");
+    args = cli.toWindowsArgv(R"("abc" d e)");
+    args = cli.toWindowsArgv(R"(a\\\b d"e f"g h)");
+    args = cli.toWindowsArgv(R"(a\\\"b c d)");
+    args = cli.toWindowsArgv(R"(a\\\\"b c" d e)");
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

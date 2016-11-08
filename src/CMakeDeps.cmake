@@ -2,6 +2,7 @@
 # ../include/dim/cli.h
 # ../include/dim/config.h
 # ../include/dim/util.h
+# argv.cpp
 # cli.cpp
 # pch.cpp
 # pch.h

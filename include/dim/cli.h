@@ -101,9 +101,13 @@ public:
     bool parse(const std::vector<std::string> & args);
     bool parse(std::ostream & os, const std::vector<std::string> & args);
 
-    // Split command line into args using platform specific rules
-    std::vector<std::string> splitGlib(const std::string & cmdline) const;
-    std::vector<std::string> splitWindows(const std::string & cmdline) const;
+    // Parse according to glib conventions, based on the UNIX98 spec
+    static std::vector<std::string> toGlibArgv(const std::string & cmdline);
+    // Parse using Windows rules
+    static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
+    // Create vector of pointers suitable for use with argc/argv APIs
+    static std::vector<const char *>
+    toPtrArgv(const std::vector<std::string> & args);
 
     void resetValues();
 
