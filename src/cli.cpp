@@ -360,6 +360,325 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
     return false;
 }
 
+//===========================================================================
+bool Cli::parse(const string & cmdline) {
+    return parse(split_windows(cmdline));
+}
+
+//===========================================================================
+bool Cli::parse(std::ostream & os, const string & cmdline) {
+    return parse(os, split_windows(cmdline));
+}
+
+//===========================================================================
+static vector<const char *> copyToArgv(const vector<string> & args) {
+    vector<const char *> argv;
+    for (auto && arg : args)
+        argv.push_back(arg.data());
+    argv.push_back(nullptr);
+    return argv;
+}
+
+//===========================================================================
+bool Cli::parse(const vector<string> & args) {
+    auto argv = copyToArgv(args);
+    return parse(argv.size() - 1, const_cast<char **>(argv.data()));
+}
+
+//===========================================================================
+bool Cli::parse(std::ostream & os, const vector<string> & args) {
+    auto argv = copyToArgv(args);
+    return parse(os, argv.size() - 1, const_cast<char **>(argv.data()));
+}
+
+//===========================================================================
+// These rules where gleaned by inspecting glib's g_shell_parse_argv which
+// takes its rules from the "Shell Command Language" section of the UNIX98
+// spec -- ignoring parameter expansion ("$()" and "${}"), command
+// substitution (backquote `), operators as separators, etc.
+//
+// Arguments are split on whitespace (" \t\r\n\f\v") unless the whitespace
+// is escaped, quoted, or in a comment.
+// - unquoted: any char following a backslash is replaced by that char,
+//   except newline, which is removed. An unquoted '#' starts a comment.
+// - comment: everything up to, but not including, the next newline is ignored
+// - single quotes: preserve the string exactly, no escape sequences, not
+//   even \'
+// - double quotes: some chars ($ ' " \ and newline) are escaped when
+//   following a backslash, a backslash not followed one of those five chars
+//   is preserved. All other chars are preserved.
+//
+// When escaping it's simplest to not quote and just escape the following:
+//   Must: | & ; < > ( ) $ ` \ " ' SP TAB LF
+//   Should: * ? [ # ~ = %
+vector<string> Cli::split_glib(const string & cmdline) const {
+    vector<string> out;
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
+
+    string arg;
+
+IN_GAP:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\':
+            if (cur < last) {
+                ch = *cur++;
+                if (ch == '\n')
+                    break;
+            }
+            arg += ch;
+            goto IN_UNQUOTED;
+        default: arg += ch; goto IN_UNQUOTED;
+        case '"': goto IN_DQUOTE;
+        case '\'': goto IN_SQUOTE;
+        case '#': goto IN_COMMENT;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+        case '\f':
+        case '\v': break;
+        }
+    }
+    return out;
+
+IN_COMMENT:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\r':
+        case '\n': goto IN_GAP;
+        }
+    }
+    return out;
+
+IN_UNQUOTED:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\':
+            if (cur < last) {
+                ch = *cur++;
+                if (ch == '\n')
+                    break;
+            }
+            arg += ch;
+            break;
+        default: arg += ch; break;
+        case '"': goto IN_DQUOTE;
+        case '\'': goto IN_SQUOTE;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+        case '\f':
+        case '\v':
+            out.push_back(move(arg));
+            arg.clear();
+            goto IN_GAP;
+        }
+    }
+    out.push_back(move(arg));
+    return out;
+
+IN_SQUOTE:
+    while (cur < last) {
+        char ch = *cur++;
+        if (ch == '\'')
+            goto IN_UNQUOTED;
+        arg += ch;
+    }
+    out.push_back(move(arg));
+    return out;
+
+IN_DQUOTE:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '"': goto IN_UNQUOTED;
+        case '\\':
+            if (cur < last) {
+                ch = *cur++;
+                switch (ch) {
+                case '$':
+                case '\'':
+                case '"':
+                case '\\': break;
+                case '\n': continue;
+                default: arg += '\\';
+                }
+            }
+            arg += ch;
+            break;
+        default: arg += ch; break;
+        }
+    }
+    out.push_back(move(arg));
+    return out;
+}
+
+//===========================================================================
+vector<string> Cli::split_windows(const string & cmdline) const {
+    vector<string> out;
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
+
+    string arg;
+    int backslashes = 0;
+
+    auto appendBackslashes = [&arg, &backslashes]() {
+        if (backslashes) {
+            arg.append(backslashes, '\\');
+            backslashes = 0;
+        }
+    };
+
+IN_GAP:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\': backslashes += 1; goto IN_UNQUOTED;
+        case '"': goto IN_QUOTED;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n': break;
+        default: arg += ch; goto IN_UNQUOTED;
+        }
+    }
+    return out;
+
+IN_UNQUOTED:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\': backslashes += 1; break;
+        case '"':
+            if (int num = backslashes) {
+                backslashes = 0;
+                arg.append(num / 2, '\\');
+                if (num % 2 == 1) {
+                    arg += ch;
+                    break;
+                }
+            }
+            goto IN_QUOTED;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+            appendBackslashes();
+            out.push_back(move(arg));
+            arg.clear();
+            goto IN_GAP;
+        default:
+            appendBackslashes();
+            arg += ch;
+            break;
+        }
+    }
+    appendBackslashes();
+    out.push_back(move(arg));
+    return out;
+
+IN_QUOTED:
+    while (cur < last) {
+        char ch = *cur++;
+        switch (ch) {
+        case '\\': backslashes += 1; break;
+        case '"':
+            if (int num = backslashes) {
+                backslashes = 0;
+                arg.append(num / 2, '\\');
+                if (num % 2 == 1) {
+                    arg += ch;
+                    break;
+                }
+            }
+            goto IN_UNQUOTED;
+        default:
+            appendBackslashes();
+            arg += ch;
+            break;
+        }
+    }
+    appendBackslashes();
+    out.push_back(move(arg));
+    return out;
+}
+
+#if 0
+//===========================================================================
+vector<string> Cli::split_windows(const string & cmdline) const {
+    vector<string> out;
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
+
+    string arg;
+    int backslashes = 0;
+    enum { kGap, kUnquoted, kQuoted } state = kGap;
+
+    for (; cur < last; ++cur) {
+        char ch = *cur;
+        switch (ch) {
+        case '\\':
+            if (state == kGap)
+                state = kUnquoted;
+            backslashes += 1;
+            break;
+        case '"':
+            if (int num = backslashes) {
+                backslashes = 0;
+                arg.append(num / 2, '\\');
+                if (num % 2 == 1) {
+                    arg += ch;
+                    break;
+                }
+            }
+            state = (state == kQuoted) ? kUnquoted : kQuoted;
+            break;
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+            if (backslashes) {
+                arg.append(backslashes, '\\');
+                backslashes = 0;
+            }
+            switch (state) {
+            case kGap: break;
+            case kUnquoted:
+                state = kGap;
+                out.push_back(move(arg));
+                arg.clear();
+                break;
+            case kQuoted: arg += ch; break;
+            }
+            break;
+        default:
+            if (state == kGap) {
+                state = kUnquoted;
+            } else if (backslashes) {
+                arg.append(backslashes, '\\');
+                backslashes = 0;
+            }
+            arg += ch;
+            break;
+        }
+    }
+
+    if (state != kGap) {
+        if (backslashes)
+            arg.append(backslashes, '\\');
+        out.push_back(move(arg));
+    }
+
+    return out;
+}
+#endif
+
 
 /****************************************************************************
 *

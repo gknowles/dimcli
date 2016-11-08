@@ -74,6 +74,14 @@ int main() {
     parseTest(cli, {"-hc2", "-?"});
     parseTest(cli, {"--count"});
 
+    vector<string> args;
+    args = cli.split_windows(R"( a "" "c )");
+    args = cli.split_windows(R"(a"" b ")");
+    args = cli.split_windows(R"("abc" d e)");
+    args = cli.split_windows(R"(a\\\b d"e f"g h)");
+    args = cli.split_windows(R"(a\\\"b c d)");
+    args = cli.split_windows(R"(a\\\\"b c" d e)");
+
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
         return Dim::kExitSoftware;

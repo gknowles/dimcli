@@ -96,6 +96,13 @@ public:
     // Parsing
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
+    bool parse(const std::string & args);
+    bool parse(std::ostream & os, const std::string & args);
+    bool parse(const std::vector<std::string> & args);
+    bool parse(std::ostream & os, const std::vector<std::string> & args);
+
+    std::vector<std::string> split_glib(const std::string & cmdline) const;
+    std::vector<std::string> split_windows(const std::string & cmdline) const;
 
     void resetValues();
 
@@ -345,8 +352,8 @@ public:
     //    "--help".
     //
     // You can use arg.from() and arg.pos() to get the argument name that the
-    // value was attached to on the command line and its position in argv[]. 
-    // For bool arguments the source value string will always be either "0" 
+    // value was attached to on the command line and its position in argv[].
+    // For bool arguments the source value string will always be either "0"
     // or "1".
     //
     // If you just need support for a new type you can provide a std::istream
@@ -644,14 +651,13 @@ inline void Cli::ArgVec<T>::set(const std::string & name, int pos) {
 }
 
 //===========================================================================
-template <typename T> 
-inline const std::string & Cli::ArgVec<T>::from(size_t index) const { 
+template <typename T>
+inline const std::string & Cli::ArgVec<T>::from(size_t index) const {
     return index >= size() ? m_empty : m_proxy->m_matches[index].name;
 }
 
 //===========================================================================
-template <typename T>
-inline int Cli::ArgVec<T>::pos(size_t index) const { 
+template <typename T> inline int Cli::ArgVec<T>::pos(size_t index) const {
     return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
