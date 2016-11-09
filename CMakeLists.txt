@@ -67,10 +67,15 @@ if(MSVC)
     # /WX - treat warnings as errors
     # /Zi - debug info format - defaults to no info
     # /Zc:inline - all inline functions must have definition available
+    # /Zc:rvalueCast - enforce type conversion rules
+    # /Zc:strictStrings - disable string literal type conversion to non-const
     # /GF - string pooling
     # /EHsc (UNUSED) - exceptions from c++ only (not from structure or "C")
     # /Yu - use precompiled header
-    set(CMAKE_CXX_FLAGS "/std:c++latest /W4 /WX /Zi /Zc:inline /GF /Yupch.h")
+    set(CMAKE_CXX_FLAGS "\
+        /std:c++latest /W4 /WX /Zi \
+        /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
+        /GF /Yupch.h")
 
     # /Od - disables optimization
     # /RTC1 - runtime checks (stack frame over/under run and uninit var use)
