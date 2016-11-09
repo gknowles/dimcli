@@ -30,6 +30,7 @@ vector<string> Cli::toArgv(const string & cmdline) {
 // static
 std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
     vector<string> out;
+    out.reserve(argc);
     for (; *argv; ++argv)
         out.push_back(*argv);
     assert(argc == out.size());
@@ -38,8 +39,23 @@ std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
 
 //===========================================================================
 // static
+std::vector<std::string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
+    vector<string> out;
+    out.reserve(argc);
+    wstring_convert<codecvt_utf8<wchar_t>, wchar_t> cvt("BadEncoding");
+    for (; *argv; ++argv) {
+        string tmp = cvt.to_bytes(*argv);
+        out.push_back(move(tmp));
+    }
+    assert(argc == out.size());
+    return out;
+}
+
+//===========================================================================
+// static
 vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
     vector<const char *> argv;
+    argv.reserve(args.size() + 1);
     for (auto && arg : args)
         argv.push_back(arg.data());
     argv.push_back(nullptr);

@@ -108,6 +108,8 @@ public:
     static std::vector<std::string> toArgv(const std::string & cmdline);
     // Copy array of pointers into vector of args 
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
+    // Copy array of wchar_t pointers into vector of utf-8 encoded args 
+    static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
     // Create vector of pointers suitable for use with argc/argv APIs, includes
     // trailing null, so use "size() - 1" for argc. The return values point
     // into the source string vector and are only valid until that vector is
