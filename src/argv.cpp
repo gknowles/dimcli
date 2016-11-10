@@ -42,9 +42,9 @@ std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
 std::vector<std::string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
-    wstring_convert<codecvt_utf8<wchar_t>, wchar_t> cvt("BadEncoding");
+    wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("BAD_ENCODING");
     for (; *argv; ++argv) {
-        string tmp = cvt.to_bytes(*argv);
+        string tmp = wcvt.to_bytes(*argv);
         out.push_back(move(tmp));
     }
     assert(argc == out.size());

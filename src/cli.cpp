@@ -199,30 +199,150 @@ bool Cli::defaultAction(ArgBase & arg, const std::string & val) {
 
 /****************************************************************************
 *
-*   Parse
+*   Response files
 *
 ***/
+
+// forward declarations
+static bool expandResponseFiles(
+    Cli & cli, 
+    vector<string> & args, 
+    set<fs::path> & expanded
+);
+
+namespace {
+enum UtfType {
+    kUtfUnknown,
+    kUtf8,
+    kUtf16BE,
+    kUtf16LE,
+    kUtf32BE,
+    kUtf32LE,
+};
+} // namespace
+
+//===========================================================================
+// How byte order mark detection works:
+//   https://en.wikipedia.org/wiki/Byte_order_mark#Representations_of_byte
+//      _order_marks_by_encoding
+static UtfType utfBomType(const char bytes[], size_t count) {
+    if (count >= 2) {
+        switch (bytes[0]) {
+        case 0:
+            if (count >= 4 && bytes[1] == 0 && bytes[2] == '\xfe' 
+                && bytes[3] == '\xff') {
+                return kUtf32BE;
+            }
+            break;
+        case '\xef':
+            if (count >= 3 && bytes[1] == '\xbb' && bytes[2] == '\xbf')
+                return kUtf8;
+            break;
+        case '\xfe':
+            if (bytes[1] == '\xff')
+                return kUtf16BE;
+            break;
+        case '\xff':
+            if (bytes[1] == '\xfe') {
+                if (count >= 4 && bytes[2] == 0 && bytes[3] == 0)
+                    return kUtf32LE;
+                return kUtf16LE;
+            }
+            break;
+        }
+    }
+    return kUtfUnknown;
+}
+
+//===========================================================================
+constexpr size_t utfBomSize(UtfType type) {
+    return type == kUtf8 ? 3
+        : (type == kUtf16BE || type == kUtf16LE) ? 2
+        : (type == kUtf32BE || type == kUtf32LE) ? 4
+        : 0;
+}
+
+//===========================================================================
+// Returns false on error, if there was an error content will either be empty
+// or - if there was a transcoding error - contain the original content.
+static bool loadFileUtf8(string & content, const fs::path & fn) {
+    content.clear();
+
+    error_code err;
+    auto bytes = fs::file_size(fn, err);
+    if (err) 
+        return false;
+
+    content.resize(bytes);
+    ifstream f(fn, ios::binary);
+    f.read(content.data(), content.size());
+    if (!f) {
+        content.clear();
+        return false;
+    }
+    f.close();
+
+    auto bom = utfBomType(content.data(), content.size());
+    if (bom == kUtfUnknown) {
+        return true;
+    } else if (bom == kUtf8) {
+        content.erase(0, utfBomSize(kUtf8));
+    } else if (bom == kUtf16LE) {
+        wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("");
+        const wchar_t * base = reinterpret_cast<const wchar_t *>(content.data());
+        string tmp = wcvt.to_bytes(base + 1, base + content.size() / 2);
+        if (tmp.empty())
+            return false;
+        content = tmp;
+    } else {
+        return false;
+    }
+    return true;
+}
 
 //===========================================================================
 static bool expandResponseFile(
     Cli & cli, 
     vector<string> & args, 
-    int & pos, 
+    size_t & pos, 
     set<fs::path> & expanded) {
     ignore = expanded;
+    string content;
     error_code err;
     fs::path fn = args[pos].substr(1);
     fs::path cfn = fs::canonical(fn, err);
     if (err) 
-        return cli.badUsage("Invalid response file: '" + fn.string() + "'");
-
+        return cli.badUsage("Invalid response file: " + fn.string());
+    auto ib = expanded.insert(cfn);
+    if (!ib.second)
+        return cli.badUsage("Recursive response file: " + fn.string());
+    if (!loadFileUtf8(content, fn)) {
+        string desc = content.empty() ? "Read error" : "Invalid encoding";
+        return cli.badUsage(desc + ": " + fn.string());
+    }
+    auto rargs = cli.toArgv(content);
+    if (!expandResponseFiles(cli, rargs, expanded))
+        return false;
+    if (rargs.empty()) {
+        args.erase(args.begin() + pos);
+    } else {
+        args.insert(args.begin() + pos + 1, rargs.size() - 1, {});
+        auto i = args.begin() + pos;
+        for (auto && arg : rargs) 
+            *i++ = move(arg);
+        pos += rargs.size();
+    }
+    expanded.erase(ib.first);
     return true;
 }
 
 //===========================================================================
-static bool expandResponseFiles(Cli & cli, vector<string> & args) {
-    set<fs::path> expanded;
-    for (int pos = 0; pos < args.size(); ++pos) {
+static bool expandResponseFiles(
+    Cli & cli, 
+    vector<string> & args, 
+    set<fs::path> & expanded
+) {
+    for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
             if (!expandResponseFile(cli, args, pos, expanded))
                 return false;
@@ -230,6 +350,13 @@ static bool expandResponseFiles(Cli & cli, vector<string> & args) {
     }
     return true;
 }
+
+
+/****************************************************************************
+*
+*   Parse
+*
+***/
 
 //===========================================================================
 void Cli::resetValues() {
@@ -271,7 +398,8 @@ bool Cli::parse(vector<string> & args) {
     assert(!args.empty());
 
     resetValues();
-    if (!expandResponseFiles(*this, args))
+    set<fs::path> expanded;
+    if (!expandResponseFiles(*this, args, expanded))
         return false;
 
     auto arg = args.data();

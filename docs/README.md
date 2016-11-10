@@ -335,11 +335,10 @@ Example:
 // printing vectors as comma separated is annoying...
 template<typename T> 
 ostream & operator<< (ostream & os, const vector<T> & v) {
-    auto b = v.begin();
-    auto e = v.end();
-    if (b != e) {
-        os << *b++;
-        for (; b != e; ++b) os << ", " << *b;
+    auto i = v.begin(), e = v.end();
+    if (i != e) {
+        os << *i++;
+        for (; i != e; ++i) os << ", " << *i;
     }
     return os;
 }
@@ -374,11 +373,69 @@ Comparing (red delicious, honeycrisp) and (mandarin, navel).
 
 ## Special Arguments
 
-| Value | Description                                               |
-|-------|-----------------------------------------------------------|
-| "-"   | Passed in as a positional argument.                       |
-| "--"  | Thrown away, but makes all remaining arguments positional |
+| Value      | Description                                                |
+|------------|------------------------------------------------------------|
+| "-"        | Passed in as a positional argument.                        |
+| "--"       | Thrown away, but makes all remaining arguments positional  |
+| "@\<file>" | [Response file](#response_files) with additional arguments |
 
+
+## Response Files
+A response file is a collection of frequently used or generated arguments 
+saved as text, often with a ".rsp" extension, that is substituted into the
+command line when referenced.
+
+What you write:
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & words = cli.argVec<string>("[words]").desc("Things you say.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Words:";
+    for (auto & w : words)
+        cout << " " << w;
+    return EX_OK;
+}
+~~~
+What happens later:
+
+~~~ console
+$ a.out --help
+Usage: a.out [OPTIONS] [words...]
+  words     Things you say.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out a b
+Words: a b
+$ echo c >one.rsp
+$ a.out a b @one.rsp d
+Words: a b c d
+~~~
+Response files can be used multiple times and the arguments in them can be 
+broken into multiple lines:
+
+~~~ console
+$ echo d >one.rsp
+$ echo e >>one.rsp
+$ a.out x @one.rsp y @one.rsp
+Words: x d e y d e
+~~~
+Response files also can be nested, when a response file contains a reference 
+to another response file the path is relative to the parent response file, 
+not to the working directory.
+
+~~~ console
+$ md rsp & cd rsp
+$ echo one @more.rsp >one.rsp
+$ echo two three >more.rsp
+$ cd ..
+$ a.out @rsp/one.rsp
+Words: one two three
+~~~
 
 ## Optional Values
 You use the '?' [flag](#argument_names) on an argument name to indicate that

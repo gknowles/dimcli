@@ -7,10 +7,10 @@ using namespace std;
 static int s_errors;
 
 //===========================================================================
-bool parseTest(Dim::Cli & cli, vector<char *> args) {
+bool parseTest(Dim::Cli & cli, vector<const char *> args) {
     args.insert(args.begin(), "test.exe");
     args.push_back(nullptr);
-    if (cli.parse(cerr, size(args) - 1, data(args)))
+    if (cli.parse(cerr, size(args) - 1, const_cast<char **>(data(args))))
         return true;
     if (cli.exitCode())
         s_errors += 1;
