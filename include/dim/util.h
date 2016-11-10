@@ -28,8 +28,8 @@ auto stringTo_impl(T & out, const std::string & src, int)
 template <typename T>
 bool stringTo_impl(T & out, const std::string & src, long) {
     std::stringstream interpreter;
-    if (!(interpreter << src) || !(interpreter >> out) ||
-        !(interpreter >> std::ws).eof()) {
+    if (!(interpreter << src) || !(interpreter >> out)
+        || !(interpreter >> std::ws).eof()) {
         out = {};
         return false;
     }

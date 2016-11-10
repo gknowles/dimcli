@@ -59,9 +59,10 @@ public:
     //-----------------------------------------------------------------------
     // Configuration
 
-    template <typename T,
-              typename U,
-              typename = enable_if<is_convertible<U, T>::value>::type>
+    template <
+        typename T,
+        typename U,
+        typename = enable_if<is_convertible<U, T>::value>::type>
     Arg<T> & arg(T * value, const std::string & keys, const U & def);
 
     template <typename T> Arg<T> & arg(T * value, const std::string & keys);
@@ -76,9 +77,10 @@ public:
     template <typename T>
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
-    template <typename T,
-              typename U,
-              typename = enable_if<is_convertible<U, T>::value>::type>
+    template <
+        typename T,
+        typename U,
+        typename = enable_if<is_convertible<U, T>::value>::type>
     Arg<T> & arg(Arg<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
@@ -103,12 +105,12 @@ public:
     bool parse(std::vector<std::string> & args);
     bool parse(std::ostream & os, std::vector<std::string> & args);
 
-    // Parse cmdline into vector of args, using the default conventions 
+    // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.
     static std::vector<std::string> toArgv(const std::string & cmdline);
-    // Copy array of pointers into vector of args 
+    // Copy array of pointers into vector of args
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
-    // Copy array of wchar_t pointers into vector of utf-8 encoded args 
+    // Copy array of wchar_t pointers into vector of utf-8 encoded args
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
     // Create vector of pointers suitable for use with argc/argv APIs, includes
     // trailing null, so use "size() - 1" for argc. The return values point
