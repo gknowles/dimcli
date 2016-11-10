@@ -210,58 +210,6 @@ static bool expandResponseFiles(
     set<fs::path> & expanded
 );
 
-namespace {
-enum UtfType {
-    kUtfUnknown,
-    kUtf8,
-    kUtf16BE,
-    kUtf16LE,
-    kUtf32BE,
-    kUtf32LE,
-};
-} // namespace
-
-//===========================================================================
-// How byte order mark detection works:
-//   https://en.wikipedia.org/wiki/Byte_order_mark#Representations_of_byte
-//      _order_marks_by_encoding
-static UtfType utfBomType(const char bytes[], size_t count) {
-    if (count >= 2) {
-        switch (bytes[0]) {
-        case 0:
-            if (count >= 4 && bytes[1] == 0 && bytes[2] == '\xfe' 
-                && bytes[3] == '\xff') {
-                return kUtf32BE;
-            }
-            break;
-        case '\xef':
-            if (count >= 3 && bytes[1] == '\xbb' && bytes[2] == '\xbf')
-                return kUtf8;
-            break;
-        case '\xfe':
-            if (bytes[1] == '\xff')
-                return kUtf16BE;
-            break;
-        case '\xff':
-            if (bytes[1] == '\xfe') {
-                if (count >= 4 && bytes[2] == 0 && bytes[3] == 0)
-                    return kUtf32LE;
-                return kUtf16LE;
-            }
-            break;
-        }
-    }
-    return kUtfUnknown;
-}
-
-//===========================================================================
-constexpr size_t utfBomSize(UtfType type) {
-    return type == kUtf8 ? 3
-        : (type == kUtf16BE || type == kUtf16LE) ? 2
-        : (type == kUtf32BE || type == kUtf32LE) ? 4
-        : 0;
-}
-
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
 // or - if there was a transcoding error - contain the original content.
@@ -282,20 +230,18 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     }
     f.close();
 
-    auto bom = utfBomType(content.data(), content.size());
-    if (bom == kUtfUnknown) {
+    if (content.size() < 2)
         return true;
-    } else if (bom == kUtf8) {
-        content.erase(0, utfBomSize(kUtf8));
-    } else if (bom == kUtf16LE) {
+    if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("");
         const wchar_t * base = reinterpret_cast<const wchar_t *>(content.data());
         string tmp = wcvt.to_bytes(base + 1, base + content.size() / 2);
         if (tmp.empty())
             return false;
         content = tmp;
-    } else {
-        return false;
+    } else if (content.size() >= 3 
+        && content[0] == '\xef' && content[1] == '\xbb' && content[2] == '\xbf') {
+        content.erase(0, 3);
     }
     return true;
 }
