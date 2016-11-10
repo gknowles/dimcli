@@ -59,9 +59,10 @@ public:
     //-----------------------------------------------------------------------
     // Configuration
 
-    template <typename T,
-              typename U,
-              typename = enable_if<is_convertible<U, T>::value>::type>
+    template <
+        typename T,
+        typename U,
+        typename = enable_if<is_convertible<U, T>::value>::type>
     Arg<T> & arg(T * value, const std::string & keys, const U & def);
 
     template <typename T> Arg<T> & arg(T * value, const std::string & keys);
@@ -76,9 +77,10 @@ public:
     template <typename T>
     ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
 
-    template <typename T,
-              typename U,
-              typename = enable_if<is_convertible<U, T>::value>::type>
+    template <
+        typename T,
+        typename U,
+        typename = enable_if<is_convertible<U, T>::value>::type>
     Arg<T> & arg(Arg<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
@@ -103,12 +105,12 @@ public:
     bool parse(std::vector<std::string> & args);
     bool parse(std::ostream & os, std::vector<std::string> & args);
 
-    // Parse cmdline into vector of args, using the default conventions 
+    // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.
     static std::vector<std::string> toArgv(const std::string & cmdline);
-    // Copy array of pointers into vector of args 
+    // Copy array of pointers into vector of args
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
-    // Copy array of wchar_t pointers into vector of utf-8 encoded args 
+    // Copy array of wchar_t pointers into vector of utf-8 encoded args
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
     // Create vector of pointers suitable for use with argc/argv APIs, includes
     // trailing null, so use "size() - 1" for argc. The return values point
@@ -147,7 +149,10 @@ private:
     bool defaultAction(ArgBase & arg, const std::string & val);
 
     void addLongName(
-        const std::string & name, ArgBase * arg, bool invert, bool optional);
+        const std::string & name,
+        ArgBase * arg,
+        bool invert,
+        bool optional);
     void addArgName(const std::string & name, ArgBase * arg);
     void addArg(std::unique_ptr<ArgBase> ptr);
 
@@ -156,7 +161,10 @@ private:
     template <typename A> A & addArg(std::unique_ptr<A> ptr);
 
     bool parseAction(
-        ArgBase & out, const std::string & name, int pos, const char src[]);
+        ArgBase & out,
+        const std::string & name,
+        int pos,
+        const char src[]);
     bool fail(int code, const std::string & msg);
 
     std::string optionList(ArgBase & arg) const;
@@ -545,7 +553,9 @@ private:
 //===========================================================================
 template <typename T>
 inline Cli::Arg<T>::Arg(
-    std::shared_ptr<Value<T>> value, const std::string & keys, const T & def)
+    std::shared_ptr<Value<T>> value,
+    const std::string & keys,
+    const T & def)
     : ArgShim<Arg, T>{keys, std::is_same<T, bool>::value}
     , m_proxy{value} {
     m_defValue = def;
@@ -657,7 +667,9 @@ private:
 //===========================================================================
 template <typename T>
 inline Cli::ArgVec<T>::ArgVec(
-    std::shared_ptr<ValueVec<T>> values, const std::string & keys, int nargs)
+    std::shared_ptr<ValueVec<T>> values,
+    const std::string & keys,
+    int nargs)
     : ArgShim<ArgVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values) {
     m_multiple = true;

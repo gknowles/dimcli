@@ -40,6 +40,7 @@ Cli::ArgBase::ArgBase(const std::string & names, bool boolean)
 *
 ***/
 
+// forward declarations
 static bool
 helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val);
 
@@ -88,7 +89,10 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
 
 //===========================================================================
 void Cli::addLongName(
-    const string & src, ArgBase * arg, bool invert, bool optional) {
+    const string & src,
+    ArgBase * arg,
+    bool invert,
+    bool optional) {
     bool allowNo = true;
     string key{src};
     if (key.back() == '.') {
@@ -205,10 +209,9 @@ bool Cli::defaultAction(ArgBase & arg, const std::string & val) {
 
 // forward declarations
 static bool expandResponseFiles(
-    Cli & cli, 
-    vector<string> & args, 
-    set<fs::path> & expanded
-);
+    Cli & cli,
+    vector<string> & args,
+    set<fs::path> & ancestors);
 
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
@@ -218,7 +221,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
     error_code err;
     auto bytes = fs::file_size(fn, err);
-    if (err) 
+    if (err)
         return false;
 
     content.resize(bytes);
@@ -234,13 +237,15 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("");
-        const wchar_t * base = reinterpret_cast<const wchar_t *>(content.data());
+        const wchar_t * base =
+            reinterpret_cast<const wchar_t *>(content.data());
         string tmp = wcvt.to_bytes(base + 1, base + content.size() / 2);
         if (tmp.empty())
             return false;
         content = tmp;
-    } else if (content.size() >= 3 
-        && content[0] == '\xef' && content[1] == '\xbb' && content[2] == '\xbf') {
+    } else if (
+        content.size() >= 3 && content[0] == '\xef' && content[1] == '\xbb'
+        && content[2] == '\xbf') {
         content.erase(0, 3);
     }
     return true;
@@ -248,18 +253,17 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
 //===========================================================================
 static bool expandResponseFile(
-    Cli & cli, 
-    vector<string> & args, 
-    size_t & pos, 
-    set<fs::path> & expanded) {
-    ignore = expanded;
+    Cli & cli,
+    vector<string> & args,
+    size_t & pos,
+    set<fs::path> & ancestors) {
     string content;
     error_code err;
     fs::path fn = args[pos].substr(1);
     fs::path cfn = fs::canonical(fn, err);
-    if (err) 
+    if (err)
         return cli.badUsage("Invalid response file: " + fn.string());
-    auto ib = expanded.insert(cfn);
+    auto ib = ancestors.insert(cfn);
     if (!ib.second)
         return cli.badUsage("Recursive response file: " + fn.string());
     if (!loadFileUtf8(content, fn)) {
@@ -267,30 +271,31 @@ static bool expandResponseFile(
         return cli.badUsage(desc + ": " + fn.string());
     }
     auto rargs = cli.toArgv(content);
-    if (!expandResponseFiles(cli, rargs, expanded))
+    if (!expandResponseFiles(cli, rargs, ancestors))
         return false;
     if (rargs.empty()) {
         args.erase(args.begin() + pos);
     } else {
         args.insert(args.begin() + pos + 1, rargs.size() - 1, {});
         auto i = args.begin() + pos;
-        for (auto && arg : rargs) 
+        for (auto && arg : rargs)
             *i++ = move(arg);
         pos += rargs.size();
     }
-    expanded.erase(ib.first);
+    ancestors.erase(ib.first);
     return true;
 }
 
 //===========================================================================
+// "ancestors" contains the set of response files these args came from,
+// directly or indirectly, and is used to detect recursive response files.
 static bool expandResponseFiles(
-    Cli & cli, 
-    vector<string> & args, 
-    set<fs::path> & expanded
-) {
+    Cli & cli,
+    vector<string> & args,
+    set<fs::path> & ancestors) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
-            if (!expandResponseFile(cli, args, pos, expanded))
+            if (!expandResponseFile(cli, args, pos, ancestors))
                 return false;
         }
     }
@@ -321,7 +326,10 @@ void Cli::resetValues() {
 
 //===========================================================================
 bool Cli::parseAction(
-    ArgBase & arg, const std::string & name, int pos, const char ptr[]) {
+    ArgBase & arg,
+    const std::string & name,
+    int pos,
+    const char ptr[]) {
     arg.set(name, pos);
     if (ptr) {
         return arg.parseAction(*this, ptr);
@@ -344,8 +352,8 @@ bool Cli::parse(vector<string> & args) {
     assert(!args.empty());
 
     resetValues();
-    set<fs::path> expanded;
-    if (!expandResponseFiles(*this, args, expanded))
+    set<fs::path> ancestors;
+    if (!expandResponseFiles(*this, args, ancestors))
         return false;
 
     auto arg = args.data();
@@ -411,7 +419,10 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option: " + name + "=");
                 }
                 if (!parseAction(
-                        *argName.arg, name, argPos, argName.invert ? "0" : "1"))
+                        *argName.arg,
+                        name,
+                        argPos,
+                        argName.invert ? "0" : "1"))
                     return false;
                 continue;
             }
@@ -628,8 +639,8 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
 
     // names
     for (auto && sn : m_shortNames) {
-        if (sn.second.arg != &arg ||
-            arg.m_bool && sn.second.invert == enableOptions) {
+        if (sn.second.arg != &arg
+            || arg.m_bool && sn.second.invert == enableOptions) {
             continue;
         }
         optional = sn.second.optional;
@@ -639,8 +650,8 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         list += sn.first;
     }
     for (auto && ln : m_longNames) {
-        if (ln.second.arg != &arg ||
-            arg.m_bool && ln.second.invert == enableOptions) {
+        if (ln.second.arg != &arg
+            || arg.m_bool && ln.second.invert == enableOptions) {
             continue;
         }
         optional = ln.second.optional;
