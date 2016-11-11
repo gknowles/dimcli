@@ -5,4 +5,5 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <locale>
 #include <set>
