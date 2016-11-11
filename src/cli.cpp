@@ -24,12 +24,47 @@ const size_t kMaxDescCol = 28;
 
 /****************************************************************************
 *
-*   Cli::ArgBase
+*   Declarations
+*
+***/
+
+// Name of group containing --help, --version, etc
+const std::string s_internalOptionGroup = "~";
+
+
+/****************************************************************************
+*
+*   CliBase::Group
 *
 ***/
 
 //===========================================================================
-Cli::ArgBase::ArgBase(const std::string & names, bool boolean)
+CliBase::Group::Group(Cli & cli, const std::string & name)
+    : m_cli(cli) 
+    , m_name(name)
+    {}
+
+//===========================================================================
+CliBase::Group & CliBase::Group::operator=(const Group & from) {
+    m_name = from.m_name;
+    return *this;
+}
+
+//===========================================================================
+CliBase::Group & CliBase::Group::groupDesc(const std::string & val) {
+    m_desc = val;
+    return *this;
+}
+
+
+/****************************************************************************
+*
+*   CliBase::ArgBase
+*
+***/
+
+//===========================================================================
+CliBase::ArgBase::ArgBase(const std::string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
 
@@ -40,12 +75,46 @@ Cli::ArgBase::ArgBase(const std::string & names, bool boolean)
 *
 ***/
 
+// forward declarations
 static bool
 helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val);
 
 //===========================================================================
-Cli::Cli() {
-    arg<bool>("help.").desc("Show this message and exit.").action(helpAction);
+Cli::Cli() : Group{*this, ""} {
+    groupDesc("Options");
+    arg<bool>("help.").desc("Show this message and exit.")
+        .action(helpAction).group(s_internalOptionGroup);
+}
+
+//===========================================================================
+CliBase::Group & Cli::group(const std::string name) {
+    if (name.empty()) {
+        return *this;
+    } else {
+        auto i = m_groups.find(name);
+        if (i == m_groups.end()) {
+            i = m_groups.emplace(make_pair(name, Group(*this, name))).first;
+        }
+        return i->second;
+    }
+}
+
+//===========================================================================
+Cli::Arg<bool> &
+Cli::versionArg(const std::string & version, const std::string & progName) {
+    auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
+        ignore = arg, val;
+        fs::path prog = progName;
+        if (prog.empty()) {
+            prog = cli.progName();
+            prog = prog.stem();
+        }
+        cout << prog << " version " << version << endl;
+        return false;
+    };
+    return group(s_internalOptionGroup).arg<bool>("version.")
+        .desc("Show version and exit.")
+        .action(verAction);
 }
 
 //===========================================================================
@@ -88,7 +157,10 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
 
 //===========================================================================
 void Cli::addLongName(
-    const string & src, ArgBase * arg, bool invert, bool optional) {
+    const string & src,
+    ArgBase * arg,
+    bool invert,
+    bool optional) {
     bool allowNo = true;
     string key{src};
     if (key.back() == '.') {
@@ -153,24 +225,6 @@ void Cli::addArgName(const string & name, ArgBase * arg) {
     addLongName(name, arg, !invert, !optional);
 }
 
-//===========================================================================
-Cli::Arg<bool> &
-Cli::versionArg(const std::string & version, const std::string & progName) {
-    auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
-        ignore = arg, val;
-        fs::path prog = progName;
-        if (prog.empty()) {
-            prog = cli.progName();
-            prog = prog.stem();
-        }
-        cout << prog << " version " << version << endl;
-        return false;
-    };
-    auto & ver = arg<bool>("version.").desc("Show version and exit.");
-    ver.action(verAction);
-    return ver;
-}
-
 
 /****************************************************************************
 *
@@ -205,10 +259,9 @@ bool Cli::defaultAction(ArgBase & arg, const std::string & val) {
 
 // forward declarations
 static bool expandResponseFiles(
-    Cli & cli, 
-    vector<string> & args, 
-    set<fs::path> & expanded
-);
+    Cli & cli,
+    vector<string> & args,
+    set<fs::path> & ancestors);
 
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
@@ -218,7 +271,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
     error_code err;
     auto bytes = fs::file_size(fn, err);
-    if (err) 
+    if (err)
         return false;
 
     content.resize(bytes);
@@ -234,13 +287,15 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("");
-        const wchar_t * base = reinterpret_cast<const wchar_t *>(content.data());
+        const wchar_t * base =
+            reinterpret_cast<const wchar_t *>(content.data());
         string tmp = wcvt.to_bytes(base + 1, base + content.size() / 2);
         if (tmp.empty())
             return false;
         content = tmp;
-    } else if (content.size() >= 3 
-        && content[0] == '\xef' && content[1] == '\xbb' && content[2] == '\xbf') {
+    } else if (
+        content.size() >= 3 && content[0] == '\xef' && content[1] == '\xbb'
+        && content[2] == '\xbf') {
         content.erase(0, 3);
     }
     return true;
@@ -248,18 +303,17 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
 //===========================================================================
 static bool expandResponseFile(
-    Cli & cli, 
-    vector<string> & args, 
-    size_t & pos, 
-    set<fs::path> & expanded) {
-    ignore = expanded;
+    Cli & cli,
+    vector<string> & args,
+    size_t & pos,
+    set<fs::path> & ancestors) {
     string content;
     error_code err;
     fs::path fn = args[pos].substr(1);
     fs::path cfn = fs::canonical(fn, err);
-    if (err) 
+    if (err)
         return cli.badUsage("Invalid response file: " + fn.string());
-    auto ib = expanded.insert(cfn);
+    auto ib = ancestors.insert(cfn);
     if (!ib.second)
         return cli.badUsage("Recursive response file: " + fn.string());
     if (!loadFileUtf8(content, fn)) {
@@ -267,30 +321,31 @@ static bool expandResponseFile(
         return cli.badUsage(desc + ": " + fn.string());
     }
     auto rargs = cli.toArgv(content);
-    if (!expandResponseFiles(cli, rargs, expanded))
+    if (!expandResponseFiles(cli, rargs, ancestors))
         return false;
     if (rargs.empty()) {
         args.erase(args.begin() + pos);
     } else {
         args.insert(args.begin() + pos + 1, rargs.size() - 1, {});
         auto i = args.begin() + pos;
-        for (auto && arg : rargs) 
+        for (auto && arg : rargs)
             *i++ = move(arg);
         pos += rargs.size();
     }
-    expanded.erase(ib.first);
+    ancestors.erase(ib.first);
     return true;
 }
 
 //===========================================================================
+// "ancestors" contains the set of response files these args came from,
+// directly or indirectly, and is used to detect recursive response files.
 static bool expandResponseFiles(
-    Cli & cli, 
-    vector<string> & args, 
-    set<fs::path> & expanded
-) {
+    Cli & cli,
+    vector<string> & args,
+    set<fs::path> & ancestors) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
-            if (!expandResponseFile(cli, args, pos, expanded))
+            if (!expandResponseFile(cli, args, pos, ancestors))
                 return false;
         }
     }
@@ -321,7 +376,10 @@ void Cli::resetValues() {
 
 //===========================================================================
 bool Cli::parseAction(
-    ArgBase & arg, const std::string & name, int pos, const char ptr[]) {
+    ArgBase & arg,
+    const std::string & name,
+    int pos,
+    const char ptr[]) {
     arg.set(name, pos);
     if (ptr) {
         return arg.parseAction(*this, ptr);
@@ -344,8 +402,8 @@ bool Cli::parse(vector<string> & args) {
     assert(!args.empty());
 
     resetValues();
-    set<fs::path> expanded;
-    if (!expandResponseFiles(*this, args, expanded))
+    set<fs::path> ancestors;
+    if (!expandResponseFiles(*this, args, ancestors))
         return false;
 
     auto arg = args.data();
@@ -411,7 +469,10 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option: " + name + "=");
                 }
                 if (!parseAction(
-                        *argName.arg, name, argPos, argName.invert ? "0" : "1"))
+                        *argName.arg,
+                        name,
+                        argPos,
+                        argName.invert ? "0" : "1"))
                     return false;
                 continue;
             }
@@ -493,6 +554,7 @@ struct WrapPos {
 } // namespace
 
 //===========================================================================
+// Write token, potentially adding a line break first.
 static void writeToken(ostream & os, WrapPos & wp, const std::string token) {
     if (wp.pos + token.size() + 1 > wp.maxWidth) {
         if (wp.pos > wp.prefix.size()) {
@@ -500,11 +562,16 @@ static void writeToken(ostream & os, WrapPos & wp, const std::string token) {
             wp.pos = wp.prefix.size();
         }
     }
-    os << ' ' << token;
-    wp.pos += token.size() + 1;
+    if (wp.pos) {
+        os << ' ';
+        wp.pos += 1;
+    }
+    os << token;
+    wp.pos += token.size();
 }
 
 //===========================================================================
+// Write series of tokens, collapsing (and potentially breaking on) spaces.
 static void writeText(ostream & os, WrapPos & wp, const string & text) {
     const char * base = text.c_str();
     for (;;) {
@@ -522,6 +589,8 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
 }
 
 //===========================================================================
+// Like text, except advance to descCol first, and indent any additional 
+// required lines to descCol.
 static void
 writeDesc(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
     if (wp.pos < descCol) {
@@ -542,11 +611,29 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
 
     // size arg column
     size_t colWidth = 0;
-    for (auto && pa : m_argNames)
+    for (auto && pa : m_argNames) {
+        // find widest positional argument name, with space for <>'s
         colWidth = max(colWidth, pa.name.size() + 2);
+    }
+    // find named args and the longest name list
+    struct ArgKey {
+        string sort; // sort by name list with leading dashes removed
+        string list;
+        ArgBase * arg;
+    };
+    vector<ArgKey> namedArgs;
     for (auto && arg : m_args) {
         string list = optionList(*arg);
-        colWidth = max(colWidth, list.size());
+        if (size_t width = list.size()) {
+            colWidth = max(colWidth, width);
+            ArgKey key;
+            key.arg = arg.get();
+            key.list = list;
+            while (list.size() && list[0] == '-')
+                list.erase(0, 1);
+            key.sort = list;
+            namedArgs.push_back(key);
+        }
     }
     colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
 
@@ -554,32 +641,52 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
     WrapPos wp;
     for (auto && pa : m_argNames) {
         wp.prefix.assign(4, ' ');
-        writeToken(os, wp, " <" + pa.name + ">");
+        writeToken(os, wp, "  <" + pa.name + ">");
         writeDesc(os, wp, pa.arg->m_desc, colWidth);
         os << '\n';
         wp.pos = 0;
     }
 
+    if (namedArgs.empty())
+        return exitCode();
+
     // named args
-    if (!m_shortNames.empty() || !m_longNames.empty()) {
-        os << "\nOptions:\n";
-        for (auto && arg : m_args) {
-            wp.prefix.assign(4, ' ');
-            string list = optionList(*arg, true);
-            if (arg->m_bool) {
-                string invert = optionList(*arg, false);
-                if (!invert.empty())
-                    list += " / " + invert;
-            }
-            if (list.empty())
-                continue;
-            os << ' ';
-            wp.pos = 1;
-            writeText(os, wp, list);
-            writeDesc(os, wp, arg->m_desc, colWidth);
+    sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
+        return tie(a.arg->m_group, a.sort) < tie(b.arg->m_group, b.sort);
+    });
+    const char * gname = nullptr;
+    for (auto && key : namedArgs) {
+        if (!gname || key.arg->m_group != gname) {
             os << '\n';
             wp.pos = 0;
+            gname = key.arg->m_group.c_str();
+            string desc;
+            if (!*gname) {
+                desc = groupDesc();
+            } else {
+                auto gi = m_groups.find(key.arg->m_group);
+                if (gi != m_groups.end())
+                    desc = gi->second.groupDesc();
+            }
+            if (desc.empty() && gname == s_internalOptionGroup && &key == namedArgs.data()) {
+                // First group and it's the internal group, give it a title
+                // so it's not just left hanging.
+                desc = "Options";
+            }
+            if (!desc.empty()) {
+                wp.prefix.clear();
+                writeText(os, wp, desc + ":");
+                os << '\n';
+                wp.pos = 0;
+            }
         }
+        wp.prefix.assign(4, ' ');
+        os << ' ';
+        wp.pos = 1;
+        writeText(os, wp, key.list);
+        writeDesc(os, wp, key.arg->m_desc, colWidth);
+        os << '\n';
+        wp.pos = 0;
     }
 
     return exitCode();
@@ -588,7 +695,7 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
 //===========================================================================
 int Cli::writeUsage(ostream & os, const string & progName) const {
     streampos base = os.tellp();
-    os << "usage: " << (progName.empty() ? m_progName : progName);
+    os << "usage: " << (progName.empty() ? m_progName : progName) << ' ';
     WrapPos wp;
     wp.maxWidth = 79;
     wp.pos = os.tellp() - base;
@@ -628,8 +735,8 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
 
     // names
     for (auto && sn : m_shortNames) {
-        if (sn.second.arg != &arg ||
-            arg.m_bool && sn.second.invert == enableOptions) {
+        if (sn.second.arg != &arg
+            || arg.m_bool && sn.second.invert == enableOptions) {
             continue;
         }
         optional = sn.second.optional;
@@ -639,8 +746,8 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         list += sn.first;
     }
     for (auto && ln : m_longNames) {
-        if (ln.second.arg != &arg ||
-            arg.m_bool && ln.second.invert == enableOptions) {
+        if (ln.second.arg != &arg
+            || arg.m_bool && ln.second.invert == enableOptions) {
             continue;
         }
         optional = ln.second.optional;
@@ -653,14 +760,11 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         return list;
 
     // value
-    if (foundLong) {
-        list += '=';
-    } else {
-        list += ' ';
-    }
     if (optional) {
-        list += "[" + arg.m_valueDesc + "]";
+        list += foundLong ? "[=" : " [";
+        list += arg.m_valueDesc + "]";
     } else {
+        list += foundLong ? '=' : ' ';
         list += arg.m_valueDesc;
     }
     return list;

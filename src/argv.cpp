@@ -42,7 +42,8 @@ std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
 std::vector<std::string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
-    wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("BAD_ENCODING");
+    wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt(
+        "BAD_ENCODING");
     for (; *argv; ++argv) {
         string tmp = wcvt.to_bytes(*argv);
         out.push_back(move(tmp));
@@ -194,7 +195,7 @@ IN_DQUOTE:
 }
 
 //===========================================================================
-// Rules from libiberty's buildargv(). 
+// Rules from libiberty's buildargv().
 //
 // Arguments split on unquoted whitespace (" \t\r\n\f\v")
 //  - backslashes: always escapes the following character.
@@ -215,15 +216,13 @@ IN_GAP:
         char ch = *cur++;
         switch (ch) {
         case '\\':
-            if (cur < last) 
+            if (cur < last)
                 ch = *cur++;
             arg += ch;
             goto IN_UNQUOTED;
         default: arg += ch; goto IN_UNQUOTED;
         case '\'':
-        case '"':
-            quote = ch;
-            goto IN_QUOTED;
+        case '"': quote = ch; goto IN_QUOTED;
         case ' ':
         case '\t':
         case '\r':
@@ -231,7 +230,7 @@ IN_GAP:
         case '\f':
         case '\v': break;
         }
-    }        
+    }
     return out;
 
 IN_UNQUOTED:
@@ -244,10 +243,8 @@ IN_UNQUOTED:
             arg += ch;
             break;
         default: arg += ch; break;
-        case '"': 
-        case '\'': 
-            quote = ch;
-            goto IN_QUOTED;
+        case '"':
+        case '\'': quote = ch; goto IN_QUOTED;
         case ' ':
         case '\t':
         case '\r':
@@ -268,7 +265,7 @@ IN_QUOTED:
         char ch = *cur++;
         if (ch == quote)
             goto IN_UNQUOTED;
-        if (ch == '\\' && cur < last) 
+        if (ch == '\\' && cur < last)
             ch = *cur++;
         arg += ch;
     }
