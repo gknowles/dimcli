@@ -36,7 +36,7 @@ test_script:
 
 deploy:
   tag: dimcli-latest
-  description: continuous trunk build $(appveyor_build_version)
+  description: continuous trunk build - $(appveyor_build_version)
   provider: GitHub
   auth_token:
     secure: yheCA/FJ+f7CL84HoPf9MapOlDZQmrGyiqlwFeeIhxvdOudQisUdOyZuWfwq3lUU
