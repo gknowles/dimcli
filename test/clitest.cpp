@@ -45,7 +45,8 @@ int main(int argc, char * argv[]) {
     auto & num = cli.arg<int>("n number", 1).desc("number is an int");
     cli.arg(num, "c").desc("alias for number").valueDesc("COUNT");
     auto & special = cli.arg<bool>("s special !S", false).desc("snowflake");
-    auto & name = cli.group("name").groupDesc("Name options").argVec<string>("name");
+    auto & name =
+        cli.group("name").groupDesc("Name options").argVec<string>("name");
     cli.argVec<string>("[key]").desc(
         "it's the key argument with a very "
         "long description that wraps the line at least once, maybe more.");

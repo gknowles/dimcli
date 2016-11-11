@@ -133,7 +133,8 @@ CliBase::Group::arg(T * value, const std::string & keys, const U & def) {
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::Arg<T> & CliBase::Group::arg(T * value, const std::string & keys) {
+inline CliBase::Group::Arg<T> &
+CliBase::Group::arg(T * value, const std::string & keys) {
     return arg(value, keys, T{});
 }
 
@@ -166,8 +167,10 @@ CliBase::Group::arg(Arg<T> & alias, const std::string & keys) {
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::ArgVec<T> &
-CliBase::Group::argVec(ArgVec<T> & alias, const std::string & keys, int nargs) {
+inline CliBase::Group::ArgVec<T> & CliBase::Group::argVec(
+    ArgVec<T> & alias,
+    const std::string & keys,
+    int nargs) {
     return argVec(&*alias, keys, nargs);
 }
 

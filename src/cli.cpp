@@ -40,9 +40,8 @@ const std::string s_internalOptionGroup = "~";
 
 //===========================================================================
 CliBase::Group::Group(Cli & cli, const std::string & name)
-    : m_cli(cli) 
-    , m_name(name)
-    {}
+    : m_cli(cli)
+    , m_name(name) {}
 
 //===========================================================================
 CliBase::Group & CliBase::Group::operator=(const Group & from) {
@@ -80,10 +79,13 @@ static bool
 helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val);
 
 //===========================================================================
-Cli::Cli() : Group{*this, ""} {
+Cli::Cli()
+    : Group{*this, ""} {
     groupDesc("Options");
-    arg<bool>("help.").desc("Show this message and exit.")
-        .action(helpAction).group(s_internalOptionGroup);
+    arg<bool>("help.")
+        .desc("Show this message and exit.")
+        .action(helpAction)
+        .group(s_internalOptionGroup);
 }
 
 //===========================================================================
@@ -112,7 +114,8 @@ Cli::versionArg(const std::string & version, const std::string & progName) {
         cout << prog << " version " << version << endl;
         return false;
     };
-    return group(s_internalOptionGroup).arg<bool>("version.")
+    return group(s_internalOptionGroup)
+        .arg<bool>("version.")
         .desc("Show version and exit.")
         .action(verAction);
 }
@@ -589,7 +592,7 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
 }
 
 //===========================================================================
-// Like text, except advance to descCol first, and indent any additional 
+// Like text, except advance to descCol first, and indent any additional
 // required lines to descCol.
 static void
 writeDesc(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
@@ -668,7 +671,8 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
                 if (gi != m_groups.end())
                     desc = gi->second.groupDesc();
             }
-            if (desc.empty() && gname == s_internalOptionGroup && &key == namedArgs.data()) {
+            if (desc.empty() && gname == s_internalOptionGroup
+                && &key == namedArgs.data()) {
                 // First group and it's the internal group, give it a title
                 // so it's not just left hanging.
                 desc = "Options";
