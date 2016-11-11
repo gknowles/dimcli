@@ -204,8 +204,11 @@ bool Cli::defaultAction(ArgBase & arg, const std::string & val) {
 ***/
 
 // forward declarations
-static bool
-expandResponseFiles(Cli & cli, vector<string> & args, set<fs::path> & expanded);
+static bool expandResponseFiles(
+    Cli & cli, 
+    vector<string> & args, 
+    set<fs::path> & expanded
+);
 
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
@@ -215,7 +218,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
     error_code err;
     auto bytes = fs::file_size(fn, err);
-    if (err)
+    if (err) 
         return false;
 
     content.resize(bytes);
@@ -231,15 +234,13 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt("");
-        const wchar_t * base =
-            reinterpret_cast<const wchar_t *>(content.data());
+        const wchar_t * base = reinterpret_cast<const wchar_t *>(content.data());
         string tmp = wcvt.to_bytes(base + 1, base + content.size() / 2);
         if (tmp.empty())
             return false;
         content = tmp;
-    } else if (
-        content.size() >= 3 && content[0] == '\xef' && content[1] == '\xbb'
-        && content[2] == '\xbf') {
+    } else if (content.size() >= 3 
+        && content[0] == '\xef' && content[1] == '\xbb' && content[2] == '\xbf') {
         content.erase(0, 3);
     }
     return true;
@@ -247,13 +248,16 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
 //===========================================================================
 static bool expandResponseFile(
-    Cli & cli, vector<string> & args, size_t & pos, set<fs::path> & expanded) {
+    Cli & cli, 
+    vector<string> & args, 
+    size_t & pos, 
+    set<fs::path> & expanded) {
     ignore = expanded;
     string content;
     error_code err;
     fs::path fn = args[pos].substr(1);
     fs::path cfn = fs::canonical(fn, err);
-    if (err)
+    if (err) 
         return cli.badUsage("Invalid response file: " + fn.string());
     auto ib = expanded.insert(cfn);
     if (!ib.second)
@@ -270,7 +274,7 @@ static bool expandResponseFile(
     } else {
         args.insert(args.begin() + pos + 1, rargs.size() - 1, {});
         auto i = args.begin() + pos;
-        for (auto && arg : rargs)
+        for (auto && arg : rargs) 
             *i++ = move(arg);
         pos += rargs.size();
     }
@@ -280,7 +284,10 @@ static bool expandResponseFile(
 
 //===========================================================================
 static bool expandResponseFiles(
-    Cli & cli, vector<string> & args, set<fs::path> & expanded) {
+    Cli & cli, 
+    vector<string> & args, 
+    set<fs::path> & expanded
+) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
             if (!expandResponseFile(cli, args, pos, expanded))
@@ -621,8 +628,8 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
 
     // names
     for (auto && sn : m_shortNames) {
-        if (sn.second.arg != &arg
-            || arg.m_bool && sn.second.invert == enableOptions) {
+        if (sn.second.arg != &arg ||
+            arg.m_bool && sn.second.invert == enableOptions) {
             continue;
         }
         optional = sn.second.optional;
@@ -632,8 +639,8 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         list += sn.first;
     }
     for (auto && ln : m_longNames) {
-        if (ln.second.arg != &arg
-            || arg.m_bool && ln.second.invert == enableOptions) {
+        if (ln.second.arg != &arg ||
+            arg.m_bool && ln.second.invert == enableOptions) {
             continue;
         }
         optional = ln.second.optional;
