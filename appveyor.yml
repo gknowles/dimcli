@@ -12,11 +12,6 @@ before_build:
   - cmake .
   - cd ..\..
 
-build:
-  parallel: true
-  project: dimcli.sln
-  verbosity: minimal
-
 build_script:
   - msbuild dimcli.sln /m /v:minimal /p:Configuration=Debug
   - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
@@ -41,9 +36,10 @@ test_script:
 
 deploy:
   tag: dimcli-latest
-  description: continuous trunk build
+  description: continuous trunk build $(appveyor_build_version)
   provider: GitHub
   auth_token:
     secure: yheCA/FJ+f7CL84HoPf9MapOlDZQmrGyiqlwFeeIhxvdOudQisUdOyZuWfwq3lUU
   prerelease: true
   draft: false
+  force_update: true
