@@ -118,6 +118,11 @@ const CliBase::Group & Cli::group(const std::string & name) const {
 }
 
 //===========================================================================
+void Cli::responseFiles(bool enable) {
+    m_responseFiles = enable;
+}
+
+//===========================================================================
 Cli::Arg<bool> &
 Cli::versionArg(const std::string & version, const std::string & progName) {
     auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
@@ -422,7 +427,7 @@ bool Cli::parse(vector<string> & args) {
 
     resetValues();
     set<fs::path> ancestors;
-    if (!expandResponseFiles(*this, args, ancestors))
+    if (m_responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
 
     auto arg = args.data();
@@ -627,14 +632,35 @@ writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 //===========================================================================
 int Cli::writeHelp(ostream & os, const string & progName) const {
     writeUsage(os, progName);
+    writePositionals(os);
+    writeOptions(os);
+    return exitCode();
+}
 
-    // size arg column
+//===========================================================================
+void Cli::writePositionals(ostream & os) const {
     size_t colWidth = 0;
     for (auto && pa : m_argNames) {
         // find widest positional argument name, with space for <>'s
         colWidth = max(colWidth, pa.name.size() + 2);
     }
+    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
+
+    WrapPos wp;
+    for (auto && pa : m_argNames) {
+        wp.prefix.assign(4, ' ');
+        writeToken(os, wp, "  " + pa.name);
+        writeDescCol(os, wp, pa.arg->m_desc, colWidth);
+        os << '\n';
+        wp.pos = 0;
+    }
+}
+
+//===========================================================================
+void Cli::writeOptions(ostream & os) const {
     // find named args and the longest name list
+    size_t colWidth = 0;
+
     struct ArgKey {
         string sort; // sort key
         string list;
@@ -659,23 +685,14 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
     }
     colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
 
-    // positional args
-    WrapPos wp;
-    for (auto && pa : m_argNames) {
-        wp.prefix.assign(4, ' ');
-        writeToken(os, wp, "  <" + pa.name + ">");
-        writeDescCol(os, wp, pa.arg->m_desc, colWidth);
-        os << '\n';
-        wp.pos = 0;
-    }
-
     if (namedArgs.empty())
-        return exitCode();
+        return;
 
-    // named args
     sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
         return tie(a.arg->m_group, a.sort) < tie(b.arg->m_group, b.sort);
     });
+
+    WrapPos wp;
     const char * gname{nullptr};
     for (auto && key : namedArgs) {
         if (!gname || key.arg->m_group != gname) {
@@ -705,8 +722,6 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
         os << '\n';
         wp.pos = 0;
     }
-
-    return exitCode();
 }
 
 //===========================================================================
@@ -720,13 +735,13 @@ int Cli::writeUsage(ostream & os, const string & progName) const {
     if (!m_shortNames.empty() || !m_longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
     for (auto && pa : m_argNames) {
-        string token = pa.name;
+        string token = "<" + pa.name + ">";
         if (pa.arg->m_multiple)
             token += "...";
         if (pa.optional) {
-            writeToken(os, wp, "[<" + token + ">]");
+            writeToken(os, wp, "[" + token + "]");
         } else {
-            writeToken(os, wp, "<" + token + ">");
+            writeToken(os, wp, token);
         }
     }
     os << '\n';

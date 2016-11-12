@@ -218,6 +218,10 @@ public:
     Group & group(const std::string & name);
     const Group & group(const std::string & name) const;
 
+    // Enabled by default, reponse file expansion replaces arguments of the 
+    // form "@file" with the contents of the file.
+    void responseFiles(bool enable = true);
+
     //-----------------------------------------------------------------------
     // Parsing
 
@@ -268,6 +272,9 @@ public:
     int writeHelp(std::ostream & os, const std::string & progName = {}) const;
     int writeUsage(std::ostream & os, const std::string & progName = {}) const;
 
+    void writePositionals(std::ostream & os) const;
+    void writeOptions(std::ostream & os) const;
+
 private:
     friend class CliBase::Group;
 
@@ -307,6 +314,7 @@ private:
     std::vector<ArgName> m_argNames;
 
     std::map<std::string, Group> m_groups;
+    bool m_responseFiles{true};
 
     int m_exitCode{0};
     std::string m_errMsg;

@@ -38,9 +38,10 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --help                   Show this message and exit.
   -c, -n, --count INTEGER  times to say hello
   --name STRING            who to greet
+
+  --help                   Show this message and exit.
 
 $ a.out --count=3
 Using the unknown name.
@@ -135,8 +136,9 @@ $ a.out --help
 Usage: a.out [OPTIONS]  
 
 Options:  
-  --help          Show this message and exit.  
   --fruit STRING  
+
+  --help          Show this message and exit.  
 
 $ a.out --fruit=orange
 Does the orange have a worm? No!
@@ -156,8 +158,9 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --help         Show this message and exit.  
   --fruit FRUIT  type of fruit
+
+  --help         Show this message and exit.  
 ~~~
 
 ## External Variables
@@ -187,9 +190,10 @@ $ a.out --help
 Usage: a.out [OPTIONS]  
 
 Options:  
-  --help          Show this message and exit.  
   --fruit STRING  type of fruit
   -w, --worm      make it icky
+
+  --help          Show this message and exit.  
 
 $ a.out --fruit=orange
 Does the orange have a worm? No!
@@ -240,15 +244,16 @@ before any optional ones):
 
 ~~~ console
 $ a.out --help  
-Usage: a.out [OPTIONS] <pear> [apple]  
-  pear                        pears are yellow
-  apple                       apples are red
+Usage: a.out [OPTIONS] pear [apple]  
+  pear      pears are yellow
+  apple     apples are red
 
 Options:  
-  --help                      Show this message and exit.  
   -a, --apple STRING          apples are red
   --apricot, --orange / -o, --no-orange  
                               oranges are orange
+
+  --help                      Show this message and exit.  
 ~~~
 
 When named arguments are added they replace any previous rule with the same 
@@ -311,9 +316,10 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --help    Show this message and exit. 
   --shout, --no-whisper / --no-shout, --whisper
             I can't hear you!
+
+  --help    Show this message and exit. 
 
 $ a.out
 I am a.out
@@ -360,11 +366,12 @@ View from the command line:
 ~~~ console
 $ a.out --help
 Usage: a.out [OPTIONS] [apple...]
-  apple                red fruit
+  apple     red fruit
 
 Options:
-  --help               Show this message and exit.
   -o, --orange STRING  oranges
+
+  --help               Show this message and exit.
 
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
@@ -436,6 +443,9 @@ $ cd ..
 $ a.out @rsp/one.rsp
 Words: one two three
 ~~~
+
+While generally useful response file processing can be disabled with 
+cli.responseFiles(false).
 
 ## Optional Values
 You use the '?' [flag](#argument_names) on an argument name to indicate that
@@ -510,9 +520,10 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --help        Show this message and exit.
   -a            red fruit
   -o, --orange  oranges
+
+  --help        Show this message and exit.
 
 $ a.out
 Does the apple have a worm? No!
@@ -593,8 +604,9 @@ Let's do some math!
 $ a.out --help
 usage: a.out [OPTIONS]
 Options:
-  --help            Show this message and exit.
   -n, --number=NUM  numbers to multiply
+
+  --help            Show this message and exit.
 
 $ a.out
 The product is: 1
