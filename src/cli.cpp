@@ -735,7 +735,8 @@ int Cli::writeUsage(ostream & os, const string & progName) const {
     if (!m_shortNames.empty() || !m_longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
     for (auto && pa : m_argNames) {
-        string token = "<" + pa.name + ">";
+        string token = pa.name.find(' ') == string::npos 
+            ? pa.name : "<" + pa.name + ">";
         if (pa.arg->m_multiple)
             token += "...";
         if (pa.optional) {
