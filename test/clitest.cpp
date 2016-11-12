@@ -18,6 +18,19 @@ bool parseTest(Dim::Cli & cli, vector<const char *> args) {
 }
 
 //===========================================================================
+bool toArgvTest(
+    std::function<vector<string>(const string&)> fn, 
+    const std::string & line, 
+    const vector<string> & argv
+) {
+    auto args = fn(line);
+    if (args == argv) 
+        return true;
+    s_errors += 1;
+    return false;
+}
+
+//===========================================================================
 int main(int argc, char * argv[]) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
@@ -46,11 +59,14 @@ int main(int argc, char * argv[]) {
     cli.arg(num, "c").desc("alias for number").valueDesc("COUNT");
     auto & special = cli.arg<bool>("s special !S", false).desc("snowflake");
     auto & name =
-        cli.group("name").groupDesc("Name options").argVec<string>("name");
+        cli.group("name").title("Name options").argVec<string>("name");
     cli.argVec<string>("[key]").desc(
         "it's the key argument with a very "
         "long description that wraps the line at least once, maybe more.");
-    cli.groupDesc("Long explanation of this very short set of options");
+    cli.title(
+        "Long explanation of this very short set of options, it's so long "
+        "that it even wraps around to the next line"
+    );
     parseTest(cli, {"-n3"});
     parseTest(cli, {"--name", "two"});
     parseTest(cli, {"--name=three"});
@@ -79,13 +95,12 @@ int main(int argc, char * argv[]) {
     parseTest(cli, {"-hc2", "-?"});
     parseTest(cli, {"--count"});
 
-    vector<string> args;
-    args = cli.toWindowsArgv(R"( a "" "c )");
-    args = cli.toWindowsArgv(R"(a"" b ")");
-    args = cli.toWindowsArgv(R"("abc" d e)");
-    args = cli.toWindowsArgv(R"(a\\\b d"e f"g h)");
-    args = cli.toWindowsArgv(R"(a\\\"b c d)");
-    args = cli.toWindowsArgv(R"(a\\\\"b c" d e)");
+    toArgvTest(&cli.toWindowsArgv, R"( a "" "c )", {"a", "", "c "});
+    toArgvTest(&cli.toWindowsArgv, R"(a"" b ")", {"a", "b", ""});
+    toArgvTest(&cli.toWindowsArgv, R"("abc" d e)", {"abc", "d", "e"});
+    toArgvTest(&cli.toWindowsArgv, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+    toArgvTest(&cli.toWindowsArgv, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
+    toArgvTest(&cli.toWindowsArgv, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

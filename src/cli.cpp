@@ -41,17 +41,27 @@ const std::string s_internalOptionGroup = "~";
 //===========================================================================
 CliBase::Group::Group(Cli & cli, const std::string & name)
     : m_cli(cli)
-    , m_name(name) {}
+    , m_name(name)
+    , m_title(name)
+    , m_sortKey(name) {}
 
 //===========================================================================
 CliBase::Group & CliBase::Group::operator=(const Group & from) {
     m_name = from.m_name;
+    m_title = from.m_title;
+    m_sortKey = from.m_sortKey;
     return *this;
 }
 
 //===========================================================================
-CliBase::Group & CliBase::Group::groupDesc(const std::string & val) {
-    m_desc = val;
+CliBase::Group & CliBase::Group::title(const std::string & val) {
+    m_title = val;
+    return *this;
+}
+
+//===========================================================================
+CliBase::Group & CliBase::Group::sortKey(const std::string & val) {
+    m_sortKey = val;
     return *this;
 }
 
@@ -81,7 +91,8 @@ helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val);
 //===========================================================================
 Cli::Cli()
     : Group{*this, ""} {
-    groupDesc("Options");
+    title("Options");
+    group(s_internalOptionGroup).title("");
     arg<bool>("help.")
         .desc("Show this message and exit.")
         .action(helpAction)
@@ -89,7 +100,7 @@ Cli::Cli()
 }
 
 //===========================================================================
-CliBase::Group & Cli::group(const std::string name) {
+CliBase::Group & Cli::group(const std::string & name) {
     if (name.empty()) {
         return *this;
     } else {
@@ -99,6 +110,11 @@ CliBase::Group & Cli::group(const std::string name) {
         }
         return i->second;
     }
+}
+
+//===========================================================================
+const CliBase::Group & Cli::group(const std::string & name) const {
+    return const_cast<Cli *>(this)->group(name);
 }
 
 //===========================================================================
@@ -595,7 +611,7 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
 // Like text, except advance to descCol first, and indent any additional
 // required lines to descCol.
 static void
-writeDesc(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
+writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
     if (wp.pos < descCol) {
         writeToken(os, wp, string(descCol - wp.pos - 1, ' '));
     } else if (wp.pos < descCol + 4) {
@@ -620,7 +636,7 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
     }
     // find named args and the longest name list
     struct ArgKey {
-        string sort; // sort by name list with leading dashes removed
+        string sort; // sort key
         string list;
         ArgBase * arg;
     };
@@ -632,9 +648,12 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
             ArgKey key;
             key.arg = arg.get();
             key.list = list;
-            while (list.size() && list[0] == '-')
-                list.erase(0, 1);
-            key.sort = list;
+
+            // sort by group sort key followed by name list with leading 
+            // dashes removed
+            key.sort = group(arg->m_group).sortKey();
+            key.sort += '\0';
+            key.sort += list.substr(list.find_first_not_of('-'));
             namedArgs.push_back(key);
         }
     }
@@ -645,7 +664,7 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
     for (auto && pa : m_argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  <" + pa.name + ">");
-        writeDesc(os, wp, pa.arg->m_desc, colWidth);
+        writeDescCol(os, wp, pa.arg->m_desc, colWidth);
         os << '\n';
         wp.pos = 0;
     }
@@ -657,29 +676,23 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
     sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
         return tie(a.arg->m_group, a.sort) < tie(b.arg->m_group, b.sort);
     });
-    const char * gname = nullptr;
+    const char * gname{nullptr};
     for (auto && key : namedArgs) {
         if (!gname || key.arg->m_group != gname) {
+            gname = key.arg->m_group.c_str();
             os << '\n';
             wp.pos = 0;
-            gname = key.arg->m_group.c_str();
-            string desc;
-            if (!*gname) {
-                desc = groupDesc();
-            } else {
-                auto gi = m_groups.find(key.arg->m_group);
-                if (gi != m_groups.end())
-                    desc = gi->second.groupDesc();
-            }
-            if (desc.empty() && gname == s_internalOptionGroup
+            auto grp = group(key.arg->m_group);
+            string title = grp.title();
+            if (title.empty() && gname == s_internalOptionGroup
                 && &key == namedArgs.data()) {
                 // First group and it's the internal group, give it a title
                 // so it's not just left hanging.
-                desc = "Options";
+                title = "Options";
             }
-            if (!desc.empty()) {
+            if (!title.empty()) {
                 wp.prefix.clear();
-                writeText(os, wp, desc + ":");
+                writeText(os, wp, title + ":");
                 os << '\n';
                 wp.pos = 0;
             }
@@ -688,7 +701,7 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
         os << ' ';
         wp.pos = 1;
         writeText(os, wp, key.list);
-        writeDesc(os, wp, key.arg->m_desc, colWidth);
+        writeDescCol(os, wp, key.arg->m_desc, colWidth);
         os << '\n';
         wp.pos = 0;
     }

@@ -79,7 +79,12 @@ public:
     //-----------------------------------------------------------------------
     // Configuration
 
-    Group & groupDesc(const std::string & desc);
+    // Heading title to display, defaults to group name. If empty there will
+    // be a single blank line separating this group from the previous one.
+    Group & title(const std::string & desc);
+
+    // Option groups are sorted by key, defaults to group name
+    Group & sortKey(const std::string & key);
 
     template <
         typename T,
@@ -114,12 +119,14 @@ public:
 
     //-----------------------------------------------------------------------
     // Queries
-    const std::string & groupDesc() const { return m_desc; }
+    const std::string & title() const { return m_title; }
+    const std::string & sortKey() const { return m_sortKey; }
 
 private:
     Cli & m_cli;
     std::string m_name;
-    std::string m_desc;
+    std::string m_title;
+    std::string m_sortKey;
 };
 
 //===========================================================================
@@ -208,7 +215,8 @@ public:
     versionArg(const std::string & ver, const std::string & progName = {});
 
     // Create a new option group, that you can then start stuffing args into.
-    Group & group(const std::string name);
+    Group & group(const std::string & name);
+    const Group & group(const std::string & name) const;
 
     //-----------------------------------------------------------------------
     // Parsing
