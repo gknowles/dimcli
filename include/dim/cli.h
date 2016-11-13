@@ -48,7 +48,7 @@ enum {
 class CliBase {
 public:
     class OptBase;
-    template <typename A, typename T> class OptCommon;
+    template <typename A, typename T> class OptShim;
     template <typename T> class Opt;
     template <typename T> class OptVec;
 
@@ -354,6 +354,9 @@ template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
 *
 *   CliBase::OptBase
 *
+*   Common base class for all options, has no information about the derived
+*   options value type, and handles all services required by the parser.
+*
 ***/
 
 class CliBase::OptBase {
@@ -361,12 +364,12 @@ public:
     OptBase(const std::string & keys, bool boolean);
     virtual ~OptBase() {}
 
-    // Name of the argument that populated the value, or an empty string if
+    // Name of the last argument to populated the value, or an empty string if
     // it wasn't populated. For vectors, it's what populated the last value.
     virtual const std::string & from() const = 0;
 
-    // Absolute position in argv[] of the argument that populated the value,
-    // or an empty string if it wasn't populated. For vectors, it's what
+    // Absolute position in argv[] of last the argument that populated the 
+    // value, or an empty string if it wasn't populated. For vectors, it's what
     // populated the last value.
     virtual int pos() const = 0;
 
@@ -429,15 +432,18 @@ CliBase::OptBase::setValueName<std::experimental::filesystem::path>() {
 
 /****************************************************************************
 *
-*   CliBase::OptCommon
+*   CliBase::OptShim
+*
+*   Common base for the more derived simple and vector option types. Has 
+*   knowledge of the value type but no knowledge about it.
 *
 ***/
 
-template <typename A, typename T> class CliBase::OptCommon : public OptBase {
+template <typename A, typename T> class CliBase::OptShim : public OptBase {
 public:
-    OptCommon(const std::string & keys, bool boolean);
-    OptCommon(const OptCommon &) = delete;
-    OptCommon & operator=(const OptCommon &) = delete;
+    OptShim(const std::string & keys, bool boolean);
+    OptShim(const OptShim &) = delete;
+    OptShim & operator=(const OptShim &) = delete;
 
     // Set group under which this argument will show up in the help text.
     A & group(const std::string & val);
@@ -492,7 +498,7 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-inline CliBase::OptCommon<A, T>::OptCommon(
+inline CliBase::OptShim<A, T>::OptShim(
     const std::string & keys,
     bool boolean)
     : OptBase(keys, boolean) {
@@ -502,42 +508,42 @@ inline CliBase::OptCommon<A, T>::OptCommon(
 //===========================================================================
 template <typename A, typename T>
 inline bool
-CliBase::OptCommon<A, T>::parseAction(Cli & cli, const std::string & val) {
+CliBase::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_action(cli, *self, val);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::group(const std::string & val) {
+inline A & CliBase::OptShim<A, T>::group(const std::string & val) {
     m_group = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::desc(const std::string & val) {
+inline A & CliBase::OptShim<A, T>::desc(const std::string & val) {
     m_desc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::valueDesc(const std::string & val) {
+inline A & CliBase::OptShim<A, T>::valueDesc(const std::string & val) {
     m_valueDesc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::defaultValue(const T & val) {
+inline A & CliBase::OptShim<A, T>::defaultValue(const T & val) {
     m_defValue = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::implicitValue(const T & val) {
+inline A & CliBase::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // they don't have separate values, just their presence/absence
         assert(!m_bool && "bool argument values are never implicit");
@@ -549,7 +555,7 @@ inline A & CliBase::OptCommon<A, T>::implicitValue(const T & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::flagValue(bool isDefault) {
+inline A & CliBase::OptShim<A, T>::flagValue(bool isDefault) {
     auto self = static_cast<A *>(this);
     m_flagValue = true;
     if (!self->m_proxy->m_defFlagOpt) {
@@ -568,7 +574,7 @@ inline A & CliBase::OptCommon<A, T>::flagValue(bool isDefault) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptCommon<A, T>::action(std::function<ActionFn> fn) {
+inline A & CliBase::OptShim<A, T>::action(std::function<ActionFn> fn) {
     m_action = fn;
     return static_cast<A &>(*this);
 }
@@ -577,6 +583,8 @@ inline A & CliBase::OptCommon<A, T>::action(std::function<ActionFn> fn) {
 /****************************************************************************
 *
 *   CliBase::ArgMatch
+*
+*   Reference to the commandline argument that was used to populate a value
 *
 ***/
 
@@ -620,7 +628,7 @@ template <typename T> struct CliBase::Value {
 *
 ***/
 
-template <typename T> class CliBase::Opt : public OptCommon<Opt<T>, T> {
+template <typename T> class CliBase::Opt : public OptShim<Opt<T>, T> {
 public:
     Opt(std::shared_ptr<Value<T>> value,
         const std::string & keys,
@@ -654,7 +662,7 @@ inline CliBase::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
     const std::string & keys,
     const T & def)
-    : OptCommon<Opt, T>{keys, std::is_same<T, bool>::value}
+    : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
     , m_proxy{value} {
     m_defValue = def;
 }
@@ -729,7 +737,7 @@ template <typename T> struct CliBase::ValueVec {
 *
 ***/
 
-template <typename T> class CliBase::OptVec : public OptCommon<OptVec<T>, T> {
+template <typename T> class CliBase::OptVec : public OptShim<OptVec<T>, T> {
 public:
     OptVec(
         std::shared_ptr<ValueVec<T>> values,
@@ -768,7 +776,7 @@ inline CliBase::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
     const std::string & keys,
     int nargs)
-    : OptCommon<OptVec, T>{keys, std::is_same<T, bool>::value}
+    : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values) {
     m_multiple = true;
     m_nargs = nargs;
