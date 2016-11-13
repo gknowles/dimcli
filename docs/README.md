@@ -668,6 +668,32 @@ Hello world!
 ~~~
 
 
+## Help Option
+You can modify the implicitly create --help option. Use cli.helpOpt() to get
+a reference and then go to town. The most likely thing would be to change the 
+desciption or option group, but since you get back an Opt\<T> you can use any 
+of the standard functions.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.helpOpt().desc("What you see is what you get.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}
+~~~
+
+And when run...
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help     What you see is what you get.
+~~~
+
+
 ## Counting
 In very rare circumstances, it is interesting to use repetition to increase
 an integer. There is no special handling for it, but counting can be done

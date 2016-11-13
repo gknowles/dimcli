@@ -93,7 +93,7 @@ Cli::Cli()
     : Group{*this, ""} {
     title("Options");
     group(s_internalOptionGroup).title("");
-    opt<bool>("help.")
+    m_helpOpt = &opt<bool>("help.")
         .desc("Show this message and exit.")
         .action(helpAction)
         .group(s_internalOptionGroup);

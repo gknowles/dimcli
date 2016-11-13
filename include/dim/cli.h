@@ -214,6 +214,10 @@ public:
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
 
+    // Get reference to internal help option, can be used to change the 
+    // desciption, option group, etc.
+    Opt<bool> & helpOpt() { return *m_helpOpt; }
+
     // Create a new option group, that you can then start stuffing args into.
     Group & group(const std::string & name);
     const Group & group(const std::string & name) const;
@@ -313,6 +317,7 @@ private:
     std::map<std::string, OptName> m_longNames;
     std::vector<OptName> m_argNames;
 
+    Opt<bool> * m_helpOpt{nullptr};
     std::map<std::string, Group> m_groups;
     bool m_responseFiles{true};
 
