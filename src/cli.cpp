@@ -94,9 +94,9 @@ Cli::Cli()
     title("Options");
     group(s_internalOptionGroup).title("");
     m_helpOpt = &opt<bool>("help.")
-        .desc("Show this message and exit.")
-        .action(helpAction)
-        .group(s_internalOptionGroup);
+                     .desc("Show this message and exit.")
+                     .action(helpAction)
+                     .group(s_internalOptionGroup);
 }
 
 //===========================================================================

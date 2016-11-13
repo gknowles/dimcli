@@ -70,12 +70,13 @@ if(MSVC)
     # /Zc:rvalueCast - enforce type conversion rules
     # /Zc:strictStrings - disable string literal type conversion to non-const
     # /GF - string pooling
+    # /GR- - disable RTTI
     # /EHsc (UNUSED) - exceptions from c++ only (not from structure or "C")
     # /Yu - use precompiled header
     set(CMAKE_CXX_FLAGS "\
         /std:c++latest /W4 /WX /Zi \
         /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /GF /Yupch.h")
+        /GF /GR- /Yupch.h")
 
     # /Od - disables optimization
     # /RTC1 - runtime checks (stack frame over/under run and uninit var use)

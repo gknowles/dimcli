@@ -8,6 +8,7 @@ Making command line interface implementation fun for kids of all ages.
   - copyable
   - assignable from std::string or has an istream extraction operator
 - help page generation
+- works with exceptions and RTTI disabled
 
 How does it feel?
 

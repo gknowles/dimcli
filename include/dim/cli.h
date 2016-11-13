@@ -214,7 +214,7 @@ public:
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
 
-    // Get reference to internal help option, can be used to change the 
+    // Get reference to internal help option, can be used to change the
     // desciption, option group, etc.
     Opt<bool> & helpOpt() { return *m_helpOpt; }
 
@@ -331,9 +331,10 @@ template <typename Opt, typename Value, typename Ptr>
 inline std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
     if (ptr) {
         for (auto && opt : m_opts) {
-            auto raw = dynamic_cast<Opt *>(opt.get());
-            if (raw && &**raw == ptr)
-                return CliBase::getProxy<Opt>(*raw);
+            if (opt->sameValue(ptr)) {
+                Opt * dopt = static_cast<Opt *>(opt.get());
+                return CliBase::getProxy<Opt>(*dopt);
+            }
         }
     }
 
@@ -368,7 +369,7 @@ public:
     // it wasn't populated. For vectors, it's what populated the last value.
     virtual const std::string & from() const = 0;
 
-    // Absolute position in argv[] of last the argument that populated the 
+    // Absolute position in argv[] of last the argument that populated the
     // value, or an empty string if it wasn't populated. For vectors, it's what
     // populated the last value.
     virtual int pos() const = 0;
@@ -388,6 +389,10 @@ public:
 protected:
     virtual bool parseAction(Cli & cli, const std::string & value) = 0;
     virtual void set(const std::string & name, int pos) = 0;
+
+    // Allows the type unaware layer to determine if a new option is pointing
+    // at the same value as an existing option -- with RTTI disabled
+    virtual bool sameValue(const void * value) = 0;
 
     template <typename T> void setValueName();
 
@@ -434,7 +439,7 @@ CliBase::OptBase::setValueName<std::experimental::filesystem::path>() {
 *
 *   CliBase::OptShim
 *
-*   Common base for the more derived simple and vector option types. Has 
+*   Common base for the more derived simple and vector option types. Has
 *   knowledge of the value type but no knowledge about it.
 *
 ***/
@@ -489,7 +494,7 @@ public:
     A & action(std::function<ActionFn> fn);
 
 protected:
-    bool parseAction(Cli & cli, const std::string & value) override;
+    bool parseAction(Cli & cli, const std::string & value) final;
 
     std::function<ActionFn> m_action;
     T m_implicitValue{};
@@ -498,9 +503,7 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-inline CliBase::OptShim<A, T>::OptShim(
-    const std::string & keys,
-    bool boolean)
+inline CliBase::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
     : OptBase(keys, boolean) {
     setValueName<T>();
 }
@@ -642,16 +645,19 @@ public:
     explicit operator bool() const { return m_proxy->m_explicit; }
 
     // OptBase
-    const std::string & from() const override { return m_proxy->m_match.name; }
-    int pos() const override { return m_proxy->m_match.pos; }
-    void reset() override;
-    bool parseValue(const std::string & value) override;
-    void unspecifiedValue() override;
-    size_t size() const override;
+    const std::string & from() const final { return m_proxy->m_match.name; }
+    int pos() const final { return m_proxy->m_match.pos; }
+    void reset() final;
+    bool parseValue(const std::string & value) final;
+    void unspecifiedValue() final;
+    size_t size() const final;
 
 private:
     friend class CliBase;
-    void set(const std::string & name, int pos) override;
+    void set(const std::string & name, int pos) final;
+    bool sameValue(const void * value) final {
+        return value == m_proxy->m_value;
+    }
 
     std::shared_ptr<Value<T>> m_proxy;
 };
@@ -751,12 +757,12 @@ public:
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
 
     // OptBase
-    const std::string & from() const override { return from(size() - 1); }
-    int pos() const override { return pos(size() - 1); }
-    void reset() override;
-    bool parseValue(const std::string & value) override;
-    void unspecifiedValue() override;
-    size_t size() const override;
+    const std::string & from() const final { return from(size() - 1); }
+    int pos() const final { return pos(size() - 1); }
+    void reset() final;
+    bool parseValue(const std::string & value) final;
+    void unspecifiedValue() final;
+    size_t size() const final;
 
     // Information about a specific member of the vector of values
     const std::string & from(size_t index) const;
@@ -764,7 +770,10 @@ public:
 
 private:
     friend class CliBase;
-    void set(const std::string & name, int pos) override;
+    void set(const std::string & name, int pos) final;
+    bool sameValue(const void * value) final {
+        return value == m_proxy->m_values;
+    }
 
     std::shared_ptr<ValueVec<T>> m_proxy;
     std::string m_empty;
