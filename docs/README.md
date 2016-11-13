@@ -1,4 +1,4 @@
-## Overview
+# Overview
 Making command line interface implementation fun for kids of all ages.
 
 - contained completely within namespace "Dim"
@@ -49,6 +49,8 @@ Hello Unknown!
 Hello Unknown!
 ~~~
 
+
+# Basics
 
 ## Basic Usage
 After inspecting args cli.parse() returns false if it thinks the program 
@@ -364,6 +366,48 @@ Comparing (red delicious, honeycrisp) and (mandarin, navel).
 ~~~
 
 
+## Life After Parsing
+If you are using external variables you just access them directly after using 
+cli.parse() to populate them.
+
+If you use the proxy object returned from cli.opt\<T>() you can dereference it 
+like a smart pointer to get at the value. In addition, you can test whether 
+it was explicitly set, find the argument name that populated it, and get the 
+position in argv\[] it came from.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & name = cli.opt<string>("n name", "Unknown");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (!name) {
+        cout << "Using the unknown name." << endl;
+    } else {
+        cout << "Name selected using " << name.from()
+            << " from argv[" << name.pos() << "]" << endl;
+    }
+    cout << "Hello " << *name << "!" << endl;
+    return EX_OK;
+}
+~~~
+What it does: 
+
+~~~ console
+$ a.out  
+Using the unknown name.  
+Hello Unknown!  
+$ a.out -n John
+Name selected using -n
+Hello John!
+$ a.out --name Mary
+Name selected using --name from argv[2]
+Hello Mary!
+~~~
+
+
+# Advanced
+
 ## Special Arguments
 
 | Value      | Description                                                |
@@ -371,67 +415,6 @@ Comparing (red delicious, honeycrisp) and (mandarin, navel).
 | "-"        | Passed in as a positional argument.                        |
 | "--"       | Thrown away, but makes all remaining arguments positional  |
 | "@\<file>" | [Response file](Response Files) with additional arguments  |
-
-
-## Response Files
-A response file is a collection of frequently used or generated arguments 
-saved as text, often with a ".rsp" extension, that is substituted into the
-command line when referenced.
-
-What you write:
-
-~~~ cpp
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    auto & words = cli.optVec<string>("[words]").desc("Things you say.");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    cout << "Words:";
-    for (auto & w : words)
-        cout << " " << w;
-    return EX_OK;
-}
-~~~
-What happens later:
-
-~~~ console
-$ a.out --help
-Usage: a.out [OPTIONS] [words...]
-  words     Things you say.
-
-Options:
-  --help    Show this message and exit.
-
-$ a.out a b
-Words: a b
-$ echo c >one.rsp
-$ a.out a b @one.rsp d
-Words: a b c d
-~~~
-Response files can be used multiple times and the arguments in them can be 
-broken into multiple lines:
-
-~~~ console
-$ echo d >one.rsp
-$ echo e >>one.rsp
-$ a.out x @one.rsp y @one.rsp
-Words: x d e y d e
-~~~
-Response files also can be nested, when a response file contains a reference 
-to another response file the path is relative to the parent response file, 
-not to the working directory.
-
-~~~ console
-$ md rsp & cd rsp
-$ echo one @more.rsp >one.rsp
-$ echo two three >more.rsp
-$ cd ..
-$ a.out @rsp/one.rsp
-Words: one two three
-~~~
-
-While generally useful response file processing can be disabled via 
-cli.responseFiles(false).
 
 
 ## Optional Values
@@ -520,38 +503,11 @@ Does the orange have a worm? No!
 ~~~
 
 
-## Counting
-In very rare circumstances, it is interesting to use repetition to increase
-an integer. There is no special handling for it, but counting can be done
-easily enough with a vector. This can be used for verbosity flags, for 
-instance:
-
-~~~ cpp
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    auto & v = cli.optVec<bool>("v verbose");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    cout << "Verbosity: " << v.size();
-    return EX_OK;
-}
-~~~
-And on the command line:
-
-~~~ console
-$ a.out -vvv
-Verbosity: 3
-~~~
-
-This could also be done with a [parse action](Parse Actions), but that seems
-like more work.
-
-
 ## Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For 
 instance, to provide more detailed errors about badly formatted arguments. Or 
 to make "--version" print some crazy ascii artwork and exit the program (for 
-a non-crazy --version use [opt.versionOpt()](Version Action)).
+a non-crazy --version use [opt.versionOpt()](Version Option)).
 
 Parsing actions are attached to options and get invoked when a value becomes 
 available for it. Any std::function compatible object that accepts references 
@@ -608,7 +564,81 @@ a.out: Bad '-n' value: x
 ~~~
 
 
-## Version Action
+## Response Files
+A response file is a collection of frequently used or generated arguments 
+saved as text, often with a ".rsp" extension, that is substituted into the
+command line when referenced.
+
+What you write:
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & words = cli.optVec<string>("[words]").desc("Things you say.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Words:";
+    for (auto & w : words)
+        cout << " " << w;
+    return EX_OK;
+}
+~~~
+What happens later:
+
+~~~ console
+$ a.out --help
+Usage: a.out [OPTIONS] [words...]
+  words     Things you say.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out a b
+Words: a b
+$ echo c >one.rsp
+$ a.out a b @one.rsp d
+Words: a b c d
+~~~
+Response files can be used multiple times and the arguments in them can be 
+broken into multiple lines:
+
+~~~ console
+$ echo d >one.rsp
+$ echo e >>one.rsp
+$ a.out x @one.rsp y @one.rsp
+Words: x d e y d e
+~~~
+Response files also can be nested, when a response file contains a reference 
+to another response file the path is relative to the parent response file, 
+not to the working directory.
+
+~~~ console
+$ md rsp & cd rsp
+$ echo one @more.rsp >one.rsp
+$ echo two three >more.rsp
+$ cd ..
+$ a.out @rsp/one.rsp
+Words: one two three
+~~~
+
+While generally useful response file processing can be disabled via 
+cli.responseFiles(false).
+
+
+## Keep It Quiet
+For some applications, such as Windows services, it's important not to 
+interact with the console. Simple steps to avoid parse() doing console IO:
+
+1. Don't use things (such as opt.prompt()) that explicitly ask for IO.
+2. Add your own "help" argument to override the default, you can still 
+turn around and call cli.writeHelp(ostream&) if desired.
+3. Use the two argument version of cli.parse() and get the error message from
+cli.errMsg() if it fails.
+
+
+# Options and Modifiers
+
+## Version Option
 Use cli.versionOpt() to add simple --version processing.
 
 ~~~ cpp
@@ -626,6 +656,7 @@ Is version 1.0 ready to ship?
 ~~~ console
 $ a.out --help
 usage: a.out [OPTIONS]
+
 Options:
   --help     Show this message and exit.
   --version  Show version and exit.  
@@ -635,6 +666,33 @@ a version 1.0
 $ a.out
 Hello world!
 ~~~
+
+
+## Counting
+In very rare circumstances, it is interesting to use repetition to increase
+an integer. There is no special handling for it, but counting can be done
+easily enough with a vector. This can be used for verbosity flags, for 
+instance:
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & v = cli.optVec<bool>("v verbose");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Verbosity: " << v.size();
+    return EX_OK;
+}
+~~~
+And on the command line:
+
+~~~ console
+$ a.out -vvv
+Verbosity: 3
+~~~
+
+This could also be done with a [parse action](Parse Actions), but that seems
+like more work.
 
 
 ## Option Modifiers
@@ -651,52 +709,73 @@ Hello world!
 ... none of these have been implemented.
 
 
-## Life After Parsing
-If you are using external variables you just access them directly after using 
-cli.parse() to populate them.
+# Help Text
 
-If you use the proxy object returned from cli.opt\<T>() you can dereference it 
-like a smart pointer to get at the value. In addition, you can test whether 
-it was explicitly set, find the argument name that populated it, and get the 
-position in argv\[] it came from.
+## Option Groups
+Option groups are used to collect related options together in the help text.
+In addition to name, groups have a title and sort key that determine section
+heading and the order groups are rendered. Groups are created when first 
+referenced, with the title and sort key equal to the name.
+
+Additionally there are two predefined option groups:
+
+| Name | Sort | Title     | Desciption                                 |
+|------|------|-----------|--------------------------------------------|
+| ""   | ""   | "Options" | Default group options are created          |
+| "~"  | "~"  | ""        | Footer group with "--help" and "--version" |
+
+In order to generate the help text the visible options are collected into 
+groups, the groups are sorted by sort key and the options within each group
+are sorted by name.
+
+The group title followed by the options is then output for each group that
+has options. A group without a title is still separate from the previous group 
+by a single blank line.
+
+To group options you either use opt.group() to set the group name or create
+the option from the group using grp.opt\<T>().
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & name = cli.opt<string>("n name", "Unknown");
+    cli.versionOpt("1.0");
+    // move 1b into 'First' group after creation
+    cli.opt<bool>("1b").group("First").desc("boolean 1b");
+    // get reference to 'First' group, update its key and add 1a directly to it
+    auto & g1 = cli.group("First").sortKey("a").title(
+        "First has a really long title that wraps around to more than "
+        "a single line, quite a lot of text for so few options"
+    );
+    g1.opt<bool>("1a");
+    // add 2a to 'Second'
+    cli.group("Second").sortKey("b").opt<bool>("2a");
+    cli.group("Third").sortKey("c").opt<bool>("3a");
+    // give the footer group a title
+    cli.group("~").title("Internally Generated");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
-    if (!name) {
-        cout << "Using the unknown name." << endl;
-    } else {
-        cout << "Name selected using " << name.from()
-            << " from argv[" << name.pos() << "]" << endl;
-    }
-    cout << "Hello " << *name << "!" << endl;
     return EX_OK;
 }
 ~~~
-What it does: 
+Let's see the groupings...
 
 ~~~ console
-$ a.out  
-Using the unknown name.  
-Hello Unknown!  
-$ a.out -n John
-Name selected using -n
-Hello John!
-$ a.out --name Mary
-Name selected using --name from argv[2]
-Hello Mary!
+$ a.out --help
+usage: a.out [OPTIONS]
+
+First has a really long title that wraps around to more than a single line, 
+quite a lot of text for so few options:
+  --1a
+  --1b       boolean 1b
+
+Second:
+  --2a
+
+Third:
+  --3a
+
+Internally Generated:
+  --help     Show this message and exit.
+  --version  Show version and exit.  
 ~~~
 
-
-## Keep It Quiet
-For some applications, such as Windows services, it's important not to 
-interact with the console. Simple steps to avoid parse() doing console IO:
-
-1. Don't use things (such as opt.prompt()) that explicitly ask for IO.
-2. Add your own "help" argument to override the default, you can still 
-turn around and call cli.writeHelp(ostream&) if desired.
-3. Use the two argument version of cli.parse() and get the error message from
-cli.errMsg() if it fails.
