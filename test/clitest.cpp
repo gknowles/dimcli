@@ -93,14 +93,13 @@ int main(int argc, char * argv[]) {
     parseTest(cli, {"-hc2", "-?"});
     parseTest(cli, {"--count"});
 
-    toArgvTest(&cli.toWindowsArgv, R"( a "" "c )", {"a", "", "c "});
-    toArgvTest(&cli.toWindowsArgv, R"(a"" b ")", {"a", "b", ""});
-    toArgvTest(&cli.toWindowsArgv, R"("abc" d e)", {"abc", "d", "e"});
-    toArgvTest(
-        &cli.toWindowsArgv, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
-    toArgvTest(&cli.toWindowsArgv, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
-    toArgvTest(
-        &cli.toWindowsArgv, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+    auto fn = cli.toWindowsArgv;
+    toArgvTest(fn, R"( a "" "c )", {"a", "", "c "});
+    toArgvTest(fn, R"(a"" b ")", {"a", "b", ""});
+    toArgvTest(fn, R"("abc" d e)", {"abc", "d", "e"});
+    toArgvTest(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+    toArgvTest(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
+    toArgvTest(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
