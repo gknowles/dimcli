@@ -59,7 +59,7 @@ public:
     class Group;
 
 protected:
-    template <typename A> auto & getProxy(A & arg) { return arg.m_proxy; }
+    template <typename A> auto & getProxy(A & opt) { return opt.m_proxy; }
 };
 
 
@@ -312,7 +312,7 @@ private:
         bool optional;    // value doesn't have to be present? (non-bools only)
         std::string name; // name of argument (only for positionals)
     };
-    std::list<std::unique_ptr<OptBase>> m_args;
+    std::list<std::unique_ptr<OptBase>> m_opts;
     std::map<char, OptName> m_shortNames;
     std::map<std::string, OptName> m_longNames;
     std::vector<OptName> m_argNames;
@@ -330,10 +330,10 @@ private:
 template <typename Opt, typename Value, typename Ptr>
 inline std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
     if (ptr) {
-        for (auto && a : m_args) {
-            auto ap = dynamic_cast<Opt *>(a.get());
-            if (ap && &**ap == ptr)
-                return CliBase::getProxy<Opt>(*ap);
+        for (auto && opt : m_opts) {
+            auto raw = dynamic_cast<Opt *>(opt.get());
+            if (raw && &**raw == ptr)
+                return CliBase::getProxy<Opt>(*raw);
         }
     }
 
