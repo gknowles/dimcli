@@ -47,10 +47,10 @@ enum {
 
 class CliBase {
 public:
-    class ArgBase;
-    template <typename A, typename T> class ArgShim;
-    template <typename T> class Arg;
-    template <typename T> class ArgVec;
+    class OptBase;
+    template <typename A, typename T> class OptCommon;
+    template <typename T> class Opt;
+    template <typename T> class OptVec;
 
     struct ArgMatch;
     template <typename T> struct Value;
@@ -90,32 +90,32 @@ public:
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-    Arg<T> & arg(T * value, const std::string & keys, const U & def);
+    Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
-    template <typename T> Arg<T> & arg(T * value, const std::string & keys);
-
-    template <typename T>
-    ArgVec<T> &
-    argVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
+    template <typename T> Opt<T> & opt(T * value, const std::string & keys);
 
     template <typename T>
-    Arg<T> & arg(const std::string & keys, const T & def = {});
+    OptVec<T> &
+    optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
 
     template <typename T>
-    ArgVec<T> & argVec(const std::string & keys, int nargs = -1);
+    Opt<T> & opt(const std::string & keys, const T & def = {});
+
+    template <typename T>
+    OptVec<T> & optVec(const std::string & keys, int nargs = -1);
 
     template <
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-    Arg<T> & arg(Arg<T> & value, const std::string & keys, const U & def);
+    Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
-    Arg<T> & arg(Arg<T> & value, const std::string & keys);
+    Opt<T> & opt(Opt<T> & value, const std::string & keys);
 
     template <typename T>
-    ArgVec<T> &
-    argVec(ArgVec<T> & values, const std::string & keys, int nargs = -1);
+    OptVec<T> &
+    optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
     //-----------------------------------------------------------------------
     // Queries
@@ -131,68 +131,68 @@ private:
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline CliBase::Group::Arg<T> &
-CliBase::Group::arg(T * value, const std::string & keys, const U & def) {
-    auto proxy = m_cli.getProxy<Arg<T>, Value<T>>(value);
-    auto ptr = std::make_unique<Arg<T>>(proxy, keys, def);
-    return m_cli.addArg(std::move(ptr)).group(m_name);
+inline CliBase::Group::Opt<T> &
+CliBase::Group::opt(T * value, const std::string & keys, const U & def) {
+    auto proxy = m_cli.getProxy<Opt<T>, Value<T>>(value);
+    auto ptr = std::make_unique<Opt<T>>(proxy, keys, def);
+    return m_cli.addOpt(std::move(ptr)).group(m_name);
 }
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::Arg<T> &
-CliBase::Group::arg(T * value, const std::string & keys) {
-    return arg(value, keys, T{});
+inline CliBase::Group::Opt<T> &
+CliBase::Group::opt(T * value, const std::string & keys) {
+    return opt(value, keys, T{});
 }
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::ArgVec<T> & CliBase::Group::argVec(
+inline CliBase::Group::OptVec<T> & CliBase::Group::optVec(
     std::vector<T> * values,
     const std::string & keys,
     int nargs) {
-    auto proxy = m_cli.getProxy<ArgVec<T>, ValueVec<T>>(values);
-    auto ptr = std::make_unique<ArgVec<T>>(proxy, keys, nargs);
-    return m_cli.addArg(std::move(ptr)).group(m_name);
+    auto proxy = m_cli.getProxy<OptVec<T>, ValueVec<T>>(values);
+    auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
+    return m_cli.addOpt(std::move(ptr)).group(m_name);
 }
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline CliBase::Group::Arg<T> & CliBase::Group::arg(
-    CliBase::Group::Arg<T> & alias,
+inline CliBase::Group::Opt<T> & CliBase::Group::opt(
+    CliBase::Group::Opt<T> & alias,
     const std::string & keys,
     const U & def) {
-    return arg(&*alias, keys, def);
+    return opt(&*alias, keys, def);
 }
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::Arg<T> &
-CliBase::Group::arg(Arg<T> & alias, const std::string & keys) {
-    return arg(&*alias, keys, T{});
+inline CliBase::Group::Opt<T> &
+CliBase::Group::opt(Opt<T> & alias, const std::string & keys) {
+    return opt(&*alias, keys, T{});
 }
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::ArgVec<T> & CliBase::Group::argVec(
-    ArgVec<T> & alias,
+inline CliBase::Group::OptVec<T> & CliBase::Group::optVec(
+    OptVec<T> & alias,
     const std::string & keys,
     int nargs) {
-    return argVec(&*alias, keys, nargs);
+    return optVec(&*alias, keys, nargs);
 }
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::Arg<T> &
-CliBase::Group::arg(const std::string & keys, const T & def) {
-    return arg<T>(nullptr, keys, def);
+inline CliBase::Group::Opt<T> &
+CliBase::Group::opt(const std::string & keys, const T & def) {
+    return opt<T>(nullptr, keys, def);
 }
 
 //===========================================================================
 template <typename T>
-inline CliBase::Group::ArgVec<T> &
-CliBase::Group::argVec(const std::string & keys, int nargs) {
-    return argVec<T>(nullptr, keys, nargs);
+inline CliBase::Group::OptVec<T> &
+CliBase::Group::optVec(const std::string & keys, int nargs) {
+    return optVec<T>(nullptr, keys, nargs);
 }
 
 
@@ -211,14 +211,14 @@ public:
 
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
-    Arg<bool> &
-    versionArg(const std::string & ver, const std::string & progName = {});
+    Opt<bool> &
+    versionOpt(const std::string & ver, const std::string & progName = {});
 
     // Create a new option group, that you can then start stuffing args into.
     Group & group(const std::string & name);
     const Group & group(const std::string & name) const;
 
-    // Enabled by default, reponse file expansion replaces arguments of the 
+    // Enabled by default, reponse file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
 
@@ -278,40 +278,40 @@ public:
 private:
     friend class CliBase::Group;
 
-    bool defaultAction(ArgBase & arg, const std::string & val);
+    bool defaultAction(OptBase & opt, const std::string & val);
 
     void addLongName(
         const std::string & name,
-        ArgBase * arg,
+        OptBase * opt,
         bool invert,
         bool optional);
-    void addArgName(const std::string & name, ArgBase * arg);
-    void addArg(std::unique_ptr<ArgBase> ptr);
+    void addOptName(const std::string & name, OptBase * opt);
+    void addOpt(std::unique_ptr<OptBase> ptr);
 
-    template <typename Arg, typename Value, typename Ptr>
+    template <typename Opt, typename Value, typename Ptr>
     std::shared_ptr<Value> getProxy(Ptr * ptr);
-    template <typename A> A & addArg(std::unique_ptr<A> ptr);
+    template <typename A> A & addOpt(std::unique_ptr<A> ptr);
 
     bool parseAction(
-        ArgBase & out,
+        OptBase & out,
         const std::string & name,
         int pos,
         const char src[]);
     bool fail(int code, const std::string & msg);
 
-    std::string optionList(ArgBase & arg) const;
-    std::string optionList(ArgBase & arg, bool disableOptions) const;
+    std::string nameList(OptBase & opt) const;
+    std::string nameList(OptBase & opt, bool disableOptions) const;
 
-    struct ArgName {
-        ArgBase * arg;
+    struct OptName {
+        OptBase * opt;
         bool invert;      // set to false instead of true (only for bools)
         bool optional;    // value doesn't have to be present? (non-bools only)
         std::string name; // name of argument (only for positionals)
     };
-    std::list<std::unique_ptr<ArgBase>> m_args;
-    std::map<char, ArgName> m_shortNames;
-    std::map<std::string, ArgName> m_longNames;
-    std::vector<ArgName> m_argNames;
+    std::list<std::unique_ptr<OptBase>> m_args;
+    std::map<char, OptName> m_shortNames;
+    std::map<std::string, OptName> m_longNames;
+    std::vector<OptName> m_argNames;
 
     std::map<std::string, Group> m_groups;
     bool m_responseFiles{true};
@@ -322,13 +322,13 @@ private:
 };
 
 //===========================================================================
-template <typename Arg, typename Value, typename Ptr>
+template <typename Opt, typename Value, typename Ptr>
 inline std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
     if (ptr) {
         for (auto && a : m_args) {
-            auto ap = dynamic_cast<Arg *>(a.get());
+            auto ap = dynamic_cast<Opt *>(a.get());
             if (ap && &**ap == ptr)
-                return CliBase::getProxy<Arg>(*ap);
+                return CliBase::getProxy<Opt>(*ap);
         }
     }
 
@@ -337,24 +337,24 @@ inline std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
 }
 
 //===========================================================================
-template <typename A> inline A & Cli::addArg(std::unique_ptr<A> ptr) {
+template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
     opt.action(&Cli::defaultAction);
-    addArg(std::unique_ptr<ArgBase>(ptr.release()));
+    addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
 
 
 /****************************************************************************
 *
-*   CliBase::ArgBase
+*   CliBase::OptBase
 *
 ***/
 
-class CliBase::ArgBase {
+class CliBase::OptBase {
 public:
-    ArgBase(const std::string & keys, bool boolean);
-    virtual ~ArgBase() {}
+    OptBase(const std::string & keys, bool boolean);
+    virtual ~OptBase() {}
 
     // Name of the argument that populated the value, or an empty string if
     // it wasn't populated. For vectors, it's what populated the last value.
@@ -404,7 +404,7 @@ private:
 };
 
 //===========================================================================
-template <typename T> inline void CliBase::ArgBase::setValueName() {
+template <typename T> inline void CliBase::OptBase::setValueName() {
     if (is_integral<T>::value) {
         m_valueDesc = "NUM";
     } else if (is_convertible<T, std::string>::value) {
@@ -417,22 +417,22 @@ template <typename T> inline void CliBase::ArgBase::setValueName() {
 //===========================================================================
 template <>
 inline void
-CliBase::ArgBase::setValueName<std::experimental::filesystem::path>() {
+CliBase::OptBase::setValueName<std::experimental::filesystem::path>() {
     m_valueDesc = "FILE";
 }
 
 
 /****************************************************************************
 *
-*   CliBase::ArgShim
+*   CliBase::OptCommon
 *
 ***/
 
-template <typename A, typename T> class CliBase::ArgShim : public ArgBase {
+template <typename A, typename T> class CliBase::OptCommon : public OptBase {
 public:
-    ArgShim(const std::string & keys, bool boolean);
-    ArgShim(const ArgShim &) = delete;
-    ArgShim & operator=(const ArgShim &) = delete;
+    OptCommon(const std::string & keys, bool boolean);
+    OptCommon(const OptCommon &) = delete;
+    OptCommon & operator=(const OptCommon &) = delete;
 
     // Set group under which this argument will show up in the help text.
     A & group(const std::string & val);
@@ -444,7 +444,7 @@ public:
     // this is used to change "NUM" to something else.
     A & valueDesc(const std::string & val);
 
-    // Allows the default to be changed after the arg has been created.
+    // Allows the default to be changed after the opt has been created.
     A & defaultValue(const T & val);
 
     // The implicit value is used for arguments with optional values when
@@ -466,7 +466,7 @@ public:
     //    could be due to error or just to early out like "--version" and
     //    "--help".
     //
-    // You can use arg.from() and arg.pos() to get the argument name that the
+    // You can use opt.from() and opt.pos() to get the argument name that the
     // value was attached to on the command line and its position in argv[].
     // For bool arguments the source value string will always be either "0"
     // or "1".
@@ -487,50 +487,52 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-inline CliBase::ArgShim<A, T>::ArgShim(const std::string & keys, bool boolean)
-    : ArgBase(keys, boolean) {
+inline CliBase::OptCommon<A, T>::OptCommon(
+    const std::string & keys,
+    bool boolean)
+    : OptBase(keys, boolean) {
     setValueName<T>();
 }
 
 //===========================================================================
 template <typename A, typename T>
 inline bool
-CliBase::ArgShim<A, T>::parseAction(Cli & cli, const std::string & val) {
+CliBase::OptCommon<A, T>::parseAction(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_action(cli, *self, val);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::group(const std::string & val) {
+inline A & CliBase::OptCommon<A, T>::group(const std::string & val) {
     m_group = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::desc(const std::string & val) {
+inline A & CliBase::OptCommon<A, T>::desc(const std::string & val) {
     m_desc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::valueDesc(const std::string & val) {
+inline A & CliBase::OptCommon<A, T>::valueDesc(const std::string & val) {
     m_valueDesc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::defaultValue(const T & val) {
+inline A & CliBase::OptCommon<A, T>::defaultValue(const T & val) {
     m_defValue = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::implicitValue(const T & val) {
+inline A & CliBase::OptCommon<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // they don't have separate values, just their presence/absence
         assert(!m_bool && "bool argument values are never implicit");
@@ -542,15 +544,15 @@ inline A & CliBase::ArgShim<A, T>::implicitValue(const T & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::flagValue(bool isDefault) {
+inline A & CliBase::OptCommon<A, T>::flagValue(bool isDefault) {
     auto self = static_cast<A *>(this);
     m_flagValue = true;
-    if (!self->m_proxy->m_defFlagArg) {
-        self->m_proxy->m_defFlagArg = self;
+    if (!self->m_proxy->m_defFlagOpt) {
+        self->m_proxy->m_defFlagOpt = self;
         m_flagDefault = true;
     } else if (isDefault) {
-        self->m_proxy->m_defFlagArg->m_flagDefault = false;
-        self->m_proxy->m_defFlagArg = self;
+        self->m_proxy->m_defFlagOpt->m_flagDefault = false;
+        self->m_proxy->m_defFlagOpt = self;
         m_flagDefault = true;
     } else {
         m_flagDefault = false;
@@ -561,7 +563,7 @@ inline A & CliBase::ArgShim<A, T>::flagValue(bool isDefault) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::ArgShim<A, T>::action(std::function<ActionFn> fn) {
+inline A & CliBase::OptCommon<A, T>::action(std::function<ActionFn> fn) {
     m_action = fn;
     return static_cast<A &>(*this);
 }
@@ -596,8 +598,8 @@ template <typename T> struct CliBase::Value {
     // the value was explicitly set
     bool m_explicit{false};
 
-    // points to the arg with the default flag value
-    Arg<T> * m_defFlagArg{nullptr};
+    // points to the opt with the default flag value
+    Opt<T> * m_defFlagOpt{nullptr};
 
     T * m_value{nullptr};
     T m_internal;
@@ -609,13 +611,13 @@ template <typename T> struct CliBase::Value {
 
 /****************************************************************************
 *
-*   CliBase::Arg
+*   CliBase::Opt
 *
 ***/
 
-template <typename T> class CliBase::Arg : public ArgShim<Arg<T>, T> {
+template <typename T> class CliBase::Opt : public OptCommon<Opt<T>, T> {
 public:
-    Arg(std::shared_ptr<Value<T>> value,
+    Opt(std::shared_ptr<Value<T>> value,
         const std::string & keys,
         const T & def = {});
 
@@ -626,7 +628,7 @@ public:
     // value may be the same as the default it wasn't simply left that way.
     explicit operator bool() const { return m_proxy->m_explicit; }
 
-    // ArgBase
+    // OptBase
     const std::string & from() const override { return m_proxy->m_match.name; }
     int pos() const override { return m_proxy->m_match.pos; }
     void reset() override;
@@ -643,25 +645,25 @@ private:
 
 //===========================================================================
 template <typename T>
-inline CliBase::Arg<T>::Arg(
+inline CliBase::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
     const std::string & keys,
     const T & def)
-    : ArgShim<Arg, T>{keys, std::is_same<T, bool>::value}
+    : OptCommon<Opt, T>{keys, std::is_same<T, bool>::value}
     , m_proxy{value} {
     m_defValue = def;
 }
 
 //===========================================================================
 template <typename T>
-inline void CliBase::Arg<T>::set(const std::string & name, int pos) {
+inline void CliBase::Opt<T>::set(const std::string & name, int pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = pos;
     m_proxy->m_explicit = true;
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::Arg<T>::reset() {
+template <typename T> inline void CliBase::Opt<T>::reset() {
     if (!m_flagValue || m_flagDefault)
         *m_proxy->m_value = m_defValue;
     m_proxy->m_match.name.clear();
@@ -671,7 +673,7 @@ template <typename T> inline void CliBase::Arg<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline bool CliBase::Arg<T>::parseValue(const std::string & value) {
+inline bool CliBase::Opt<T>::parseValue(const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
@@ -685,12 +687,12 @@ inline bool CliBase::Arg<T>::parseValue(const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::Arg<T>::unspecifiedValue() {
+template <typename T> inline void CliBase::Opt<T>::unspecifiedValue() {
     *m_proxy->m_value = m_implicitValue;
 }
 
 //===========================================================================
-template <typename T> inline size_t CliBase::Arg<T>::size() const {
+template <typename T> inline size_t CliBase::Opt<T>::size() const {
     return 1;
 }
 
@@ -705,8 +707,8 @@ template <typename T> struct CliBase::ValueVec {
     // where the values came from
     std::vector<ArgMatch> m_matches;
 
-    // points to the arg with the default flag value
-    ArgVec<T> * m_defFlagArg{nullptr};
+    // points to the opt with the default flag value
+    OptVec<T> * m_defFlagOpt{nullptr};
 
     std::vector<T> * m_values{nullptr};
     std::vector<T> m_internal;
@@ -718,13 +720,13 @@ template <typename T> struct CliBase::ValueVec {
 
 /****************************************************************************
 *
-*   CliBase::ArgVec
+*   CliBase::OptVec
 *
 ***/
 
-template <typename T> class CliBase::ArgVec : public ArgShim<ArgVec<T>, T> {
+template <typename T> class CliBase::OptVec : public OptCommon<OptVec<T>, T> {
 public:
-    ArgVec(
+    OptVec(
         std::shared_ptr<ValueVec<T>> values,
         const std::string & keys,
         int nargs);
@@ -735,7 +737,7 @@ public:
     // True if values where added from the command line
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
 
-    // ArgBase
+    // OptBase
     const std::string & from() const override { return from(size() - 1); }
     int pos() const override { return pos(size() - 1); }
     void reset() override;
@@ -757,11 +759,11 @@ private:
 
 //===========================================================================
 template <typename T>
-inline CliBase::ArgVec<T>::ArgVec(
+inline CliBase::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
     const std::string & keys,
     int nargs)
-    : ArgShim<ArgVec, T>{keys, std::is_same<T, bool>::value}
+    : OptCommon<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values) {
     m_multiple = true;
     m_nargs = nargs;
@@ -769,7 +771,7 @@ inline CliBase::ArgVec<T>::ArgVec(
 
 //===========================================================================
 template <typename T>
-inline void CliBase::ArgVec<T>::set(const std::string & name, int pos) {
+inline void CliBase::OptVec<T>::set(const std::string & name, int pos) {
     ArgMatch match;
     match.name = name;
     match.pos = pos;
@@ -778,24 +780,24 @@ inline void CliBase::ArgVec<T>::set(const std::string & name, int pos) {
 
 //===========================================================================
 template <typename T>
-inline const std::string & CliBase::ArgVec<T>::from(size_t index) const {
+inline const std::string & CliBase::OptVec<T>::from(size_t index) const {
     return index >= size() ? m_empty : m_proxy->m_matches[index].name;
 }
 
 //===========================================================================
-template <typename T> inline int CliBase::ArgVec<T>::pos(size_t index) const {
+template <typename T> inline int CliBase::OptVec<T>::pos(size_t index) const {
     return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::ArgVec<T>::reset() {
+template <typename T> inline void CliBase::OptVec<T>::reset() {
     m_proxy->m_values->clear();
     m_proxy->m_matches.clear();
 }
 
 //===========================================================================
 template <typename T>
-inline bool CliBase::ArgVec<T>::parseValue(const std::string & value) {
+inline bool CliBase::OptVec<T>::parseValue(const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
@@ -813,12 +815,12 @@ inline bool CliBase::ArgVec<T>::parseValue(const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::ArgVec<T>::unspecifiedValue() {
+template <typename T> inline void CliBase::OptVec<T>::unspecifiedValue() {
     m_proxy->m_values->push_back(m_implicitValue);
 }
 
 //===========================================================================
-template <typename T> inline size_t CliBase::ArgVec<T>::size() const {
+template <typename T> inline size_t CliBase::OptVec<T>::size() const {
     return m_proxy->m_values->size();
 }
 

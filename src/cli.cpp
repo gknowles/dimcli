@@ -68,12 +68,12 @@ CliBase::Group & CliBase::Group::sortKey(const std::string & val) {
 
 /****************************************************************************
 *
-*   CliBase::ArgBase
+*   CliBase::OptBase
 *
 ***/
 
 //===========================================================================
-CliBase::ArgBase::ArgBase(const std::string & names, bool boolean)
+CliBase::OptBase::OptBase(const std::string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
 
@@ -86,14 +86,14 @@ CliBase::ArgBase::ArgBase(const std::string & names, bool boolean)
 
 // forward declarations
 static bool
-helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val);
+helpAction(Cli & cli, Cli::Opt<bool> & arg, const std::string & val);
 
 //===========================================================================
 Cli::Cli()
     : Group{*this, ""} {
     title("Options");
     group(s_internalOptionGroup).title("");
-    arg<bool>("help.")
+    opt<bool>("help.")
         .desc("Show this message and exit.")
         .action(helpAction)
         .group(s_internalOptionGroup);
@@ -123,8 +123,8 @@ void Cli::responseFiles(bool enable) {
 }
 
 //===========================================================================
-Cli::Arg<bool> &
-Cli::versionArg(const std::string & version, const std::string & progName) {
+Cli::Opt<bool> &
+Cli::versionOpt(const std::string & version, const std::string & progName) {
     auto verAction = [version, progName](auto & cli, auto & arg, auto & val) {
         ignore = arg, val;
         fs::path prog = progName;
@@ -136,14 +136,14 @@ Cli::versionArg(const std::string & version, const std::string & progName) {
         return false;
     };
     return group(s_internalOptionGroup)
-        .arg<bool>("version.")
+        .opt<bool>("version.")
         .desc("Show version and exit.")
         .action(verAction);
 }
 
 //===========================================================================
-void Cli::addArg(std::unique_ptr<ArgBase> src) {
-    ArgBase * arg = src.get();
+void Cli::addOpt(std::unique_ptr<OptBase> src) {
+    OptBase * arg = src.get();
     m_args.push_back(std::move(src));
     const char * ptr = arg->m_names.data();
     string name;
@@ -172,7 +172,7 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
             if (close != ' ')
                 hasPos = true;
             name = string(b, ptr - b);
-            addArgName(name, arg);
+            addOptName(name, arg);
         }
         if (!*ptr)
             return;
@@ -182,7 +182,7 @@ void Cli::addArg(std::unique_ptr<ArgBase> src) {
 //===========================================================================
 void Cli::addLongName(
     const string & src,
-    ArgBase * arg,
+    OptBase * arg,
     bool invert,
     bool optional) {
     bool allowNo = true;
@@ -201,7 +201,7 @@ void Cli::addLongName(
 }
 
 //===========================================================================
-void Cli::addArgName(const string & name, ArgBase * arg) {
+void Cli::addOptName(const string & name, OptBase * arg) {
     const bool invert = true;
     const bool optional = true;
 
@@ -258,7 +258,7 @@ void Cli::addArgName(const string & name, ArgBase * arg) {
 
 //===========================================================================
 static bool
-helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val) {
+helpAction(Cli & cli, Cli::Opt<bool> & arg, const std::string & val) {
     stringTo(*arg, val);
     if (*arg) {
         cli.writeHelp(cout);
@@ -268,7 +268,7 @@ helpAction(Cli & cli, Cli::Arg<bool> & arg, const std::string & val) {
 }
 
 //===========================================================================
-bool Cli::defaultAction(ArgBase & arg, const std::string & val) {
+bool Cli::defaultAction(OptBase & arg, const std::string & val) {
     if (!arg.parseValue(val))
         return badUsage("Invalid '" + arg.from() + "' value: " + val);
     return true;
@@ -400,7 +400,7 @@ void Cli::resetValues() {
 
 //===========================================================================
 bool Cli::parseAction(
-    ArgBase & arg,
+    OptBase & arg,
     const std::string & name,
     int pos,
     const char ptr[]) {
@@ -422,7 +422,7 @@ bool Cli::fail(int code, const string & msg) {
 
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
-    // the 0th (name of this program) arg should always be present
+    // the 0th (name of this program) opt should always be present
     assert(!args.empty());
 
     resetValues();
@@ -441,7 +441,7 @@ bool Cli::parse(vector<string> & args) {
     arg += 1;
 
     for (; argPos < argc; ++argPos, ++arg) {
-        ArgName argName;
+        OptName argName;
         const char * ptr = arg->c_str();
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
@@ -452,9 +452,9 @@ bool Cli::parse(vector<string> & args) {
                 }
                 argName = it->second;
                 name = "-"s + *ptr;
-                if (argName.arg->m_bool) {
+                if (argName.opt->m_bool) {
                     if (!parseAction(
-                            *argName.arg,
+                            *argName.opt,
                             name,
                             argPos,
                             argName.invert ? "0" : "1"))
@@ -488,12 +488,12 @@ bool Cli::parse(vector<string> & args) {
             }
             argName = it->second;
             name = "--" + key;
-            if (argName.arg->m_bool) {
+            if (argName.opt->m_bool) {
                 if (equal) {
                     return badUsage("Unknown option: " + name + "=");
                 }
                 if (!parseAction(
-                        *argName.arg,
+                        *argName.opt,
                         name,
                         argPos,
                         argName.invert ? "0" : "1"))
@@ -509,20 +509,20 @@ bool Cli::parse(vector<string> & args) {
         }
         argName = m_argNames[pos];
         name = argName.name;
-        if (!parseAction(*argName.arg, name, argPos, ptr))
+        if (!parseAction(*argName.opt, name, argPos, ptr))
             return false;
-        if (!argName.arg->m_multiple)
+        if (!argName.opt->m_multiple)
             pos += 1;
         continue;
 
     OPTION_VALUE:
         if (*ptr) {
-            if (!parseAction(*argName.arg, name, argPos, ptr))
+            if (!parseAction(*argName.opt, name, argPos, ptr))
                 return false;
             continue;
         }
         if (argName.optional) {
-            if (!parseAction(*argName.arg, name, argPos, nullptr))
+            if (!parseAction(*argName.opt, name, argPos, nullptr))
                 return false;
             continue;
         }
@@ -531,7 +531,7 @@ bool Cli::parse(vector<string> & args) {
         if (argPos == argc) {
             return badUsage("No value given for " + name);
         }
-        if (!parseAction(*argName.arg, name, argPos, arg->c_str()))
+        if (!parseAction(*argName.opt, name, argPos, arg->c_str()))
             return false;
     }
 
@@ -650,7 +650,7 @@ void Cli::writePositionals(ostream & os) const {
     for (auto && pa : m_argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  " + pa.name);
-        writeDescCol(os, wp, pa.arg->m_desc, colWidth);
+        writeDescCol(os, wp, pa.opt->m_desc, colWidth);
         os << '\n';
         wp.pos = 0;
     }
@@ -664,18 +664,18 @@ void Cli::writeOptions(ostream & os) const {
     struct ArgKey {
         string sort; // sort key
         string list;
-        ArgBase * arg;
+        OptBase * arg;
     };
     vector<ArgKey> namedArgs;
     for (auto && arg : m_args) {
-        string list = optionList(*arg);
+        string list = nameList(*arg);
         if (size_t width = list.size()) {
             colWidth = max(colWidth, width);
             ArgKey key;
             key.arg = arg.get();
             key.list = list;
 
-            // sort by group sort key followed by name list with leading 
+            // sort by group sort key followed by name list with leading
             // dashes removed
             key.sort = group(arg->m_group).sortKey();
             key.sort += '\0';
@@ -735,9 +735,9 @@ int Cli::writeUsage(ostream & os, const string & progName) const {
     if (!m_shortNames.empty() || !m_longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
     for (auto && pa : m_argNames) {
-        string token = pa.name.find(' ') == string::npos 
-            ? pa.name : "<" + pa.name + ">";
-        if (pa.arg->m_multiple)
+        string token =
+            pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
+        if (pa.opt->m_multiple)
             token += "...";
         if (pa.optional) {
             writeToken(os, wp, "[" + token + "]");
@@ -750,10 +750,10 @@ int Cli::writeUsage(ostream & os, const string & progName) const {
 }
 
 //===========================================================================
-string Cli::optionList(ArgBase & arg) const {
-    string list = optionList(arg, true);
+string Cli::nameList(OptBase & arg) const {
+    string list = nameList(arg, true);
     if (arg.m_bool) {
-        string invert = optionList(arg, false);
+        string invert = nameList(arg, false);
         if (!invert.empty())
             list += " / " + invert;
     }
@@ -761,14 +761,14 @@ string Cli::optionList(ArgBase & arg) const {
 }
 
 //===========================================================================
-string Cli::optionList(ArgBase & arg, bool enableOptions) const {
+string Cli::nameList(OptBase & arg, bool enableOptions) const {
     string list;
     bool foundLong = false;
     bool optional = false;
 
     // names
     for (auto && sn : m_shortNames) {
-        if (sn.second.arg != &arg
+        if (sn.second.opt != &arg
             || arg.m_bool && sn.second.invert == enableOptions) {
             continue;
         }
@@ -779,7 +779,7 @@ string Cli::optionList(ArgBase & arg, bool enableOptions) const {
         list += sn.first;
     }
     for (auto && ln : m_longNames) {
-        if (ln.second.arg != &arg
+        if (ln.second.opt != &arg
             || arg.m_bool && ln.second.invert == enableOptions) {
             continue;
         }

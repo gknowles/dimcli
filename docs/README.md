@@ -1,5 +1,4 @@
 ## Overview
-
 Making command line interface implementation fun for kids of all ages.
 
 - contained completely within namespace "Dim"
@@ -20,8 +19,8 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & count = cli.arg<int>("c n count", 1).desc("times to say hello");
-    auto & name = cli.arg<string>("name", "Unknown").desc("who to greet");
+    auto & count = cli.opt<int>("c n count", 1).desc("times to say hello");
+    auto & name = cli.opt<string>("name", "Unknown").desc("who to greet");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     if (!name)
@@ -51,28 +50,12 @@ Hello Unknown!
 ~~~
 
 
-## Terminology
-- Argument
-  - something appearing in a command line, probably typed by a user, 
-    consisting of a name and/or value.
-- Positional argument
-  - argument identified by their position in the command line
-- Named argument
-  - argument identifiable by name (e.g. --name, -n)
-- Variable
-  - object that receives values and contains rules about what values
-    can be given to it.
-
-The command line interface (Cli) maps arguments to variables by name
-and position.
-
-
 ## Basic Usage
 After inspecting args cli.parse() returns false if it thinks the program 
 should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64) 
 for early exit (like --help) or bad arguments respectively. Otherwise the 
-command line was valid, arguments have been parsed to their variables, and 
-cli.exitCode() is EX_OK.
+command line was valid, arguments have been parsed, and cli.exitCode() is 
+EX_OK.
 
 ~~~ cpp
 #include "dim/cli.h"
@@ -108,19 +91,19 @@ Dim::kExitOk and Dim::kExitUsage are defined, which can be useful on Windows
 where \<sysexits.h> doesn't exist.
 
 
-## Arguments
-Dim::Cli is used by declaring variables to receive arguments. Either via pointer
-to a predefined external variable or by implicitly creating the variable as 
-part of declaring it.
+## Options
+Dim::Cli is used by declaring options to receive arguments. Either via pointer
+to a predefined external variable or by implicitly creating the variable when
+the option is declared. 
 
-Use cli.arg\<T>(names, defaultValue) to link argument names to a target 
-variable. It returns a proxy object that can be used like a pointer (* and ->) 
-to access the target directly.
+Use cli.opt\<T>(names, defaultValue) to link positional or named arguments to 
+an option. It returns a proxy object that can be used like a pointer (* and ->) 
+to access the value.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & fruit = cli.arg<string>("fruit", "apple");
+    auto & fruit = cli.opt<string>("fruit", "apple");
     if (!cli.parse(cerr, argc, argv)) {
         return cli.exitCode();
     }
@@ -147,7 +130,7 @@ Does the orange have a worm? No!
 Add a description and change the value's name in the description:
 
 ~~~ cpp
-auto & fruit = cli.arg<string>("fruit", "apple")
+auto & fruit = cli.opt<string>("fruit", "apple")
     .desc("type of fruit")
     .valueDesc("FRUIT");
 ~~~
@@ -163,10 +146,11 @@ Options:
   --help         Show this message and exit.  
 ~~~
 
+
 ## External Variables
-In addition to using the variable proxies you can bind the arguments directly 
-to predefined variables. This can be used to set a global flag, or populate an
-options struct that you access later.
+In addition to using the option proxies you can bind options directly to 
+predefined variables. This can be used to set a global flag, or populate a
+struct that you access later.
 
 For example:
 
@@ -174,8 +158,8 @@ For example:
 int main(int argc, char * argv[]) {
     bool worm;
     Dim::Cli cli;
-    cli.arg(&worm, "w worm").desc("make it icky");
-    auto & fruit = cli.arg<string>("fruit", "apple").desc("type of fruit");
+    cli.opt(&worm, "w worm").desc("make it icky");
+    auto & fruit = cli.opt<string>("fruit", "apple").desc("type of fruit");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Does the " << *fruit << " have a worm? " 
@@ -201,10 +185,11 @@ $ a.out -w
 Does the apple have a worm? Yes :(
 ~~~
 
-You can also point multiple arguments at the same variable, as is common with
-[feature switches](#feature-switches).
+You can also point multiple "options" at the same variable, as is common with
+[feature switches](Feature Switches).
 
-## Argument Names
+
+## Option Names
 Names are passed in as a space separated list where the individual names look 
 like these:
 
@@ -221,7 +206,7 @@ and all names may have modifier flags:
 | Flag | Type   | Description                                                     |
 | :--: |--------|-----------------------------------------------------------------|
 | !    | prefix | for boolean values, when setting the value it is first inverted |
-| ?    | prefix | for non-boolean named arguments, makes the value [optional](#optional-values) |
+| ?    | prefix | for non-boolean named options, makes the value [optional](Optional Values) |
 | .    | suffix | for long names, suppresses the implicit "no-" version           |
 
 By default, long names for boolean values get a second "no-" version implicitly
@@ -232,9 +217,9 @@ For example:
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.arg<string>("a apple [apple]").desc("apples are red");
-    cli.arg<bool>("!o orange apricot.").desc("oranges are orange");
-    cli.arg<string>("<pear>").desc("pears are yellow");
+    cli.opt<string>("a apple [apple]").desc("apples are red");
+    cli.opt<bool>("!o orange apricot.").desc("oranges are orange");
+    cli.opt<string>("<pear>").desc("pears are yellow");
     cli.parse(cerr, argc, argv);
     return EX_OK;
 }
@@ -256,24 +241,25 @@ Options:
   --help                      Show this message and exit.  
 ~~~
 
-When named arguments are added they replace any previous rule with the same 
-name, therefore these args declare '-n' an inverted bool:
+When named options are added they replace any previous rule with the same 
+name, therefore this option declares '-n' an inverted bool:
 
 ~~~ cpp
-cli.arg<bool>("n !n");
+cli.opt<bool>("n !n");
 ~~~
 But with these it becomes '-n STRING', a string:
 
 ~~~ cpp
-cli.arg<bool>("n !n");
-cli.arg<string>("n");
+cli.opt<bool>("n !n");
+cli.opt<string>("n");
 ~~~
+
 
 ## Positional Arguments
 A few things to keep in mind about positional arguments:
 
-- Arguments are mapped by the order they are added, except that all required 
-  positionals appear before optional ones. 
+- Positional arguments are mapped by the order they are added, except that 
+  required ones appear before optional ones. 
 - If there are multiple variadic positionals with unlimited (nargs = -1) 
   arity all but the first will be treated as if they had nargs = 1. 
 - If the unlimited one is required it will prevent any optional positionals 
@@ -282,21 +268,21 @@ A few things to keep in mind about positional arguments:
 
 
 ## Flag Arguments
-Some (most?) arguments are flags with no associated value, they just set
-a variable to a predefined value. This is the default when you create a 
-variable of type bool. Normally flags set the variable to true, but this can
-be changed in two ways:
+Many arguments are flags with no associated value, they just set an option 
+to a predefined value. This is the default when you create a option of type 
+bool. Normally flags set the option to true, but this can be changed in two 
+ways:
 
 - make it an inverted bool, which will set it to false
   - explicitly using the "!" modifier
   - define a long name and use the implicitly created "no-" prefix version
-- use arg.flagValue() to set the value, see 
-  [feature switches](#feature-switches).
+- use opt.flagValue() to set the value, see 
+  [feature switches](Feature Switches).
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & shout = cli.arg<bool>("shout !whisper").desc("I can't hear you!");
+    auto & shout = cli.opt<bool>("shout !whisper").desc("I can't hear you!");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     string prog = argv[0];
@@ -330,15 +316,15 @@ I am A.OUT!!!!111
 ~~~
 
 
-## Variadic Arguments
-Allows for an unlimited (or specific) number of arguments to be returned in a 
-vector. Variadic arguments are declared using cli.argVec() which binds 
-to a std::vector\<T>.
+## Variadic Options
+Allows for an unlimited (or specific) number of values to be returned in a 
+vector. Variadic options are declared using cli.optVec() which binds to a 
+std::vector\<T>.
 
 Example: 
 
 ~~~ cpp
-// printing vectors as comma separated is annoying...
+// printing a comma separated list is annoying...
 template<typename T> 
 ostream & operator<< (ostream & os, const vector<T> & v) {
     auto i = v.begin(), e = v.end();
@@ -352,8 +338,8 @@ ostream & operator<< (ostream & os, const vector<T> & v) {
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     vector<string> oranges;
-    cli.argVec(&oranges, "o orange").desc("oranges");
-    auto & apples = cli.argVec<string>("[apple]").desc("red fruit");
+    cli.optVec(&oranges, "o orange").desc("oranges");
+    auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
     if (!cli.parse(cerr, argc, argv)) {
         return cli.exitCode();
     }
@@ -384,7 +370,7 @@ Comparing (red delicious, honeycrisp) and (mandarin, navel).
 |------------|------------------------------------------------------------|
 | "-"        | Passed in as a positional argument.                        |
 | "--"       | Thrown away, but makes all remaining arguments positional  |
-| "@\<file>" | [Response file](#response_files) with additional arguments |
+| "@\<file>" | [Response file](Response Files) with additional arguments  |
 
 
 ## Response Files
@@ -397,7 +383,7 @@ What you write:
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & words = cli.argVec<string>("[words]").desc("Things you say.");
+    auto & words = cli.optVec<string>("[words]").desc("Things you say.");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Words:";
@@ -444,11 +430,12 @@ $ a.out @rsp/one.rsp
 Words: one two three
 ~~~
 
-While generally useful response file processing can be disabled with 
+While generally useful response file processing can be disabled via 
 cli.responseFiles(false).
 
+
 ## Optional Values
-You use the '?' [flag](#argument_names) on an argument name to indicate that
+You use the '?' [flag](Option Names) on an argument name to indicate that
 its value is optional. Only non-booleans can have optional values, booleans 
 are evaluated just on their presence or absence and don't otherwise have 
 values.
@@ -457,20 +444,20 @@ For a user to set a value on the command line when it is optional the value
 must be connected (no space) to the argument name, otherwise it is interpreted 
 as not present and the arguments implicit value is used instead. If the name 
 is not present at all the variable is set to the default given in the 
-cli.arg\<T>() call. 
+cli.opt\<T>() call. 
 
 By default the implicit value is T{}, but can be changed using 
-arg.implicitValue().
+opt.implicitValue().
 
 For example:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & v1 = cli.arg<string>("?o ?optional", "default");
-    auto & v2 = cli.arg<string>("?i ?with-implicit", "default");
+    auto & v1 = cli.opt<string>("?o ?optional", "default");
+    auto & v2 = cli.opt<string>("?i ?with-implicit", "default");
     v2.implicitValue("implicit");
-    auto & p = cli.arg<string>("[positional]", "default");
+    auto & p = cli.opt<string>("[positional]", "default");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "v1 = " << *v1 << ", v2 = " << *v2 << ", p = " << *p;
@@ -494,8 +481,9 @@ v1 =, v2 = two, p = one
 
 
 ## Feature Switches
-Using flag arguments, feature switches are implemented by setting multiple
-variables that reference the same target and marking them flag values.
+Using flag arguments, feature switches are implemented by creating multiple
+options that reference the same external variable and marking them flag 
+values.
 
 To set the default, pass in a value of true to the flagValue() function of 
 the option that should be the default.
@@ -504,8 +492,8 @@ the option that should be the default.
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     string fruit;
-    cli.arg(&fruit, "o orange", "orange").desc("oranges").flagValue();
-    cli.arg(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
+    cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
+    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
     if (!cli.parse(cerr, argc, argv)) {
         return cli.exitCode();
     }
@@ -541,7 +529,7 @@ instance:
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & v = cli.argVec<bool>("v verbose");
+    auto & v = cli.optVec<bool>("v verbose");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Verbosity: " << v.size();
@@ -555,41 +543,44 @@ $ a.out -vvv
 Verbosity: 3
 ~~~
 
+This could also be done with a [parse action](Parse Actions), but that seems
+like more work.
+
 
 ## Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For 
-instance, provide more detailed errors about badly formatted arguments. Or if 
-you want "--version" to print some crazy ascii artwork and exit the program 
-(for a non-crazy --version use [arg.versionArg()](#version_action)).
+instance, to provide more detailed errors about badly formatted arguments. Or 
+to make "--version" print some crazy ascii artwork and exit the program (for 
+a non-crazy --version use [opt.versionOpt()](Version Action)).
 
-Parsing actions are attached to arguments and get invoked when a value becomes 
+Parsing actions are attached to options and get invoked when a value becomes 
 available for it. Any std::function compatible object that accepts references 
-to cli, argument, and source value as parameters can be used. The function 
+to cli, option, and source string as parameters can be used. The function 
 should:
 
-- Parse the source string and use the result to set the value (or push back 
-  the additional value for vectors).
+- Parse the source string and use the result to set the option value (or 
+  push back the additional value for vector arguments).
 - Call cli.badUsage() with an error message if there's a problem.
 - Return false if the program should stop, otherwise true. You may want to 
   stop due to error or just to early out like "--version" and "--help".
 
 Other things to keep in mind:
 
-- You can use arg.from() and arg.pos() to get the argument name that the value 
+- You can use opt.from() and opt.pos() to get the argument name that the value 
   was attached to on the command line and its position in argv\[].
-- For bool arguments the source value string will always be either "0" or "1".
+- For bool options the source value string will always be either "0" or "1".
 
 Here's an action that multiples multiple values together:
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & sum = cli.arg<int>("n number", 1)
+    auto & sum = cli.opt<int>("n number", 1)
         .desc("numbers to multiply")
-        .action([](auto & cli, auto & arg, const string & val) {
-            int tmp = *arg; // save the old value
-            if (!arg.parseValue(val)) // parse the new value into arg
-                return cli.badUsage("Bad '" + arg.from() + "' value: " + val);
-            *arg *= tmp; // multiply old and new together
+        .action([](auto & cli, auto & opt, const string & val) {
+            int tmp = *opt; // save the old value
+            if (!opt.parseValue(val)) // parse the new value into opt
+                return cli.badUsage("Bad '" + opt.from() + "' value: " + val);
+            *opt *= tmp; // multiply old and new together
             return true;
         });
     if (!cli.parse(cerr, argc, argv))
@@ -618,12 +609,12 @@ a.out: Bad '-n' value: x
 
 
 ## Version Action
-Use cli.versionArg() to add simple --version processing.
+Use cli.versionOpt() to add simple --version processing.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.versionArg("1.0");
+    cli.versionOpt("1.0");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Hello world!" << endl;
@@ -646,13 +637,13 @@ Hello world!
 ~~~
 
 
-## Variable Modifiers
+## Option Modifiers
 
 | Modifier | Done | Description |
 |----------|------|-------------|
 | choice | - | value from vector? index in vec for enum? or vector\<pair\<string, T>>? |
 | prompt | - | prompt(string&, bool hide, bool confirm)
-| passwordArg | - | arg("password").prompt("Password", true, true) |
+| passwordOpt | - | opt("password").prompt("Password", true, true) |
 | yes | - | are you sure? fail if not y |
 | range | - | min/max allowed for variable |
 | clamp | - | clamp variable so it is between min/max |
@@ -664,7 +655,7 @@ Hello world!
 If you are using external variables you just access them directly after using 
 cli.parse() to populate them.
 
-If you use the proxy object returned from cli.arg\<T>() you can dereference it 
+If you use the proxy object returned from cli.opt\<T>() you can dereference it 
 like a smart pointer to get at the value. In addition, you can test whether 
 it was explicitly set, find the argument name that populated it, and get the 
 position in argv\[] it came from.
@@ -672,7 +663,7 @@ position in argv\[] it came from.
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & name = cli.arg<string>("n name", "Unknown");
+    auto & name = cli.opt<string>("n name", "Unknown");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     if (!name) {
@@ -700,11 +691,11 @@ Hello Mary!
 ~~~
 
 
-## Keep it quiet
+## Keep It Quiet
 For some applications, such as Windows services, it's important not to 
 interact with the console. Simple steps to avoid parse() doing console IO:
 
-1. Don't use options (such as arg.prompt()) that explicitly ask for IO.
+1. Don't use things (such as opt.prompt()) that explicitly ask for IO.
 2. Add your own "help" argument to override the default, you can still 
 turn around and call cli.writeHelp(ostream&) if desired.
 3. Use the two argument version of cli.parse() and get the error message from

@@ -19,12 +19,11 @@ bool parseTest(Dim::Cli & cli, vector<const char *> args) {
 
 //===========================================================================
 bool toArgvTest(
-    std::function<vector<string>(const string&)> fn, 
-    const std::string & line, 
-    const vector<string> & argv
-) {
+    std::function<vector<string>(const string &)> fn,
+    const std::string & line,
+    const vector<string> & argv) {
     auto args = fn(line);
-    if (args == argv) 
+    if (args == argv)
         return true;
     s_errors += 1;
     return false;
@@ -39,7 +38,7 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
 
-    auto & sum = cli.arg<int>("n number", 1)
+    auto & sum = cli.opt<int>("n number", 1)
                      .desc("numbers to multiply")
                      .action([](auto & cli, auto & arg, const string & val) {
                          int tmp = *arg;
@@ -49,24 +48,23 @@ int main(int argc, char * argv[]) {
                          *arg *= tmp;
                          return true;
                      });
-    cli.versionArg("1.0");
+    cli.versionOpt("1.0");
     parseTest(cli, {"-n2", "-n3"});
     cout << "The sum is: " << *sum << endl;
     parseTest(cli, {"--version"});
 
     cli = {};
-    auto & num = cli.arg<int>("n number", 1).desc("number is an int");
-    cli.arg(num, "c").desc("alias for number").valueDesc("COUNT");
-    auto & special = cli.arg<bool>("s special !S", false).desc("snowflake");
+    auto & num = cli.opt<int>("n number", 1).desc("number is an int");
+    cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
+    auto & special = cli.opt<bool>("s special !S", false).desc("snowflake");
     auto & name =
-        cli.group("name").title("Name options").argVec<string>("name");
-    cli.argVec<string>("[key]").desc(
+        cli.group("name").title("Name options").optVec<string>("name");
+    cli.optVec<string>("[key]").desc(
         "it's the key argument with a very "
         "long description that wraps the line at least once, maybe more.");
     cli.title(
         "Long explanation of this very short set of options, it's so long "
-        "that it even wraps around to the next line"
-    );
+        "that it even wraps around to the next line");
     parseTest(cli, {"-n3"});
     parseTest(cli, {"--name", "two"});
     parseTest(cli, {"--name=three"});
@@ -80,9 +78,9 @@ int main(int argc, char * argv[]) {
     cli = {};
     parseTest(cli, {"--help"});
     string fruit;
-    auto & orange = cli.arg(&fruit, "o", "orange").flagValue();
-    cli.arg(&fruit, "a", "apple").flagValue(true);
-    cli.arg(orange, "p", "pear").flagValue();
+    auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
+    cli.opt(&fruit, "a", "apple").flagValue(true);
+    cli.opt(orange, "p", "pear").flagValue();
     parseTest(cli, {"-o"});
     cout << "orange '" << *orange << "' from '" << orange.from() << "' at "
          << orange.pos() << endl;
@@ -90,17 +88,19 @@ int main(int argc, char * argv[]) {
     cli = {};
     int count;
     bool help;
-    cli.arg(&count, "c ?count").implicitValue(3);
-    cli.arg(&help, "? h help");
+    cli.opt(&count, "c ?count").implicitValue(3);
+    cli.opt(&help, "? h help");
     parseTest(cli, {"-hc2", "-?"});
     parseTest(cli, {"--count"});
 
     toArgvTest(&cli.toWindowsArgv, R"( a "" "c )", {"a", "", "c "});
     toArgvTest(&cli.toWindowsArgv, R"(a"" b ")", {"a", "b", ""});
     toArgvTest(&cli.toWindowsArgv, R"("abc" d e)", {"abc", "d", "e"});
-    toArgvTest(&cli.toWindowsArgv, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+    toArgvTest(
+        &cli.toWindowsArgv, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
     toArgvTest(&cli.toWindowsArgv, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
-    toArgvTest(&cli.toWindowsArgv, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+    toArgvTest(
+        &cli.toWindowsArgv, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
