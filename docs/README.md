@@ -464,46 +464,6 @@ v1 =, v2 = two, p = one
 ~~~
 
 
-## Feature Switches
-Using flag arguments, feature switches are implemented by creating multiple
-options that reference the same external variable and marking them flag 
-values.
-
-To set the default, pass in a value of true to the flagValue() function of 
-the option that should be the default.
-
-~~~ cpp
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    string fruit;
-    cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
-    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
-    if (!cli.parse(cerr, argc, argv)) {
-        return cli.exitCode();
-    }
-    cout << "Does the " << fruit << " have a worm? No!";
-    return EX_OK;
-}
-~~~
-Which looks like:
-
-~~~ console
-$ a.out --help
-Usage: a.out [OPTIONS]
-
-Options:
-  -a            red fruit
-  -o, --orange  oranges
-
-  --help        Show this message and exit.
-
-$ a.out
-Does the apple have a worm? No!
-$ a.out -o
-Does the orange have a worm? No!
-~~~
-
-
 ## Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For 
 instance, to provide more detailed errors about badly formatted arguments. Or 
@@ -563,6 +523,60 @@ The product is: 6
 $ a.out -nx
 a.out: Bad '-n' value: x
 ~~~
+
+
+## Distributed Registration
+Options don't have to be defined all in one source file, separate source 
+files can each define options of interest to that file and get them populated
+when the command line is processed.
+
+When you instanticate Dim::Cli you're creating a handle to the globally 
+shared configuration. So multiple translation units can each create one and
+use it to update the shared configuration.
+
+The following example has a logMsg function in log.cpp with its own "-1" 
+option while main.cpp registers "--version":
+
+~~~ cpp
+// main.cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt("1.0");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    // do stuff that might call logMessage...
+    return EX_OK;
+}
+~~~
+
+~~~ cpp
+// log.cpp
+static Dim::Cli s_cli;
+static auto & s_failEarly = s_cli.opt<bool>("1").desc("Exit on first error");
+
+void logMsg(string & msg) {
+    cerr << msg << endl;
+    if (*s_failEarly)
+        exit(EX_SOFTWARE);
+}
+~~~
+
+~~~ console
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1         Exit on first error
+
+  --help     Show this message and exit.
+  --version  Show version and exit.
+~~~
+
+#### Dim::CliLocal
+Although it was created for testing you can also use Dim::CliLocal, a 
+completely self-contained parser, if you need to redefine options, have results
+from multiple parses at once, or otherwise need to avoid the shared 
+configuration.
 
 
 ## Response Files
@@ -692,6 +706,46 @@ usage: a.out [OPTIONS]
 
 Options:
   --help     What you see is what you get.
+~~~
+
+
+## Feature Switches
+Using flag arguments, feature switches are implemented by creating multiple
+options that reference the same external variable and marking them flag 
+values.
+
+To set the default, pass in a value of true to the flagValue() function of 
+the option that should be the default.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    string fruit;
+    cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
+    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
+    if (!cli.parse(cerr, argc, argv)) {
+        return cli.exitCode();
+    }
+    cout << "Does the " << fruit << " have a worm? No!";
+    return EX_OK;
+}
+~~~
+Which looks like:
+
+~~~ console
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -a            red fruit
+  -o, --orange  oranges
+
+  --help        Show this message and exit.
+
+$ a.out
+Does the apple have a worm? No!
+$ a.out -o
+Does the orange have a worm? No!
 ~~~
 
 

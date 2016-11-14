@@ -34,7 +34,9 @@ int main(int argc, char * argv[]) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
 
-    Dim::Cli cli;
+    Dim::Cli c1;
+    Dim::Cli c2;
+    Dim::CliLocal cli;
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
 

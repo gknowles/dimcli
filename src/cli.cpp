@@ -29,7 +29,29 @@ const size_t kMaxDescCol = 28;
 ***/
 
 // Name of group containing --help, --version, etc
-const std::string s_internalOptionGroup = "~";
+const string s_internalOptionGroup = "~";
+
+
+struct Cli::OptName {
+    CliBase::OptBase * opt;
+    bool invert;    // set to false instead of true (only for bools)
+    bool optional;  // value doesn't have to be present? (non-bools only)
+    string name;    // name of argument (only for positionals)
+};
+struct Cli::Config {
+    std::list<std::unique_ptr<OptBase>> opts;
+    std::map<char, OptName> shortNames;
+    std::map<std::string, OptName> longNames;
+    std::vector<OptName> argNames;
+
+    Opt<bool> * helpOpt{nullptr};
+    std::map<std::string, Group> groups;
+    bool responseFiles{true};
+
+    int exitCode{0};
+    std::string errMsg;
+    std::string progName;
+};
 
 
 /****************************************************************************
@@ -39,7 +61,7 @@ const std::string s_internalOptionGroup = "~";
 ***/
 
 //===========================================================================
-CliBase::Group::Group(Cli & cli, const std::string & name)
+CliBase::Group::Group(Cli & cli, const string & name)
     : m_cli(cli)
     , m_name(name)
     , m_title(name)
@@ -54,13 +76,13 @@ CliBase::Group & CliBase::Group::operator=(const Group & from) {
 }
 
 //===========================================================================
-CliBase::Group & CliBase::Group::title(const std::string & val) {
+CliBase::Group & CliBase::Group::title(const string & val) {
     m_title = val;
     return *this;
 }
 
 //===========================================================================
-CliBase::Group & CliBase::Group::sortKey(const std::string & val) {
+CliBase::Group & CliBase::Group::sortKey(const string & val) {
     m_sortKey = val;
     return *this;
 }
@@ -73,9 +95,19 @@ CliBase::Group & CliBase::Group::sortKey(const std::string & val) {
 ***/
 
 //===========================================================================
-CliBase::OptBase::OptBase(const std::string & names, bool boolean)
+CliBase::OptBase::OptBase(const string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
+
+
+/****************************************************************************
+*
+*   CliLocal
+*
+***/
+
+//===========================================================================
+CliLocal::CliLocal() : Cli(make_shared<Config>()) {}
 
 
 /****************************************************************************
@@ -86,45 +118,63 @@ CliBase::OptBase::OptBase(const std::string & names, bool boolean)
 
 // forward declarations
 static bool
-helpAction(Cli & cli, Cli::Opt<bool> & opt, const std::string & val);
+helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 
 //===========================================================================
-Cli::Cli()
-    : Group{*this, ""} {
-    title("Options");
-    group(s_internalOptionGroup).title("");
-    m_helpOpt = &opt<bool>("help.")
-                     .desc("Show this message and exit.")
-                     .action(helpAction)
-                     .group(s_internalOptionGroup);
+// Default constructor creates a handle to the shared configuration, this
+// allows options to be statically registered from multiple source files.
+Cli::Cli() : Group(*this, "") {
+    static auto s_cfg = make_shared<Config>();
+    m_cfg = s_cfg;
+    if (!m_cfg->helpOpt)
+        construct();
 }
 
 //===========================================================================
-CliBase::Group & Cli::group(const std::string & name) {
+// protected
+Cli::Cli(shared_ptr<Config> cfg) 
+    : Group{*this, ""} 
+    , m_cfg(cfg)
+{
+    construct();
+}
+
+//===========================================================================
+void Cli::construct () {
+    title("Options");
+    group(s_internalOptionGroup).title("");
+    m_cfg->helpOpt = &opt<bool>("help.")
+        .desc("Show this message and exit.")
+        .action(helpAction)
+        .group(s_internalOptionGroup);
+}
+
+//===========================================================================
+CliBase::Group & Cli::group(const string & name) {
     if (name.empty()) {
         return *this;
     } else {
-        auto i = m_groups.find(name);
-        if (i == m_groups.end()) {
-            i = m_groups.emplace(make_pair(name, Group(*this, name))).first;
+        auto i = m_cfg->groups.find(name);
+        if (i == m_cfg->groups.end()) {
+            i = m_cfg->groups.emplace(make_pair(name, Group(*this, name))).first;
         }
         return i->second;
     }
 }
 
 //===========================================================================
-const CliBase::Group & Cli::group(const std::string & name) const {
+const CliBase::Group & Cli::group(const string & name) const {
     return const_cast<Cli *>(this)->group(name);
 }
 
 //===========================================================================
 void Cli::responseFiles(bool enable) {
-    m_responseFiles = enable;
+    m_cfg->responseFiles = enable;
 }
 
 //===========================================================================
 Cli::Opt<bool> &
-Cli::versionOpt(const std::string & version, const std::string & progName) {
+Cli::versionOpt(const string & version, const string & progName) {
     auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
         ignore = opt, val;
         fs::path prog = progName;
@@ -142,9 +192,25 @@ Cli::versionOpt(const std::string & version, const std::string & progName) {
 }
 
 //===========================================================================
-void Cli::addOpt(std::unique_ptr<OptBase> src) {
+Cli::Opt<bool> & Cli::helpOpt() { 
+    return *m_cfg->helpOpt; 
+}
+
+//===========================================================================
+Cli::OptBase * Cli::findOpt(const void * value) {
+    if (value) {
+        for (auto && opt : m_cfg->opts) {
+            if (opt->sameValue(value))
+                return opt.get();
+        }
+    }
+    return nullptr;
+}
+
+//===========================================================================
+void Cli::addOpt(unique_ptr<OptBase> src) {
     OptBase * opt = src.get();
-    m_opts.push_back(std::move(src));
+    m_cfg->opts.push_back(move(src));
     const char * ptr = opt->m_names.data();
     string name;
     char close;
@@ -195,9 +261,9 @@ void Cli::addLongName(
         }
         key.pop_back();
     }
-    m_longNames[key] = {opt, invert, optional};
+    m_cfg->longNames[key] = {opt, invert, optional};
     if (opt->m_bool && allowNo)
-        m_longNames["no-" + key] = {opt, !invert, optional};
+        m_cfg->longNames["no-" + key] = {opt, !invert, optional};
 }
 
 //===========================================================================
@@ -208,18 +274,18 @@ void Cli::addOptName(const string & name, OptBase * opt) {
     switch (name[0]) {
     case '-': assert(name[0] != '-' && "bad argument name"); return;
     case '[':
-        m_argNames.push_back({opt, !invert, optional, name.data() + 1});
+        m_cfg->argNames.push_back({opt, !invert, optional, name.data() + 1});
         return;
     case '<':
         auto where =
-            find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
+            find_if(m_cfg->argNames.begin(), m_cfg->argNames.end(), [](auto && key) {
                 return key.optional;
             });
-        m_argNames.insert(where, {opt, !invert, !optional, name.data() + 1});
+        m_cfg->argNames.insert(where, {opt, !invert, !optional, name.data() + 1});
         return;
     }
     if (name.size() == 1) {
-        m_shortNames[name[0]] = {opt, !invert, !optional};
+        m_cfg->shortNames[name[0]] = {opt, !invert, !optional};
         return;
     }
     switch (name[0]) {
@@ -229,7 +295,7 @@ void Cli::addOptName(const string & name, OptBase * opt) {
             return;
         }
         if (name.size() == 2) {
-            m_shortNames[name[1]] = {opt, invert, !optional};
+            m_cfg->shortNames[name[1]] = {opt, invert, !optional};
         } else {
             addLongName(name.substr(1), opt, invert, !optional);
         }
@@ -240,7 +306,7 @@ void Cli::addOptName(const string & name, OptBase * opt) {
             return;
         }
         if (name.size() == 2) {
-            m_shortNames[name[1]] = {opt, !invert, optional};
+            m_cfg->shortNames[name[1]] = {opt, !invert, optional};
         } else {
             addLongName(name.substr(1), opt, !invert, optional);
         }
@@ -258,7 +324,7 @@ void Cli::addOptName(const string & name, OptBase * opt) {
 
 //===========================================================================
 static bool
-helpAction(Cli & cli, Cli::Opt<bool> & opt, const std::string & val) {
+helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
     stringTo(*opt, val);
     if (*opt) {
         cli.writeHelp(cout);
@@ -268,7 +334,7 @@ helpAction(Cli & cli, Cli::Opt<bool> & opt, const std::string & val) {
 }
 
 //===========================================================================
-bool Cli::defaultAction(OptBase & opt, const std::string & val) {
+bool Cli::defaultAction(OptBase & opt, const string & val) {
     if (!opt.parseValue(val))
         return badUsage("Invalid '" + opt.from() + "' value: " + val);
     return true;
@@ -385,23 +451,23 @@ static bool expandResponseFiles(
 
 //===========================================================================
 void Cli::resetValues() {
-    for (auto && opt : m_opts) {
+    for (auto && opt : m_cfg->opts) {
         opt->reset();
     }
-    for (unsigned i = 0; i < size(m_argNames); ++i) {
-        auto & key = m_argNames[i];
+    for (unsigned i = 0; i < size(m_cfg->argNames); ++i) {
+        auto & key = m_cfg->argNames[i];
         if (key.name.empty())
             key.name = "arg" + to_string(i + 1);
     }
-    m_exitCode = kExitOk;
-    m_errMsg.clear();
-    m_progName.clear();
+    m_cfg->exitCode = kExitOk;
+    m_cfg->errMsg.clear();
+    m_cfg->progName.clear();
 }
 
 //===========================================================================
 bool Cli::parseAction(
     OptBase & opt,
-    const std::string & name,
+    const string & name,
     int pos,
     const char ptr[]) {
     opt.set(name, pos);
@@ -415,8 +481,8 @@ bool Cli::parseAction(
 
 //===========================================================================
 bool Cli::fail(int code, const string & msg) {
-    m_errMsg = msg;
-    m_exitCode = code;
+    m_cfg->errMsg = msg;
+    m_cfg->exitCode = code;
     return false;
 }
 
@@ -427,7 +493,7 @@ bool Cli::parse(vector<string> & args) {
 
     resetValues();
     set<fs::path> ancestors;
-    if (m_responseFiles && !expandResponseFiles(*this, args, ancestors))
+    if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
 
     auto arg = args.data();
@@ -436,7 +502,7 @@ bool Cli::parse(vector<string> & args) {
     string name;
     unsigned pos = 0;
     bool moreOpts = true;
-    m_progName = *arg;
+    m_cfg->progName = *arg;
     int argPos = 1;
     arg += 1;
 
@@ -446,8 +512,8 @@ bool Cli::parse(vector<string> & args) {
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
             for (; *ptr && *ptr != '-'; ++ptr) {
-                auto it = m_shortNames.find(*ptr);
-                if (it == m_shortNames.end()) {
+                auto it = m_cfg->shortNames.find(*ptr);
+                if (it == m_cfg->shortNames.end()) {
                     return badUsage("Unknown option: -"s + *ptr);
                 }
                 argName = it->second;
@@ -482,8 +548,8 @@ bool Cli::parse(vector<string> & args) {
                 key = ptr;
                 ptr = "";
             }
-            auto it = m_longNames.find(key);
-            if (it == m_longNames.end()) {
+            auto it = m_cfg->longNames.find(key);
+            if (it == m_cfg->longNames.end()) {
                 return badUsage("Unknown option: --"s + key);
             }
             argName = it->second;
@@ -504,10 +570,10 @@ bool Cli::parse(vector<string> & args) {
         }
 
         // positional value
-        if (pos >= size(m_argNames)) {
+        if (pos >= size(m_cfg->argNames)) {
             return badUsage("Unexpected argument: "s + ptr);
         }
-        argName = m_argNames[pos];
+        argName = m_cfg->argNames[pos];
         name = argName.name;
         if (!parseAction(*argName.opt, name, argPos, ptr))
             return false;
@@ -535,8 +601,8 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    if (pos < size(m_argNames) && !m_argNames[pos].optional) {
-        return badUsage("No value given for " + m_argNames[pos].name);
+    if (pos < size(m_cfg->argNames) && !m_cfg->argNames[pos].optional) {
+        return badUsage("No value given for " + m_cfg->argNames[pos].name);
     }
     return true;
 }
@@ -565,6 +631,28 @@ bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
 
 /****************************************************************************
 *
+*   Parse results
+*
+***/
+
+//===========================================================================
+int Cli::exitCode() const { 
+    return m_cfg->exitCode; 
+};
+
+//===========================================================================
+const string & Cli::errMsg() const { 
+    return m_cfg->errMsg; 
+}
+
+//===========================================================================
+const string & Cli::progName() const { 
+    return m_cfg->progName; 
+}
+
+
+/****************************************************************************
+*
 *   Help
 *
 ***/
@@ -573,13 +661,13 @@ namespace {
 struct WrapPos {
     size_t pos{0};
     size_t maxWidth{79};
-    std::string prefix;
+    string prefix;
 };
 } // namespace
 
 //===========================================================================
 // Write token, potentially adding a line break first.
-static void writeToken(ostream & os, WrapPos & wp, const std::string token) {
+static void writeToken(ostream & os, WrapPos & wp, const string token) {
     if (wp.pos + token.size() + 1 > wp.maxWidth) {
         if (wp.pos > wp.prefix.size()) {
             os << '\n' << wp.prefix;
@@ -640,14 +728,14 @@ int Cli::writeHelp(ostream & os, const string & progName) const {
 //===========================================================================
 void Cli::writePositionals(ostream & os) const {
     size_t colWidth = 0;
-    for (auto && pa : m_argNames) {
+    for (auto && pa : m_cfg->argNames) {
         // find widest positional argument name, with space for <>'s
         colWidth = max(colWidth, pa.name.size() + 2);
     }
     colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
 
     WrapPos wp;
-    for (auto && pa : m_argNames) {
+    for (auto && pa : m_cfg->argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  " + pa.name);
         writeDescCol(os, wp, pa.opt->m_desc, colWidth);
@@ -667,7 +755,7 @@ void Cli::writeOptions(ostream & os) const {
         OptBase * opt;
     };
     vector<ArgKey> namedArgs;
-    for (auto && opt : m_opts) {
+    for (auto && opt : m_cfg->opts) {
         string list = nameList(*opt);
         if (size_t width = list.size()) {
             colWidth = max(colWidth, width);
@@ -727,14 +815,14 @@ void Cli::writeOptions(ostream & os) const {
 //===========================================================================
 int Cli::writeUsage(ostream & os, const string & progName) const {
     streampos base = os.tellp();
-    os << "usage: " << (progName.empty() ? m_progName : progName) << ' ';
+    os << "usage: " << (progName.empty() ? m_cfg->progName : progName) << ' ';
     WrapPos wp;
     wp.maxWidth = 79;
     wp.pos = os.tellp() - base;
     wp.prefix = string(wp.pos, ' ');
-    if (!m_shortNames.empty() || !m_longNames.empty())
+    if (!m_cfg->shortNames.empty() || !m_cfg->longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
-    for (auto && pa : m_argNames) {
+    for (auto && pa : m_cfg->argNames) {
         string token =
             pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
         if (pa.opt->m_multiple)
@@ -767,7 +855,7 @@ string Cli::nameList(OptBase & opt, bool enableOptions) const {
     bool optional = false;
 
     // names
-    for (auto && sn : m_shortNames) {
+    for (auto && sn : m_cfg->shortNames) {
         if (sn.second.opt != &opt
             || opt.m_bool && sn.second.invert == enableOptions) {
             continue;
@@ -778,7 +866,7 @@ string Cli::nameList(OptBase & opt, bool enableOptions) const {
         list += '-';
         list += sn.first;
     }
-    for (auto && ln : m_longNames) {
+    for (auto && ln : m_cfg->longNames) {
         if (ln.second.opt != &opt
             || opt.m_bool && ln.second.invert == enableOptions) {
             continue;

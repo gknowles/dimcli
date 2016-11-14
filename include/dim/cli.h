@@ -204,6 +204,9 @@ CliBase::Group::optVec(const std::string & keys, int nargs) {
 
 class Cli : public CliBase::Group {
 public:
+    // Creates a handle to the shared command line configuration, this 
+    // indirection allows options to be statically registered from multiple 
+    // source files.
     Cli();
 
     //-----------------------------------------------------------------------
@@ -216,7 +219,7 @@ public:
 
     // Get reference to internal help option, can be used to change the
     // desciption, option group, etc.
-    Opt<bool> & helpOpt() { return *m_helpOpt; }
+    Opt<bool> & helpOpt();
 
     // Create a new option group, that you can then start stuffing args into.
     Group & group(const std::string & name);
@@ -266,11 +269,11 @@ public:
     //-----------------------------------------------------------------------
     // Inspection after parsing
 
-    int exitCode() const { return m_exitCode; };
-    const std::string & errMsg() const { return m_errMsg; }
+    int exitCode() const;
+    const std::string & errMsg() const;
 
     // Program name received in argv[0]
-    const std::string & progName() const { return m_progName; }
+    const std::string & progName() const;
 
     // writeHelp & writeUsage return the current exitCode()
     int writeHelp(std::ostream & os, const std::string & progName = {}) const;
@@ -279,8 +282,13 @@ public:
     void writePositionals(std::ostream & os) const;
     void writeOptions(std::ostream & os) const;
 
+protected:
+    struct Config;
+    Cli(std::shared_ptr<Config> cfg);
+
 private:
     friend class CliBase::Group;
+    void construct();
 
     bool defaultAction(OptBase & opt, const std::string & val);
 
@@ -292,8 +300,11 @@ private:
     void addOptName(const std::string & name, OptBase * opt);
     void addOpt(std::unique_ptr<OptBase> ptr);
 
-    template <typename Opt, typename Value, typename Ptr>
-    std::shared_ptr<Value> getProxy(Ptr * ptr);
+    OptBase * findOpt(const void * value);
+
+    template <typename Opt, typename Value, typename T>
+    std::shared_ptr<Value> getProxy(T * ptr);
+
     template <typename A> A & addOpt(std::unique_ptr<A> ptr);
 
     bool parseAction(
@@ -306,36 +317,16 @@ private:
     std::string nameList(OptBase & opt) const;
     std::string nameList(OptBase & opt, bool disableOptions) const;
 
-    struct OptName {
-        OptBase * opt;
-        bool invert;      // set to false instead of true (only for bools)
-        bool optional;    // value doesn't have to be present? (non-bools only)
-        std::string name; // name of argument (only for positionals)
-    };
-    std::list<std::unique_ptr<OptBase>> m_opts;
-    std::map<char, OptName> m_shortNames;
-    std::map<std::string, OptName> m_longNames;
-    std::vector<OptName> m_argNames;
-
-    Opt<bool> * m_helpOpt{nullptr};
-    std::map<std::string, Group> m_groups;
-    bool m_responseFiles{true};
-
-    int m_exitCode{0};
-    std::string m_errMsg;
-    std::string m_progName;
+    struct OptName;
+    std::shared_ptr<Config> m_cfg;
 };
 
 //===========================================================================
-template <typename Opt, typename Value, typename Ptr>
-inline std::shared_ptr<Value> Cli::getProxy(Ptr * ptr) {
-    if (ptr) {
-        for (auto && opt : m_opts) {
-            if (opt->sameValue(ptr)) {
-                Opt * dopt = static_cast<Opt *>(opt.get());
-                return CliBase::getProxy<Opt>(*dopt);
-            }
-        }
+template <typename Opt, typename Value, typename T>
+inline std::shared_ptr<Value> Cli::getProxy(T * ptr) {
+    if (OptBase * opt = findOpt(ptr)) {
+        Opt * dopt = static_cast<Opt *>(opt);
+        return CliBase::getProxy<Opt>(*dopt);
     }
 
     // Since there was no pre-existing proxy to raw value, create new proxy.
@@ -349,6 +340,21 @@ template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
+
+
+/****************************************************************************
+*
+*   CliLocal
+*
+*   Stand-alone cli instance independent of the shared configuration. Mainly
+*   for testing.
+*
+***/
+
+class CliLocal : public Cli {
+public:
+    CliLocal();
+};
 
 
 /****************************************************************************
