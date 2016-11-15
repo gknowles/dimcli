@@ -544,19 +544,19 @@ int main(int argc, char * argv[]) {
     cli.versionOpt("1.0");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
-    // do stuff that might call logMessage...
+    // do stuff that might call logMsg...
     return EX_OK;
 }
 ~~~
 
 ~~~ cpp
 // log.cpp
-static Dim::Cli s_cli;
-static auto & s_failEarly = s_cli.opt<bool>("1").desc("Exit on first error");
+static Dim::Cli cli;
+static auto & failEarly = cli.opt<bool>("1").desc("Exit on first error");
 
 void logMsg(string & msg) {
     cerr << msg << endl;
-    if (*s_failEarly)
+    if (*failEarly)
         exit(EX_SOFTWARE);
 }
 ~~~
