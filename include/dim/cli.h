@@ -1,6 +1,8 @@
 // cli.h - dim cli
 //
-// For documentation and examples follow the links at:
+// Command line parser
+//
+// For thouough documentation and examples:
 // https://github.com/gknowles/dimcli
 
 #pragma once
@@ -51,12 +53,14 @@ public:
     template <typename A, typename T> class OptShim;
     template <typename T> class Opt;
     template <typename T> class OptVec;
+    struct OptIndex;
 
     struct ArgMatch;
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
 
     class Group;
+    class Command;
 
 protected:
     template <typename A> auto & getProxy(A & opt) { return opt.m_proxy; }
@@ -67,11 +71,15 @@ protected:
 *
 *   CliBase::Group
 *
+*   An option group that shares a section in the help text. Options are
+*   always added to a group, either the default group of the cli (or command)
+*   or an explicitly created one.
+*
 ***/
 
 class CliBase::Group : public CliBase {
 public:
-    Group(Cli & cli, const std::string & name);
+    Group(CliBase::Command & cmd, const std::string & name);
 
     // assignment only changes the contents, not the owner
     Group & operator=(const Group & from);
@@ -119,23 +127,23 @@ public:
 
     //-----------------------------------------------------------------------
     // Queries
-    const std::string & title() const { return m_title; }
-    const std::string & sortKey() const { return m_sortKey; }
+    const std::string & name() const;
+    const std::string & title() const;
+    const std::string & sortKey() const;
 
 private:
-    Cli & m_cli;
-    std::string m_name;
-    std::string m_title;
-    std::string m_sortKey;
+    CliBase::Command & m_cmd;
+    struct Config;
+    std::shared_ptr<Config> m_grpCfg;
 };
 
 //===========================================================================
 template <typename T, typename U, typename>
 inline CliBase::Group::Opt<T> &
 CliBase::Group::opt(T * value, const std::string & keys, const U & def) {
-    auto proxy = m_cli.getProxy<Opt<T>, Value<T>>(value);
+    auto proxy = m_cmd.getProxy<Opt<T>, Value<T>>(value);
     auto ptr = std::make_unique<Opt<T>>(proxy, keys, def);
-    return m_cli.addOpt(std::move(ptr)).group(m_name);
+    return m_cmd.addOpt(std::move(ptr)).group(name());
 }
 
 //===========================================================================
@@ -151,9 +159,9 @@ inline CliBase::Group::OptVec<T> & CliBase::Group::optVec(
     std::vector<T> * values,
     const std::string & keys,
     int nargs) {
-    auto proxy = m_cli.getProxy<OptVec<T>, ValueVec<T>>(values);
+    auto proxy = m_cmd.getProxy<OptVec<T>, ValueVec<T>>(values);
     auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
-    return m_cli.addOpt(std::move(ptr)).group(m_name);
+    return m_cmd.addOpt(std::move(ptr)).group(name());
 }
 
 //===========================================================================
@@ -198,16 +206,14 @@ CliBase::Group::optVec(const std::string & keys, int nargs) {
 
 /****************************************************************************
 *
-*   Cli
+*   CliBase::Command
 *
 ***/
 
-class Cli : public CliBase::Group {
+class CliBase::Command : public CliBase::Group {
 public:
-    // Creates a handle to the shared command line configuration, this 
-    // indirection allows options to be statically registered from multiple 
-    // source files.
-    Cli();
+    // assignment only changes the contents, not the owner
+    Command & operator=(const Command & from);
 
     //-----------------------------------------------------------------------
     // Configuration
@@ -217,17 +223,100 @@ public:
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
 
-    // Get reference to internal help option, can be used to change the
-    // desciption, option group, etc.
-    Opt<bool> & helpOpt();
-
     // Create a new option group, that you can then start stuffing args into.
     Group & group(const std::string & name);
     const Group & group(const std::string & name) const;
 
+    //-----------------------------------------------------------------------
+    // Queries
+    const std::string & name() const;
+
+protected:
+    struct Config;
+    Command(Cli & cli, const std::string & name);
+
+private:
+    friend class CliBase::Group;
+
+    bool defaultAction(OptBase & opt, const std::string & val);
+
+    void addOpt(std::unique_ptr<OptBase> ptr);
+
+    template <typename A> A & addOpt(std::unique_ptr<A> ptr);
+
+    template <typename Opt, typename Value, typename T>
+    std::shared_ptr<Value> getProxy(T * ptr);
+
+    Cli & m_cli;
+    std::shared_ptr<Config> m_cmdCfg;
+};
+
+//===========================================================================
+template <typename A>
+inline A & CliBase::Command::addOpt(std::unique_ptr<A> ptr) {
+    auto & opt = *ptr;
+    opt.action(&Cli::defaultAction).command(name());
+    addOpt(std::unique_ptr<OptBase>(ptr.release()));
+    return opt;
+}
+
+//===========================================================================
+template <typename Opt, typename Value, typename T>
+inline std::shared_ptr<Value> CliBase::Command::getProxy(T * ptr) {
+    if (OptBase * opt = m_cli.findOpt(ptr)) {
+        Opt * dopt = static_cast<Opt *>(opt);
+        return CliBase::getProxy<Opt>(*dopt);
+    }
+
+    // Since there was no pre-existing proxy to raw value, create new proxy.
+    return std::make_shared<Value>(ptr);
+}
+
+
+/****************************************************************************
+*
+*   Cli
+*
+***/
+
+class Cli : public CliBase::Command {
+public:
+    // Creates a handle to the shared command line configuration, this
+    // indirection allows options to be statically registered from multiple
+    // source files.
+    Cli();
+
+    //-----------------------------------------------------------------------
+    // Configuration
+
+    // Create a new subcommand, with it's own options
+    Command & command(const std::string & name);
+    const Command & command(const std::string & name) const;
+
     // Enabled by default, reponse file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
+
+    // Get reference to internal help option, can be used to change the
+    // desciption, option group, etc.
+    Opt<bool> & helpOpt();
+
+    //-----------------------------------------------------------------------
+    // Help
+
+    // writeHelp & writeUsage return the current exitCode()
+    int writeHelp(
+        std::ostream & os,
+        const std::string & progName = {},
+        const std::string & cmd = {}) const;
+    int writeUsage(
+        std::ostream & os,
+        const std::string & progName = {},
+        const std::string & cmd = {}) const;
+
+    void
+    writePositionals(std::ostream & os, const std::string & cmd = {}) const;
+    void writeOptions(std::ostream & os, const std::string & cmd = {}) const;
 
     //-----------------------------------------------------------------------
     // Parsing
@@ -275,37 +364,25 @@ public:
     // Program name received in argv[0]
     const std::string & progName() const;
 
-    // writeHelp & writeUsage return the current exitCode()
-    int writeHelp(std::ostream & os, const std::string & progName = {}) const;
-    int writeUsage(std::ostream & os, const std::string & progName = {}) const;
-
-    void writePositionals(std::ostream & os) const;
-    void writeOptions(std::ostream & os) const;
-
 protected:
     struct Config;
     Cli(std::shared_ptr<Config> cfg);
 
 private:
-    friend class CliBase::Group;
+    friend class CliBase::Command;
     void construct();
 
-    bool defaultAction(OptBase & opt, const std::string & val);
+    void addOpt(std::unique_ptr<OptBase> opt);
 
-    void addLongName(
-        const std::string & name,
-        OptBase * opt,
-        bool invert,
-        bool optional);
-    void addOptName(const std::string & name, OptBase * opt);
-    void addOpt(std::unique_ptr<OptBase> ptr);
-
+    // find an option (from any subcommand) that updates the value
     OptBase * findOpt(const void * value);
 
-    template <typename Opt, typename Value, typename T>
-    std::shared_ptr<Value> getProxy(T * ptr);
-
-    template <typename A> A & addOpt(std::unique_ptr<A> ptr);
+    void index(OptIndex & ndx, const std::string & cmd) const;
+    std::string nameList(const OptBase & opt, const OptIndex & ndx) const;
+    std::string nameList(
+        const OptBase & opt,
+        const OptIndex & ndx,
+        bool disableOptions) const;
 
     bool parseAction(
         OptBase & out,
@@ -314,32 +391,8 @@ private:
         const char src[]);
     bool fail(int code, const std::string & msg);
 
-    std::string nameList(OptBase & opt) const;
-    std::string nameList(OptBase & opt, bool disableOptions) const;
-
-    struct OptName;
     std::shared_ptr<Config> m_cfg;
 };
-
-//===========================================================================
-template <typename Opt, typename Value, typename T>
-inline std::shared_ptr<Value> Cli::getProxy(T * ptr) {
-    if (OptBase * opt = findOpt(ptr)) {
-        Opt * dopt = static_cast<Opt *>(opt);
-        return CliBase::getProxy<Opt>(*dopt);
-    }
-
-    // Since there was no pre-existing proxy to raw value, create new proxy.
-    return std::make_shared<Value>(ptr);
-}
-
-//===========================================================================
-template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
-    auto & opt = *ptr;
-    opt.action(&Cli::defaultAction);
-    addOpt(std::unique_ptr<OptBase>(ptr.release()));
-    return opt;
-}
 
 
 /****************************************************************************
@@ -402,6 +455,15 @@ protected:
 
     template <typename T> void setValueName();
 
+    void index(OptIndex & ndx);
+    void indexName(OptIndex & ndx, const std::string & name);
+    void indexLongName(
+        OptIndex & ndx,
+        const std::string & name,
+        bool invert,
+        bool optional);
+
+    std::string m_command;
     std::string m_group;
     std::string m_desc;
     std::string m_valueDesc;
@@ -455,6 +517,9 @@ public:
     OptShim(const std::string & keys, bool boolean);
     OptShim(const OptShim &) = delete;
     OptShim & operator=(const OptShim &) = delete;
+
+    // Set subcommand for which this is an option.
+    A & command(const std::string & val);
 
     // Set group under which this argument will show up in the help text.
     A & group(const std::string & val);
@@ -520,6 +585,13 @@ inline bool
 CliBase::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_action(cli, *self, val);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & CliBase::OptShim<A, T>::command(const std::string & val) {
+    m_command = val;
+    return static_cast<A &>(*this);
 }
 
 //===========================================================================
