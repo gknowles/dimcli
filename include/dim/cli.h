@@ -212,6 +212,8 @@ CliBase::Group::optVec(const std::string & keys, int nargs) {
 
 class CliBase::Command : public CliBase::Group {
 public:
+    Command(Cli & cli, const std::string & name);
+
     // assignment only changes the contents, not the owner
     Command & operator=(const Command & from);
 
@@ -223,17 +225,32 @@ public:
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
 
+    // Get reference to internal help option, can be used to change the
+    // desciption, option group, etc.
+    Opt<bool> & helpOpt();
+
     // Create a new option group, that you can then start stuffing args into.
     Group & group(const std::string & name);
     const Group & group(const std::string & name) const;
 
+    // Action that should be taken after this command is selected. Actions
+    // are executed when cli.run() (or cmd.run()) is called by the
+    // application. The action function should:
+    //  - do something useful
+    //  - return an exitCode.
+    using ActionFn = int(Cli & cli, const std::string & cmd);
+    Command & action(std::function<ActionFn> fn);
+
     //-----------------------------------------------------------------------
     // Queries
+
     const std::string & name() const;
 
-protected:
-    struct Config;
-    Command(Cli & cli, const std::string & name);
+    //-----------------------------------------------------------------------
+    // After parsing
+
+    // Runs this commands action and returns cli.exitCode()
+    int run();
 
 private:
     friend class CliBase::Group;
@@ -248,6 +265,7 @@ private:
     std::shared_ptr<Value> getProxy(T * ptr);
 
     Cli & m_cli;
+    struct Config;
     std::shared_ptr<Config> m_cmdCfg;
 };
 
@@ -296,10 +314,6 @@ public:
     // Enabled by default, reponse file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
-
-    // Get reference to internal help option, can be used to change the
-    // desciption, option group, etc.
-    Opt<bool> & helpOpt();
 
     //-----------------------------------------------------------------------
     // Help
@@ -356,13 +370,22 @@ public:
     bool badUsage(const std::string & msg) { return fail(kExitUsage, msg); }
 
     //-----------------------------------------------------------------------
-    // Inspection after parsing
+    // After parsing
 
     int exitCode() const;
     const std::string & errMsg() const;
 
     // Program name received in argv[0]
     const std::string & progName() const;
+
+    // Command selected, empty string if there are no commands defined or none
+    // were selected.
+    const std::string & command() const;
+
+    // Runs the action of the selected command and returns cli.exitCode(). If
+    // no command was selected it runs the empty "" command, which can be set
+    // via cli.action() or cli.command("").action().
+    int run();
 
 protected:
     struct Config;
@@ -467,6 +490,7 @@ protected:
     std::string m_group;
     std::string m_desc;
     std::string m_valueDesc;
+    bool m_visible{true};
 
     // Are multiple values are allowed, and how many there can be (-1 for
     // unlimited).
@@ -564,6 +588,9 @@ public:
     using ActionFn = bool(Cli & cli, A & arg, const std::string & src);
     A & action(std::function<ActionFn> fn);
 
+    // Controls whether or not the option appears in help pages.
+    A & show(bool visible = true);
+
 protected:
     bool parseAction(Cli & cli, const std::string & value) final;
 
@@ -657,6 +684,13 @@ inline A & CliBase::OptShim<A, T>::flagValue(bool isDefault) {
 template <typename A, typename T>
 inline A & CliBase::OptShim<A, T>::action(std::function<ActionFn> fn) {
     m_action = fn;
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & CliBase::OptShim<A, T>::show(bool visible) {
+    m_visible = visible;
     return static_cast<A &>(*this);
 }
 

@@ -227,11 +227,14 @@ const string & CliBase::Group::sortKey() const {
 
 struct CliBase::Command::Config {
     string name;
+    std::function<ActionFn> action;
+    Opt<bool> * helpOpt{nullptr};
     map<string, Group> groups;
 };
 
 // forward declarations
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
+static int cmdAction(Cli & cli, const string & cmd);
 
 //===========================================================================
 // Default constructor creates a handle to the shared configuration, this
@@ -243,17 +246,18 @@ CliBase::Command::Command(Cli & cli, const string & name)
     m_cmdCfg->name = name;
     *static_cast<Group *>(this) = group("");
     title("Options");
+    group(s_internalOptionGroup).title("");
+    action(cmdAction);
 }
 
 //===========================================================================
 CliBase::Command & CliBase::Command::operator=(const Command & from) {
-    m_cmdCfg = from.m_cmdCfg;
+    m_cmdCfg->name = from.m_cmdCfg->name;
+    m_cmdCfg->action = from.m_cmdCfg->action;
+    m_cmdCfg->helpOpt = from.m_cmdCfg->helpOpt;
+    for (auto && grp : from.m_cmdCfg->groups)
+        group(grp.second.name()) = grp.second;
     return *this;
-}
-
-//===========================================================================
-const string & CliBase::Command::name() const {
-    return m_cmdCfg->name;
 }
 
 //===========================================================================
@@ -269,6 +273,12 @@ CliBase::Group & CliBase::Command::group(const string & name) {
 //===========================================================================
 const CliBase::Group & CliBase::Command::group(const string & name) const {
     return const_cast<Command *>(this)->group(name);
+}
+
+//===========================================================================
+CliBase::Command & CliBase::Command::action(std::function<ActionFn> fn) {
+    m_cmdCfg->action = fn;
+    return *this;
 }
 
 //===========================================================================
@@ -291,6 +301,30 @@ CliBase::Command::versionOpt(const string & version, const string & progName) {
 }
 
 //===========================================================================
+CliBase::Opt<bool> & CliBase::Command::helpOpt() {
+    if (!m_cmdCfg->helpOpt) {
+        m_cmdCfg->helpOpt = &opt<bool>("help.")
+                                 .desc("Show this message and exit.")
+                                 .action(helpAction)
+                                 .group(s_internalOptionGroup)
+                                 .show(false);
+    }
+    return *m_cmdCfg->helpOpt;
+}
+
+//===========================================================================
+const string & CliBase::Command::name() const {
+    return m_cmdCfg->name;
+}
+
+//===========================================================================
+int CliBase::Command::run() {
+    int code = m_cmdCfg->action(m_cli, name());
+    m_cli.fail(code, "");
+    return code;
+}
+
+//===========================================================================
 void CliBase::Command::addOpt(unique_ptr<OptBase> src) {
     m_cli.addOpt(move(src));
 }
@@ -306,7 +340,7 @@ void CliBase::Command::addOpt(unique_ptr<OptBase> src) {
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
     stringTo(*opt, val);
     if (*opt) {
-        cli.writeHelp(cout);
+        cli.writeHelp(cout, {}, cli.command());
         return false;
     }
     return true;
@@ -319,6 +353,13 @@ bool CliBase::Command::defaultAction(OptBase & opt, const string & val) {
     return true;
 }
 
+//===========================================================================
+static int cmdAction(Cli & cli, const string & cmd) {
+    ignore = cli;
+    cerr << "Command '" << cmd << "' has not been implemented." << endl;
+    return kExitSoftware;
+}
+
 
 /****************************************************************************
 *
@@ -327,14 +368,16 @@ bool CliBase::Command::defaultAction(OptBase & opt, const string & val) {
 ***/
 
 struct Cli::Config {
-    map<string, CliBase::Command::Config> cmds;
+    bool constructed{false};
+
+    map<string, CliBase::Command> cmds;
     std::list<std::unique_ptr<OptBase>> opts;
-    Opt<bool> * helpOpt{nullptr};
     bool responseFiles{true};
 
     int exitCode{0};
     string errMsg;
     string progName;
+    string command;
 };
 
 //===========================================================================
@@ -344,8 +387,7 @@ Cli::Cli()
     : Command(*this, "") {
     static auto s_cfg = make_shared<Config>();
     m_cfg = s_cfg;
-    if (!m_cfg->helpOpt)
-        construct();
+    construct();
 }
 
 //===========================================================================
@@ -358,22 +400,37 @@ Cli::Cli(shared_ptr<Config> cfg)
 
 //===========================================================================
 void Cli::construct() {
-    title("Options");
-    group(s_internalOptionGroup).title("");
-    m_cfg->helpOpt = &opt<bool>("help.")
-                          .desc("Show this message and exit.")
-                          .action(helpAction)
-                          .group(s_internalOptionGroup);
+    if (!m_cfg->constructed) {
+        m_cfg->constructed = true;
+        *static_cast<Command *>(this) = command("");
+        helpOpt().show();
+    }
 }
 
 //===========================================================================
-CliBase::Opt<bool> & Cli::helpOpt() {
-    return *m_cfg->helpOpt;
+CliBase::Command & Cli::command(const std::string & name) {
+    auto & cmds = m_cfg->cmds;
+    auto i = cmds.find(name);
+    if (i == cmds.end()) {
+        i = cmds.emplace(make_pair(name, Command(*this, name))).first;
+        i->second.helpOpt();
+    }
+    return i->second;
+}
+
+//===========================================================================
+const CliBase::Command & Cli::command(const std::string & name) const {
+    return const_cast<Cli *>(this)->command(name);
 }
 
 //===========================================================================
 void Cli::responseFiles(bool enable) {
     m_cfg->responseFiles = enable;
+}
+
+//===========================================================================
+int Cli::run() {
+    return command(command()).run();
 }
 
 //===========================================================================
@@ -514,7 +571,7 @@ void Cli::resetValues() {
 //===========================================================================
 void Cli::index(OptIndex & ndx, const std::string & cmd) const {
     for (auto && opt : m_cfg->opts) {
-        if (opt->m_command == cmd)
+        if (opt->m_command == cmd && opt->m_visible)
             opt->index(ndx);
     }
     for (unsigned i = 0; i < size(ndx.argNames); ++i) {
@@ -711,6 +768,11 @@ const string & Cli::errMsg() const {
 //===========================================================================
 const string & Cli::progName() const {
     return m_cfg->progName;
+}
+
+//===========================================================================
+const string & Cli::command() const {
+    return m_cfg->command;
 }
 
 
