@@ -1,6 +1,6 @@
 // cli.cpp - dim cli
 //
-// For documentation and examples follow the links at:
+// For documentation and examples:
 // https://github.com/gknowles/dimcli
 
 #include "pch.h"
@@ -857,7 +857,7 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     OptIndex ndx;
     index(ndx, cmd);
     streampos base = os.tellp();
-    os << "usage: " << (arg0.empty() ? progName() : arg0) << ' ';
+    os << "usage: " << (arg0.empty() ? progName() : arg0);
     WrapPos wp;
     wp.maxWidth = 79;
     wp.pos = os.tellp() - base;

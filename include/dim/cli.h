@@ -2,7 +2,7 @@
 //
 // Command line parser
 //
-// For thouough documentation and examples:
+// For documentation and examples:
 // https://github.com/gknowles/dimcli
 
 #pragma once

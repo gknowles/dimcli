@@ -6,27 +6,56 @@ using namespace std;
 
 static int s_errors;
 
+#define EXPECT(e) if (!bool(e)) failed(line ? line : __LINE__, #e)
+#define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
+#define EXPECT_PARSE(cli, ...) parseTest(__LINE__, cli, true, 0, __VA_ARGS__)
+#define EXPECT_PARSE2(cli, cont, ec, ...) \
+    parseTest(__LINE__, cli, cont, ec, __VA_ARGS__)
+#define EXPECT_ARGV(fn, cmdline, ...) \
+    toArgvTest(__LINE__, fn, cmdline, __VA_ARGS__)
+
 //===========================================================================
-bool parseTest(Dim::Cli & cli, vector<const char *> args) {
-    args.insert(args.begin(), "test.exe");
-    args.push_back(nullptr);
-    if (cli.parse(cerr, size(args) - 1, const_cast<char **>(data(args))))
-        return true;
-    if (cli.exitCode())
-        s_errors += 1;
-    return false;
+void failed(int line, const char msg[]) {
+    cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
+    s_errors += 1;
 }
 
 //===========================================================================
-bool toArgvTest(
+void helpTest(
+    int line, Dim::Cli & cli, const string & cmd, const string & helpText) {
+    ostringstream os;
+    cli.writeHelp(os, "test.exe", cmd);
+    auto tmp = os.str();
+    EXPECT(os.str() == helpText);
+}
+
+//===========================================================================
+void parseTest(
+    int line,
+    Dim::Cli & cli, 
+    bool continueFlag,
+    int exitCode,
+    vector<const char *> args
+) {
+    args.insert(args.begin(), "test.exe");
+    args.push_back(nullptr);
+    bool rc = cli.parse(size(args) - 1, const_cast<char **>(data(args)));
+    if (rc != continueFlag || exitCode != cli.exitCode()) {
+        if (exitCode)
+            cerr << cli.errMsg() << endl;
+        EXPECT(rc == continueFlag);
+        EXPECT(exitCode == cli.exitCode());
+    }
+}
+
+//===========================================================================
+void toArgvTest(
+    int line,
     std::function<vector<string>(const string &)> fn,
-    const std::string & line,
+    const std::string & cmdline,
     const vector<string> & argv) {
-    auto args = fn(line);
-    if (args == argv)
-        return true;
-    s_errors += 1;
-    return false;
+    auto args = fn(cmdline);
+    EXPECT(args == argv);
 }
 
 //===========================================================================
@@ -34,6 +63,7 @@ int main(int argc, char * argv[]) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
 
+    int line = 0;
     Dim::Cli c1;
     Dim::Cli c2;
     Dim::CliLocal cli;
@@ -51,9 +81,9 @@ int main(int argc, char * argv[]) {
                          return true;
                      });
     cli.versionOpt("1.0");
-    parseTest(cli, {"-n2", "-n3"});
-    cout << "The sum is: " << *sum << endl;
-    parseTest(cli, {"--version"});
+    EXPECT_PARSE(cli, {"-n2", "-n3"});
+    EXPECT(*sum == 6);
+    EXPECT_PARSE2(cli, false, 0, {"--version"});
 
     cli = {};
     auto & num = cli.opt<int>("n number", 1).desc("number is an int");
@@ -62,46 +92,72 @@ int main(int argc, char * argv[]) {
     auto & name =
         cli.group("name").title("Name options").optVec<string>("name");
     cli.optVec<string>("[key]").desc(
-        "it's the key argument with a very "
-        "long description that wraps the line at least once, maybe more.");
+        "it's the key argument with a very long description that wraps the "
+        "line at least once, maybe more.");
     cli.title(
         "Long explanation of this very short set of options, it's so long "
         "that it even wraps around to the next line");
-    parseTest(cli, {"-n3"});
-    parseTest(cli, {"--name", "two"});
-    parseTest(cli, {"--name=three"});
-    parseTest(cli, {"-s-name=four", "key", "--name", "four"});
-    parseTest(cli, {"key", "extra"});
-    parseTest(cli, {"-", "--", "-s"});
+    EXPECT_HELP(cli, "", 1 + R"(
+usage: test.exe [OPTIONS] [key...]
+  key       it's the key argument with a very long description that wraps the
+            line at least once, maybe more.
+
+Long explanation of this very short set of options, it's so long that it even
+wraps around to the next line:
+  -c COUNT                   alias for number
+  -n, --number=NUM           number is an int
+  -s, --special / -S, --no-special
+                             snowflake
+
+Name options:
+  --name=STRING             
+
+  --help                     Show this message and exit.
+)");
+    EXPECT_PARSE(cli, {"-n3"});
+    EXPECT(*num == 3);
+    EXPECT_PARSE(cli, {"--name", "two"});
+    EXPECT_PARSE(cli, {"--name=three"});
+    EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
+    EXPECT_PARSE(cli, {"key", "extra"});
+    EXPECT_PARSE(cli, {"-", "--", "-s"});
     *num += 2;
+    EXPECT(*num == 2);
     *special = name->empty();
-    parseTest(cli, {"--help"});
+    EXPECT(*special);
 
     cli = {};
-    parseTest(cli, {"--help"});
+    EXPECT_HELP(cli, "", 1 + R"(
+usage: test.exe [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+)");
+
     string fruit;
     auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
     cli.opt(&fruit, "a", "apple").flagValue(true);
     cli.opt(orange, "p", "pear").flagValue();
-    parseTest(cli, {"-o"});
-    cout << "orange '" << *orange << "' from '" << orange.from() << "' at "
-         << orange.pos() << endl;
+    EXPECT_PARSE(cli, {"-o"});
+    EXPECT(*orange == "orange");
+    EXPECT(orange.from() == "-o");
+    EXPECT(orange.pos() == 1);
 
     cli = {};
     int count;
     bool help;
     cli.opt(&count, "c ?count").implicitValue(3);
     cli.opt(&help, "? h help");
-    parseTest(cli, {"-hc2", "-?"});
-    parseTest(cli, {"--count"});
+    EXPECT_PARSE(cli, {"-hc2", "-?"});
+    EXPECT_PARSE(cli, {"--count"});
 
     auto fn = cli.toWindowsArgv;
-    toArgvTest(fn, R"( a "" "c )", {"a", "", "c "});
-    toArgvTest(fn, R"(a"" b ")", {"a", "b", ""});
-    toArgvTest(fn, R"("abc" d e)", {"abc", "d", "e"});
-    toArgvTest(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
-    toArgvTest(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
-    toArgvTest(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+    EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
+    EXPECT_ARGV(fn, R"(a"" b ")", {"a", "b", ""});
+    EXPECT_ARGV(fn, R"("abc" d e)", {"abc", "d", "e"});
+    EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+    EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
+    EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
