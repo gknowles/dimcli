@@ -123,7 +123,7 @@ public:
 
     // Heading title to display, defaults to group name. If empty there will
     // be a single blank line separating this group from the previous one.
-    Cli & title(const std::string & desc);
+    Cli & title(const std::string & val);
 
     // Option groups are sorted by key, defaults to group name
     Cli & sortKey(const std::string & key);
@@ -136,7 +136,6 @@ public:
     // Returns a new Cli() object, pointed at the default option group of 
     // the selected subcommand.
     Cli command(const std::string & name, const std::string & group = {});
-    const std::string & command() const { return m_command; }
 
     // Action that should be taken when the currently selected command is run.
     // Actions are executed when cli.run() is called by the application. The 
@@ -145,6 +144,17 @@ public:
     //  - return an exitCode.
     using ActionFn = int(Cli & cli, const std::string & cmd);
     Cli & action(std::function<ActionFn> fn);
+
+    // Description to display between usage and options. Use line breaks for
+    // semantics, let the automatic line wrapping deal long lines.
+    Cli & desc(const std::string & val);
+
+    // Test to display after options.
+    Cli & footer(const std::string & val);
+
+    const std::string & command() const { return m_command; }
+    const std::string & desc() const;
+    const std::string & footer() const;
 
     //-----------------------------------------------------------------------
     // Enabled by default, reponse file expansion replaces arguments of the

@@ -54,6 +54,8 @@ struct Cli::GroupConfig {
 
 struct Cli::CommandConfig {
     string name;
+    string desc;
+    string footer;
     std::function<Cli::ActionFn> action;
     Opt<bool> * helpOpt{nullptr};
     map<string, GroupConfig> groups;
@@ -359,6 +361,28 @@ Cli Cli::command(const string & name, const string & grpName) {
 Cli & Cli::action(std::function<ActionFn> fn) {
     cmdCfg().action = fn;
     return *this;
+}
+
+//===========================================================================
+Cli & Cli::desc(const std::string & val) {
+    cmdCfg().desc = val;
+    return *this;
+}
+
+//===========================================================================
+Cli & Cli::footer(const std::string & val) {
+    cmdCfg().footer = val;
+    return *this;
+}
+
+//===========================================================================
+const string & Cli::desc() const {
+    return cmdCfg().desc;
+}
+
+//===========================================================================
+const string & Cli::footer() const {
+    return cmdCfg().footer;
 }
 
 //===========================================================================
@@ -779,12 +803,20 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
             base += 1;
         if (!*base)
             return;
+        const char * nl = strchr(base, '\n');
         const char * ptr = strchr(base, ' ');
         if (!ptr) {
             ptr = text.c_str() + text.size();
         }
-        writeToken(os, wp, string(base, ptr));
-        base = ptr;
+        if (nl && nl < ptr) {
+            writeToken(os, wp, string(base, nl));
+            os << '\n';
+            wp.pos = 0;
+            base = nl + 1;
+        } else {
+            writeToken(os, wp, string(base, ptr));
+            base = ptr;
+        }
     }
 }
 
@@ -806,11 +838,20 @@ writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 }
 
 //===========================================================================
-int Cli::writeHelp(ostream & os, const string & progName, const string & cmd)
+int Cli::writeHelp(ostream & os, const string & progName, const string & cmdName)
     const {
-    writeUsage(os, progName, cmd);
-    writePositionals(os, cmd);
-    writeOptions(os, cmd);
+    auto & cmd = findCmdAlways(*m_cfg, cmdName);
+    writeUsage(os, progName, cmdName);
+    if (!cmd.desc.empty()) {
+        WrapPos wp;
+        writeText(os, wp, cmd.desc);
+    }
+    writePositionals(os, cmdName);
+    writeOptions(os, cmdName);
+    if (!cmd.footer.empty()) {
+        WrapPos wp;
+        writeText(os, wp, cmd.footer);
+    }
     return exitCode();
 }
 
