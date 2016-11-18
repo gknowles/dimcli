@@ -1,7 +1,6 @@
 # Overview
 Making command line interface implementation fun for kids of all ages.
 
-- contained completely within namespace "Dim"
 - parses directly to supplied (or implicitly created) variables
 - supports parsing to any type that is:
   - default constructable
