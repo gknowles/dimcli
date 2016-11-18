@@ -54,6 +54,7 @@ struct Cli::GroupConfig {
 
 struct Cli::CommandConfig {
     string name;
+    string header;
     string desc;
     string footer;
     std::function<Cli::ActionFn> action;
@@ -173,10 +174,10 @@ void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
     case '<':
         auto where =
             find_if(ndx.argNames.begin(), ndx.argNames.end(), [](auto && key) {
-                return key.optional;
-            });
+            return key.optional;
+        });
         ndx.argNames.insert(
-            where, {this, !invert, !optional, name.data() + 1});
+        where, {this, !invert, !optional, name.data() + 1});
         return;
     }
     if (name.size() == 1) {
@@ -318,9 +319,9 @@ Cli::Opt<bool> & Cli::helpOpt() {
     auto & cmd = cmdCfg();
     if (!cmd.helpOpt) {
         cmd.helpOpt = &opt<bool>("help.")
-                           .desc("Show this message and exit.")
-                           .action(helpAction)
-                           .group(s_internalOptionGroup);
+            .desc("Show this message and exit.")
+            .action(helpAction)
+            .group(s_internalOptionGroup);
         if (!m_command.empty())
             cmd.helpOpt->show(false);
     }
@@ -366,6 +367,12 @@ Cli & Cli::action(std::function<ActionFn> fn) {
 }
 
 //===========================================================================
+Cli & Cli::header(const std::string & val) {
+    cmdCfg().header = val;
+    return *this;
+}
+
+//===========================================================================
 Cli & Cli::desc(const std::string & val) {
     cmdCfg().desc = val;
     return *this;
@@ -375,6 +382,11 @@ Cli & Cli::desc(const std::string & val) {
 Cli & Cli::footer(const std::string & val) {
     cmdCfg().footer = val;
     return *this;
+}
+
+//===========================================================================
+const string & Cli::header() const {
+    return cmdCfg().header;
 }
 
 //===========================================================================
@@ -619,10 +631,10 @@ bool Cli::parse(vector<string> & args) {
                 name = "-"s + *ptr;
                 if (argName.opt->m_bool) {
                     if (!parseAction(
-                            *argName.opt,
-                            name,
-                            argPos,
-                            argName.invert ? "0" : "1"))
+                        *argName.opt,
+                        name,
+                        argPos,
+                        argName.invert ? "0" : "1"))
                         return false;
                     continue;
                 }
@@ -658,10 +670,10 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option: " + name + "=");
                 }
                 if (!parseAction(
-                        *argName.opt,
-                        name,
-                        argPos,
-                        argName.invert ? "0" : "1"))
+                    *argName.opt,
+                    name,
+                    argPos,
+                    argName.invert ? "0" : "1"))
                     return false;
                 continue;
             }
@@ -779,13 +791,18 @@ struct WrapPos {
 };
 } // namespace
 
+  //===========================================================================
+static void writeNewline(ostream & os, WrapPos & wp) {
+    os << '\n' << wp.prefix;
+    wp.pos = wp.prefix.size();
+}
+
 //===========================================================================
 // Write token, potentially adding a line break first.
 static void writeToken(ostream & os, WrapPos & wp, const string token) {
     if (wp.pos + token.size() + 1 > wp.maxWidth) {
         if (wp.pos > wp.prefix.size()) {
-            os << '\n' << wp.prefix;
-            wp.pos = wp.prefix.size();
+            writeNewline(os, wp);
         }
     }
     if (wp.pos) {
@@ -812,8 +829,7 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
         }
         if (nl && nl < ptr) {
             writeToken(os, wp, string(base, nl));
-            os << '\n';
-            wp.pos = 0;
+            writeNewline(os, wp);
             base = nl + 1;
         } else {
             writeToken(os, wp, string(base, ptr));
@@ -845,6 +861,11 @@ int Cli::writeHelp(
     const string & progName,
     const string & cmdName) const {
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
+    if (!cmd.header.empty()) {
+        WrapPos wp;
+        writeText(os, wp, cmd.header);
+        writeNewline(os, wp);
+    }
     writeUsage(os, progName, cmdName);
     if (!cmd.desc.empty()) {
         WrapPos wp;
@@ -861,17 +882,18 @@ int Cli::writeHelp(
 
 //===========================================================================
 int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
-    const {
+const {
     OptIndex ndx;
     index(ndx, cmd);
     streampos base = os.tellp();
-    os << "usage: " << (arg0.empty() ? progName() : arg0);
+    fs::path prog = arg0.empty() ? progName() : arg0;
+    os << "usage: " << prog.stem();
     WrapPos wp;
     wp.maxWidth = 79;
     wp.pos = os.tellp() - base;
     wp.prefix = string(wp.pos, ' ');
     if (!ndx.shortNames.empty() || !ndx.longNames.empty())
-        writeToken(os, wp, "[OPTIONS]");
+        writeToken(os, wp, " [OPTIONS]");
     for (auto && pa : ndx.argNames) {
         string token =
             pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
@@ -892,11 +914,15 @@ void Cli::writePositionals(ostream & os, const string & cmd) const {
     OptIndex ndx;
     index(ndx, cmd);
     size_t colWidth = 0;
+    bool hasDesc = false;
     for (auto && pa : ndx.argNames) {
         // find widest positional argument name, with space for <>'s
         colWidth = max(colWidth, pa.name.size() + 2);
+        hasDesc = hasDesc || pa.opt->m_desc.size();
     }
     colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
+    if (!hasDesc)
+        return;
 
     WrapPos wp;
     for (auto && pa : ndx.argNames) {
@@ -953,8 +979,7 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
     for (auto && key : namedArgs) {
         if (!gname || key.opt->m_group != gname) {
             gname = key.opt->m_group.c_str();
-            os << '\n';
-            wp.pos = 0;
+            writeNewline(os, wp);
             auto & grp = findGrpAlways(cmd, key.opt->m_group);
             string title = grp.title;
             if (title.empty() && gname == s_internalOptionGroup
@@ -966,8 +991,7 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
             if (!title.empty()) {
                 wp.prefix.clear();
                 writeText(os, wp, title + ":");
-                os << '\n';
-                wp.pos = 0;
+                writeNewline(os, wp);
             }
         }
         wp.prefix.assign(4, ' ');
@@ -975,8 +999,8 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
         wp.pos = 1;
         writeText(os, wp, key.list);
         writeDescCol(os, wp, key.opt->m_desc, colWidth);
-        os << '\n';
-        wp.pos = 0;
+        wp.prefix.clear();
+        writeNewline(os, wp);
     }
 }
 

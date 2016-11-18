@@ -76,13 +76,13 @@ public:
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-    Opt<T> & opt(T * value, const std::string & keys, const U & def);
+        Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
 
     template <typename T>
     OptVec<T> &
-    optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
+        optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
 
     template <typename T>
     Opt<T> & opt(const std::string & keys, const T & def = {});
@@ -94,19 +94,19 @@ public:
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-    Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
+        Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
     Opt<T> & opt(Opt<T> & value, const std::string & keys);
 
     template <typename T>
     OptVec<T> &
-    optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
+        optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
     Opt<bool> &
-    versionOpt(const std::string & ver, const std::string & progName = {});
+        versionOpt(const std::string & ver, const std::string & progName = {});
 
     // Get reference to internal help option, can be used to change the
     // desciption, option group, etc.
@@ -145,14 +145,17 @@ public:
     using ActionFn = int(Cli & cli, const std::string & cmd);
     Cli & action(std::function<ActionFn> fn);
 
-    // Description to display between usage and options. Use line breaks for
-    // semantics, let the automatic line wrapping deal long lines.
+    // Arbitrary text can be added to the generated help for each command,
+    // this text can come before the usage (header), between the usage and
+    // the arguments / options (desc), or after the options (footer). Use
+    // line breaks for semantics, let the automatic line wrapping take care
+    // of the rest.
+    Cli & header(const std::string & val);
     Cli & desc(const std::string & val);
-
-    // Test to display after options.
     Cli & footer(const std::string & val);
 
     const std::string & command() const { return m_command; }
+    const std::string & header() const;
     const std::string & desc() const;
     const std::string & footer() const;
 
@@ -175,7 +178,7 @@ public:
         const std::string & cmd = {}) const;
 
     void
-    writePositionals(std::ostream & os, const std::string & cmd = {}) const;
+        writePositionals(std::ostream & os, const std::string & cmd = {}) const;
     void writeOptions(std::ostream & os, const std::string & cmd = {}) const;
 
     //-----------------------------------------------------------------------
@@ -200,7 +203,7 @@ public:
     // into the source string vector and are only valid until that vector is
     // resized or destroyed.
     static std::vector<const char *>
-    toPtrArgv(const std::vector<std::string> & args);
+        toPtrArgv(const std::vector<std::string> & args);
 
     // Parse according to glib conventions, based on the UNIX98 shell spec
     static std::vector<std::string> toGlibArgv(const std::string & cmdline);
