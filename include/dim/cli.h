@@ -43,12 +43,16 @@ enum {
 
 /****************************************************************************
 *
-*   CliBase
+*   Cli
 *
 ***/
 
-class CliBase {
+class Cli {
 public:
+    struct Config;
+    struct CommandConfig;
+    struct GroupConfig;
+
     class OptBase;
     template <typename A, typename T> class OptShim;
     template <typename T> class Opt;
@@ -59,52 +63,26 @@ public:
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
 
-    class Group;
-    class Command;
-
-protected:
-    template <typename A> auto & getProxy(A & opt) { return opt.m_proxy; }
-};
-
-
-/****************************************************************************
-*
-*   CliBase::Group
-*
-*   An option group that shares a section in the help text. Options are
-*   always added to a group, either the default group of the cli (or command)
-*   or an explicitly created one.
-*
-***/
-
-class CliBase::Group : public CliBase {
 public:
-    Group(CliBase::Command & cmd, const std::string & name);
-
-    // assignment only changes the contents, not the owner
-    Group & operator=(const Group & from);
+    // Creates a handle to the shared command line configuration, this
+    // indirection allows options to be statically registered from multiple
+    // source files.
+    Cli();
 
     //-----------------------------------------------------------------------
     // Configuration
-
-    // Heading title to display, defaults to group name. If empty there will
-    // be a single blank line separating this group from the previous one.
-    Group & title(const std::string & desc);
-
-    // Option groups are sorted by key, defaults to group name
-    Group & sortKey(const std::string & key);
 
     template <
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-    Opt<T> & opt(T * value, const std::string & keys, const U & def);
+        Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
 
     template <typename T>
     OptVec<T> &
-    optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
+        optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
 
     template <typename T>
     Opt<T> & opt(const std::string & keys, const T & def = {});
@@ -116,201 +94,59 @@ public:
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-    Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
+        Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
     Opt<T> & opt(Opt<T> & value, const std::string & keys);
 
     template <typename T>
     OptVec<T> &
-    optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
-
-    //-----------------------------------------------------------------------
-    // Queries
-    const std::string & name() const;
-    const std::string & title() const;
-    const std::string & sortKey() const;
-
-private:
-    CliBase::Command & m_cmd;
-    struct Config;
-    std::shared_ptr<Config> m_grpCfg;
-};
-
-//===========================================================================
-template <typename T, typename U, typename>
-inline CliBase::Group::Opt<T> &
-CliBase::Group::opt(T * value, const std::string & keys, const U & def) {
-    auto proxy = m_cmd.getProxy<Opt<T>, Value<T>>(value);
-    auto ptr = std::make_unique<Opt<T>>(proxy, keys, def);
-    return m_cmd.addOpt(std::move(ptr)).group(name());
-}
-
-//===========================================================================
-template <typename T>
-inline CliBase::Group::Opt<T> &
-CliBase::Group::opt(T * value, const std::string & keys) {
-    return opt(value, keys, T{});
-}
-
-//===========================================================================
-template <typename T>
-inline CliBase::Group::OptVec<T> & CliBase::Group::optVec(
-    std::vector<T> * values,
-    const std::string & keys,
-    int nargs) {
-    auto proxy = m_cmd.getProxy<OptVec<T>, ValueVec<T>>(values);
-    auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
-    return m_cmd.addOpt(std::move(ptr)).group(name());
-}
-
-//===========================================================================
-template <typename T, typename U, typename>
-inline CliBase::Group::Opt<T> & CliBase::Group::opt(
-    CliBase::Group::Opt<T> & alias,
-    const std::string & keys,
-    const U & def) {
-    return opt(&*alias, keys, def);
-}
-
-//===========================================================================
-template <typename T>
-inline CliBase::Group::Opt<T> &
-CliBase::Group::opt(Opt<T> & alias, const std::string & keys) {
-    return opt(&*alias, keys, T{});
-}
-
-//===========================================================================
-template <typename T>
-inline CliBase::Group::OptVec<T> & CliBase::Group::optVec(
-    OptVec<T> & alias,
-    const std::string & keys,
-    int nargs) {
-    return optVec(&*alias, keys, nargs);
-}
-
-//===========================================================================
-template <typename T>
-inline CliBase::Group::Opt<T> &
-CliBase::Group::opt(const std::string & keys, const T & def) {
-    return opt<T>(nullptr, keys, def);
-}
-
-//===========================================================================
-template <typename T>
-inline CliBase::Group::OptVec<T> &
-CliBase::Group::optVec(const std::string & keys, int nargs) {
-    return optVec<T>(nullptr, keys, nargs);
-}
-
-
-/****************************************************************************
-*
-*   CliBase::Command
-*
-***/
-
-class CliBase::Command : public CliBase::Group {
-public:
-    Command(Cli & cli, const std::string & name);
-
-    // assignment only changes the contents, not the owner
-    Command & operator=(const Command & from);
-
-    //-----------------------------------------------------------------------
-    // Configuration
+        optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
     Opt<bool> &
-    versionOpt(const std::string & ver, const std::string & progName = {});
+        versionOpt(const std::string & ver, const std::string & progName = {});
 
     // Get reference to internal help option, can be used to change the
     // desciption, option group, etc.
     Opt<bool> & helpOpt();
 
-    // Create a new option group, that you can then start stuffing args into.
-    Group & group(const std::string & name);
-    const Group & group(const std::string & name) const;
+    //-----------------------------------------------------------------------
+    // An option group that shares a section in the help text. Options are
+    // always added to a group, either the default group of the cli (or of the
+    // selected command), or an explicitly created one.
 
-    // Action that should be taken after this command is selected. Actions
-    // are executed when cli.run() (or cmd.run()) is called by the
-    // application. The action function should:
+    // Returns a new Cli() object, pointed at the selected option group of the
+    // current cli's command, that you can then start stuffing args into.
+    Cli group(const std::string & name);
+
+    // Heading title to display, defaults to group name. If empty there will
+    // be a single blank line separating this group from the previous one.
+    Cli & title(const std::string & desc);
+
+    // Option groups are sorted by key, defaults to group name
+    Cli & sortKey(const std::string & key);
+
+    const std::string & group() const { return m_group; }
+    const std::string & title() const;
+    const std::string & sortKey() const;
+
+    //-----------------------------------------------------------------------
+    // Returns a new Cli() object, pointed at the default option group of 
+    // the selected subcommand.
+    Cli command(const std::string & name, const std::string & group = {});
+    const std::string & command() const { return m_command; }
+
+    // Action that should be taken when the currently selected command is run.
+    // Actions are executed when cli.run() is called by the application. The 
+    // action function should:
     //  - do something useful
     //  - return an exitCode.
     using ActionFn = int(Cli & cli, const std::string & cmd);
-    Command & action(std::function<ActionFn> fn);
+    Cli & action(std::function<ActionFn> fn);
 
     //-----------------------------------------------------------------------
-    // Queries
-
-    const std::string & name() const;
-
-    //-----------------------------------------------------------------------
-    // After parsing
-
-    // Runs this commands action and returns cli.exitCode()
-    int run();
-
-private:
-    friend class CliBase::Group;
-
-    bool defaultAction(OptBase & opt, const std::string & val);
-
-    void addOpt(std::unique_ptr<OptBase> ptr);
-
-    template <typename A> A & addOpt(std::unique_ptr<A> ptr);
-
-    template <typename Opt, typename Value, typename T>
-    std::shared_ptr<Value> getProxy(T * ptr);
-
-    Cli & m_cli;
-    struct Config;
-    std::shared_ptr<Config> m_cmdCfg;
-};
-
-//===========================================================================
-template <typename A>
-inline A & CliBase::Command::addOpt(std::unique_ptr<A> ptr) {
-    auto & opt = *ptr;
-    opt.action(&Cli::defaultAction).command(name());
-    addOpt(std::unique_ptr<OptBase>(ptr.release()));
-    return opt;
-}
-
-//===========================================================================
-template <typename Opt, typename Value, typename T>
-inline std::shared_ptr<Value> CliBase::Command::getProxy(T * ptr) {
-    if (OptBase * opt = m_cli.findOpt(ptr)) {
-        Opt * dopt = static_cast<Opt *>(opt);
-        return CliBase::getProxy<Opt>(*dopt);
-    }
-
-    // Since there was no pre-existing proxy to raw value, create new proxy.
-    return std::make_shared<Value>(ptr);
-}
-
-
-/****************************************************************************
-*
-*   Cli
-*
-***/
-
-class Cli : public CliBase::Command {
-public:
-    // Creates a handle to the shared command line configuration, this
-    // indirection allows options to be statically registered from multiple
-    // source files.
-    Cli();
-
-    //-----------------------------------------------------------------------
-    // Configuration
-
-    // Create a new subcommand, with it's own options
-    Command & command(const std::string & name);
-    const Command & command(const std::string & name) const;
-
     // Enabled by default, reponse file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
@@ -378,27 +214,39 @@ public:
     // Program name received in argv[0]
     const std::string & progName() const;
 
-    // Command selected, empty string if there are no commands defined or none
-    // were selected.
-    const std::string & command() const;
+    // Command selected by argv, empty string if there are no commands 
+    // defined or none were selected.
+    const std::string & runCommand() const;
 
-    // Runs the action of the selected command and returns cli.exitCode(). If
-    // no command was selected it runs the empty "" command, which can be set
-    // via cli.action() or cli.command("").action().
+    // Runs the action of the selected command and returns its exit code; 
+    // which is also used to set cli.exitCode(). If no command was selected 
+    // it runs the action of the empty "" command, which can be set via 
+    // cli.action() just like any other command.
     int run();
 
 protected:
-    struct Config;
-    Cli(std::shared_ptr<Config> cfg);
+    Cli(
+        std::shared_ptr<Config> cfg, 
+        const std::string & command, 
+        const std::string & group);
 
 private:
-    friend class CliBase::Command;
-    void construct();
+    bool defaultAction(OptBase & opt, const std::string & val);
 
     void addOpt(std::unique_ptr<OptBase> opt);
 
+    template <typename A> A & addOpt(std::unique_ptr<A> ptr);
+
+    template <typename Opt, typename Value, typename T>
+    std::shared_ptr<Value> getProxy(T * ptr);
+
     // find an option (from any subcommand) that updates the value
     OptBase * findOpt(const void * value);
+
+    CommandConfig & cmdCfg();
+    const CommandConfig & cmdCfg() const;
+    GroupConfig & grpCfg();
+    const GroupConfig & grpCfg() const;
 
     void index(OptIndex & ndx, const std::string & cmd) const;
     std::string nameList(const OptBase & opt, const OptIndex & ndx) const;
@@ -415,7 +263,96 @@ private:
     bool fail(int code, const std::string & msg);
 
     std::shared_ptr<Config> m_cfg;
+    std::string m_group;
+    std::string m_command;
 };
+
+//===========================================================================
+template <typename T, typename U, typename>
+inline Cli::Opt<T> &
+Cli::opt(T * value, const std::string & keys, const U & def) {
+    auto proxy = getProxy<Opt<T>, Value<T>>(value);
+    auto ptr = std::make_unique<Opt<T>>(proxy, keys, def);
+    return addOpt(std::move(ptr));
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::Opt<T> &
+Cli::opt(T * value, const std::string & keys) {
+    return opt(value, keys, T{});
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::OptVec<T> & Cli::optVec(
+    std::vector<T> * values,
+    const std::string & keys,
+    int nargs) {
+    auto proxy = getProxy<OptVec<T>, ValueVec<T>>(values);
+    auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
+    return addOpt(std::move(ptr));
+}
+
+//===========================================================================
+template <typename T, typename U, typename>
+inline Cli::Opt<T> & Cli::opt(
+    Opt<T> & alias,
+    const std::string & keys,
+    const U & def) {
+    return opt(&*alias, keys, def);
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::Opt<T> &
+Cli::opt(Opt<T> & alias, const std::string & keys) {
+    return opt(&*alias, keys, T{});
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::OptVec<T> & Cli::optVec(
+    OptVec<T> & alias,
+    const std::string & keys,
+    int nargs) {
+    return optVec(&*alias, keys, nargs);
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::Opt<T> &
+Cli::opt(const std::string & keys, const T & def) {
+    return opt<T>(nullptr, keys, def);
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::OptVec<T> &
+Cli::optVec(const std::string & keys, int nargs) {
+    return optVec<T>(nullptr, keys, nargs);
+}
+
+//===========================================================================
+template <typename A>
+inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
+    auto & opt = *ptr;
+    opt.action(&Cli::defaultAction).command(command()).group(group());
+    addOpt(std::unique_ptr<OptBase>(ptr.release()));
+    return opt;
+}
+
+//===========================================================================
+template <typename Opt, typename Value, typename T>
+inline std::shared_ptr<Value> Cli::getProxy(T * ptr) {
+    if (OptBase * opt = findOpt(ptr)) {
+        Opt * dopt = static_cast<Opt *>(opt);
+        return dopt->m_proxy;
+    }
+
+    // Since there was no pre-existing proxy to raw value, create new proxy.
+    return std::make_shared<Value>(ptr);
+}
 
 
 /****************************************************************************
@@ -435,14 +372,14 @@ public:
 
 /****************************************************************************
 *
-*   CliBase::OptBase
+*   Cli::OptBase
 *
 *   Common base class for all options, has no information about the derived
 *   options value type, and handles all services required by the parser.
 *
 ***/
 
-class CliBase::OptBase {
+class Cli::OptBase {
 public:
     OptBase(const std::string & keys, bool boolean);
     virtual ~OptBase() {}
@@ -509,7 +446,7 @@ private:
 };
 
 //===========================================================================
-template <typename T> inline void CliBase::OptBase::setValueName() {
+template <typename T> inline void Cli::OptBase::setValueName() {
     if (is_integral<T>::value) {
         m_valueDesc = "NUM";
     } else if (is_convertible<T, std::string>::value) {
@@ -522,21 +459,21 @@ template <typename T> inline void CliBase::OptBase::setValueName() {
 //===========================================================================
 template <>
 inline void
-CliBase::OptBase::setValueName<std::experimental::filesystem::path>() {
+Cli::OptBase::setValueName<std::experimental::filesystem::path>() {
     m_valueDesc = "FILE";
 }
 
 
 /****************************************************************************
 *
-*   CliBase::OptShim
+*   Cli::OptShim
 *
 *   Common base for the more derived simple and vector option types. Has
 *   knowledge of the value type but no knowledge about it.
 *
 ***/
 
-template <typename A, typename T> class CliBase::OptShim : public OptBase {
+template <typename A, typename T> class Cli::OptShim : public OptBase {
 public:
     OptShim(const std::string & keys, bool boolean);
     OptShim(const OptShim &) = delete;
@@ -601,7 +538,7 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-inline CliBase::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
+inline Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
     : OptBase(keys, boolean) {
     setValueName<T>();
 }
@@ -609,49 +546,49 @@ inline CliBase::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
 //===========================================================================
 template <typename A, typename T>
 inline bool
-CliBase::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
+Cli::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_action(cli, *self, val);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::command(const std::string & val) {
+inline A & Cli::OptShim<A, T>::command(const std::string & val) {
     m_command = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::group(const std::string & val) {
+inline A & Cli::OptShim<A, T>::group(const std::string & val) {
     m_group = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::desc(const std::string & val) {
+inline A & Cli::OptShim<A, T>::desc(const std::string & val) {
     m_desc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::valueDesc(const std::string & val) {
+inline A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
     m_valueDesc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::defaultValue(const T & val) {
+inline A & Cli::OptShim<A, T>::defaultValue(const T & val) {
     m_defValue = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::implicitValue(const T & val) {
+inline A & Cli::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // they don't have separate values, just their presence/absence
         assert(!m_bool && "bool argument values are never implicit");
@@ -663,7 +600,7 @@ inline A & CliBase::OptShim<A, T>::implicitValue(const T & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::flagValue(bool isDefault) {
+inline A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
     auto self = static_cast<A *>(this);
     m_flagValue = true;
     if (!self->m_proxy->m_defFlagOpt) {
@@ -682,14 +619,14 @@ inline A & CliBase::OptShim<A, T>::flagValue(bool isDefault) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::action(std::function<ActionFn> fn) {
+inline A & Cli::OptShim<A, T>::action(std::function<ActionFn> fn) {
     m_action = fn;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & CliBase::OptShim<A, T>::show(bool visible) {
+inline A & Cli::OptShim<A, T>::show(bool visible) {
     m_visible = visible;
     return static_cast<A &>(*this);
 }
@@ -697,13 +634,13 @@ inline A & CliBase::OptShim<A, T>::show(bool visible) {
 
 /****************************************************************************
 *
-*   CliBase::ArgMatch
+*   Cli::ArgMatch
 *
 *   Reference to the commandline argument that was used to populate a value
 *
 ***/
 
-struct CliBase::ArgMatch {
+struct Cli::ArgMatch {
     // name of the argument that populated the value, or an empty
     // string if it wasn't populated.
     std::string name;
@@ -715,11 +652,11 @@ struct CliBase::ArgMatch {
 
 /****************************************************************************
 *
-*   CliBase::Value
+*   Cli::Value
 *
 ***/
 
-template <typename T> struct CliBase::Value {
+template <typename T> struct Cli::Value {
     // where the value came from
     ArgMatch m_match;
 
@@ -739,11 +676,11 @@ template <typename T> struct CliBase::Value {
 
 /****************************************************************************
 *
-*   CliBase::Opt
+*   Cli::Opt
 *
 ***/
 
-template <typename T> class CliBase::Opt : public OptShim<Opt<T>, T> {
+template <typename T> class Cli::Opt : public OptShim<Opt<T>, T> {
 public:
     Opt(std::shared_ptr<Value<T>> value,
         const std::string & keys,
@@ -765,7 +702,7 @@ public:
     size_t size() const final;
 
 private:
-    friend class CliBase;
+    friend class Cli;
     void set(const std::string & name, int pos) final;
     bool sameValue(const void * value) final {
         return value == m_proxy->m_value;
@@ -776,7 +713,7 @@ private:
 
 //===========================================================================
 template <typename T>
-inline CliBase::Opt<T>::Opt(
+inline Cli::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
     const std::string & keys,
     const T & def)
@@ -787,14 +724,14 @@ inline CliBase::Opt<T>::Opt(
 
 //===========================================================================
 template <typename T>
-inline void CliBase::Opt<T>::set(const std::string & name, int pos) {
+inline void Cli::Opt<T>::set(const std::string & name, int pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = pos;
     m_proxy->m_explicit = true;
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::Opt<T>::reset() {
+template <typename T> inline void Cli::Opt<T>::reset() {
     if (!m_flagValue || m_flagDefault)
         *m_proxy->m_value = m_defValue;
     m_proxy->m_match.name.clear();
@@ -804,7 +741,7 @@ template <typename T> inline void CliBase::Opt<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline bool CliBase::Opt<T>::parseValue(const std::string & value) {
+inline bool Cli::Opt<T>::parseValue(const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
@@ -818,23 +755,23 @@ inline bool CliBase::Opt<T>::parseValue(const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::Opt<T>::unspecifiedValue() {
+template <typename T> inline void Cli::Opt<T>::unspecifiedValue() {
     *m_proxy->m_value = m_implicitValue;
 }
 
 //===========================================================================
-template <typename T> inline size_t CliBase::Opt<T>::size() const {
+template <typename T> inline size_t Cli::Opt<T>::size() const {
     return 1;
 }
 
 
 /****************************************************************************
 *
-*   CliBase::ValueVec
+*   Cli::ValueVec
 *
 ***/
 
-template <typename T> struct CliBase::ValueVec {
+template <typename T> struct Cli::ValueVec {
     // where the values came from
     std::vector<ArgMatch> m_matches;
 
@@ -851,11 +788,11 @@ template <typename T> struct CliBase::ValueVec {
 
 /****************************************************************************
 *
-*   CliBase::OptVec
+*   Cli::OptVec
 *
 ***/
 
-template <typename T> class CliBase::OptVec : public OptShim<OptVec<T>, T> {
+template <typename T> class Cli::OptVec : public OptShim<OptVec<T>, T> {
 public:
     OptVec(
         std::shared_ptr<ValueVec<T>> values,
@@ -881,7 +818,7 @@ public:
     int pos(size_t index) const;
 
 private:
-    friend class CliBase;
+    friend class Cli;
     void set(const std::string & name, int pos) final;
     bool sameValue(const void * value) final {
         return value == m_proxy->m_values;
@@ -893,7 +830,7 @@ private:
 
 //===========================================================================
 template <typename T>
-inline CliBase::OptVec<T>::OptVec(
+inline Cli::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
     const std::string & keys,
     int nargs)
@@ -905,7 +842,7 @@ inline CliBase::OptVec<T>::OptVec(
 
 //===========================================================================
 template <typename T>
-inline void CliBase::OptVec<T>::set(const std::string & name, int pos) {
+inline void Cli::OptVec<T>::set(const std::string & name, int pos) {
     ArgMatch match;
     match.name = name;
     match.pos = pos;
@@ -914,24 +851,24 @@ inline void CliBase::OptVec<T>::set(const std::string & name, int pos) {
 
 //===========================================================================
 template <typename T>
-inline const std::string & CliBase::OptVec<T>::from(size_t index) const {
+inline const std::string & Cli::OptVec<T>::from(size_t index) const {
     return index >= size() ? m_empty : m_proxy->m_matches[index].name;
 }
 
 //===========================================================================
-template <typename T> inline int CliBase::OptVec<T>::pos(size_t index) const {
+template <typename T> inline int Cli::OptVec<T>::pos(size_t index) const {
     return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::OptVec<T>::reset() {
+template <typename T> inline void Cli::OptVec<T>::reset() {
     m_proxy->m_values->clear();
     m_proxy->m_matches.clear();
 }
 
 //===========================================================================
 template <typename T>
-inline bool CliBase::OptVec<T>::parseValue(const std::string & value) {
+inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
     if (m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
@@ -949,12 +886,12 @@ inline bool CliBase::OptVec<T>::parseValue(const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> inline void CliBase::OptVec<T>::unspecifiedValue() {
+template <typename T> inline void Cli::OptVec<T>::unspecifiedValue() {
     m_proxy->m_values->push_back(m_implicitValue);
 }
 
 //===========================================================================
-template <typename T> inline size_t CliBase::OptVec<T>::size() const {
+template <typename T> inline size_t Cli::OptVec<T>::size() const {
     return m_proxy->m_values->size();
 }
 

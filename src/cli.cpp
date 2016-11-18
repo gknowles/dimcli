@@ -33,33 +33,95 @@ const string s_internalOptionGroup = "~";
 
 namespace {
 struct OptName {
-    CliBase::OptBase * opt;
+    Cli::OptBase * opt;
     bool invert;      // set to false instead of true (only for bools)
     bool optional;    // value doesn't have to be present? (non-bools only)
     std::string name; // name of argument (only for positionals)
 };
 } // namespace
 
-struct CliBase::OptIndex {
+struct Cli::OptIndex {
     map<char, OptName> shortNames;
     map<string, OptName> longNames;
     vector<OptName> argNames;
 };
 
+struct Cli::GroupConfig {
+    string name;
+    string title;
+    string sortKey;
+};
+
+struct Cli::CommandConfig {
+    string name;
+    std::function<Cli::ActionFn> action;
+    Opt<bool> * helpOpt{nullptr};
+    map<string, GroupConfig> groups;
+};
+
+struct Cli::Config {
+    bool constructed{false};
+
+    map<string, CommandConfig> cmds;
+    std::list<std::unique_ptr<OptBase>> opts;
+    bool responseFiles{true};
+
+    int exitCode{0};
+    string errMsg;
+    string progName;
+    string command;
+};
+
 
 /****************************************************************************
 *
-*   CliBase::OptBase
+*   Helpers
+*
+***/
+
+// forward declarations
+static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
+static int cmdAction(Cli & cli, const string & cmd);
+
+//===========================================================================
+static Cli::GroupConfig & findGrpAlways(Cli::CommandConfig & cmd, const string & name) {
+    auto i = cmd.groups.find(name);
+    if (i != cmd.groups.end())
+        return i->second;
+    auto & grp = cmd.groups[name];
+    grp.name = grp.sortKey = grp.title = name;
+    return grp;
+}
+
+//===========================================================================
+static Cli::CommandConfig & findCmdAlways(Cli::Config & cfg, const string & name) {
+    auto i = cfg.cmds.find(name);
+    if (i != cfg.cmds.end()) 
+        return i->second;
+    auto & cmd = cfg.cmds[name];
+    cmd.name = name;
+    cmd.action = cmdAction;
+    auto & defGrp = findGrpAlways(cmd, "");
+    defGrp.title = "Options";
+    auto & intGrp = findGrpAlways(cmd, s_internalOptionGroup);
+    intGrp.title.clear();
+    return cmd;
+}
+
+
+/****************************************************************************
+*
+*   Cli::OptBase
 *
 ***/
 
 //===========================================================================
-CliBase::OptBase::OptBase(const string & names, bool boolean)
+Cli::OptBase::OptBase(const string & names, bool boolean)
     : m_names{names}
     , m_bool{boolean} {}
 
 //===========================================================================
-void CliBase::OptBase::index(OptIndex & ndx) {
+void Cli::OptBase::index(OptIndex & ndx) {
     const char * ptr = m_names.data();
     string name;
     char close;
@@ -95,7 +157,7 @@ void CliBase::OptBase::index(OptIndex & ndx) {
 }
 
 //===========================================================================
-void CliBase::OptBase::indexName(OptIndex & ndx, const string & name) {
+void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
     const bool invert = true;
     const bool optional = true;
 
@@ -145,7 +207,7 @@ void CliBase::OptBase::indexName(OptIndex & ndx, const string & name) {
 }
 
 //===========================================================================
-void CliBase::OptBase::indexLongName(
+void Cli::OptBase::indexLongName(
     OptIndex & ndx,
     const string & name,
     bool invert,
@@ -168,170 +230,6 @@ void CliBase::OptBase::indexLongName(
 
 /****************************************************************************
 *
-*   CliBase::Group
-*
-***/
-
-struct CliBase::Group::Config {
-    string name;
-    string title;
-    string sortKey;
-};
-
-//===========================================================================
-CliBase::Group::Group(CliBase::Command & cmd, const string & name)
-    : m_cmd(cmd) {
-    m_grpCfg = make_shared<Config>();
-    m_grpCfg->name = m_grpCfg->title = m_grpCfg->sortKey = name;
-}
-
-//===========================================================================
-CliBase::Group & CliBase::Group::operator=(const Group & from) {
-    m_grpCfg = from.m_grpCfg;
-    return *this;
-}
-
-//===========================================================================
-CliBase::Group & CliBase::Group::title(const string & val) {
-    m_grpCfg->title = val;
-    return *this;
-}
-
-//===========================================================================
-CliBase::Group & CliBase::Group::sortKey(const string & val) {
-    m_grpCfg->sortKey = val;
-    return *this;
-}
-
-//===========================================================================
-const string & CliBase::Group::name() const {
-    return m_grpCfg->name;
-}
-
-//===========================================================================
-const string & CliBase::Group::title() const {
-    return m_grpCfg->title;
-}
-
-//===========================================================================
-const string & CliBase::Group::sortKey() const {
-    return m_grpCfg->sortKey;
-}
-
-
-/****************************************************************************
-*
-*   CliBase::Command
-*
-***/
-
-struct CliBase::Command::Config {
-    string name;
-    std::function<ActionFn> action;
-    Opt<bool> * helpOpt{nullptr};
-    map<string, Group> groups;
-};
-
-// forward declarations
-static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static int cmdAction(Cli & cli, const string & cmd);
-
-//===========================================================================
-// Default constructor creates a handle to the shared configuration, this
-// allows options to be statically registered from multiple source files.
-CliBase::Command::Command(Cli & cli, const string & name)
-    : Group{*this, ""}
-    , m_cli{cli} {
-    m_cmdCfg = make_shared<Config>();
-    m_cmdCfg->name = name;
-    *static_cast<Group *>(this) = group("");
-    title("Options");
-    group(s_internalOptionGroup).title("");
-    action(cmdAction);
-}
-
-//===========================================================================
-CliBase::Command & CliBase::Command::operator=(const Command & from) {
-    m_cmdCfg->name = from.m_cmdCfg->name;
-    m_cmdCfg->action = from.m_cmdCfg->action;
-    m_cmdCfg->helpOpt = from.m_cmdCfg->helpOpt;
-    for (auto && grp : from.m_cmdCfg->groups)
-        group(grp.second.name()) = grp.second;
-    return *this;
-}
-
-//===========================================================================
-CliBase::Group & CliBase::Command::group(const string & name) {
-    auto & grps = m_cmdCfg->groups;
-    auto i = grps.find(name);
-    if (i == grps.end()) {
-        i = grps.emplace(make_pair(name, Group(*this, name))).first;
-    }
-    return i->second;
-}
-
-//===========================================================================
-const CliBase::Group & CliBase::Command::group(const string & name) const {
-    return const_cast<Command *>(this)->group(name);
-}
-
-//===========================================================================
-CliBase::Command & CliBase::Command::action(std::function<ActionFn> fn) {
-    m_cmdCfg->action = fn;
-    return *this;
-}
-
-//===========================================================================
-CliBase::Opt<bool> &
-CliBase::Command::versionOpt(const string & version, const string & progName) {
-    auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
-        ignore = opt, val;
-        fs::path prog = progName;
-        if (prog.empty()) {
-            prog = cli.progName();
-            prog = prog.stem();
-        }
-        cout << prog << " version " << version << endl;
-        return false;
-    };
-    return group(s_internalOptionGroup)
-        .opt<bool>("version.")
-        .desc("Show version and exit.")
-        .action(verAction);
-}
-
-//===========================================================================
-CliBase::Opt<bool> & CliBase::Command::helpOpt() {
-    if (!m_cmdCfg->helpOpt) {
-        m_cmdCfg->helpOpt = &opt<bool>("help.")
-                                 .desc("Show this message and exit.")
-                                 .action(helpAction)
-                                 .group(s_internalOptionGroup)
-                                 .show(false);
-    }
-    return *m_cmdCfg->helpOpt;
-}
-
-//===========================================================================
-const string & CliBase::Command::name() const {
-    return m_cmdCfg->name;
-}
-
-//===========================================================================
-int CliBase::Command::run() {
-    int code = m_cmdCfg->action(m_cli, name());
-    m_cli.fail(code, "");
-    return code;
-}
-
-//===========================================================================
-void CliBase::Command::addOpt(unique_ptr<OptBase> src) {
-    m_cli.addOpt(move(src));
-}
-
-
-/****************************************************************************
-*
 *   Action callbacks
 *
 ***/
@@ -340,16 +238,16 @@ void CliBase::Command::addOpt(unique_ptr<OptBase> src) {
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
     stringTo(*opt, val);
     if (*opt) {
-        cli.writeHelp(cout, {}, cli.command());
+        cli.writeHelp(cout, {}, cli.runCommand());
         return false;
     }
     return true;
 }
 
 //===========================================================================
-bool CliBase::Command::defaultAction(OptBase & opt, const string & val) {
+bool Cli::defaultAction(OptBase & opt, const string & val) {
     if (!opt.parseValue(val))
-        return m_cli.badUsage("Invalid '" + opt.from() + "' value: " + val);
+        return badUsage("Invalid '" + opt.from() + "' value: " + val);
     return true;
 }
 
@@ -367,60 +265,100 @@ static int cmdAction(Cli & cli, const string & cmd) {
 *
 ***/
 
-struct Cli::Config {
-    bool constructed{false};
-
-    map<string, CliBase::Command> cmds;
-    std::list<std::unique_ptr<OptBase>> opts;
-    bool responseFiles{true};
-
-    int exitCode{0};
-    string errMsg;
-    string progName;
-    string command;
-};
-
 //===========================================================================
 // Default constructor creates a handle to the shared configuration, this
 // allows options to be statically registered from multiple source files.
-Cli::Cli()
-    : Command(*this, "") {
+Cli::Cli() {
     static auto s_cfg = make_shared<Config>();
     m_cfg = s_cfg;
-    construct();
+    helpOpt();
 }
 
 //===========================================================================
 // protected
-Cli::Cli(shared_ptr<Config> cfg)
-    : Command{*this, ""}
-    , m_cfg(cfg) {
-    construct();
+Cli::Cli(shared_ptr<Config> cfg, const string & command, const string & group)
+    : m_cfg(cfg)
+    , m_command(command)
+    , m_group(group) {
+    helpOpt();
+}
+
+
+/****************************************************************************
+*
+*   Configuration
+*
+***/
+
+//===========================================================================
+Cli::Opt<bool> &
+Cli::versionOpt(const string & version, const string & progName) {
+    auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
+        ignore = opt, val;
+        fs::path prog = progName;
+        if (prog.empty()) {
+            prog = cli.progName();
+            prog = prog.stem();
+        }
+        cout << prog << " version " << version << endl;
+        return false;
+    };
+    return opt<bool>("version.")
+        .desc("Show version and exit.")
+        .action(verAction)
+        .group(s_internalOptionGroup);
 }
 
 //===========================================================================
-void Cli::construct() {
-    if (!m_cfg->constructed) {
-        m_cfg->constructed = true;
-        *static_cast<Command *>(this) = command("");
-        helpOpt().show();
+Cli::Opt<bool> & Cli::helpOpt() {
+    auto & cmd = cmdCfg();
+    if (!cmd.helpOpt) {
+        cmd.helpOpt = &opt<bool>("help.")
+            .desc("Show this message and exit.")
+            .action(helpAction)
+            .group(s_internalOptionGroup);
+        if (!m_command.empty())
+            cmd.helpOpt->show(false);
     }
+    return *cmd.helpOpt;
 }
 
 //===========================================================================
-CliBase::Command & Cli::command(const std::string & name) {
-    auto & cmds = m_cfg->cmds;
-    auto i = cmds.find(name);
-    if (i == cmds.end()) {
-        i = cmds.emplace(make_pair(name, Command(*this, name))).first;
-        i->second.helpOpt();
-    }
-    return i->second;
+Cli Cli::group(const string & name) {
+    return Cli(m_cfg, m_command, name);
 }
 
 //===========================================================================
-const CliBase::Command & Cli::command(const std::string & name) const {
-    return const_cast<Cli *>(this)->command(name);
+Cli & Cli::title(const string & val) {
+    grpCfg().title = val;
+    return *this;
+}
+
+//===========================================================================
+Cli & Cli::sortKey(const string & val) {
+    grpCfg().sortKey = val;
+    return *this;
+}
+
+//===========================================================================
+const string & Cli::title() const {
+    return grpCfg().title;
+}
+
+//===========================================================================
+const string & Cli::sortKey() const {
+    return grpCfg().sortKey;
+}
+
+//===========================================================================
+Cli Cli::command(const string & name, const string & grpName) {
+    return Cli(m_cfg, name, grpName);
+}
+
+//===========================================================================
+Cli & Cli::action(std::function<ActionFn> fn) {
+    cmdCfg().action = fn;
+    return *this;
 }
 
 //===========================================================================
@@ -429,8 +367,23 @@ void Cli::responseFiles(bool enable) {
 }
 
 //===========================================================================
-int Cli::run() {
-    return command(command()).run();
+Cli::GroupConfig & Cli::grpCfg() {
+    return findGrpAlways(cmdCfg(), m_group);
+}
+
+//===========================================================================
+const Cli::GroupConfig & Cli::grpCfg() const {
+    return const_cast<Cli *>(this)->grpCfg();
+}
+
+//===========================================================================
+Cli::CommandConfig & Cli::cmdCfg() {
+    return findCmdAlways(*m_cfg, m_command);
+}
+
+//===========================================================================
+const Cli::CommandConfig & Cli::cmdCfg() const {
+    return const_cast<Cli *>(this)->cmdCfg();
 }
 
 //===========================================================================
@@ -771,8 +724,18 @@ const string & Cli::progName() const {
 }
 
 //===========================================================================
-const string & Cli::command() const {
+const string & Cli::runCommand() const {
     return m_cfg->command;
+}
+
+//===========================================================================
+int Cli::run() {
+    auto & name = runCommand();
+    assert(m_cfg->cmds.find(name) != m_cfg->cmds.end());
+    auto & cmd = m_cfg->cmds[name];
+    int code = cmd.action(*this, name);
+    fail(code, "");
+    return code;
 }
 
 
@@ -901,9 +864,10 @@ void Cli::writePositionals(ostream & os, const string & cmd) const {
 }
 
 //===========================================================================
-void Cli::writeOptions(ostream & os, const string & cmd) const {
+void Cli::writeOptions(ostream & os, const string & cmdName) const {
     OptIndex ndx;
-    index(ndx, cmd);
+    index(ndx, cmdName);
+    auto & cmd = findCmdAlways(*m_cfg, cmdName);
 
     // find named args and the longest name list
     size_t colWidth = 0;
@@ -924,7 +888,7 @@ void Cli::writeOptions(ostream & os, const string & cmd) const {
 
             // sort by group sort key followed by name list with leading
             // dashes removed
-            key.sort = group(opt->m_group).sortKey();
+            key.sort = findGrpAlways(cmd, opt->m_group).sortKey;
             key.sort += '\0';
             key.sort += list.substr(list.find_first_not_of('-'));
             namedArgs.push_back(key);
@@ -946,8 +910,8 @@ void Cli::writeOptions(ostream & os, const string & cmd) const {
             gname = key.opt->m_group.c_str();
             os << '\n';
             wp.pos = 0;
-            auto grp = group(key.opt->m_group);
-            string title = grp.title();
+            auto & grp = findGrpAlways(cmd, key.opt->m_group);
+            string title = grp.title;
             if (title.empty() && gname == s_internalOptionGroup
                 && &key == namedArgs.data()) {
                 // First group and it's the internal group, give it a title
@@ -1037,4 +1001,4 @@ string Cli::nameList(
 
 //===========================================================================
 CliLocal::CliLocal()
-    : Cli(make_shared<Config>()) {}
+    : Cli(make_shared<Config>(), "", "") {}
