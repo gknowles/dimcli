@@ -76,13 +76,13 @@ public:
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-        Opt<T> & opt(T * value, const std::string & keys, const U & def);
+    Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
 
     template <typename T>
     OptVec<T> &
-        optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
+    optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
 
     template <typename T>
     Opt<T> & opt(const std::string & keys, const T & def = {});
@@ -94,19 +94,19 @@ public:
         typename T,
         typename U,
         typename = enable_if<is_convertible<U, T>::value>::type>
-        Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
+    Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
     Opt<T> & opt(Opt<T> & value, const std::string & keys);
 
     template <typename T>
     OptVec<T> &
-        optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
+    optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
     // Add --version argument that shows "${progName.stem()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
     Opt<bool> &
-        versionOpt(const std::string & ver, const std::string & progName = {});
+    versionOpt(const std::string & ver, const std::string & progName = {});
 
     // Get reference to internal help option, can be used to change the
     // desciption, option group, etc.
@@ -133,12 +133,12 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Returns a new Cli() object, pointed at the default option group of 
+    // Returns a new Cli() object, pointed at the default option group of
     // the selected subcommand.
     Cli command(const std::string & name, const std::string & group = {});
 
     // Action that should be taken when the currently selected command is run.
-    // Actions are executed when cli.run() is called by the application. The 
+    // Actions are executed when cli.run() is called by the application. The
     // action function should:
     //  - do something useful
     //  - return an exitCode.
@@ -224,20 +224,19 @@ public:
     // Program name received in argv[0]
     const std::string & progName() const;
 
-    // Command selected by argv, empty string if there are no commands 
+    // Command selected by argv, empty string if there are no commands
     // defined or none were selected.
     const std::string & runCommand() const;
 
-    // Runs the action of the selected command and returns its exit code; 
-    // which is also used to set cli.exitCode(). If no command was selected 
-    // it runs the action of the empty "" command, which can be set via 
+    // Runs the action of the selected command and returns its exit code;
+    // which is also used to set cli.exitCode(). If no command was selected
+    // it runs the action of the empty "" command, which can be set via
     // cli.action() just like any other command.
     int run();
 
 protected:
-    Cli(
-        std::shared_ptr<Config> cfg, 
-        const std::string & command, 
+    Cli(std::shared_ptr<Config> cfg,
+        const std::string & command,
         const std::string & group);
 
 private:
@@ -288,17 +287,14 @@ Cli::opt(T * value, const std::string & keys, const U & def) {
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T> &
-Cli::opt(T * value, const std::string & keys) {
+inline Cli::Opt<T> & Cli::opt(T * value, const std::string & keys) {
     return opt(value, keys, T{});
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> & Cli::optVec(
-    std::vector<T> * values,
-    const std::string & keys,
-    int nargs) {
+inline Cli::OptVec<T> &
+Cli::optVec(std::vector<T> * values, const std::string & keys, int nargs) {
     auto proxy = getProxy<OptVec<T>, ValueVec<T>>(values);
     auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
     return addOpt(std::move(ptr));
@@ -306,46 +302,38 @@ inline Cli::OptVec<T> & Cli::optVec(
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline Cli::Opt<T> & Cli::opt(
-    Opt<T> & alias,
-    const std::string & keys,
-    const U & def) {
+inline Cli::Opt<T> &
+Cli::opt(Opt<T> & alias, const std::string & keys, const U & def) {
     return opt(&*alias, keys, def);
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T> &
-Cli::opt(Opt<T> & alias, const std::string & keys) {
+inline Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & keys) {
     return opt(&*alias, keys, T{});
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> & Cli::optVec(
-    OptVec<T> & alias,
-    const std::string & keys,
-    int nargs) {
+inline Cli::OptVec<T> &
+Cli::optVec(OptVec<T> & alias, const std::string & keys, int nargs) {
     return optVec(&*alias, keys, nargs);
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T> &
-Cli::opt(const std::string & keys, const T & def) {
+inline Cli::Opt<T> & Cli::opt(const std::string & keys, const T & def) {
     return opt<T>(nullptr, keys, def);
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> &
-Cli::optVec(const std::string & keys, int nargs) {
+inline Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
     return optVec<T>(nullptr, keys, nargs);
 }
 
 //===========================================================================
-template <typename A>
-inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
+template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
     opt.action(&Cli::defaultAction).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
@@ -468,8 +456,7 @@ template <typename T> inline void Cli::OptBase::setValueName() {
 
 //===========================================================================
 template <>
-inline void
-Cli::OptBase::setValueName<std::experimental::filesystem::path>() {
+inline void Cli::OptBase::setValueName<std::experimental::filesystem::path>() {
     m_valueDesc = "FILE";
 }
 

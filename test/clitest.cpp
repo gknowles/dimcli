@@ -6,7 +6,9 @@ using namespace std;
 
 static int s_errors;
 
-#define EXPECT(e) if (!bool(e)) failed(line ? line : __LINE__, #e)
+#define EXPECT(e) \
+    if (!bool(e)) \
+    failed(line ? line : __LINE__, #e)
 #define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
 #define EXPECT_PARSE(cli, ...) parseTest(__LINE__, cli, true, 0, __VA_ARGS__)
 #define EXPECT_PARSE2(cli, cont, ec, ...) \
@@ -22,7 +24,10 @@ void failed(int line, const char msg[]) {
 
 //===========================================================================
 void helpTest(
-    int line, Dim::Cli & cli, const string & cmd, const string & helpText) {
+    int line,
+    Dim::Cli & cli,
+    const string & cmd,
+    const string & helpText) {
     ostringstream os;
     cli.writeHelp(os, "test.exe", cmd);
     auto tmp = os.str();
@@ -32,11 +37,10 @@ void helpTest(
 //===========================================================================
 void parseTest(
     int line,
-    Dim::Cli & cli, 
+    Dim::Cli & cli,
     bool continueFlag,
     int exitCode,
-    vector<const char *> args
-) {
+    vector<const char *> args) {
     args.insert(args.begin(), "test.exe");
     args.push_back(nullptr);
     bool rc = cli.parse(size(args) - 1, const_cast<char **>(data(args)));

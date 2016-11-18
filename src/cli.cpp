@@ -86,7 +86,8 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static int cmdAction(Cli & cli, const string & cmd);
 
 //===========================================================================
-static Cli::GroupConfig & findGrpAlways(Cli::CommandConfig & cmd, const string & name) {
+static Cli::GroupConfig &
+findGrpAlways(Cli::CommandConfig & cmd, const string & name) {
     auto i = cmd.groups.find(name);
     if (i != cmd.groups.end())
         return i->second;
@@ -96,9 +97,10 @@ static Cli::GroupConfig & findGrpAlways(Cli::CommandConfig & cmd, const string &
 }
 
 //===========================================================================
-static Cli::CommandConfig & findCmdAlways(Cli::Config & cfg, const string & name) {
+static Cli::CommandConfig &
+findCmdAlways(Cli::Config & cfg, const string & name) {
     auto i = cfg.cmds.find(name);
-    if (i != cfg.cmds.end()) 
+    if (i != cfg.cmds.end())
         return i->second;
     auto & cmd = cfg.cmds[name];
     cmd.name = name;
@@ -316,9 +318,9 @@ Cli::Opt<bool> & Cli::helpOpt() {
     auto & cmd = cmdCfg();
     if (!cmd.helpOpt) {
         cmd.helpOpt = &opt<bool>("help.")
-            .desc("Show this message and exit.")
-            .action(helpAction)
-            .group(s_internalOptionGroup);
+                           .desc("Show this message and exit.")
+                           .action(helpAction)
+                           .group(s_internalOptionGroup);
         if (!m_command.empty())
             cmd.helpOpt->show(false);
     }
@@ -838,8 +840,10 @@ writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 }
 
 //===========================================================================
-int Cli::writeHelp(ostream & os, const string & progName, const string & cmdName)
-    const {
+int Cli::writeHelp(
+    ostream & os,
+    const string & progName,
+    const string & cmdName) const {
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
     writeUsage(os, progName, cmdName);
     if (!cmd.desc.empty()) {
