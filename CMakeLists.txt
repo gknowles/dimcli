@@ -96,6 +96,7 @@ endif()
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
     .clang-format
+    .travis.yml
     appveyor.yml
     LICENSE
     README.md

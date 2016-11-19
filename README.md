@@ -26,8 +26,8 @@ you did! Contains thorough documentation including many examples.
   - git clone https://github.com/gknowles/dimcli.git
   - cd dimcli
   - md build & cd build
-  - cmake -G "Visual Studio 14 2015 Win64" ..
-  - cmake --build .
+  - cmake .. -G "Visual Studio 14 2015 Win64"
+  - cmake . --build
 - Test
   - ctest -C Debug
 - Visual Studio 2015
