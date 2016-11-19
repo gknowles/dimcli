@@ -14,10 +14,10 @@ install:
     fi
 
 script:
-  - mkdir build
-  - cd build
+  - mkdir -p ${TRAVIS_BUILD_DIR}/build
+  - cd ${TRAVIS_BUILD_DIR}/build
   - env
   - which cmake
   - cmake ..
-  - cmake . --build
+  - cmake --build .
   - cd ..
