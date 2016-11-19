@@ -75,7 +75,8 @@ public:
     template <
         typename T,
         typename U,
-        typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+        typename =
+            typename std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
@@ -93,7 +94,8 @@ public:
     template <
         typename T,
         typename U,
-        typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+        typename =
+            typename std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
@@ -198,9 +200,9 @@ public:
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Copy array of wchar_t pointers into vector of utf-8 encoded args
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
-    // Create vector of pointers suitable for use with argc/argv APIs, 
-    // includes trailing null, so use "size() - 1" for argc. The return 
-    // values point into the source string vector and are only valid until 
+    // Create vector of pointers suitable for use with argc/argv APIs,
+    // includes trailing null, so use "size() - 1" for argc. The return
+    // values point into the source string vector and are only valid until
     // that vector is resized or destroyed.
     static std::vector<const char *>
     toPtrArgv(const std::vector<std::string> & args);
@@ -217,7 +219,7 @@ public:
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
     bool badUsage(const std::string & msg) { return fail(kExitUsage, msg); }
-    // Calls badUsage(msg) with msg set to, depending on if its a subcommand, 
+    // Calls badUsage(msg) with msg set to, depending on if its a subcommand,
     // one of the following:
     //  "<prefix>: <value>"
     //  "<prefix> for '<command>' command: <value>"
@@ -725,7 +727,7 @@ inline Cli::Opt<T>::Opt(
     const T & def)
     : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
     , m_proxy{value} {
-    m_defValue = def;
+    OptShim::m_defValue = def;
 }
 
 //===========================================================================
@@ -739,7 +741,7 @@ inline void Cli::Opt<T>::set(const std::string & name, int pos) {
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::reset() {
     if (!OptBase::m_flagValue || OptBase::m_flagDefault)
-        *m_proxy->m_value = m_defValue;
+        *m_proxy->m_value = OptShim::m_defValue;
     m_proxy->m_match.name.clear();
     m_proxy->m_match.pos = 0;
     m_proxy->m_explicit = false;
@@ -753,7 +755,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
-            *m_proxy->m_value = m_defValue;
+            *m_proxy->m_value = OptShim::m_defValue;
         return true;
     }
 
@@ -762,7 +764,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
 
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::unspecifiedValue() {
-    *m_proxy->m_value = m_implicitValue;
+    *m_proxy->m_value = OptShim::m_implicitValue;
 }
 
 //===========================================================================
@@ -842,8 +844,8 @@ inline Cli::OptVec<T>::OptVec(
     int nargs)
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values) {
-    m_multiple = true;
-    m_nargs = nargs;
+    OptBase::m_multiple = true;
+    OptBase::m_nargs = nargs;
 }
 
 //===========================================================================
@@ -880,7 +882,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
-            m_proxy->m_values->push_back(m_defValue);
+            m_proxy->m_values->push_back(OptShim::m_defValue);
         return true;
     }
 
@@ -893,7 +895,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
 
 //===========================================================================
 template <typename T> inline void Cli::OptVec<T>::unspecifiedValue() {
-    m_proxy->m_values->push_back(m_implicitValue);
+    m_proxy->m_values->push_back(OptShim::m_implicitValue);
 }
 
 //===========================================================================
