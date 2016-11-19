@@ -174,10 +174,10 @@ void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
     case '<':
         auto where =
             find_if(ndx.argNames.begin(), ndx.argNames.end(), [](auto && key) {
-            return key.optional;
-        });
+                return key.optional;
+            });
         ndx.argNames.insert(
-        where, {this, !invert, !optional, name.data() + 1});
+            where, {this, !invert, !optional, name.data() + 1});
         return;
     }
     if (name.size() == 1) {
@@ -319,9 +319,9 @@ Cli::Opt<bool> & Cli::helpOpt() {
     auto & cmd = cmdCfg();
     if (!cmd.helpOpt) {
         cmd.helpOpt = &opt<bool>("help.")
-            .desc("Show this message and exit.")
-            .action(helpAction)
-            .group(s_internalOptionGroup);
+                           .desc("Show this message and exit.")
+                           .action(helpAction)
+                           .group(s_internalOptionGroup);
         if (!m_command.empty())
             cmd.helpOpt->show(false);
     }
@@ -631,10 +631,10 @@ bool Cli::parse(vector<string> & args) {
                 name = "-"s + *ptr;
                 if (argName.opt->m_bool) {
                     if (!parseAction(
-                        *argName.opt,
-                        name,
-                        argPos,
-                        argName.invert ? "0" : "1"))
+                            *argName.opt,
+                            name,
+                            argPos,
+                            argName.invert ? "0" : "1"))
                         return false;
                     continue;
                 }
@@ -670,10 +670,10 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option: " + name + "=");
                 }
                 if (!parseAction(
-                    *argName.opt,
-                    name,
-                    argPos,
-                    argName.invert ? "0" : "1"))
+                        *argName.opt,
+                        name,
+                        argPos,
+                        argName.invert ? "0" : "1"))
                     return false;
                 continue;
             }
@@ -791,7 +791,7 @@ struct WrapPos {
 };
 } // namespace
 
-  //===========================================================================
+//===========================================================================
 static void writeNewline(ostream & os, WrapPos & wp) {
     os << '\n' << wp.prefix;
     wp.pos = wp.prefix.size();
@@ -882,18 +882,20 @@ int Cli::writeHelp(
 
 //===========================================================================
 int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
-const {
+    const {
     OptIndex ndx;
     index(ndx, cmd);
     streampos base = os.tellp();
-    fs::path prog = arg0.empty() ? progName() : arg0;
-    os << "usage: " << prog.stem();
+    string prog =
+        fs::path(arg0.empty() ? progName() : arg0).filename().string();
+    const string usageStr{"usage: "};
+    os << usageStr << prog;
     WrapPos wp;
     wp.maxWidth = 79;
-    wp.pos = os.tellp() - base;
+    wp.pos = prog.size() + size(usageStr);
     wp.prefix = string(wp.pos, ' ');
     if (!ndx.shortNames.empty() || !ndx.longNames.empty())
-        writeToken(os, wp, " [OPTIONS]");
+        writeToken(os, wp, "[OPTIONS]");
     for (auto && pa : ndx.argNames) {
         string token =
             pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
