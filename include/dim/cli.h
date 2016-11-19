@@ -75,7 +75,7 @@ public:
     template <
         typename T,
         typename U,
-        typename = enable_if<is_convertible<U, T>::value>::type>
+        typename = std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
@@ -93,7 +93,7 @@ public:
     template <
         typename T,
         typename U,
-        typename = enable_if<is_convertible<U, T>::value>::type>
+        typename = std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
@@ -454,9 +454,9 @@ private:
 
 //===========================================================================
 template <typename T> inline void Cli::OptBase::setValueName() {
-    if (is_integral<T>::value) {
+    if (std::is_integral<T>::value) {
         m_valueDesc = "NUM";
-    } else if (is_convertible<T, std::string>::value) {
+    } else if (std::is_convertible<T, std::string>::value) {
         m_valueDesc = "STRING";
     } else {
         m_valueDesc = "VALUE";
