@@ -322,15 +322,17 @@ Cli::versionOpt(const string & version, const string & progName) {
 //===========================================================================
 Cli::Opt<bool> & Cli::helpOpt() {
     auto & cmd = cmdCfg();
-    if (!cmd.helpOpt) {
-        cmd.helpOpt = &opt<bool>("help.")
-                           .desc("Show this message and exit.")
-                           .action(helpAction)
-                           .group(s_internalOptionGroup);
-        if (!m_command.empty())
-            cmd.helpOpt->show(false);
-    }
-    return *cmd.helpOpt;
+    if (cmd.helpOpt)
+        return *cmd.helpOpt;
+
+    auto & hlp = opt<bool>("help.")
+                     .desc("Show this message and exit.")
+                     .action(helpAction)
+                     .group(s_internalOptionGroup);
+    if (!m_command.empty())
+        hlp.show(false);
+    cmd.helpOpt = &hlp;
+    return hlp;
 }
 
 //===========================================================================
@@ -616,7 +618,7 @@ bool Cli::parse(vector<string> & args) {
     // Commands can't be added when the top level command as already
     // added a positional argument, command processing requires that the
     // first positional is available to identify the command.
-    assert(!needCmd || ndx.allowCommands);
+    assert(ndx.allowCommands || !needCmd);
 
     resetValues();
     set<fs::path> ancestors;
@@ -915,8 +917,7 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     OptIndex ndx;
     index(ndx, cmd, true);
     streampos base = os.tellp();
-    string prog =
-        fs::path(arg0.empty() ? progName() : arg0).stem().string();
+    string prog = fs::path(arg0.empty() ? progName() : arg0).stem().string();
     const string usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
@@ -1042,8 +1043,10 @@ string Cli::nameList(const OptBase & opt, const OptIndex & ndx) const {
     string list = nameList(opt, ndx, true);
     if (opt.m_bool) {
         string invert = nameList(opt, ndx, false);
-        if (!invert.empty())
-            list += " / " + invert;
+        if (!invert.empty()) {
+            list += list.empty() ? "/ " : " / ";
+            list += invert;
+        }
     }
     return list;
 }
