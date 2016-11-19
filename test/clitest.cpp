@@ -68,8 +68,6 @@ int main(int argc, char * argv[]) {
     _set_error_mode(_OUT_TO_MSGBOX);
 
     int line = 0;
-    Dim::Cli c1;
-    Dim::Cli c2;
     Dim::CliLocal cli;
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -102,7 +100,7 @@ int main(int argc, char * argv[]) {
         "Long explanation of this very short set of options, it's so long "
         "that it even wraps around to the next line");
     EXPECT_HELP(cli, "", 1 + R"(
-usage: test.exe [OPTIONS] [key...]
+usage: test [OPTIONS] [key...]
   key       it's the key argument with a very long description that wraps the
             line at least once, maybe more.
 
@@ -114,7 +112,7 @@ wraps around to the next line:
                              snowflake
 
 Name options:
-  --name=STRING             
+  --name=STRING
 
   --help                     Show this message and exit.
 )");
@@ -132,7 +130,7 @@ Name options:
 
     cli = {};
     EXPECT_HELP(cli, "", 1 + R"(
-usage: test.exe [OPTIONS]
+usage: test [OPTIONS]
 
 Options:
   --help    Show this message and exit.
@@ -162,6 +160,21 @@ Options:
     EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
     EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
     EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+
+    Dim::Cli c1;
+    auto & a1 = c1.command("one").opt<int>("a", 1);
+    Dim::Cli c2;
+    auto & a2 = c2.command("two").opt<int>("a", 2);
+    EXPECT_HELP(c1, "one", 1 + R"(
+usage: test one [OPTIONS]
+
+Options:
+  -a NUM
+)");
+    EXPECT_PARSE(c1, {"one", "-a3"});
+    EXPECT(*a1 == 3);
+    EXPECT(*a2 == 2);
+    EXPECT(c2.runCommand() == "one");
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

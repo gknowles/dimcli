@@ -870,6 +870,8 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
 // required lines to descCol.
 static void
 writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
+    if (text.empty())
+        return;
     if (wp.pos < descCol) {
         writeToken(os, wp, string(descCol - wp.pos - 1, ' '));
     } else if (wp.pos < descCol + 4) {
@@ -914,13 +916,15 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     index(ndx, cmd, true);
     streampos base = os.tellp();
     string prog =
-        fs::path(arg0.empty() ? progName() : arg0).filename().string();
+        fs::path(arg0.empty() ? progName() : arg0).stem().string();
     const string usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
     wp.maxWidth = 79;
     wp.pos = prog.size() + size(usageStr);
     wp.prefix = string(wp.pos, ' ');
+    if (cmd.size())
+        writeToken(os, wp, cmd);
     if (!ndx.shortNames.empty() || !ndx.longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
     for (auto && pa : ndx.argNames) {
