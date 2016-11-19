@@ -257,7 +257,7 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
 //===========================================================================
 bool Cli::defaultAction(OptBase & opt, const string & val) {
     if (!opt.parseValue(val))
-        return badUsage("Invalid '" + opt.from() + "' value: " + val);
+        return badUsage("Invalid '" + opt.from() + "' value", val);
     return true;
 }
 
@@ -509,13 +509,13 @@ static bool expandResponseFile(
     fs::path fn = args[pos].substr(1);
     fs::path cfn = fs::canonical(fn, err);
     if (err)
-        return cli.badUsage("Invalid response file: " + fn.string());
+        return cli.badUsage("Invalid response file", fn.string());
     auto ib = ancestors.insert(cfn);
     if (!ib.second)
-        return cli.badUsage("Recursive response file: " + fn.string());
+        return cli.badUsage("Recursive response file", fn.string());
     if (!loadFileUtf8(content, fn)) {
         string desc = content.empty() ? "Read error" : "Invalid encoding";
-        return cli.badUsage(desc + ": " + fn.string());
+        return cli.badUsage(desc, fn.string());
     }
     auto rargs = cli.toArgv(content);
     if (!expandResponseFiles(cli, rargs, ancestors))
@@ -564,6 +564,7 @@ void Cli::resetValues() {
     m_cfg->exitCode = kExitOk;
     m_cfg->errMsg.clear();
     m_cfg->progName.clear();
+    m_cfg->command.clear();
 }
 
 //===========================================================================
@@ -597,6 +598,19 @@ bool Cli::parseAction(
         opt.unspecifiedValue();
         return true;
     }
+}
+
+//===========================================================================
+bool Cli::badUsage(const string & prefix, const string & value) {
+    string msg = prefix;
+    auto & cmd = m_cfg->command;
+    if (cmd.empty()) {
+        msg.append(": ");
+    } else {
+        msg.append(" for '").append(cmd).append("' command: ");
+    }
+    msg.append(value);
+    return badUsage(msg);
 }
 
 //===========================================================================
@@ -643,7 +657,7 @@ bool Cli::parse(vector<string> & args) {
             for (; *ptr && *ptr != '-'; ++ptr) {
                 auto it = ndx.shortNames.find(*ptr);
                 if (it == ndx.shortNames.end()) {
-                    return badUsage("Unknown option: -"s + *ptr);
+                    return badUsage("Unknown option", "-"s + *ptr);
                 }
                 argName = it->second;
                 name = "-"s + *ptr;
@@ -679,13 +693,13 @@ bool Cli::parse(vector<string> & args) {
             }
             auto it = ndx.longNames.find(key);
             if (it == ndx.longNames.end()) {
-                return badUsage("Unknown option: --"s + key);
+                return badUsage("Unknown option", "--"s + key);
             }
             argName = it->second;
             name = "--" + key;
             if (argName.opt->m_bool) {
                 if (equal) {
-                    return badUsage("Unknown option: " + name + "=");
+                    return badUsage("Unknown option", name + "=");
                 }
                 if (!parseAction(
                         *argName.opt,
@@ -703,7 +717,7 @@ bool Cli::parse(vector<string> & args) {
             string cmd = ptr;
             auto i = m_cfg->cmds.find(cmd);
             if (i == m_cfg->cmds.end())
-                return badUsage("Unknown command: "s + cmd);
+                return badUsage("Unknown command", cmd);
             needCmd = false;
             m_cfg->command = cmd;
             index(ndx, cmd, false);
@@ -711,7 +725,7 @@ bool Cli::parse(vector<string> & args) {
         }
 
         if (pos >= size(ndx.argNames)) {
-            return badUsage("Unexpected argument: "s + ptr);
+            return badUsage("Unexpected argument", ptr);
         }
         argName = ndx.argNames[pos];
         name = argName.name;
@@ -735,14 +749,14 @@ bool Cli::parse(vector<string> & args) {
         argPos += 1;
         arg += 1;
         if (argPos == argc) {
-            return badUsage("No value given for " + name);
+            return badUsage("Option requires value", name);
         }
         if (!parseAction(*argName.opt, name, argPos, arg->c_str()))
             return false;
     }
 
     if (pos < size(ndx.argNames) && !ndx.argNames[pos].optional) {
-        return badUsage("No value given for " + ndx.argNames[pos].name);
+        return badUsage("Option requires value", ndx.argNames[pos].name);
     }
     return true;
 }

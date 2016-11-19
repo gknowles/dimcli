@@ -198,10 +198,10 @@ public:
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Copy array of wchar_t pointers into vector of utf-8 encoded args
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
-    // Create vector of pointers suitable for use with argc/argv APIs, includes
-    // trailing null, so use "size() - 1" for argc. The return values point
-    // into the source string vector and are only valid until that vector is
-    // resized or destroyed.
+    // Create vector of pointers suitable for use with argc/argv APIs, 
+    // includes trailing null, so use "size() - 1" for argc. The return 
+    // values point into the source string vector and are only valid until 
+    // that vector is resized or destroyed.
     static std::vector<const char *>
     toPtrArgv(const std::vector<std::string> & args);
 
@@ -217,6 +217,11 @@ public:
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
     bool badUsage(const std::string & msg) { return fail(kExitUsage, msg); }
+    // Calls badUsage(msg) with msg set to, depending on if its a subcommand, 
+    // one of the following:
+    //  "<prefix>: <value>"
+    //  "<prefix> for '<command>' command: <value>"
+    bool badUsage(const std::string & prefix, const std::string & value);
 
     //-----------------------------------------------------------------------
     // After parsing

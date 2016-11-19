@@ -175,6 +175,10 @@ Options:
     EXPECT(*a1 == 3);
     EXPECT(*a2 == 2);
     EXPECT(c2.runCommand() == "one");
+    EXPECT_PARSE2(c1, false, 64, {"-a"});
+    EXPECT(c2.errMsg() == "Unknown option: -a");
+    EXPECT_PARSE2(c1, false, 64, {"two", "-a"});
+    EXPECT(c2.errMsg() == "Option requires value for 'two' command: -a");
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
