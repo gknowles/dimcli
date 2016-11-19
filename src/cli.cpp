@@ -44,6 +44,7 @@ struct Cli::OptIndex {
     map<char, OptName> shortNames;
     map<string, OptName> longNames;
     vector<OptName> argNames;
+    bool allowCommands{false};
 };
 
 struct Cli::GroupConfig {
@@ -170,6 +171,8 @@ void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
     case '-': assert(name[0] != '-' && "bad argument name"); return;
     case '[':
         ndx.argNames.push_back({this, !invert, optional, name.data() + 1});
+        if (m_command.empty())
+            ndx.allowCommands = false;
         return;
     case '<':
         auto where =
@@ -178,6 +181,8 @@ void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
             });
         ndx.argNames.insert(
             where, {this, !invert, !optional, name.data() + 1});
+        if (m_command.empty())
+            ndx.allowCommands = false;
         return;
     }
     if (name.size() == 1) {
@@ -560,9 +565,14 @@ void Cli::resetValues() {
 }
 
 //===========================================================================
-void Cli::index(OptIndex & ndx, const std::string & cmd) const {
+void Cli::index(OptIndex & ndx, const std::string & cmd, bool requireVisible)
+    const {
+    ndx.argNames.clear();
+    ndx.longNames.clear();
+    ndx.shortNames.clear();
+    ndx.allowCommands = cmd.empty();
     for (auto && opt : m_cfg->opts) {
-        if (opt->m_command == cmd && opt->m_visible)
+        if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
             opt->index(ndx);
     }
     for (unsigned i = 0; i < size(ndx.argNames); ++i) {
@@ -600,7 +610,13 @@ bool Cli::parse(vector<string> & args) {
     assert(!args.empty());
 
     OptIndex ndx;
-    index(ndx, "");
+    index(ndx, "", false);
+    bool needCmd = m_cfg->cmds.size() > 1;
+
+    // Commands can't be added when the top level command as already
+    // added a positional argument, command processing requires that the
+    // first positional is available to identify the command.
+    assert(!needCmd || ndx.allowCommands);
 
     resetValues();
     set<fs::path> ancestors;
@@ -681,6 +697,17 @@ bool Cli::parse(vector<string> & args) {
         }
 
         // positional value
+        if (needCmd) {
+            string cmd = ptr;
+            auto i = m_cfg->cmds.find(cmd);
+            if (i == m_cfg->cmds.end())
+                return badUsage("Unknown command: "s + cmd);
+            needCmd = false;
+            m_cfg->command = cmd;
+            index(ndx, cmd, false);
+            continue;
+        }
+
         if (pos >= size(ndx.argNames)) {
             return badUsage("Unexpected argument: "s + ptr);
         }
@@ -884,7 +911,7 @@ int Cli::writeHelp(
 int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     const {
     OptIndex ndx;
-    index(ndx, cmd);
+    index(ndx, cmd, true);
     streampos base = os.tellp();
     string prog =
         fs::path(arg0.empty() ? progName() : arg0).filename().string();
@@ -914,7 +941,7 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
 //===========================================================================
 void Cli::writePositionals(ostream & os, const string & cmd) const {
     OptIndex ndx;
-    index(ndx, cmd);
+    index(ndx, cmd, true);
     size_t colWidth = 0;
     bool hasDesc = false;
     for (auto && pa : ndx.argNames) {
@@ -939,7 +966,7 @@ void Cli::writePositionals(ostream & os, const string & cmd) const {
 //===========================================================================
 void Cli::writeOptions(ostream & os, const string & cmdName) const {
     OptIndex ndx;
-    index(ndx, cmdName);
+    index(ndx, cmdName, true);
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
 
     // find named args and the longest name list

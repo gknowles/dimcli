@@ -260,7 +260,8 @@ private:
     GroupConfig & grpCfg();
     const GroupConfig & grpCfg() const;
 
-    void index(OptIndex & ndx, const std::string & cmd) const;
+    void
+    index(OptIndex & ndx, const std::string & cmd, bool requireVisible) const;
     std::string nameList(const OptBase & opt, const OptIndex & ndx) const;
     std::string nameList(
         const OptBase & opt,
