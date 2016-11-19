@@ -3,7 +3,7 @@ language: cpp
 addons:
   apt:
     packages:
-      - cmake
+      - cmake-3.6
 
 script:
   - mkdir build 
