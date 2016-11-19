@@ -12,12 +12,10 @@ install:
     else
       if ! brew ls --version cmake &>/dev/null; then brew install cmake; fi
     fi
+  - cd ${TRAVIS_BUILD_DIR}
 
 script:
-  - mkdir -p ${TRAVIS_BUILD_DIR}/build
-  - cd ${TRAVIS_BUILD_DIR}/build
-  - env
-  - which cmake
+  - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
   - cd ..
