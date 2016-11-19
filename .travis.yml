@@ -1,5 +1,10 @@
 language: cpp
 
+addons:
+  apt:
+    packages:
+      - cmake
+
 script:
   - mkdir build 
   - cd build
