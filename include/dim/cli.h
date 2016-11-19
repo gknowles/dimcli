@@ -75,7 +75,7 @@ public:
     template <
         typename T,
         typename U,
-        typename = std::enable_if<std::is_convertible<U, T>::value>::type>
+        typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
@@ -93,7 +93,7 @@ public:
     template <
         typename T,
         typename U,
-        typename = std::enable_if<std::is_convertible<U, T>::value>::type>
+        typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
@@ -738,7 +738,7 @@ inline void Cli::Opt<T>::set(const std::string & name, int pos) {
 
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::reset() {
-    if (!m_flagValue || m_flagDefault)
+    if (!OptBase::m_flagValue || OptBase::m_flagDefault)
         *m_proxy->m_value = m_defValue;
     m_proxy->m_match.name.clear();
     m_proxy->m_match.pos = 0;
@@ -748,7 +748,7 @@ template <typename T> inline void Cli::Opt<T>::reset() {
 //===========================================================================
 template <typename T>
 inline bool Cli::Opt<T>::parseValue(const std::string & value) {
-    if (m_flagValue) {
+    if (OptBase::m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
             return false;
@@ -875,7 +875,7 @@ template <typename T> inline void Cli::OptVec<T>::reset() {
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
-    if (m_flagValue) {
+    if (OptBase::m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
             return false;
