@@ -292,7 +292,8 @@ template <typename T, typename U, typename>
 inline Cli::Opt<T> &
 Cli::opt(T * value, const std::string & keys, const U & def) {
     auto proxy = getProxy<Opt<T>, Value<T>>(value);
-    auto ptr = std::make_unique<Opt<T>>(proxy, keys, def);
+    auto ptr = std::make_unique<Opt<T>>(proxy, keys);
+    ptr->defaultValue(def);
     return addOpt(std::move(ptr));
 }
 
@@ -487,6 +488,9 @@ public:
     OptShim(const OptShim &) = delete;
     OptShim & operator=(const OptShim &) = delete;
 
+    //-----------------------------------------------------------------------
+    // Configuration
+
     // Set subcommand for which this is an option.
     A & command(const std::string & val);
 
@@ -535,6 +539,11 @@ public:
 
     // Controls whether or not the option appears in help pages.
     A & show(bool visible = true);
+
+    //-----------------------------------------------------------------------
+    // Queries
+    const T & implicitValue() const { return m_implicitValue; }
+    const T & defaultValue() const { return m_defValue; }
 
 protected:
     bool parseAction(Cli & cli, const std::string & value) final;
@@ -690,9 +699,7 @@ template <typename T> struct Cli::Value {
 
 template <typename T> class Cli::Opt : public OptShim<Opt<T>, T> {
 public:
-    Opt(std::shared_ptr<Value<T>> value,
-        const std::string & keys,
-        const T & def = {});
+    Opt(std::shared_ptr<Value<T>> value, const std::string & keys);
 
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
@@ -723,12 +730,9 @@ private:
 template <typename T>
 inline Cli::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
-    const std::string & keys,
-    const T & def)
+    const std::string & keys)
     : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
-    , m_proxy{value} {
-    OptShim::m_defValue = def;
-}
+    , m_proxy{value} {}
 
 //===========================================================================
 template <typename T>
@@ -741,7 +745,7 @@ inline void Cli::Opt<T>::set(const std::string & name, int pos) {
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::reset() {
     if (!OptBase::m_flagValue || OptBase::m_flagDefault)
-        *m_proxy->m_value = OptShim::m_defValue;
+        *m_proxy->m_value = defaultValue();
     m_proxy->m_match.name.clear();
     m_proxy->m_match.pos = 0;
     m_proxy->m_explicit = false;
@@ -755,7 +759,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
-            *m_proxy->m_value = OptShim::m_defValue;
+            *m_proxy->m_value = defaultValue();
         return true;
     }
 
@@ -764,7 +768,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
 
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::unspecifiedValue() {
-    *m_proxy->m_value = OptShim::m_implicitValue;
+    *m_proxy->m_value = implicitValue();
 }
 
 //===========================================================================
@@ -882,7 +886,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
-            m_proxy->m_values->push_back(OptShim::m_defValue);
+            m_proxy->m_values->push_back(defaultValue());
         return true;
     }
 
@@ -895,7 +899,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
 
 //===========================================================================
 template <typename T> inline void Cli::OptVec<T>::unspecifiedValue() {
-    m_proxy->m_values->push_back(OptShim::m_implicitValue);
+    m_proxy->m_values->push_back(implicitValue());
 }
 
 //===========================================================================
