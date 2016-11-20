@@ -129,11 +129,20 @@ Name options:
     EXPECT(*special);
 
     cli = {};
+    cli.footer(
+        "Multiline footer:\n"
+        "- first reference\n"
+        "- second reference\n"
+    );
     EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
   --help    Show this message and exit.
+
+Multiline footer:
+- first reference
+- second reference
 )");
 
     string fruit;

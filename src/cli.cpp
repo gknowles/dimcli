@@ -921,6 +921,7 @@ int Cli::writeHelp(
     writeOptions(os, cmdName);
     if (!cmd.footer.empty()) {
         WrapPos wp;
+        writeNewline(os, wp);
         writeText(os, wp, cmd.footer);
     }
     return exitCode();
