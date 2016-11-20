@@ -8,7 +8,7 @@
 
 using namespace std;
 using namespace Dim;
-namespace fs = experimental::filesystem;
+namespace fs = filesystem;
 
 
 /****************************************************************************

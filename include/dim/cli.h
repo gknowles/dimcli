@@ -12,7 +12,7 @@
 #include "util.h"
 
 #include <cassert>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <functional>
 #include <list>
 #include <map>
@@ -468,7 +468,7 @@ template <typename T> inline void Cli::OptBase::setValueName() {
 
 //===========================================================================
 template <>
-inline void Cli::OptBase::setValueName<std::experimental::filesystem::path>() {
+inline void Cli::OptBase::setValueName<std::filesystem::path>() {
     m_valueDesc = "FILE";
 }
 
