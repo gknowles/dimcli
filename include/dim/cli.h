@@ -708,6 +708,8 @@ public:
     // value may be the same as the default it wasn't simply left that way.
     explicit operator bool() const { return m_proxy->m_explicit; }
 
+    using OptShim<Opt, T>::defaultValue;
+
     // OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
     int pos() const final { return m_proxy->m_match.pos; }
