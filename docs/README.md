@@ -791,6 +791,59 @@ like more work.
 
 # Help Text
 
+## Page Layout
+The main help page, and the help pages for subcommands, are built the same
+way and made up of the same six (not counting [option groups](Option Groups))
+sections.
+
+| Section | Changed by | Description |
+|---------|------------|-------------|
+| Header | cli.header() | Generally a one line synopsis of the purpose of the command. |
+| Usage | cli.opt() | Generated text list the defined positional arguments. |
+| Description | cli.desc() | Text descirbing how to use the command and what it does. Sometimes used instead of the positionals list. |
+| Positionals | cli.opt(), opt.desc() | List of positional arguments and their descriptions, omitted if none have descriptions. |
+| Options | cli.opt(), opt.desc(), opt.valueDesc() | List of named options and descriptions, included if there are any visible options. |
+| Footer | cli.footer() | Shown at the end, often contains references to further information. |
+
+Within text, consecutive spaces are collapsed and words are wrapped at 80 
+columns. Newlines should be reserved for paragraph breaks.
+
+~~~ cpp
+Dim::Cli cli;
+cli.header("Heading before usage");
+cli.desc("Desciption of what the command does, including any general "
+    "discussion of the various aspects of its use.");
+cli.opt<bool>("[positional]");
+cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
+cli.footer(
+    "Footer at end, usually with where to find more info.\n"
+    "- first reference\n"
+    "- second reference\n"
+);
+~~~
+
+In this example the positionals section is omitted because the positional 
+doesn't have a description.
+
+~~~ console
+$ a.out --help
+Heading before usage
+
+usage: a.out [OPTIONS] positional
+Description of what the command does, including any general discussion of the
+various aspects of its use.
+
+Options:
+  --option=OPT_VAL  About this options.
+
+  --help            Show this message and exit.
+
+Footer at end, usually with where to find more info.
+- first reference
+- second reference
+~~~
+
+
 ## Option Groups
 Option groups are used to collect related options together in the help text.
 In addition to name, groups have a title and sort key that determine section
@@ -859,3 +912,25 @@ Internally Generated:
   --version  Show version and exit.  
 ~~~
 
+
+## Going your own way
+If generated help doesn't work for you, you can override the builtin help 
+option with your own.
+
+~~~ cpp
+auto & help = cli.opt<bool>("help");
+if (!cli.parse(cerr, argv, argc))
+    return cli.exitCode();
+if (*help)
+    return printMyHelp();
+~~~
+
+This works because the last definition for named options overrides any 
+previous ones.
+
+Within your help printer you can use help functions to do some of the work:
+
+- cli.writeHelp
+- cli.writeUsage
+- cli.writePositionals
+- cli.writeOptions
