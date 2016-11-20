@@ -1,5 +1,5 @@
-﻿[![Build status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master)
-
+﻿[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master)
+[![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli)
 # dimcli
 
 Making command line interface implementation fun for kids of all ages.
