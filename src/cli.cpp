@@ -123,8 +123,8 @@ findCmdAlways(Cli::Config & cfg, const string & name) {
 
 //===========================================================================
 Cli::OptBase::OptBase(const string & names, bool boolean)
-    : m_names{names}
-    , m_bool{boolean} {}
+    : m_bool{boolean} 
+    , m_names{names} {}
 
 //===========================================================================
 void Cli::OptBase::index(OptIndex & ndx) {
@@ -288,8 +288,8 @@ Cli::Cli() {
 // protected
 Cli::Cli(shared_ptr<Config> cfg, const string & command, const string & group)
     : m_cfg(cfg)
-    , m_command(command)
-    , m_group(group) {
+    , m_group(group) 
+    , m_command(command) {
     helpOpt();
 }
 
@@ -304,7 +304,8 @@ Cli::Cli(shared_ptr<Config> cfg, const string & command, const string & group)
 Cli::Opt<bool> &
 Cli::versionOpt(const string & version, const string & progName) {
     auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
-        ignore = opt, val;
+        ignore = opt;
+        ignore = val;
         fs::path prog = progName;
         if (prog.empty()) {
             prog = cli.progName();
@@ -930,7 +931,6 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     const {
     OptIndex ndx;
     index(ndx, cmd, true);
-    streampos base = os.tellp();
     string prog = fs::path(arg0.empty() ? progName() : arg0).stem().string();
     const string usageStr{"usage: "};
     os << usageStr << prog;

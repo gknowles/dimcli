@@ -353,15 +353,15 @@ template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
 }
 
 //===========================================================================
-template <typename Opt, typename Value, typename T>
-inline std::shared_ptr<Value> Cli::getProxy(T * ptr) {
+template <typename A, typename V, typename T>
+inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
     if (OptBase * opt = findOpt(ptr)) {
-        Opt * dopt = static_cast<Opt *>(opt);
+        A * dopt = static_cast<A *>(opt);
         return dopt->m_proxy;
     }
 
     // Since there was no pre-existing proxy to raw value, create new proxy.
-    return std::make_shared<Value>(ptr);
+    return std::make_shared<V>(ptr);
 }
 
 
