@@ -709,6 +709,7 @@ public:
     explicit operator bool() const { return m_proxy->m_explicit; }
 
     using OptShim<Opt, T>::defaultValue;
+    using OptShim<Opt, T>::implicitValue;
 
     // OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
@@ -818,6 +819,9 @@ public:
 
     // True if values where added from the command line
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
+
+    using OptShim<OptVec, T>::defaultValue;
+    using OptShim<OptVec, T>::implicitValue;
 
     // OptBase
     const std::string & from() const final { return from(size() - 1); }
