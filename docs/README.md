@@ -579,21 +579,20 @@ configuration.
 
 
 ## Subcommands
-Git style subcommands are created by either cli.command("cmd"), which 
-returns a new cli object, or with opt.command("cmd"), which changes the command 
-the option is for.
+Git style subcommands are created by either cli.command("cmd"), which returns 
+a new cli object, or with opt.command("cmd"), which changes the command the 
+option is for. The cli object can than be used to set the desciption, footer, 
+add options, etc for the command. Exactly the same as when working with a 
+simple command line. If you pass in an empty string to cli.command() or 
+opt.command() it represents the top level processing that takes place before 
+a command has been found.
 
-The cli object can than be used to set the desciption, footer, add options, etc
-all for the command. All exactly the same as when working with a simple command line. 
-When the command is an empty string it refers to the top level processing that
-takes place before a command has been found.
+Options are processed on the top level up to the first positional. The first 
+positional is the command, and the rest of the arguments are processed in the 
+context of that command. Since the top level doesn't process positionals when 
+commands are present it will assert in debug builds if it has positionals and 
+ignore them in release.
 
-Options are processed on the top level up to the first positional.
-The first positional is the command, and the rest of the arguments are 
-processed in the context of that command.
-In debug builds an assert will fire if there are commands and the top level 
-has positionals
-In release builds the configured positionals will be ignored
 In the commands list, the cli.desc() up to the first '.' is used
 
 
