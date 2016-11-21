@@ -114,6 +114,14 @@ findCmdAlways(Cli::Config & cfg, const string & name) {
     return cmd;
 }
 
+//===========================================================================
+static fs::path displayName(const fs::path & file) {
+#if defined(_WIN32)
+    return file.stem();
+#else
+    return file.filename();
+#endif
+}
 
 /****************************************************************************
 *
@@ -286,10 +294,8 @@ Cli::Cli() {
 
 //===========================================================================
 // protected
-Cli::Cli(shared_ptr<Config> cfg, const string & command, const string & group)
-    : m_cfg(cfg)
-    , m_group(group) 
-    , m_command(command) {
+Cli::Cli(shared_ptr<Config> cfg)
+    : m_cfg(cfg) {
     helpOpt();
 }
 
@@ -308,8 +314,7 @@ Cli::versionOpt(const string & version, const string & progName) {
         ignore = val;
         fs::path prog = progName;
         if (prog.empty()) {
-            prog = cli.progName();
-            prog = prog.stem();
+            prog = displayName(cli.progName());
         }
         cout << prog << " version " << version << endl;
         return false;
@@ -337,8 +342,9 @@ Cli::Opt<bool> & Cli::helpOpt() {
 }
 
 //===========================================================================
-Cli Cli::group(const string & name) {
-    return Cli(m_cfg, m_command, name);
+Cli & Cli::group(const string & name) {
+    m_group = name;
+    return *this;
 }
 
 //===========================================================================
@@ -364,8 +370,11 @@ const string & Cli::sortKey() const {
 }
 
 //===========================================================================
-Cli Cli::command(const string & name, const string & grpName) {
-    return Cli(m_cfg, name, grpName);
+Cli & Cli::command(const string & name, const string & grpName) {
+    m_command = name;
+    m_group = grpName;
+    helpOpt();
+    return *this;
 }
 
 //===========================================================================
@@ -919,7 +928,7 @@ int Cli::writeHelp(
     }
     writePositionals(os, cmdName);
     writeOptions(os, cmdName);
-    if (!cmdName.empty())
+    if (cmdName.empty())
         writeCommands(os);
     if (!cmd.footer.empty()) {
         WrapPos wp;
@@ -934,7 +943,7 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     const {
     OptIndex ndx;
     index(ndx, cmd, true);
-    string prog = fs::path(arg0.empty() ? progName() : arg0).stem().string();
+    string prog = displayName(arg0.empty() ? progName() : arg0).string();
     const string usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
@@ -1082,8 +1091,10 @@ void Cli::writeCommands(ostream & os) const {
     for (auto && key : keys) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  "s + key.name);
-        auto & keyd = key.cmd->desc;
-        string desc = keyd.substr(0, keyd.find_first_of('.')) += '.';
+        string desc = key.cmd->desc;
+        size_t pos = desc.find_first_of('.');
+        if (pos != string::npos)
+            desc.resize(pos + 1);
         writeDescCol(os, wp, desc, colWidth);
         os << '\n';
         wp.pos = 0;
@@ -1158,4 +1169,4 @@ string Cli::nameList(
 
 //===========================================================================
 CliLocal::CliLocal()
-    : Cli(make_shared<Config>(), "", "") {}
+    : Cli(make_shared<Config>()) {}

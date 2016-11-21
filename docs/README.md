@@ -573,25 +573,25 @@ Options:
 
 #### Dim::CliLocal
 Although it was created for testing you can also use Dim::CliLocal, a 
-completely self-contained parser, if you need to redefine options, have results
-from multiple parses at once, or otherwise need to avoid the shared 
+completely self-contained parser, if you need to redefine options, have 
+results from multiple parses at once, or otherwise need to avoid the shared 
 configuration.
 
 
 ## Subcommands
-Git style subcommands are created by either cli.command("cmd"), which returns 
-a new cli object, or with opt.command("cmd"), which changes the command the 
-option is for. The cli object can than be used to set the desciption, footer, 
-add options, etc for the command. Exactly the same as when working with a 
-simple command line. If you pass in an empty string to cli.command() or 
-opt.command() it represents the top level processing that takes place before 
-a command has been found.
+Git style subcommands are created by either cli.command("cmd"), which changes
+the cli objects context to the command, or with opt.command("cmd"), which 
+changes the command the option is for. The cli object can than be used to set 
+the desciption, footer, add options, etc for the command. Exactly the same as 
+when working with a simple command line. If you pass in an empty string to 
+cli.command() or opt.command() it represents the top level processing that 
+takes place before a command has been found.
 
 Options are processed on the top level up to the first positional. The first 
 positional is the command, and the rest of the arguments are processed in the 
 context of that command. Since the top level doesn't process positionals when 
-commands are present it will assert in debug builds if it has positionals and 
-ignore them in release.
+commands are present, it will assert in debug builds and ignore them in 
+release if positionals are present.
 
 In the commands list, the cli.desc() up to the first '.' is used
 
@@ -866,15 +866,15 @@ Footer at end, usually with where to find more info.
 ## Option Groups
 Option groups are used to collect related options together in the help text.
 In addition to name, groups have a title and sort key that determine section
-heading and the order groups are rendered. Groups are created when first 
-referenced, with the title and sort key equal to the name.
+heading and the order groups are rendered. Groups are created on reference, 
+with the title and sort key equal to the name.
 
 Additionally there are two predefined option groups:
 
 | Name | Sort | Title     | Desciption                                 |
 |------|------|-----------|--------------------------------------------|
 | ""   | ""   | "Options" | Default group options are created          |
-| "~"  | "~"  | ""        | Footer group with "--help" and "--version" |
+| "~"  | "~"  | ""        | Footer group, default location for "--help" and "--version" |
 
 In order to generate the help text the visible options are collected into 
 groups, the groups are sorted by sort key and the options within each group
@@ -885,7 +885,7 @@ has options. A group without a title is still separate from the previous group
 by a single blank line.
 
 To group options you either use opt.group() to set the group name or create
-the option from the group using grp.opt\<T>().
+the option using cli.opt\<T>() after changing the context with cli.group().
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -893,12 +893,12 @@ int main(int argc, char * argv[]) {
     cli.versionOpt("1.0");
     // move 1b into 'First' group after creation
     cli.opt<bool>("1b").group("First").desc("boolean 1b");
-    // get reference to 'First' group, update its key and add 1a directly to it
-    auto & g1 = cli.group("First").sortKey("a").title(
+    // set context to 'First' group, update its key and add 1a directly to it
+    cli.group("First").sortKey("a").title(
         "First has a really long title that wraps around to more than "
         "a single line, quite a lot of text for so few options"
     );
-    g1.opt<bool>("1a");
+    cli.opt<bool>("1a");
     // add 2a to 'Second'
     cli.group("Second").sortKey("b").opt<bool>("2a");
     cli.group("Third").sortKey("c").opt<bool>("3a");

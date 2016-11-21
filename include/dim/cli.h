@@ -105,7 +105,7 @@ public:
     OptVec<T> &
     optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
-    // Add --version argument that shows "${progName.stem()} version ${ver}"
+    // Add --version argument that shows "${progName.filename()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
@@ -119,9 +119,9 @@ public:
     // always added to a group, either the default group of the cli (or of the
     // selected command), or an explicitly created one.
 
-    // Returns a new Cli() object, pointed at the selected option group of the
-    // current cli's command, that you can then start stuffing args into.
-    Cli group(const std::string & name);
+    // Changes config context to point at the selected option group of the
+    // current command, that you can then start stuffing args into.
+    Cli & group(const std::string & name);
 
     // Heading title to display, defaults to group name. If empty there will
     // be a single blank line separating this group from the previous one.
@@ -135,9 +135,9 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Returns a new Cli() object, pointed at the default option group of
-    // the selected subcommand.
-    Cli command(const std::string & name, const std::string & group = {});
+    // Changes config context to point at the default option group of the 
+    // selected command.
+    Cli & command(const std::string & name, const std::string & group = {});
 
     // Action that should be taken when the currently selected command is run.
     // Actions are executed when cli.run() is called by the application. The
@@ -246,9 +246,7 @@ public:
     int run();
 
 protected:
-    Cli(std::shared_ptr<Config> cfg,
-        const std::string & command,
-        const std::string & group);
+    Cli(std::shared_ptr<Config> cfg);
 
 private:
     bool defaultAction(OptBase & opt, const std::string & val);

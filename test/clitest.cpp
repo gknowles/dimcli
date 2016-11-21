@@ -93,7 +93,7 @@ int main(int argc, char * argv[]) {
     auto & special = cli.opt<bool>("s special !S", false).desc("snowflake");
     auto & name =
         cli.group("name").title("Name options").optVec<string>("name");
-    cli.optVec<string>("[key]").desc(
+    cli.group("").optVec<string>("[key]").desc(
         "it's the key argument with a very long description that wraps the "
         "line at least once, maybe more.");
     cli.title(
@@ -172,13 +172,24 @@ Multiline footer:
 
     Dim::Cli c1;
     auto & a1 = c1.command("one").opt<int>("a", 1);
+    c1.desc("First sentence of description. Rest of one's description.");
     Dim::Cli c2;
     auto & a2 = c2.command("two").opt<int>("a", 2);
     EXPECT_HELP(c1, "one", 1 + R"(
 usage: test one [OPTIONS]
-
+First sentence of description. Rest of one's description.
 Options:
   -a NUM
+)");
+    EXPECT_HELP(c1, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+
+Commands:
+  one       First sentence of description.
+  two
 )");
     EXPECT_PARSE(c1, {"one", "-a3"});
     EXPECT(*a1 == 3);
