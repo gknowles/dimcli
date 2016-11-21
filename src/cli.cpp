@@ -919,6 +919,8 @@ int Cli::writeHelp(
     }
     writePositionals(os, cmdName);
     writeOptions(os, cmdName);
+    if (!cmdName.empty())
+        writeCommands(os);
     if (!cmd.footer.empty()) {
         WrapPos wp;
         writeNewline(os, wp);
@@ -1050,6 +1052,41 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
         writeDescCol(os, wp, key.opt->m_desc, colWidth);
         wp.prefix.clear();
         writeNewline(os, wp);
+    }
+}
+
+//===========================================================================
+void Cli::writeCommands(ostream & os) const {
+    size_t colWidth = 0;
+    struct CmdKey {
+        const char * name;
+        const CommandConfig * cmd;
+    };
+    vector<CmdKey> keys;
+    for (auto && cmd : m_cfg->cmds) {
+        if (auto width = cmd.first.size()) {
+            colWidth = max(colWidth, width);
+            CmdKey key = { cmd.first.c_str(), &cmd.second };
+            keys.push_back(key);
+        }
+    }
+    if (keys.empty())
+        return;
+    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
+    sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
+        return strcmp(a.name, b.name) < 0;
+    });
+
+    os << "\nCommands:\n";
+    WrapPos wp;
+    for (auto && key : keys) {
+        wp.prefix.assign(4, ' ');
+        writeToken(os, wp, "  "s + key.name);
+        auto & keyd = key.cmd->desc;
+        string desc = keyd.substr(0, keyd.find_first_of('.')) += '.';
+        writeDescCol(os, wp, desc, colWidth);
+        os << '\n';
+        wp.pos = 0;
     }
 }
 

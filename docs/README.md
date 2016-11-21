@@ -578,6 +578,25 @@ from multiple parses at once, or otherwise need to avoid the shared
 configuration.
 
 
+## Subcommands
+Git style subcommands are created by either cli.command("cmd"), which 
+returns a new cli object, or with opt.command("cmd"), which changes the command 
+the option is for.
+
+The cli object can than be used to set the desciption, footer, add options, etc
+all for the command. All exactly the same as when working with a simple command line. 
+When the command is an empty string it refers to the top level processing that
+takes place before a command has been found.
+
+Options are processed on the top level up to the first positional.
+The first positional is the command, and the rest of the arguments are 
+processed in the context of that command.
+In debug builds an assert will fire if there are commands and the top level 
+has positionals
+In release builds the configured positionals will be ignored
+In the commands list, the cli.desc() up to the first '.' is used
+
+
 ## Response Files
 A response file is a collection of frequently used or generated arguments 
 saved as text, often with a ".rsp" extension, that is substituted into the
@@ -704,7 +723,7 @@ $ a.out --help
 usage: a.out [OPTIONS]
 
 Options:
-  --help     What you see is what you get.
+  --help    What you see is what you get.
 ~~~
 
 
@@ -802,7 +821,8 @@ sections.
 | Usage | cli.opt() | Generated text list the defined positional arguments. |
 | Description | cli.desc() | Text descirbing how to use the command and what it does. Sometimes used instead of the positionals list. |
 | Positionals | cli.opt(), opt.desc() | List of positional arguments and their descriptions, omitted if none have descriptions. |
-| Options | cli.opt(), opt.desc(), opt.valueDesc() | List of named options and descriptions, included if there are any visible options. |
+| Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
+| Commands | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
 | Footer | cli.footer() | Shown at the end, often contains references to further information. |
 
 Within text, consecutive spaces are collapsed and words are wrapped at 80 
@@ -934,3 +954,4 @@ Within your help printer you can use help functions to do some of the work:
 - cli.writeUsage
 - cli.writePositionals
 - cli.writeOptions
+- cli.writeCommands

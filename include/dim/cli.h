@@ -182,6 +182,7 @@ public:
     void
     writePositionals(std::ostream & os, const std::string & cmd = {}) const;
     void writeOptions(std::ostream & os, const std::string & cmd = {}) const;
+    void writeCommands(std::ostream & os) const;
 
     //-----------------------------------------------------------------------
     // Parsing
