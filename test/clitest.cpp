@@ -180,7 +180,7 @@ Options:
   -a NUM
 )");
     EXPECT_HELP(c1, "", 1 + R"(
-usage: test [OPTIONS]
+usage: test [OPTIONS] command [args...]
 
 Options:
   --help    Show this message and exit.

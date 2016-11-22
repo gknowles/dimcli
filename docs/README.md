@@ -593,7 +593,87 @@ context of that command. Since the top level doesn't process positionals when
 commands are present, it will assert in debug builds and ignore them in 
 release if positionals are present.
 
-In the commands list, the cli.desc() up to the first '.' is used
+~~~ cpp
+static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
+static auto & color = Dim::Cli().opt<string>("color", "red")
+    .command("apple")
+    .desc("Change color of the apple.");
+
+int apple(Dim::Cli & cli) {
+    cout << "It's a " << *color << " apple" << (*yell ? "!!!" : ".");
+    return EX_OK;
+}
+
+int orange(Dim::Cli & cli) {
+    cout << "It's an orange" << (*yell ? "!!!" : ".");
+    return EX_OK;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.command("apple").desc("Show apple. No other fruit.\n").action(apple);
+    cli.command("orange").desc("Show orange.\n").action(orange);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return cli.run();
+}
+~~~
+
+The same thing could also be done with external variables:
+
+~~~ cpp
+static bool yell;
+static string color;
+...
+
+int main(int argc, char * argv[]) {
+	Dim::Cli cli;
+    cli.opt(&yell, "yell").desc("Say it loud.");
+	cli.opt(&color, "color", "red").command("apple")
+	    .desc("Change color of the apple.");
+	...
+~~~
+
+The end result from the console:
+
+~~~ console
+$ a.out
+No command given.
+$ a.out --help
+usage: a.out [OPTIONS] command [args...]
+
+Options:
+  --yell    Say it loud.
+
+  --help    Show this message and exit.
+
+Commands:
+  apple     Show apple.
+  orange    Show orange.
+
+$ a.out apple
+It's a red apple.
+$ a.out apple --color=yellow
+It's a yellow apple.
+$ a.out orange
+It's an orange.
+$ a.out --yell orange
+It's an orange!!!
+~~~
+
+In the commands list, the cli.desc() is only used up to the first period, but 
+in command specific page you see the whole thing:
+
+~~~ console
+$ a.out apple --help
+usage: a.out apple [OPTIONS]
+Show apple. No other fruit.
+
+Options:
+  --color=STRING  Change color of the apple.
+
+  --help          Show this message and exit.
+~~~
 
 
 ## Response Files
@@ -932,7 +1012,7 @@ Internally Generated:
 ~~~
 
 
-## Going your own way
+## Going Your Own Way
 If generated help doesn't work for you, you can override the builtin help 
 option with your own.
 
@@ -954,3 +1034,42 @@ Within your help printer you can use help functions to do some of the work:
 - cli.writePositionals
 - cli.writeOptions
 - cli.writeCommands
+
+
+## Help Subcommand
+There is no default help subcommand, but you can make a basic one without much
+trouble.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+	Dim::Cli cli;
+	cli.command("help");
+	cli.desc("This is how you get help. There could be more details.")
+	auto & cmd = cli.opt<string>("[command]").desc("Command to explain.");
+	cli.action([&cmd](auto & cli) {
+		return cli.writeHelp(cout, {}, *cmd);
+	});
+	if (!cli.parse(argc, argv))
+		return cli.exitCode();
+	return cli.run();
+}
+~~~
+
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS] command [args...]
+
+Options:
+  --help    Show this message and exit.
+
+Commands:
+  help      This is how you get help.
+
+$ a.out help help
+usage: a.out help [OPTIONS] command
+This is how you get help. There could be more details.
+  command   Command to explain.
+
+Options:
+  --help    Show this message and exit.
+~~~

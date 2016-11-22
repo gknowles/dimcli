@@ -952,18 +952,23 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
         writeToken(os, wp, cmd);
     if (!ndx.shortNames.empty() || !ndx.longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
-    for (auto && pa : ndx.argNames) {
-        string token =
-            pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
-        if (pa.opt->m_multiple)
-            token += "...";
-        if (pa.optional) {
-            writeToken(os, wp, "[" + token + "]");
-        } else {
-            writeToken(os, wp, token);
-        }
-    }
-    os << '\n';
+	if (cmd.empty() && m_cfg->cmds.size() > 1) {
+		writeToken(os, wp, "command");
+		writeToken(os, wp, "[args...]");
+	} else {
+		for (auto && pa : ndx.argNames) {
+			string token =
+				pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
+			if (pa.opt->m_multiple)
+				token += "...";
+			if (pa.optional) {
+				writeToken(os, wp, "[" + token + "]");
+			} else {
+				writeToken(os, wp, token);
+			}
+		}
+	}
+	os << '\n';
     return exitCode();
 }
 
@@ -1063,6 +1068,21 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
 }
 
 //===========================================================================
+static string trim(const string & val) {
+    const char * first = val.data();
+    const char * last = first + val.size();
+    while (isspace(*first))
+        ++first;
+    if (!*first)
+        return {};
+    while (isspace(*--last)) {
+        if (last == first)
+            break;
+    }
+    return string(first, last - first + 1);
+}
+
+//===========================================================================
 void Cli::writeCommands(ostream & os) const {
     size_t colWidth = 0;
     struct CmdKey {
@@ -1091,8 +1111,9 @@ void Cli::writeCommands(ostream & os) const {
         writeToken(os, wp, "  "s + key.name);
         string desc = key.cmd->desc;
         size_t pos = desc.find_first_of('.');
-        if (pos != string::npos)
-            desc.resize(pos + 1);
+		if (pos != string::npos) 
+			desc.resize(pos + 1);
+        desc = trim(desc);
         writeDescCol(os, wp, desc, colWidth);
         os << '\n';
         wp.pos = 0;
