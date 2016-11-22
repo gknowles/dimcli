@@ -105,7 +105,7 @@ public:
     OptVec<T> &
     optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
-    // Add --version argument that shows "${progName.filename()} version ${ver}"
+    // Add --version option that shows "${progName.filename()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
@@ -115,7 +115,7 @@ public:
     Opt<bool> & helpOpt();
 
     //-----------------------------------------------------------------------
-    // An option group that shares a section in the help text. Options are
+    // A group collects options into sections in the help text. Options are 
     // always added to a group, either the default group of the cli (or of the
     // selected command), or an explicitly created one.
 
@@ -135,7 +135,7 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Changes config context to point at the default option group of the 
+    // Changes config context to point at the default option group of the
     // selected command.
     Cli & command(const std::string & name, const std::string & group = {});
 

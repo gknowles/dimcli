@@ -131,7 +131,7 @@ static fs::path displayName(const fs::path & file) {
 
 //===========================================================================
 Cli::OptBase::OptBase(const string & names, bool boolean)
-    : m_bool{boolean} 
+    : m_bool{boolean}
     , m_names{names} {}
 
 //===========================================================================
@@ -274,7 +274,8 @@ static int cmdAction(Cli & cli) {
     if (cli.runCommand().empty()) {
         cerr << "No command given." << endl;
     } else {
-        cerr << "Command '" << cli.runCommand() << "' has not been implemented." << endl;
+        cerr << "Command '" << cli.runCommand()
+             << "' has not been implemented." << endl;
     }
     return kExitSoftware;
 }
@@ -642,8 +643,8 @@ bool Cli::parse(vector<string> & args) {
     index(ndx, "", false);
     bool needCmd = m_cfg->cmds.size() > 1;
 
-    // Commands can't be added when the top level command has a positional 
-    // argument, command processing requires that the first positional is 
+    // Commands can't be added when the top level command has a positional
+    // argument, command processing requires that the first positional is
     // available to identify the command.
     assert(ndx.allowCommands || !needCmd);
 
@@ -1072,7 +1073,7 @@ void Cli::writeCommands(ostream & os) const {
     for (auto && cmd : m_cfg->cmds) {
         if (auto width = cmd.first.size()) {
             colWidth = max(colWidth, width);
-            CmdKey key = { cmd.first.c_str(), &cmd.second };
+            CmdKey key = {cmd.first.c_str(), &cmd.second};
             keys.push_back(key);
         }
     }
