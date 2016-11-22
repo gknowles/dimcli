@@ -106,9 +106,8 @@ to access the value.
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & fruit = cli.opt<string>("fruit", "apple");
-    if (!cli.parse(cerr, argc, argv)) {
+    if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
-    }
     cout << "Does the " << *fruit << " have a worm? No!";
     return EX_OK;
 }
@@ -342,9 +341,8 @@ int main(int argc, char * argv[]) {
     vector<string> oranges;
     cli.optVec(&oranges, "o orange").desc("oranges");
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
-    if (!cli.parse(cerr, argc, argv)) {
+    if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
-    }
     cout << "Comparing (" << *apples << ") and (" << *oranges << ").";
     return EX_OK;
 }
@@ -524,7 +522,7 @@ a.out: Bad '-n' value: x
 ~~~
 
 
-## Distributed Registration
+## Multiple Source Files
 Options don't have to be defined all in one source file, separate source 
 files can each define options of interest to that file and get them populated
 when the command line is processed.
@@ -820,9 +818,8 @@ int main(int argc, char * argv[]) {
     string fruit;
     cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
     cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
-    if (!cli.parse(cerr, argc, argv)) {
+    if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
-    }
     cout << "Does the " << fruit << " have a worm? No!";
     return EX_OK;
 }
@@ -846,9 +843,88 @@ Does the orange have a worm? No!
 ~~~
 
 
+## Choice Options
+Sometimes you want an option to have a fixed set of possible values, such as
+for an enum. You use opt.choice() to add legal choices, one at a time, to an
+option.
+
+Choices are similar to [feature switches](Feature Switches) but instead of
+multiple boolean options populating a single variable it is a single 
+non-boolean option setting its variable to one of multiple values.
+
+~~~ cpp
+enum class State { go, wait, stop };
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & state = cli.opt<State>("streetlight", State::wait)
+        .desc("Color of street light.").valueDesc("COLOR")
+        .choice(State::go, "green", "Means go!")
+        .choice(State::wait, "yellow", "Means wait, even if you're late.")
+        .choice(State::stop, "red", "Means stop.");
+    if (!cli.parse(cerr, argc, argv)) 
+        return cli.exitCode();
+    switch (*state) {
+        case State::stop: cout << "STOP!"; break;
+        case State::go: cout << "Go!"; break;
+        case State::wait: cout << "Wait"; break;
+    }
+    return EX_OK;
+}
+~~~
+
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --streetlight=COLOR  Color of street light.
+      green   Means go!
+      yellow  Means wait, even if you're late.
+      red     Means stop.
+
+  --help               Show this message and exit.
+
+$ a.out
+Wait
+$ a.out --streetlight
+Option requires value: --streetlight
+$ a.out --streetlight=purple
+Invalid value for "--streetlight": purple
+Must be "green", "red", or "yellow"
+$ a.out --streetlight=green
+Go!
+~~~
+
+
+## Range and Clamp
+When you want to limit a value to be within a range (inclusive) you can use
+opt.range() to error out or opt.clamp() to convert values outside the range to
+be equal to the nearest of the two edges.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & count = cli.opt<int>("<count>").clamp(1, 10);
+    auto & letter = cli.opt<char>("<letter>").range('a','z');
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << string(*count, *letter) << endl;
+    return EX_OK;
+}
+~~~
+
+~~~ console
+$ a.out 1000 b
+bbbbbbbbbb
+$ a.out 1000 1
+a.out: Out of range [a - z] for "letter": 1
+~~~
+
+
 ## Counting
-In very rare circumstances, it is interesting to use repetition to increase
-an integer. There is no special handling for it, but counting can be done
+In very rare circumstances, it might be useful to use repetition to increase 
+an integer. There is no special handling for it, but counting can be done 
 easily enough with a vector. This can be used for verbosity flags, for 
 instance:
 
@@ -877,12 +953,9 @@ like more work.
 
 | Modifier | Done | Description |
 |----------|------|-------------|
-| choice | - | value from vector? index in vec for enum? or vector\<pair\<string, T>>? |
 | prompt | - | prompt(string&, bool hide, bool confirm)
 | passwordOpt | - | opt("password").prompt("Password", true, true) |
 | yes | - | are you sure? fail if not y |
-| range | - | min/max allowed for variable |
-| clamp | - | clamp variable so it is between min/max |
 
 ... none of these have been implemented.
 
