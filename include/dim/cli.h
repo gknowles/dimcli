@@ -115,7 +115,7 @@ public:
     Opt<bool> & helpOpt();
 
     //-----------------------------------------------------------------------
-    // A group collects options into sections in the help text. Options are 
+    // A group collects options into sections in the help text. Options are
     // always added to a group, either the default group of the cli (or of the
     // selected command), or an explicitly created one.
 
@@ -242,7 +242,7 @@ public:
     // Runs the action of the selected command and returns its exit code;
     // which is also used to set cli.exitCode(). If no command was selected
     // it runs the action of the empty "" command, which can be set via
-    // cli.action() just like any other command.
+    // cli.action() just like for any other command.
     int run();
 
 protected:
@@ -416,6 +416,7 @@ public:
 
 protected:
     virtual bool parseAction(Cli & cli, const std::string & value) = 0;
+    virtual bool checkActions(Cli & cli, const std::string & value) = 0;
     virtual void set(const std::string & name, int pos) = 0;
 
     // Allows the type unaware layer to determine if a new option is pointing
@@ -533,8 +534,23 @@ public:
     // If you just need support for a new type you can provide a std::istream
     // extraction (>>) or assignment from std::string operator and the
     // default action will pick it up.
-    using ActionFn = bool(Cli & cli, A & arg, const std::string & src);
+    using ActionFn = bool(Cli & cli, A & opt, const std::string & src);
     A & action(std::function<ActionFn> fn);
+
+    // Action to take after the argument has been parsed, unlike parsing
+    // where there can only be one action, any number of after actions can
+    // be added. They will be called in the order they were added and if any
+    // of them return false an error is generated. As an example, opt.clamp()
+    // and opt.range() both do their job by adding check actions.
+    //
+    // The function should:
+    //  - check the options new value, possible in relation to other options
+    //  - call cli.badUsage() with an error message and return false if
+    //    there's a problem.
+    //  - return true if everythings fine, to let processing continue.
+    //
+    // The opt is fully populated so *opt, opt.from(), etc are all available.
+    A & check(std::function<ActionFn> fn);
 
     // Controls whether or not the option appears in help pages.
     A & show(bool visible = true);
@@ -546,8 +562,10 @@ public:
 
 protected:
     bool parseAction(Cli & cli, const std::string & value) final;
+    bool checkActions(Cli & cli, const std::string & value) final;
 
     std::function<ActionFn> m_action;
+    std::vector<std::function<ActionFn>> m_checks;
     T m_implicitValue{};
     T m_defValue{};
 };
@@ -565,6 +583,18 @@ inline bool
 Cli::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_action(cli, *self, val);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline bool
+Cli::OptShim<A, T>::checkActions(Cli & cli, const std::string & val) {
+    auto self = static_cast<A *>(this);
+    for (auto && chk : m_checks) {
+        if (!chk(cli, *self, val))
+            return false;
+    }
+    return true;
 }
 
 //===========================================================================
@@ -637,6 +667,13 @@ inline A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::action(std::function<ActionFn> fn) {
     m_action = fn;
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
+    m_checks.push_back(fn);
     return static_cast<A &>(*this);
 }
 

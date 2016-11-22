@@ -606,12 +606,20 @@ bool Cli::parseAction(
     int pos,
     const char ptr[]) {
     opt.set(name, pos);
+    string val;
     if (ptr) {
-        return opt.parseAction(*this, ptr);
+        val = ptr;
+        if (!opt.parseAction(*this, val))
+            return false;
     } else {
         opt.unspecifiedValue();
-        return true;
     }
+    if (!opt.checkActions(*this, val)) {
+        if (!exitCode())
+            badUsage("Option check failed for '"s + name + "'", val);
+        return false;
+    }
+    return true;
 }
 
 //===========================================================================
@@ -952,23 +960,24 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
         writeToken(os, wp, cmd);
     if (!ndx.shortNames.empty() || !ndx.longNames.empty())
         writeToken(os, wp, "[OPTIONS]");
-	if (cmd.empty() && m_cfg->cmds.size() > 1) {
-		writeToken(os, wp, "command");
-		writeToken(os, wp, "[args...]");
-	} else {
-		for (auto && pa : ndx.argNames) {
-			string token =
-				pa.name.find(' ') == string::npos ? pa.name : "<" + pa.name + ">";
-			if (pa.opt->m_multiple)
-				token += "...";
-			if (pa.optional) {
-				writeToken(os, wp, "[" + token + "]");
-			} else {
-				writeToken(os, wp, token);
-			}
-		}
-	}
-	os << '\n';
+    if (cmd.empty() && m_cfg->cmds.size() > 1) {
+        writeToken(os, wp, "command");
+        writeToken(os, wp, "[args...]");
+    } else {
+        for (auto && pa : ndx.argNames) {
+            string token = pa.name.find(' ') == string::npos
+                ? pa.name
+                : "<" + pa.name + ">";
+            if (pa.opt->m_multiple)
+                token += "...";
+            if (pa.optional) {
+                writeToken(os, wp, "[" + token + "]");
+            } else {
+                writeToken(os, wp, token);
+            }
+        }
+    }
+    os << '\n';
     return exitCode();
 }
 
@@ -1111,8 +1120,8 @@ void Cli::writeCommands(ostream & os) const {
         writeToken(os, wp, "  "s + key.name);
         string desc = key.cmd->desc;
         size_t pos = desc.find_first_of('.');
-		if (pos != string::npos) 
-			desc.resize(pos + 1);
+        if (pos != string::npos)
+            desc.resize(pos + 1);
         desc = trim(desc);
         writeDescCol(os, wp, desc, colWidth);
         os << '\n';
