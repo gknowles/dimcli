@@ -144,7 +144,7 @@ public:
     // action function should:
     //  - do something useful
     //  - return an exitCode.
-    using ActionFn = int(Cli & cli, const std::string & cmd);
+    using ActionFn = int(Cli & cli);
     Cli & action(std::function<ActionFn> fn);
 
     // Arbitrary text can be added to the generated help for each command,

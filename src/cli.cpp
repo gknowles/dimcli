@@ -85,7 +85,7 @@ struct Cli::Config {
 
 // forward declarations
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static int cmdAction(Cli & cli, const string & cmd);
+static int cmdAction(Cli & cli);
 
 //===========================================================================
 static Cli::GroupConfig &
@@ -270,9 +270,12 @@ bool Cli::defaultAction(OptBase & opt, const string & val) {
 }
 
 //===========================================================================
-static int cmdAction(Cli & cli, const string & cmd) {
-    ignore = cli;
-    cerr << "Command '" << cmd << "' has not been implemented." << endl;
+static int cmdAction(Cli & cli) {
+    if (cli.runCommand().empty()) {
+        cerr << "No command given." << endl;
+    } else {
+        cerr << "Command '" << cli.runCommand() << "' has not been implemented." << endl;
+    }
     return kExitSoftware;
 }
 
@@ -639,9 +642,9 @@ bool Cli::parse(vector<string> & args) {
     index(ndx, "", false);
     bool needCmd = m_cfg->cmds.size() > 1;
 
-    // Commands can't be added when the top level command as already
-    // added a positional argument, command processing requires that the
-    // first positional is available to identify the command.
+    // Commands can't be added when the top level command has a positional 
+    // argument, command processing requires that the first positional is 
+    // available to identify the command.
     assert(ndx.allowCommands || !needCmd);
 
     resetValues();
@@ -666,9 +669,8 @@ bool Cli::parse(vector<string> & args) {
             ptr += 1;
             for (; *ptr && *ptr != '-'; ++ptr) {
                 auto it = ndx.shortNames.find(*ptr);
-                if (it == ndx.shortNames.end()) {
+                if (it == ndx.shortNames.end())
                     return badUsage("Unknown option", "-"s + *ptr);
-                }
                 argName = it->second;
                 name = "-"s + *ptr;
                 if (argName.opt->m_bool) {
@@ -702,15 +704,13 @@ bool Cli::parse(vector<string> & args) {
                 ptr = "";
             }
             auto it = ndx.longNames.find(key);
-            if (it == ndx.longNames.end()) {
+            if (it == ndx.longNames.end())
                 return badUsage("Unknown option", "--"s + key);
-            }
             argName = it->second;
             name = "--" + key;
             if (argName.opt->m_bool) {
-                if (equal) {
+                if (equal)
                     return badUsage("Unknown option", name + "=");
-                }
                 if (!parseAction(
                         *argName.opt,
                         name,
@@ -734,9 +734,8 @@ bool Cli::parse(vector<string> & args) {
             continue;
         }
 
-        if (pos >= size(ndx.argNames)) {
+        if (pos >= size(ndx.argNames))
             return badUsage("Unexpected argument", ptr);
-        }
         argName = ndx.argNames[pos];
         name = argName.name;
         if (!parseAction(*argName.opt, name, argPos, ptr))
@@ -758,16 +757,14 @@ bool Cli::parse(vector<string> & args) {
         }
         argPos += 1;
         arg += 1;
-        if (argPos == argc) {
+        if (argPos == argc)
             return badUsage("Option requires value", name);
-        }
         if (!parseAction(*argName.opt, name, argPos, arg->c_str()))
             return false;
     }
 
-    if (pos < size(ndx.argNames) && !ndx.argNames[pos].optional) {
-        return badUsage("Option requires value", ndx.argNames[pos].name);
-    }
+    if (!needCmd && pos < size(ndx.argNames) && !ndx.argNames[pos].optional)
+        return badUsage("Missing required argument", ndx.argNames[pos].name);
     return true;
 }
 
@@ -824,7 +821,7 @@ int Cli::run() {
     auto & name = runCommand();
     assert(m_cfg->cmds.find(name) != m_cfg->cmds.end());
     auto & cmd = m_cfg->cmds[name];
-    int code = cmd.action(*this, name);
+    int code = cmd.action(*this);
     fail(code, "");
     return code;
 }
