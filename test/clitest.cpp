@@ -143,22 +143,27 @@ Multiline footer:
 - second reference
 )");
 
-    string fruit;
-    auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
-    cli.opt(&fruit, "a", "apple").flagValue(true);
-    cli.opt(orange, "p", "pear").flagValue();
-    EXPECT_PARSE(cli, {"-o"});
-    EXPECT(*orange == "orange");
-    EXPECT(orange.from() == "-o");
-    EXPECT(orange.pos() == 1);
+    {
+        cli = {};
+        string fruit;
+        auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
+        cli.opt(&fruit, "a", "apple").flagValue(true);
+        cli.opt(orange, "p", "pear").flagValue();
+        EXPECT_PARSE(cli, {"-o"});
+        EXPECT(*orange == "orange");
+        EXPECT(orange.from() == "-o");
+        EXPECT(orange.pos() == 1);
+    }
 
-    cli = {};
-    int count;
-    bool help;
-    cli.opt(&count, "c ?count").implicitValue(3);
-    cli.opt(&help, "? h help");
-    EXPECT_PARSE(cli, {"-hc2", "-?"});
-    EXPECT_PARSE(cli, {"--count"});
+    {
+        cli = {};
+        int count;
+        bool help;
+        cli.opt(&count, "c ?count").implicitValue(3);
+        cli.opt(&help, "? h help");
+        EXPECT_PARSE(cli, {"-hc2", "-?"});
+        EXPECT_PARSE(cli, {"--count"});
+    }
 
     auto fn = cli.toWindowsArgv;
     EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
@@ -197,6 +202,19 @@ Commands:
     EXPECT(c2.errMsg() == "Unknown option: -a");
     EXPECT_PARSE2(c1, false, 64, {"two", "-a"});
     EXPECT(c2.errMsg() == "Option requires value for 'two' command: -a");
+
+    {
+        cli = {};
+        auto & count = cli.opt<int>("<count>", 1).clamp(1, 10);
+        auto & letter = cli.opt<char>("<letter>").range('a', 'z');
+        EXPECT_PARSE(cli, {"20", "a"});
+        EXPECT(*count == 10);
+        EXPECT(*letter == 'a');
+        EXPECT_PARSE2(cli, false, 64, {"5", "0"});
+        EXPECT(*count == 5);
+        EXPECT(
+            cli.errMsg() == "Option 'letter' value out of range [a - z]: 0");
+    }
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

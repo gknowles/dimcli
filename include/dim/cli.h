@@ -534,7 +534,7 @@ public:
     // If you just need support for a new type you can provide a std::istream
     // extraction (>>) or assignment from std::string operator and the
     // default action will pick it up.
-    using ActionFn = bool(Cli & cli, A & opt, const std::string & src);
+    using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
     A & action(std::function<ActionFn> fn);
 
     // Action to take after the argument has been parsed, unlike parsing
@@ -554,6 +554,14 @@ public:
 
     // Controls whether or not the option appears in help pages.
     A & show(bool visible = true);
+
+    // Fail if the value given for this option is not in within the range
+    // (inclusive) of low to high.
+    A & range(const T & low, const T & high);
+
+    // Forces the value to be within the range, if it's less than the low
+    // it's set to the low, if higher than high it's made merely high.
+    A & clamp(const T & low, const T & high);
 
     //-----------------------------------------------------------------------
     // Queries
@@ -681,6 +689,39 @@ inline A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::show(bool visible) {
     m_visible = visible;
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
+    assert(low < high && !(high < low));
+    check([low, high](auto & cli, auto & opt, auto & val) {
+        if (*opt < low || high < *opt) {
+            ostringstream os;
+            os << "Option '" << opt.from() << "' value out of range [" << low
+               << " - " << high << "]";
+            return cli.badUsage(os.str(), val);
+        }
+        return true;
+    });
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
+    assert(low < high && !(high < low));
+    check([low, high](auto & cli, auto & opt, auto & val) {
+        ignore = cli;
+        ignore = val;
+        if (*opt < low) {
+            *opt = low;
+        } else if (high < *opt) {
+            *opt = high;
+        }
+        return true;
+    });
     return static_cast<A &>(*this);
 }
 

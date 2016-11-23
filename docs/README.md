@@ -918,7 +918,7 @@ int main(int argc, char * argv[]) {
 $ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-a.out: Out of range [a - z] for "letter": 1
+a.out: Option 'letter' value out of range [a - z]: 1
 ~~~
 
 
