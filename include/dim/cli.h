@@ -785,9 +785,6 @@ public:
     // value may be the same as the default it wasn't simply left that way.
     explicit operator bool() const { return m_proxy->m_explicit; }
 
-    using OptShim<Opt, T>::defaultValue;
-    using OptShim<Opt, T>::implicitValue;
-
     // OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
     int pos() const final { return m_proxy->m_match.pos; }
@@ -825,7 +822,7 @@ inline void Cli::Opt<T>::set(const std::string & name, int pos) {
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::reset() {
     if (!OptBase::m_flagValue || OptBase::m_flagDefault)
-        *m_proxy->m_value = defaultValue();
+        *m_proxy->m_value = this->defaultValue();
     m_proxy->m_match.name.clear();
     m_proxy->m_match.pos = 0;
     m_proxy->m_explicit = false;
@@ -839,7 +836,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
-            *m_proxy->m_value = defaultValue();
+            *m_proxy->m_value = this->defaultValue();
         return true;
     }
 
@@ -848,7 +845,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
 
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::unspecifiedValue() {
-    *m_proxy->m_value = implicitValue();
+    *m_proxy->m_value = this->implicitValue();
 }
 
 //===========================================================================
@@ -896,9 +893,6 @@ public:
 
     // True if values where added from the command line
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
-
-    using OptShim<OptVec, T>::defaultValue;
-    using OptShim<OptVec, T>::implicitValue;
 
     // OptBase
     const std::string & from() const final { return from(size() - 1); }
@@ -969,7 +963,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
-            m_proxy->m_values->push_back(defaultValue());
+            m_proxy->m_values->push_back(this->defaultValue());
         return true;
     }
 
@@ -982,7 +976,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
 
 //===========================================================================
 template <typename T> inline void Cli::OptVec<T>::unspecifiedValue() {
-    m_proxy->m_values->push_back(implicitValue());
+    m_proxy->m_values->push_back(this->implicitValue());
 }
 
 //===========================================================================
