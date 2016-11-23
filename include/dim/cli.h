@@ -698,7 +698,7 @@ inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
     assert(low < high && !(high < low));
     check([low, high](auto & cli, auto & opt, auto & val) {
         if (*opt < low || high < *opt) {
-            ostringstream os;
+            std::ostringstream os;
             os << "Option '" << opt.from() << "' value out of range [" << low
                << " - " << high << "]";
             return cli.badUsage(os.str(), val);
@@ -712,9 +712,7 @@ inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
     assert(low < high && !(high < low));
-    check([low, high](auto & cli, auto & opt, auto & val) {
-        ignore = cli;
-        ignore = val;
+    check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
         if (*opt < low) {
             *opt = low;
         } else if (high < *opt) {
