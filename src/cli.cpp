@@ -799,6 +799,12 @@ bool Cli::parse(vector<string> & args) {
 
     if (!needCmd && pos < size(ndx.argNames) && !ndx.argNames[pos].optional)
         return badUsage("Missing argument", ndx.argNames[pos].name);
+
+    for (auto && opt : m_cfg->opts) {
+        if (!opt->afterActions(*this))
+            return false;
+    }
+
     return true;
 }
 

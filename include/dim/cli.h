@@ -438,6 +438,7 @@ public:
 protected:
     virtual bool parseValue(Cli & cli, const std::string & value) = 0;
     virtual bool checkValue(Cli & cli, const std::string & value) = 0;
+    virtual bool afterActions(Cli & cli) = 0;
     virtual void set(const std::string & name, int pos) = 0;
 
     // Allows the type unaware layer to determine if a new option is pointing
@@ -593,10 +594,18 @@ public:
     //  - check the options new value, possibly in relation to other options
     //  - call cli.badUsage() with an error message and return false if
     //    there's a problem.
-    //  - return true if everythings fine, to let processing continue.
+    //  - return true if everything is fine, to let processing continue.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);
+
+    // Action to run after all arguments have been parsed, any number of 
+    // after actions can be added and will, for each option, be called in the 
+    // order they're added. The function should:
+    //  - do something interesting
+    //  - call cli.badUsage() and return false on error
+    //  - return true to let processing continue
+    A & after(std::function<ActionFn> fn);
 
     //-----------------------------------------------------------------------
     // Queries
@@ -606,9 +615,15 @@ public:
 protected:
     bool parseValue(Cli & cli, const std::string & value) final;
     bool checkValue(Cli & cli, const std::string & value) final;
+    bool afterActions(Cli & cli) final;
+    bool exec(
+        Cli & cli, 
+        const std::string & value, 
+        std::vector<std::function<ActionFn>> actions); 
 
     std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
+    std::vector<std::function<ActionFn>> m_afters;
 
     T m_implicitValue{};
     T m_defValue{};
@@ -634,9 +649,26 @@ Cli::OptShim<A, T>::parseValue(Cli & cli, const std::string & val) {
 template <typename A, typename T>
 inline bool
 Cli::OptShim<A, T>::checkValue(Cli & cli, const std::string & val) {
+    return exec(cli, val, m_checks);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline bool
+Cli::OptShim<A, T>::afterActions(Cli & cli) {
+    return exec(cli, {}, m_checks);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline bool
+Cli::OptShim<A, T>::exec(
+    Cli & cli, 
+    const std::string & val, 
+    std::vector<std::function<ActionFn>> actions) { 
     auto self = static_cast<A *>(this);
-    for (auto && chk : m_checks) {
-        if (!chk(cli, *self, val))
+    for (auto && fn : actions) {
+        if (!fn(cli, *self, val))
             return false;
     }
     return true;
@@ -742,6 +774,13 @@ inline A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
     this->m_checks.push_back(fn);
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
+    this->m_afters.push_back(fn);
     return static_cast<A &>(*this);
 }
 
