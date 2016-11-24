@@ -212,8 +212,7 @@ Commands:
         EXPECT(*letter == 'a');
         EXPECT_PARSE2(cli, false, 64, {"5", "0"});
         EXPECT(*count == 5);
-        EXPECT(
-            cli.errMsg() == "Option 'letter' value out of range [a - z]: 0");
+        EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
     }
 
     if (s_errors) {

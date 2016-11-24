@@ -41,8 +41,8 @@ struct OptName {
 } // namespace
 
 struct Cli::OptIndex {
-    map<char, OptName> shortNames;
-    map<string, OptName> longNames;
+    unordered_map<char, OptName> shortNames;
+    unordered_map<string, OptName> longNames;
     vector<OptName> argNames;
     bool allowCommands{false};
 };
@@ -60,18 +60,19 @@ struct Cli::CommandConfig {
     string footer;
     std::function<Cli::ActionFn> action;
     Opt<bool> * helpOpt{nullptr};
-    map<string, GroupConfig> groups;
+    unordered_map<string, GroupConfig> groups;
 };
 
 struct Cli::Config {
     bool constructed{false};
 
-    map<string, CommandConfig> cmds;
+    unordered_map<string, CommandConfig> cmds;
     std::list<std::unique_ptr<OptBase>> opts;
     bool responseFiles{true};
 
     int exitCode{0};
     string errMsg;
+    string errDetail;
     string progName;
     string command;
 };
@@ -264,8 +265,28 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
 
 //===========================================================================
 bool Cli::defaultAction(OptBase & opt, const string & val) {
-    if (!opt.parseValue(val))
-        return badUsage("Invalid '" + opt.from() + "' value", val);
+    if (!opt.parseValue(val)) {
+        badUsage("Invalid '" + opt.from() + "' value", val);
+        if (!opt.m_choiceDescs.empty()) {
+            ostringstream os;
+            os << "Must be ";
+            size_t pos = 0;
+            for (auto && cd : opt.m_choiceDescs) {
+                pos += 1;
+                os << '"' << cd.first << '"';
+                auto num = opt.m_choiceDescs.size();
+                if (pos == num)
+                    break;
+                if (pos + 1 == num) {
+                    os << ((pos == 1) ? " or " : ", or ");
+                } else {
+                    os << ", ";
+                }
+            }
+            m_cfg->errDetail = os.str();
+        }
+        return false;
+    }
     return true;
 }
 
@@ -472,7 +493,7 @@ Cli::OptBase * Cli::findOpt(const void * value) {
 static bool expandResponseFiles(
     Cli & cli,
     vector<string> & args,
-    set<fs::path> & ancestors);
+    unordered_set<string> & ancestors);
 
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
@@ -517,14 +538,14 @@ static bool expandResponseFile(
     Cli & cli,
     vector<string> & args,
     size_t & pos,
-    set<fs::path> & ancestors) {
+    unordered_set<string> & ancestors) {
     string content;
     error_code err;
     fs::path fn = args[pos].substr(1);
     fs::path cfn = fs::canonical(fn, err);
     if (err)
         return cli.badUsage("Invalid response file", fn.string());
-    auto ib = ancestors.insert(cfn);
+    auto ib = ancestors.insert(cfn.string());
     if (!ib.second)
         return cli.badUsage("Recursive response file", fn.string());
     if (!loadFileUtf8(content, fn)) {
@@ -553,7 +574,7 @@ static bool expandResponseFile(
 static bool expandResponseFiles(
     Cli & cli,
     vector<string> & args,
-    set<fs::path> & ancestors) {
+    unordered_set<string> & ancestors) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
             if (!expandResponseFile(cli, args, pos, ancestors))
@@ -577,6 +598,7 @@ void Cli::resetValues() {
     }
     m_cfg->exitCode = kExitOk;
     m_cfg->errMsg.clear();
+    m_cfg->errDetail.clear();
     m_cfg->progName.clear();
     m_cfg->command.clear();
 }
@@ -657,7 +679,7 @@ bool Cli::parse(vector<string> & args) {
     assert(ndx.allowCommands || !needCmd);
 
     resetValues();
-    set<fs::path> ancestors;
+    unordered_set<string> ancestors;
     if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
 
@@ -773,7 +795,7 @@ bool Cli::parse(vector<string> & args) {
     }
 
     if (!needCmd && pos < size(ndx.argNames) && !ndx.argNames[pos].optional)
-        return badUsage("Missing required argument", ndx.argNames[pos].name);
+        return badUsage("Missing argument", ndx.argNames[pos].name);
     return true;
 }
 
@@ -781,8 +803,11 @@ bool Cli::parse(vector<string> & args) {
 bool Cli::parse(ostream & os, vector<string> & args) {
     if (parse(args))
         return true;
-    if (exitCode())
+    if (exitCode()) {
         os << args[0] << ": " << errMsg() << endl;
+        if (m_cfg->errDetail.size())
+            os << args[0] << ": " << m_cfg->errDetail << endl;
+    }
     return false;
 }
 
@@ -813,6 +838,11 @@ int Cli::exitCode() const {
 //===========================================================================
 const string & Cli::errMsg() const {
     return m_cfg->errMsg;
+}
+
+//===========================================================================
+const string & Cli::errDetail() const {
+    return m_cfg->errDetail;
 }
 
 //===========================================================================
@@ -917,6 +947,47 @@ writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 }
 
 //===========================================================================
+static void writeChoices(
+    ostream & os,
+    WrapPos & wp,
+    const std::unordered_map<std::string, Cli::OptBase::ChoiceDesc> &
+        choices) {
+    if (choices.empty())
+        return;
+    size_t colWidth = 0;
+    struct ChoiceKey {
+        size_t pos;
+        const char * key;
+        const char * desc;
+        const char * sortKey;
+    };
+    vector<ChoiceKey> keys;
+    for (auto && cd : choices) {
+        colWidth = max(colWidth, cd.first.size());
+        ChoiceKey key;
+        key.pos = cd.second.pos;
+        key.key = cd.first.c_str();
+        key.desc = cd.second.desc.c_str();
+        key.sortKey = cd.second.sortKey.c_str();
+        keys.push_back(key);
+    }
+    colWidth = max(min(colWidth + 5, kMaxDescCol), kMinDescCol);
+    sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
+        if (int rc = strcmp(a.sortKey, b.sortKey))
+            return rc < 0;
+        return a.pos < b.pos;
+    });
+
+    for (auto && k : keys) {
+        wp.prefix.assign(8, ' ');
+        writeToken(os, wp, "      "s + k.key);
+        writeDescCol(os, wp, k.desc, colWidth);
+        os << '\n';
+        wp.pos = 0;
+    }
+}
+
+//===========================================================================
 int Cli::writeHelp(
     ostream & os,
     const string & progName,
@@ -1003,6 +1074,7 @@ void Cli::writePositionals(ostream & os, const string & cmd) const {
         writeDescCol(os, wp, pa.opt->m_desc, colWidth);
         os << '\n';
         wp.pos = 0;
+        writeChoices(os, wp, pa.opt->m_choiceDescs);
     }
 }
 
@@ -1073,6 +1145,7 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
         writeDescCol(os, wp, key.opt->m_desc, colWidth);
         wp.prefix.clear();
         writeNewline(os, wp);
+        writeChoices(os, wp, key.opt->m_choiceDescs);
     }
 }
 

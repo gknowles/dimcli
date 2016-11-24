@@ -15,9 +15,9 @@
 #include <experimental/filesystem>
 #include <functional>
 #include <list>
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -232,6 +232,10 @@ public:
     int exitCode() const;
     const std::string & errMsg() const;
 
+    // Additional information that may help the user correct their mistake,
+    // may be empty.
+    const std::string & errDetail() const;
+
     // Program name received in argv[0]
     const std::string & progName() const;
 
@@ -390,6 +394,13 @@ public:
 
 class Cli::OptBase {
 public:
+    struct ChoiceDesc {
+        std::string desc;
+        std::string sortKey;
+        size_t pos{0};
+    };
+
+public:
     OptBase(const std::string & keys, bool boolean);
     virtual ~OptBase() {}
 
@@ -435,9 +446,11 @@ protected:
 
     std::string m_command;
     std::string m_group;
+
+    bool m_visible{true};
     std::string m_desc;
     std::string m_valueDesc;
-    bool m_visible{true};
+    std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
     // Are multiple values are allowed, and how many there can be (-1 for
     // unlimited).
@@ -491,6 +504,9 @@ public:
     //-----------------------------------------------------------------------
     // Configuration
 
+    // Controls whether or not the option appears in help pages.
+    A & show(bool visible = true);
+
     // Set subcommand for which this is an option.
     A & command(const std::string & val);
 
@@ -514,8 +530,20 @@ public:
     // Turns the argument into a feature switch, there are normally multiple
     // switches pointed at a single external value, one of which should be
     // flagged as the default. If none (or many) are set marked as the default
-    // a default will be choosen for you.
+    // one will be choosen for you.
     A & flagValue(bool isDefault = false);
+
+    // Adds a choice, when choices have been added only values that match one
+    // of the choices are allowed. Useful for things like enums where there is
+    // a controlled set of possible values.
+    //
+    // In help text choices are sorted first by sortKey and then by the order
+    // they were added.
+    A & choice(
+        const T & val,
+        const std::string & key,
+        const std::string & desc = {},
+        const std::string & sortKey = {});
 
     // Change the action to take when parsing this argument. The function
     // should:
@@ -552,9 +580,6 @@ public:
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);
 
-    // Controls whether or not the option appears in help pages.
-    A & show(bool visible = true);
-
     // Fail if the value given for this option is not in within the range
     // (inclusive) of low to high.
     A & range(const T & low, const T & high);
@@ -576,6 +601,7 @@ protected:
     std::vector<std::function<ActionFn>> m_checks;
     T m_implicitValue{};
     T m_defValue{};
+    std::vector<T> m_choices;
 };
 
 //===========================================================================
@@ -603,6 +629,13 @@ Cli::OptShim<A, T>::checkActions(Cli & cli, const std::string & val) {
             return false;
     }
     return true;
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::show(bool visible) {
+    m_visible = visible;
+    return static_cast<A &>(*this);
 }
 
 //===========================================================================
@@ -673,6 +706,22 @@ inline A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
 
 //===========================================================================
 template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::choice(
+    const T & val,
+    const std::string & key,
+    const std::string & desc,
+    const std::string & sortKey) {
+    assert(!key.empty());
+    ChoiceDesc & cd = m_choiceDescs[key];
+    cd.pos = m_choices.size();
+    cd.desc = desc;
+    cd.sortKey = sortKey;
+    m_choices.push_back(val);
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::action(std::function<ActionFn> fn) {
     m_action = fn;
     return static_cast<A &>(*this);
@@ -687,20 +736,13 @@ inline A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::show(bool visible) {
-    m_visible = visible;
-    return static_cast<A &>(*this);
-}
-
-//===========================================================================
-template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
     assert(low < high && !(high < low));
     check([low, high](auto & cli, auto & opt, auto & val) {
         if (*opt < low || high < *opt) {
             std::ostringstream os;
-            os << "Option '" << opt.from() << "' value out of range [" << low
-               << " - " << high << "]";
+            os << "Out of range '" << opt.from() << "' value [" << low << " - "
+               << high << "]";
             return cli.badUsage(os.str(), val);
         }
         return true;
@@ -819,7 +861,7 @@ inline void Cli::Opt<T>::set(const std::string & name, int pos) {
 
 //===========================================================================
 template <typename T> inline void Cli::Opt<T>::reset() {
-    if (!OptBase::m_flagValue || OptBase::m_flagDefault)
+    if (!this->m_flagValue || this->m_flagDefault)
         *m_proxy->m_value = this->defaultValue();
     m_proxy->m_match.name.clear();
     m_proxy->m_match.pos = 0;
@@ -829,7 +871,7 @@ template <typename T> inline void Cli::Opt<T>::reset() {
 //===========================================================================
 template <typename T>
 inline bool Cli::Opt<T>::parseValue(const std::string & value) {
-    if (OptBase::m_flagValue) {
+    if (this->m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
             return false;
@@ -837,7 +879,13 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
             *m_proxy->m_value = this->defaultValue();
         return true;
     }
-
+    if (!this->m_choices.empty()) {
+        auto i = this->m_choiceDescs.find(value);
+        if (i == this->m_choiceDescs.end())
+            return false;
+        *m_proxy->m_value = this->m_choices[i->second.pos];
+        return true;
+    }
     return stringTo(*m_proxy->m_value, value);
 }
 
@@ -923,8 +971,8 @@ inline Cli::OptVec<T>::OptVec(
     int nargs)
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values) {
-    OptBase::m_multiple = true;
-    OptBase::m_nargs = nargs;
+    this->m_multiple = true;
+    this->m_nargs = nargs;
 }
 
 //===========================================================================
@@ -956,12 +1004,19 @@ template <typename T> inline void Cli::OptVec<T>::reset() {
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
-    if (OptBase::m_flagValue) {
+    if (this->m_flagValue) {
         bool flagged;
         if (!stringTo(flagged, value))
             return false;
         if (flagged)
             m_proxy->m_values->push_back(this->defaultValue());
+        return true;
+    }
+    if (!this->m_choices.empty()) {
+        auto i = this->m_choiceDescs.find(value);
+        if (i == this->m_choiceDescs.end())
+            return false;
+        m_proxy->m_values->push_back(this->m_choices[i->second.pos]);
         return true;
     }
 

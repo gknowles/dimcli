@@ -518,7 +518,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-a.out: Bad '-n' value: x
+a.out: Invalid '-n' value: x
 ~~~
 
 
@@ -636,7 +636,7 @@ The end result from the console:
 
 ~~~ console
 $ a.out
-No command given.
+a.out: No command given.
 $ a.out --help
 usage: a.out [OPTIONS] command [args...]
 
@@ -743,7 +743,7 @@ interact with the console. Simple steps to avoid parse() doing console IO:
 2. Add your own "help" argument to override the default, you can still 
 turn around and call cli.writeHelp(ostream&) if desired.
 3. Use the two argument version of cli.parse() and get the error message from
-cli.errMsg() if it fails.
+cli.errMsg() and cli.errDetail() if it fails.
 
 
 # Options and Modifiers
@@ -772,7 +772,7 @@ Options:
   --version  Show version and exit.  
 
 $ a.out --version
-a version 1.0
+a.out version 1.0
 $ a.out
 Hello world!
 ~~~
@@ -888,10 +888,10 @@ Options:
 $ a.out
 Wait
 $ a.out --streetlight
-Option requires value: --streetlight
+a.out: Option requires value: --streetlight
 $ a.out --streetlight=purple
-Invalid value for "--streetlight": purple
-Must be "green", "red", or "yellow"
+a.out: Invalid "--streetlight" value: purple
+a.out: Must be "green", "red", or "yellow"
 $ a.out --streetlight=green
 Go!
 ~~~
@@ -918,7 +918,7 @@ int main(int argc, char * argv[]) {
 $ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-a.out: Option 'letter' value out of range [a - z]: 1
+a.out: Out of range 'letter' value [a - z]: 1
 ~~~
 
 
