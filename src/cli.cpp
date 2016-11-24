@@ -638,7 +638,7 @@ bool Cli::parseAction(
     }
     if (!opt.checkActions(*this, val)) {
         if (!exitCode())
-            badUsage("Option check failed for '"s + name + "'", val);
+            badUsage("Check failed for '"s + name + "'", val);
         return false;
     }
     return true;
@@ -646,15 +646,18 @@ bool Cli::parseAction(
 
 //===========================================================================
 bool Cli::badUsage(const string & prefix, const string & value) {
-    string msg = prefix;
-    auto & cmd = m_cfg->command;
-    if (cmd.empty()) {
-        msg.append(": ");
-    } else {
-        msg.append(" for '").append(cmd).append("' command: ");
-    }
-    msg.append(value);
+    string msg = prefix + ": " + value;
     return badUsage(msg);
+}
+
+//===========================================================================
+bool Cli::badUsage(const string & msg) {
+    string out;
+    string & cmd = m_cfg->command;
+    if (cmd.size())
+        out = "Command '" + cmd + "': ";
+    out += msg;
+    return fail(kExitUsage, out); 
 }
 
 //===========================================================================
@@ -804,9 +807,9 @@ bool Cli::parse(ostream & os, vector<string> & args) {
     if (parse(args))
         return true;
     if (exitCode()) {
-        os << args[0] << ": " << errMsg() << endl;
+        os << "Error: " << errMsg() << endl;
         if (m_cfg->errDetail.size())
-            os << args[0] << ": " << m_cfg->errDetail << endl;
+            os << "Error: " << m_cfg->errDetail << endl;
     }
     return false;
 }

@@ -219,7 +219,7 @@ public:
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
-    bool badUsage(const std::string & msg) { return fail(kExitUsage, msg); }
+    bool badUsage(const std::string & msg);
     // Calls badUsage(msg) with msg set to, depending on if its a subcommand,
     // one of the following:
     //  "<prefix>: <value>"

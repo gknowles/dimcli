@@ -518,7 +518,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-a.out: Invalid '-n' value: x
+Error: Invalid '-n' value: x
 ~~~
 
 
@@ -636,7 +636,7 @@ The end result from the console:
 
 ~~~ console
 $ a.out
-a.out: No command given.
+Error: No command given.
 $ a.out --help
 usage: a.out [OPTIONS] command [args...]
 
@@ -888,10 +888,10 @@ Options:
 $ a.out
 Wait
 $ a.out --streetlight
-a.out: Option requires value: --streetlight
+Error: Option requires value: --streetlight
 $ a.out --streetlight=purple
-a.out: Invalid "--streetlight" value: purple
-a.out: Must be "green", "red", or "yellow"
+Error: Invalid "--streetlight" value: purple
+Error: Must be "green", "red", or "yellow"
 $ a.out --streetlight=green
 Go!
 ~~~
@@ -918,7 +918,7 @@ int main(int argc, char * argv[]) {
 $ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-a.out: Out of range 'letter' value [a - z]: 1
+Error: Out of range 'letter' value [a - z]: 1
 ~~~
 
 

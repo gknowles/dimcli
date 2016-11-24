@@ -201,7 +201,7 @@ Commands:
     EXPECT_PARSE2(c1, false, 64, {"-a"});
     EXPECT(c2.errMsg() == "Unknown option: -a");
     EXPECT_PARSE2(c1, false, 64, {"two", "-a"});
-    EXPECT(c2.errMsg() == "Option requires value for 'two' command: -a");
+    EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
 
     {
         cli = {};
