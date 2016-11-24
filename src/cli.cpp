@@ -34,9 +34,9 @@ const string s_internalOptionGroup = "~";
 namespace {
 struct OptName {
     Cli::OptBase * opt;
-    bool invert;      // set to false instead of true (only for bools)
-    bool optional;    // value doesn't have to be present? (non-bools only)
-    std::string name; // name of argument (only for positionals)
+    bool invert;   // set to false instead of true (only for bools)
+    bool optional; // value doesn't have to be present? (non-bools only)
+    string name;   // name of argument (only for positionals)
 };
 } // namespace
 
@@ -58,7 +58,7 @@ struct Cli::CommandConfig {
     string header;
     string desc;
     string footer;
-    std::function<Cli::ActionFn> action;
+    function<Cli::ActionFn> action;
     Opt<bool> * helpOpt{nullptr};
     unordered_map<string, GroupConfig> groups;
 };
@@ -67,7 +67,7 @@ struct Cli::Config {
     bool constructed{false};
 
     unordered_map<string, CommandConfig> cmds;
-    std::list<std::unique_ptr<OptBase>> opts;
+    list<unique_ptr<OptBase>> opts;
     bool responseFiles{true};
 
     int exitCode{0};
@@ -403,25 +403,25 @@ Cli & Cli::command(const string & name, const string & grpName) {
 }
 
 //===========================================================================
-Cli & Cli::action(std::function<ActionFn> fn) {
+Cli & Cli::action(function<ActionFn> fn) {
     cmdCfg().action = fn;
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::header(const std::string & val) {
+Cli & Cli::header(const string & val) {
     cmdCfg().header = val;
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::desc(const std::string & val) {
+Cli & Cli::desc(const string & val) {
     cmdCfg().desc = val;
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::footer(const std::string & val) {
+Cli & Cli::footer(const string & val) {
     cmdCfg().footer = val;
     return *this;
 }
@@ -604,7 +604,7 @@ void Cli::resetValues() {
 }
 
 //===========================================================================
-void Cli::index(OptIndex & ndx, const std::string & cmd, bool requireVisible)
+void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
     const {
     ndx.argNames.clear();
     ndx.longNames.clear();
@@ -950,8 +950,7 @@ writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 static void writeChoices(
     ostream & os,
     WrapPos & wp,
-    const std::unordered_map<std::string, Cli::OptBase::ChoiceDesc> &
-        choices) {
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices) {
     if (choices.empty())
         return;
     size_t colWidth = 0;
