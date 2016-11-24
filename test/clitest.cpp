@@ -74,7 +74,7 @@ int main(int argc, char * argv[]) {
 
     auto & sum = cli.opt<int>("n number", 1)
                      .desc("numbers to multiply")
-                     .action([](auto & cli, auto & arg, const string & val) {
+                     .parse([](auto & cli, auto & arg, const string & val) {
                          int tmp = *arg;
                          if (!arg.parseValue(val))
                              return cli.badUsage(

@@ -141,7 +141,7 @@ public:
 
     // Action that should be taken when the currently selected command is run.
     // Actions are executed when cli.run() is called by the application. The
-    // action function should:
+    // parse function should:
     //  - do something useful
     //  - return an exitCode.
     using ActionFn = int(Cli & cli);
@@ -350,7 +350,7 @@ inline Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 //===========================================================================
 template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
-    opt.action(&Cli::defaultAction).command(command()).group(group());
+    opt.parse(&Cli::defaultAction).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
@@ -545,6 +545,14 @@ public:
         const std::string & desc = {},
         const std::string & sortKey = {});
 
+    // Fail if the value given for this option is not in within the range
+    // (inclusive) of low to high.
+    A & range(const T & low, const T & high);
+
+    // Forces the value to be within the range, if it's less than the low
+    // it's set to the low, if higher than high it's made merely high.
+    A & clamp(const T & low, const T & high);
+
     // Change the action to take when parsing this argument. The function
     // should:
     //  - parse the src string and use the result to set the value (or
@@ -561,32 +569,24 @@ public:
     //
     // If you just need support for a new type you can provide a std::istream
     // extraction (>>) or assignment from std::string operator and the
-    // default action will pick it up.
+    // default parse action will pick it up.
     using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
-    A & action(std::function<ActionFn> fn);
+    A & parse(std::function<ActionFn> fn);
 
-    // Action to take after the argument has been parsed, unlike parsing
-    // where there can only be one action, any number of after actions can
-    // be added. They will be called in the order they were added and if any
-    // of them return false an error is generated. As an example, opt.clamp()
-    // and opt.range() both do their job by adding check actions.
+    // Action to take after each value is parsed, unlike parsing where there 
+    // can only be one action, any number of check actions can be added. They 
+    // will be called in the order they were added and if any of them return 
+    // false an error is generated. As an example, opt.clamp() and opt.range() 
+    // both do their job by adding check actions.
     //
     // The function should:
-    //  - check the options new value, possible in relation to other options
+    //  - check the options new value, possibly in relation to other options
     //  - call cli.badUsage() with an error message and return false if
     //    there's a problem.
     //  - return true if everythings fine, to let processing continue.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);
-
-    // Fail if the value given for this option is not in within the range
-    // (inclusive) of low to high.
-    A & range(const T & low, const T & high);
-
-    // Forces the value to be within the range, if it's less than the low
-    // it's set to the low, if higher than high it's made merely high.
-    A & clamp(const T & low, const T & high);
 
     //-----------------------------------------------------------------------
     // Queries
@@ -597,8 +597,9 @@ protected:
     bool parseAction(Cli & cli, const std::string & value) final;
     bool checkActions(Cli & cli, const std::string & value) final;
 
-    std::function<ActionFn> m_action;
+    std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
+
     T m_implicitValue{};
     T m_defValue{};
     std::vector<T> m_choices;
@@ -616,7 +617,7 @@ template <typename A, typename T>
 inline bool
 Cli::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
-    return m_action(cli, *self, val);
+    return m_parse(cli, *self, val);
 }
 
 //===========================================================================
@@ -722,15 +723,15 @@ inline A & Cli::OptShim<A, T>::choice(
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::action(std::function<ActionFn> fn) {
-    m_action = fn;
+inline A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
+    this->m_parse = fn;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
-    m_checks.push_back(fn);
+    this->m_checks.push_back(fn);
     return static_cast<A &>(*this);
 }
 

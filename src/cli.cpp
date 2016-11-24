@@ -346,7 +346,7 @@ Cli::versionOpt(const string & version, const string & progName) {
     };
     return opt<bool>("version.")
         .desc("Show version and exit.")
-        .action(verAction)
+        .parse(verAction)
         .group(s_internalOptionGroup);
 }
 
@@ -358,7 +358,7 @@ Cli::Opt<bool> & Cli::helpOpt() {
 
     auto & hlp = opt<bool>("help.")
                      .desc("Show this message and exit.")
-                     .action(helpAction)
+                     .parse(helpAction)
                      .group(s_internalOptionGroup);
     if (!m_command.empty())
         hlp.show(false);

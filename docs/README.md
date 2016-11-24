@@ -490,7 +490,7 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & sum = cli.opt<int>("n number", 1)
         .desc("numbers to multiply")
-        .action([](auto & cli, auto & opt, const string & val) {
+        .parse([](auto & cli, auto & opt, const string & val) {
             int tmp = *opt; // save the old value
             if (!opt.parseValue(val)) // parse the new value into opt
                 return cli.badUsage("Bad '" + opt.from() + "' value: " + val);
@@ -737,7 +737,7 @@ cli.responseFiles(false).
 
 ## Keep It Quiet
 For some applications, such as Windows services, it's important not to 
-interact with the console. Simple steps to avoid parse() doing console IO:
+interact with the console. Simple steps to avoid cli.parse() doing console IO:
 
 1. Don't use things (such as opt.prompt()) that explicitly ask for IO.
 2. Add your own "help" argument to override the default, you can still 
