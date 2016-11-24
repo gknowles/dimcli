@@ -215,7 +215,22 @@ public:
     // Parse using Windows rules
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
+    // Sets all options to their defaults, called internally when parsing 
+    // starts.
     void resetValues();
+
+    //-----------------------------------------------------------------------
+    // Support for parsing callbacks
+
+    // Used to populate an option with an arbitrary input string and the 
+    // normal parse error handling. Since it causes the parse and check 
+    // actions to be called care must be taken to avoid infinite recursion
+    // if used from those actions.
+    bool parseValue(
+        OptBase & out,
+        const std::string & name,
+        int pos,
+        const char src[]);
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
@@ -223,7 +238,7 @@ public:
     // Calls badUsage(msg) with msg set to, depending on if its a subcommand,
     // one of the following:
     //  "<prefix>: <value>"
-    //  "<prefix> for '<command>' command: <value>"
+    //  "Command: '<command>': <prefix>: <value>"
     bool badUsage(const std::string & prefix, const std::string & value);
 
     //-----------------------------------------------------------------------
@@ -278,11 +293,6 @@ private:
         const OptIndex & ndx,
         bool disableOptions) const;
 
-    bool parseAction(
-        OptBase & out,
-        const std::string & name,
-        int pos,
-        const char src[]);
     bool fail(int code, const std::string & msg);
 
     std::shared_ptr<Config> m_cfg;
@@ -426,8 +436,8 @@ public:
     virtual size_t size() const = 0;
 
 protected:
-    virtual bool parseAction(Cli & cli, const std::string & value) = 0;
-    virtual bool checkActions(Cli & cli, const std::string & value) = 0;
+    virtual bool parseValue(Cli & cli, const std::string & value) = 0;
+    virtual bool checkValue(Cli & cli, const std::string & value) = 0;
     virtual void set(const std::string & name, int pos) = 0;
 
     // Allows the type unaware layer to determine if a new option is pointing
@@ -594,8 +604,8 @@ public:
     const T & defaultValue() const { return m_defValue; }
 
 protected:
-    bool parseAction(Cli & cli, const std::string & value) final;
-    bool checkActions(Cli & cli, const std::string & value) final;
+    bool parseValue(Cli & cli, const std::string & value) final;
+    bool checkValue(Cli & cli, const std::string & value) final;
 
     std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
@@ -615,7 +625,7 @@ inline Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
 //===========================================================================
 template <typename A, typename T>
 inline bool
-Cli::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
+Cli::OptShim<A, T>::parseValue(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_parse(cli, *self, val);
 }
@@ -623,7 +633,7 @@ Cli::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
 //===========================================================================
 template <typename A, typename T>
 inline bool
-Cli::OptShim<A, T>::checkActions(Cli & cli, const std::string & val) {
+Cli::OptShim<A, T>::checkValue(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     for (auto && chk : m_checks) {
         if (!chk(cli, *self, val))

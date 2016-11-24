@@ -622,7 +622,7 @@ void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
 }
 
 //===========================================================================
-bool Cli::parseAction(
+bool Cli::parseValue(
     OptBase & opt,
     const string & name,
     int pos,
@@ -631,12 +631,12 @@ bool Cli::parseAction(
     string val;
     if (ptr) {
         val = ptr;
-        if (!opt.parseAction(*this, val))
+        if (!opt.parseValue(*this, val))
             return false;
     } else {
         opt.unspecifiedValue();
     }
-    if (!opt.checkActions(*this, val)) {
+    if (!opt.checkValue(*this, val)) {
         if (!exitCode())
             badUsage("Check failed for '"s + name + "'", val);
         return false;
@@ -708,7 +708,7 @@ bool Cli::parse(vector<string> & args) {
                 argName = it->second;
                 name = "-"s + *ptr;
                 if (argName.opt->m_bool) {
-                    if (!parseAction(
+                    if (!parseValue(
                             *argName.opt,
                             name,
                             argPos,
@@ -745,7 +745,7 @@ bool Cli::parse(vector<string> & args) {
             if (argName.opt->m_bool) {
                 if (equal)
                     return badUsage("Unknown option", name + "=");
-                if (!parseAction(
+                if (!parseValue(
                         *argName.opt,
                         name,
                         argPos,
@@ -772,7 +772,7 @@ bool Cli::parse(vector<string> & args) {
             return badUsage("Unexpected argument", ptr);
         argName = ndx.argNames[pos];
         name = argName.name;
-        if (!parseAction(*argName.opt, name, argPos, ptr))
+        if (!parseValue(*argName.opt, name, argPos, ptr))
             return false;
         if (!argName.opt->m_multiple)
             pos += 1;
@@ -780,12 +780,12 @@ bool Cli::parse(vector<string> & args) {
 
     OPTION_VALUE:
         if (*ptr) {
-            if (!parseAction(*argName.opt, name, argPos, ptr))
+            if (!parseValue(*argName.opt, name, argPos, ptr))
                 return false;
             continue;
         }
         if (argName.optional) {
-            if (!parseAction(*argName.opt, name, argPos, nullptr))
+            if (!parseValue(*argName.opt, name, argPos, nullptr))
                 return false;
             continue;
         }
@@ -793,7 +793,7 @@ bool Cli::parse(vector<string> & args) {
         arg += 1;
         if (argPos == argc)
             return badUsage("Option requires value", name);
-        if (!parseAction(*argName.opt, name, argPos, arg->c_str()))
+        if (!parseValue(*argName.opt, name, argPos, arg->c_str()))
             return false;
     }
 
