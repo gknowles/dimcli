@@ -427,11 +427,15 @@ public:
     virtual const std::string & from() const = 0;
 
     // Absolute position in argv[] of last the argument that populated the
-    // value, or an empty string if it wasn't populated. For vectors, it's what
-    // populated the last value.
+    // value. For vectors, it refers to where the value on the back came from.
+    // If pos() is 0 the value wasn't populated from the command line or
+    // wasn't populated at all, check from() to tell the difference.
+    //
+    // It's possible for a value to come from prompt() or some other action
+    // (which should set the position to 0) instead of the command.
     virtual int pos() const = 0;
 
-    // set to passed in default
+    // set to passed in default value
     virtual void reset() = 0;
 
     // parses the string into the value, returns false on error
@@ -443,6 +447,11 @@ public:
     // number of values, non-vecs are always 1
     virtual size_t size() const = 0;
 
+    // defaults to use when populating the option from an action that's not
+    // tied to a command line argument.
+    const std::string & defaultFrom() const { return m_fromName; }
+    std::string defaultPrompt() const;
+    
 protected:
     virtual bool parseValue(Cli & cli, const std::string & value) = 0;
     virtual bool checkValue(Cli & cli, const std::string & value) = 0;
@@ -455,7 +464,6 @@ protected:
 
     template <typename T> void setValueName();
 
-    const std::string & name() const { return m_displayName; }
     void setNameIfEmpty(const std::string & name);
 
     void index(OptIndex & ndx);
@@ -489,7 +497,7 @@ protected:
 private:
     friend class Cli;
     std::string m_names;
-    std::string m_displayName;
+    std::string m_fromName;
 };
 
 //===========================================================================
@@ -837,7 +845,7 @@ inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(bool hide, bool confirm) {
-    return prompt(name() + ": ", hide, confirm);
+    return prompt(this->defaultPrompt() + ":", hide, confirm);
 }
 
 //===========================================================================

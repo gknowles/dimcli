@@ -134,18 +134,25 @@ static fs::path displayName(const fs::path & file) {
 Cli::OptBase::OptBase(const string & names, bool boolean)
     : m_bool{boolean}
     , m_names{names} {
-    // set displayName and assert if names is malformed
+    // set m_fromName and assert if names is malformed
     OptIndex ndx;
     index(ndx);
 }
 
 //===========================================================================
 void Cli::OptBase::setNameIfEmpty(const string & name) {
-    if (m_displayName.empty()) {
-        m_displayName = name;
-        if (name.size())
-            m_displayName[0] = (char)toupper(name[0]);
-    }
+    if (m_fromName.empty())
+        m_fromName = name;
+}
+
+//===========================================================================
+string Cli::OptBase::defaultPrompt() const {
+    string name = m_fromName;
+    while (name.size() && name[0] == '-')
+        name.erase(0, 1);
+    if (name.size())
+        name[0] = (char)toupper(name[0]);
+    return name;
 }
 
 //===========================================================================
@@ -241,7 +248,7 @@ void Cli::OptBase::indexShortName(
     bool invert,
     bool optional) {
     ndx.shortNames[name] = {this, invert, optional};
-    setNameIfEmpty(string(1, name));
+    setNameIfEmpty('-' + string(1, name));
 }
 
 //===========================================================================
@@ -260,7 +267,7 @@ void Cli::OptBase::indexLongName(
         }
         key.pop_back();
     }
-    setNameIfEmpty(key);
+    setNameIfEmpty("--" + key);
     ndx.longNames[key] = {this, invert, optional};
     if (m_bool && allowNo)
         ndx.longNames["no-" + key] = {this, !invert, optional};
@@ -655,7 +662,7 @@ bool Cli::prompt(OptBase & opt, const string & msg, bool hide, bool confirm) {
     struct EnableEcho {
         ~EnableEcho() { consoleEnableEcho(true); }
     } enableEcho;
-    cout << msg;
+    cout << msg << ' ';
     if (hide)
         consoleEnableEcho(false);
     string val;
@@ -669,7 +676,7 @@ bool Cli::prompt(OptBase & opt, const string & msg, bool hide, bool confirm) {
         if (val != again)
             return badUsage("Confirm failed, entries not the same.");
     }
-    return parseValue(opt, "prompt0", 0, val.c_str());
+    return parseValue(opt, opt.defaultFrom(), 0, val.c_str());
 }
 
 //===========================================================================
