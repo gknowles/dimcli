@@ -43,11 +43,11 @@ prefer it all on a single page.
 Sources of inspiration:
 
 - LLVM's CommandLine module
-- click - http://click.pocoo.org
+- click - Python composable command line utility
 - My own bad experiences
 
 Things that were harder than expected:
 
 - parsing command lines with bash style quoting
 - response files - because of the need to transcode utf-16 on windows
-- password prompting - there's no standard way to disable console echo
+- password prompting - there's no standard way to disable console echo :(
