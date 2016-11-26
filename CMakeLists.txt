@@ -15,7 +15,7 @@ function(update_file path content)
     endif()
 endfunction(update_file)
 
-# Creates a file called CMakeDeps.cmake next to your CMakeLists.txt with
+# Creates a file called CMakeDeps.cmake next to the CMakeLists.txt with
 # the list of dependencies in it - this file should be treated as part of 
 # CMakeLists.txt (source controlled, etc.).
 function(update_deps_file)
@@ -73,6 +73,7 @@ if(MSVC)
     # /GR- - disable RTTI
     # /EHsc (UNUSED) - exceptions from c++ only (not from structure or "C")
     # /Yu - use precompiled header
+    # /permissive- (UNUSED) - reject non-conforming backward compatibilitisms
     set(CMAKE_CXX_FLAGS "\
         /std:c++latest /W4 /WX /Zi \
         /Zc:inline /Zc:rvalueCast /Zc:strictStrings \

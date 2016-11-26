@@ -63,15 +63,11 @@ void toArgvTest(
 }
 
 //===========================================================================
-int main(int argc, char * argv[]) {
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-    _set_error_mode(_OUT_TO_MSGBOX);
-
+void basicTests() {
     int line = 0;
     Dim::CliLocal cli;
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
 
+    cli = {};
     auto & sum = cli.opt<int>("n number", 1)
                      .desc("numbers to multiply")
                      .parse([](auto & cli, auto & arg, const string & val) {
@@ -213,6 +209,33 @@ Commands:
         EXPECT_PARSE2(cli, false, 64, {"5", "0"});
         EXPECT(*count == 5);
         EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
+    }
+}
+
+//===========================================================================
+void promptTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+
+    auto & pass = cli.passwordOpt(true);
+    EXPECT_PARSE(cli, {"--password=hi"});
+    EXPECT(*pass == "hi");
+    EXPECT_PARSE(cli, {});
+    cout << "Entered password was '" << *pass << "'" << endl;
+}
+
+//===========================================================================
+int main(int argc, char * argv[]) {
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    _set_error_mode(_OUT_TO_MSGBOX);
+
+    Dim::CliLocal cli;
+    auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    basicTests();
+    if (*prompt) {
+        promptTests();
     }
 
     if (s_errors) {

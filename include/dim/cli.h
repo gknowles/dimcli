@@ -110,6 +110,11 @@ public:
     Opt<bool> &
     versionOpt(const std::string & ver, const std::string & progName = {});
 
+    // Add --password option and prompts for a password if it's not given
+    // on the command line. If confirm is true and it's not on the command
+    // line you have to enter it twice.
+    Opt<std::string> & passwordOpt(bool confirm = false);
+
     // Get reference to internal help option, can be used to change the
     // desciption, option group, etc.
     Opt<bool> & helpOpt();
@@ -215,22 +220,12 @@ public:
     // Parse using Windows rules
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
-    // Sets all options to their defaults, called internally when parsing 
+    // Sets all options to their defaults, called internally when parsing
     // starts.
     void resetValues();
 
     //-----------------------------------------------------------------------
     // Support for parsing callbacks
-
-    // Used to populate an option with an arbitrary input string and the 
-    // normal parse error handling. Since it causes the parse and check 
-    // actions to be called care must be taken to avoid infinite recursion
-    // if used from those actions.
-    bool parseValue(
-        OptBase & out,
-        const std::string & name,
-        int pos,
-        const char src[]);
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
@@ -240,6 +235,19 @@ public:
     //  "<prefix>: <value>"
     //  "Command: '<command>': <prefix>: <value>"
     bool badUsage(const std::string & prefix, const std::string & value);
+
+    // Used to populate an option with an arbitrary input string through the
+    // standard parsing logic. Since it causes the parse and check actions to
+    // be called care must be taken to avoid infinite recursion if used from
+    // those actions.
+    bool parseValue(
+        OptBase & out,
+        const std::string & name,
+        int pos,
+        const char src[]);
+
+    bool
+    prompt(OptBase & opt, const std::string & msg, bool hide, bool confirm);
 
     //-----------------------------------------------------------------------
     // After parsing
@@ -268,7 +276,7 @@ protected:
     Cli(std::shared_ptr<Config> cfg);
 
 private:
-    bool defaultAction(OptBase & opt, const std::string & val);
+    bool defaultParse(OptBase & opt, const std::string & val);
 
     void addOpt(std::unique_ptr<OptBase> opt);
 
@@ -360,7 +368,7 @@ inline Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 //===========================================================================
 template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
-    opt.parse(&Cli::defaultAction).command(command()).group(group());
+    opt.parse(&Cli::defaultParse).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
@@ -447,8 +455,12 @@ protected:
 
     template <typename T> void setValueName();
 
+    const std::string & name() const { return m_displayName; }
+    void setNameIfEmpty(const std::string & name);
+
     void index(OptIndex & ndx);
     void indexName(OptIndex & ndx, const std::string & name);
+    void indexShortName(OptIndex & ndx, char name, bool invert, bool optional);
     void indexLongName(
         OptIndex & ndx,
         const std::string & name,
@@ -477,6 +489,7 @@ protected:
 private:
     friend class Cli;
     std::string m_names;
+    std::string m_displayName;
 };
 
 //===========================================================================
@@ -564,6 +577,14 @@ public:
     // it's set to the low, if higher than high it's made merely high.
     A & clamp(const T & low, const T & high);
 
+    // Enables prompting. When the option hasn't been provided on the command
+    // line the user will be prompted for it.
+    A & prompt(bool hide = false, bool confirm = false);
+    A & prompt(
+        const std::string & msg, // message to prompt with instead of default
+        bool hide = false,       // hide user input as they type
+        bool confirm = false);   // make the user enter it twice
+
     // Change the action to take when parsing this argument. The function
     // should:
     //  - parse the src string and use the result to set the value (or
@@ -584,10 +605,10 @@ public:
     using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
     A & parse(std::function<ActionFn> fn);
 
-    // Action to take after each value is parsed, unlike parsing where there 
-    // can only be one action, any number of check actions can be added. They 
-    // will be called in the order they were added and if any of them return 
-    // false an error is generated. As an example, opt.clamp() and opt.range() 
+    // Action to take after each value is parsed, unlike parsing where there
+    // can only be one action, any number of check actions can be added. They
+    // will be called in the order they were added and if any of them return
+    // false an error is generated. As an example, opt.clamp() and opt.range()
     // both do their job by adding check actions.
     //
     // The function should:
@@ -599,8 +620,8 @@ public:
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);
 
-    // Action to run after all arguments have been parsed, any number of 
-    // after actions can be added and will, for each option, be called in the 
+    // Action to run after all arguments have been parsed, any number of
+    // after actions can be added and will, for each option, be called in the
     // order they're added. The function should:
     //  - do something interesting
     //  - call cli.badUsage() and return false on error
@@ -617,9 +638,9 @@ protected:
     bool checkValue(Cli & cli, const std::string & value) final;
     bool afterActions(Cli & cli) final;
     bool exec(
-        Cli & cli, 
-        const std::string & value, 
-        std::vector<std::function<ActionFn>> actions); 
+        Cli & cli,
+        const std::string & value,
+        std::vector<std::function<ActionFn>> actions);
 
     std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
@@ -654,18 +675,16 @@ Cli::OptShim<A, T>::checkValue(Cli & cli, const std::string & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline bool
-Cli::OptShim<A, T>::afterActions(Cli & cli) {
-    return exec(cli, {}, m_checks);
+inline bool Cli::OptShim<A, T>::afterActions(Cli & cli) {
+    return exec(cli, {}, m_afters);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline bool
-Cli::OptShim<A, T>::exec(
-    Cli & cli, 
-    const std::string & val, 
-    std::vector<std::function<ActionFn>> actions) { 
+inline bool Cli::OptShim<A, T>::exec(
+    Cli & cli,
+    const std::string & val,
+    std::vector<std::function<ActionFn>> actions) {
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
         if (!fn(cli, *self, val))
@@ -811,6 +830,24 @@ inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
             *opt = high;
         }
         return true;
+    });
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::prompt(bool hide, bool confirm) {
+    return prompt(name() + ": ", hide, confirm);
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::prompt(
+    const std::string & msg,
+    bool hide,
+    bool confirm) {
+    after([=](auto & cli, auto & opt, auto & /* val */) {
+        return cli.prompt(opt, msg, hide, confirm);
     });
     return static_cast<A &>(*this);
 }

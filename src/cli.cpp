@@ -133,7 +133,20 @@ static fs::path displayName(const fs::path & file) {
 //===========================================================================
 Cli::OptBase::OptBase(const string & names, bool boolean)
     : m_bool{boolean}
-    , m_names{names} {}
+    , m_names{names} {
+    // set displayName and assert if names is malformed
+    OptIndex ndx;
+    index(ndx);
+}
+
+//===========================================================================
+void Cli::OptBase::setNameIfEmpty(const string & name) {
+    if (m_displayName.empty()) {
+        m_displayName = name;
+        if (name.size())
+            m_displayName[0] = (char)toupper(name[0]);
+    }
+}
 
 //===========================================================================
 void Cli::OptBase::index(OptIndex & ndx) {
@@ -176,53 +189,59 @@ void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
     const bool invert = true;
     const bool optional = true;
 
+    auto where = ndx.argNames.end();
     switch (name[0]) {
     case '-': assert(name[0] != '-' && "bad argument name"); return;
     case '[':
         ndx.argNames.push_back({this, !invert, optional, name.data() + 1});
-        if (m_command.empty())
-            ndx.allowCommands = false;
-        return;
+        where = ndx.argNames.end() - 1;
+        goto INDEX_POS_NAME;
     case '<':
-        auto where =
+        where =
             find_if(ndx.argNames.begin(), ndx.argNames.end(), [](auto && key) {
                 return key.optional;
             });
-        ndx.argNames.insert(
+        where = ndx.argNames.insert(
             where, {this, !invert, !optional, name.data() + 1});
+    INDEX_POS_NAME:
+        setNameIfEmpty(where->name);
         if (m_command.empty())
             ndx.allowCommands = false;
         return;
     }
-    if (name.size() == 1) {
-        ndx.shortNames[name[0]] = {this, !invert, !optional};
-        return;
-    }
+    if (name.size() == 1)
+        return indexShortName(ndx, name[0], !invert, !optional);
     switch (name[0]) {
     case '!':
         if (!m_bool) {
             assert(!m_bool && "bad modifier '!' for non-bool argument");
             return;
         }
-        if (name.size() == 2) {
-            ndx.shortNames[name[1]] = {this, invert, !optional};
-        } else {
-            indexLongName(ndx, name.substr(1), invert, !optional);
-        }
+        if (name.size() == 2)
+            return indexShortName(ndx, name[1], invert, !optional);
+        indexLongName(ndx, name.substr(1), invert, !optional);
         return;
     case '?':
         if (m_bool) {
             assert(!m_bool && "bad modifier '?' for bool argument");
             return;
         }
-        if (name.size() == 2) {
-            ndx.shortNames[name[1]] = {this, !invert, optional};
-        } else {
-            indexLongName(ndx, name.substr(1), !invert, optional);
-        }
+        if (name.size() == 2)
+            return indexShortName(ndx, name[1], !invert, optional);
+        indexLongName(ndx, name.substr(1), !invert, optional);
         return;
     }
     indexLongName(ndx, name, !invert, !optional);
+}
+
+//===========================================================================
+void Cli::OptBase::indexShortName(
+    OptIndex & ndx,
+    char name,
+    bool invert,
+    bool optional) {
+    ndx.shortNames[name] = {this, invert, optional};
+    setNameIfEmpty(string(1, name));
 }
 
 //===========================================================================
@@ -241,6 +260,7 @@ void Cli::OptBase::indexLongName(
         }
         key.pop_back();
     }
+    setNameIfEmpty(key);
     ndx.longNames[key] = {this, invert, optional};
     if (m_bool && allowNo)
         ndx.longNames["no-" + key] = {this, !invert, optional};
@@ -264,7 +284,7 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
 }
 
 //===========================================================================
-bool Cli::defaultAction(OptBase & opt, const string & val) {
+bool Cli::defaultParse(OptBase & opt, const string & val) {
     if (!opt.parseValue(val)) {
         badUsage("Invalid '" + opt.from() + "' value", val);
         if (!opt.m_choiceDescs.empty()) {
@@ -348,6 +368,13 @@ Cli::versionOpt(const string & version, const string & progName) {
         .desc("Show version and exit.")
         .parse(verAction)
         .group(s_internalOptionGroup);
+}
+
+//===========================================================================
+Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
+    return opt<string>("password.")
+        .desc("Password required for access.")
+        .prompt(true, confirm);
 }
 
 //===========================================================================
@@ -622,6 +649,30 @@ void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
 }
 
 //===========================================================================
+bool Cli::prompt(OptBase & opt, const string & msg, bool hide, bool confirm) {
+    if (!opt.from().empty())
+        return true;
+    struct EnableEcho {
+        ~EnableEcho() { consoleEnableEcho(true); }
+    } enableEcho;
+    cout << msg;
+    if (hide)
+        consoleEnableEcho(false);
+    string val;
+    getline(cin, val);
+    cout << endl;
+    if (confirm) {
+        string again;
+        cout << "Enter again to confirm: ";
+        getline(cin, again);
+        cout << endl;
+        if (val != again)
+            return badUsage("Confirm failed, entries not the same.");
+    }
+    return parseValue(opt, "prompt0", 0, val.c_str());
+}
+
+//===========================================================================
 bool Cli::parseValue(
     OptBase & opt,
     const string & name,
@@ -657,7 +708,7 @@ bool Cli::badUsage(const string & msg) {
     if (cmd.size())
         out = "Command '" + cmd + "': ";
     out += msg;
-    return fail(kExitUsage, out); 
+    return fail(kExitUsage, out);
 }
 
 //===========================================================================
