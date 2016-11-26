@@ -13,7 +13,9 @@ Making command line interface implementation fun for kids of all ages.
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
-you did! Contains thorough documentation including many examples.
+you did! Contains thorough documentation including many examples. Or click 
+[here](https://github.com/gknowles/dimcli/blob/master/docs/README.md) if you 
+prefer it all on a single page.
 
 ## Build
 - Prerequisites
@@ -33,6 +35,19 @@ you did! Contains thorough documentation including many examples.
   - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln) for github
     integration to work
 
-## Include in your project
+## Include in Your Project
 - Copy the includes files
 - Link to the library, or just add "cli.cpp" to your project
+
+# Random Thoughts
+Sources of inspiration:
+
+- LLVM's CommandLine module
+- click - http://click.pocoo.org
+- My own bad experiences
+
+Things that were harder than expected:
+
+- parsing command lines with bash style quoting
+- response files - because of the need to transcode utf-16 on windows
+- password prompting - there's no standard way to disable console echo

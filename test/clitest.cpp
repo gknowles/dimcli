@@ -213,15 +213,25 @@ Commands:
 }
 
 //===========================================================================
-void promptTests() {
+void promptTests(bool prompt) {
     int line = 0;
     Dim::CliLocal cli;
 
     auto & pass = cli.passwordOpt(true);
+    EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --password=STRING  Password required for access.
+
+  --help             Show this message and exit.
+)");
     EXPECT_PARSE(cli, {"--password=hi"});
-    EXPECT(*pass == "hi");
-    EXPECT_PARSE(cli, {});
-    cout << "Entered password was '" << *pass << "'" << endl;
+    if (prompt) {
+        EXPECT(*pass == "hi");
+        EXPECT_PARSE(cli, {});
+        cout << "Entered password was '" << *pass << "'" << endl;
+    }
 }
 
 //===========================================================================
@@ -234,9 +244,7 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     basicTests();
-    if (*prompt) {
-        promptTests();
-    }
+    promptTests(*prompt);
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

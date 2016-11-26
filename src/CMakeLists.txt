@@ -1,3 +1,5 @@
+# CMakeLists.txt - dim cli source
+
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")

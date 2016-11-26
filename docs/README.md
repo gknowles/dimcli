@@ -997,13 +997,51 @@ There are 9 cookies.
 ~~~
 
 
-## Password Option
+## Password Prompting
+In addition to simple prompting, when an option is left off the command line 
+a prompt can also hide the input and/or require confirmation.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & pass = cli.opt<string>("password")
+        .prompt(/*hide=*/true, /*confirm=*/true);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Password was: " << *pass;
+    return EX_OK;
+}
+~~~
+Results in:
+
+~~~ console
+$ a.out
+Password: 
+Enter again to confirm: 
+Password was: secret
+~~~
+For passwords you can use opt.passwordOpt() instead of spelling it out.
+
+~~~ cpp
+auto & pass = cli.passwordOpt(/*confirm=*/true);
+~~~
+Which gives you:
+
+~~~ console
+$ a.out --help
+usage: test [OPTIONS]
+
+Options:
+  --password=STRING  Password required for access.
+
+  --help             Show this message and exit.
+~~~
+
 
 ## Option Modifiers
 
 | Modifier | Done | Description |
 |----------|------|-------------|
-| passwordOpt | - | opt("password").prompt("Password", true, true) |
 | yes | - | are you sure? fail if not y |
 
 ... none of these have been implemented.

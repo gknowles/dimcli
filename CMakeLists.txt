@@ -1,3 +1,5 @@
+# CMakeLists.txt - dim cli
+
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

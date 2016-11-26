@@ -1,3 +1,5 @@
+# CMakeLists.txt - dim cli include
+
 cmake_minimum_required (VERSION 3.6)
 project (test)
 set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
