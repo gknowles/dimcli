@@ -103,6 +103,7 @@ file(GLOB meta_sources LIST_DIRECTORIES false
     appveyor.yml
     LICENSE
     README.md
+    CHANGELOG.md
     docs/*)
 update_deps_file(${meta_sources})
 add_custom_target("_meta" SOURCES ${meta_sources})
