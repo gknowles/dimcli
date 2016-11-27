@@ -35,7 +35,6 @@ test_script:
   - build\Win64\bin\clitest
 
 deploy:
-  tag: latest
   description: continuous trunk build - $(appveyor_build_version)
   provider: GitHub
   auth_token:
