@@ -1049,6 +1049,9 @@ Options:
 ~~~
 
 
+## Confirm Option
+
+
 ## Option Modifiers
 
 | Modifier | Done | Description |

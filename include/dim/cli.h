@@ -105,19 +105,23 @@ public:
     OptVec<T> &
     optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
-    // Add --version option that shows "${progName.filename()} version ${ver}"
-    // and exits. An empty progName defaults to argv[0].
-    Opt<bool> &
-    versionOpt(const std::string & ver, const std::string & progName = {});
+    // Add -y, --yes option that exits early when false and has an "are you 
+    // sure?" style prompt when it's not present.
+    Opt<bool> & confirmOpt(const std::string & prompt = {});
+
+    // Get reference to internal help option, can be used to change the
+    // desciption, option group, etc.
+    Opt<bool> & helpOpt();
 
     // Add --password option and prompts for a password if it's not given
     // on the command line. If confirm is true and it's not on the command
     // line you have to enter it twice.
     Opt<std::string> & passwordOpt(bool confirm = false);
 
-    // Get reference to internal help option, can be used to change the
-    // desciption, option group, etc.
-    Opt<bool> & helpOpt();
+    // Add --version option that shows "${progName.filename()} version ${ver}"
+    // and exits. An empty progName defaults to argv[0].
+    Opt<bool> &
+    versionOpt(const std::string & ver, const std::string & progName = {});
 
     //-----------------------------------------------------------------------
     // A group collects options into sections in the help text. Options are

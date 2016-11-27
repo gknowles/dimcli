@@ -359,29 +359,12 @@ Cli::Cli(shared_ptr<Config> cfg)
 ***/
 
 //===========================================================================
-Cli::Opt<bool> &
-Cli::versionOpt(const string & version, const string & progName) {
-    auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
-        ignore = opt;
-        ignore = val;
-        fs::path prog = progName;
-        if (prog.empty()) {
-            prog = displayName(cli.progName());
-        }
-        cout << prog << " version " << version << endl;
-        return false;
-    };
-    return opt<bool>("version.")
-        .desc("Show version and exit.")
-        .parse(verAction)
-        .group(s_internalOptionGroup);
-}
-
-//===========================================================================
-Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
-    return opt<string>("password.")
-        .desc("Password required for access.")
-        .prompt(kPromptHide | (confirm * kPromptConfirm));
+Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
+    auto & ask = opt<bool>("y yes")
+        .desc("Suppress prompting to confirm execution.")
+        .check([](auto &, auto & opt, auto &) { return *opt; })
+        .prompt(prompt.empty() ? "Are you sure?" : prompt);
+    return ask;
 }
 
 //===========================================================================
@@ -398,6 +381,32 @@ Cli::Opt<bool> & Cli::helpOpt() {
         hlp.show(false);
     cmd.helpOpt = &hlp;
     return hlp;
+}
+
+//===========================================================================
+Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
+    return opt<string>("password.")
+        .desc("Password required for access.")
+        .prompt(kPromptHide | (confirm * kPromptConfirm));
+}
+
+//===========================================================================
+Cli::Opt<bool> &
+Cli::versionOpt(const string & version, const string & progName) {
+    auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
+        ignore = opt;
+        ignore = val;
+        fs::path prog = progName;
+        if (prog.empty()) {
+            prog = displayName(cli.progName());
+        }
+        cout << prog << " version " << version << endl;
+        return false;
+    };
+    return opt<bool>("version.")
+        .desc("Show version and exit.")
+        .parse(verAction)
+        .group(s_internalOptionGroup);
 }
 
 //===========================================================================

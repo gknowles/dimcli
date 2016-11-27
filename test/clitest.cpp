@@ -235,8 +235,7 @@ Options:
     }
 
     cli = {};
-    auto & ask = cli.opt<bool>("y yes").prompt("Are you sure?");
-    ask.check([](auto &, auto & opt, auto &) { return *opt; });
+    auto & ask = cli.confirmOpt();
     EXPECT_PARSE(cli, {"-y"});
     EXPECT(*ask);
     if (prompt) {
