@@ -1,7 +1,7 @@
 ﻿[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master)
 # dimcli
 
-Making command line implementation fun for kids of all ages.
+C++ command line implementation toolkit for kids of all ages.
 
 - parses directly to supplied (or implicitly created) variables
 - supports parsing to any type that is:

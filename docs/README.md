@@ -1,5 +1,5 @@
 # Overview
-Making command line implementation fun for kids of all ages.
+C++ command line implementation toolkit for kids of all ages.
 
 - parses directly to supplied (or implicitly created) variables
 - supports parsing to any type that is:
