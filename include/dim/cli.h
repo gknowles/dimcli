@@ -105,7 +105,7 @@ public:
     OptVec<T> &
     optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
 
-    // Add -y, --yes option that exits early when false and has an "are you 
+    // Add -y, --yes option that exits early when false and has an "are you
     // sure?" style prompt when it's not present.
     Opt<bool> & confirmOpt(const std::string & prompt = {});
 
@@ -253,10 +253,10 @@ public:
     // Prompt sends a prompt message to cout and read a response from cin,
     // the response is then passed to cli.parseValue() to set the value and
     // run any actions.
-    enum { 
-        kPromptHide      = 1,   // hide user input as they type
-        kPromptConfirm   = 2,   // make the user enter it twice
-        kPromptNoDefault = 4,   // don't include default value in prompt
+    enum {
+        kPromptHide = 1,      // hide user input as they type
+        kPromptConfirm = 2,   // make the user enter it twice
+        kPromptNoDefault = 4, // don't include default value in prompt
     };
     bool prompt(OptBase & opt, const std::string & msg, int flags);
 
@@ -603,7 +603,7 @@ public:
     A & prompt(
         const std::string & msg, // custom prompt message
         int flags = 0            // Cli::kPrompt* flags
-        );   
+        );
 
     // Change the action to take when parsing this argument. The function
     // should:
@@ -634,7 +634,7 @@ public:
     // The function should:
     //  - Check the options new value, possibly in relation to other options.
     //  - Call cli.badUsage() with an error message if there's a problem.
-    //  - Return false if the program should stop, otherwise true to let 
+    //  - Return false if the program should stop, otherwise true to let
     //    processing continue.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
@@ -855,8 +855,7 @@ inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 }
 
 //===========================================================================
-template <typename A, typename T>
-A & Cli::OptShim<A, T>::prompt(int flags) {
+template <typename A, typename T> A & Cli::OptShim<A, T>::prompt(int flags) {
     return prompt(this->defaultPrompt() + ":", flags);
 }
 
