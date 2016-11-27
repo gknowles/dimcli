@@ -1,5 +1,5 @@
 # Overview
-Making command line interface implementation fun for kids of all ages.
+Making command line implementation fun for kids of all ages.
 
 - parses directly to supplied (or implicitly created) variables
 - supports parsing to any type that is:
