@@ -361,7 +361,7 @@ Cli::Cli(shared_ptr<Config> cfg)
 //===========================================================================
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes")
-        .desc("Suppress prompting to confirm execution.")
+        .desc("Suppress prompting to allow execution.")
         .check([](auto &, auto & opt, auto &) { return *opt; })
         .prompt(prompt.empty() ? "Are you sure?" : prompt);
     return ask;

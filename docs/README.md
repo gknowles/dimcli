@@ -469,8 +469,7 @@ a non-crazy --version use [opt.versionOpt()](Version Option)).
 
 Parsing actions are attached to options and get invoked when a value becomes 
 available for it. Any std::function compatible object that accepts references 
-to cli, option, and source string as parameters can be used. The function 
-should:
+to cli, opt, and string as parameters can be used. The function should:
 
 - Parse the source string and use the result to set the option value (or 
   push back the additional value for vector arguments).
@@ -480,6 +479,7 @@ should:
 
 Other things to keep in mind:
 
+- Options only have one parse action, changing it *replaces* the default.
 - You can use opt.from() and opt.pos() to get the argument name that the value 
   was attached to on the command line and its position in argv\[].
 - For bool options the source value string will always be either "0" or "1".
@@ -523,9 +523,33 @@ Error: Invalid '-n' value: x
 
 
 ## Check Actions
+Check actions run for each value that is successfully parsed and are a good 
+place for additional work. For example, opt.range() and opt.clamp() are 
+implemented as check actions. Just like parse actions the callback is any
+std::function compatible object that accepts references to cli, opt, and
+string parameters and returns bool. 
+
+An option can have any number of check actions and they are called in the
+order they were added.
+
+The function should:
+- check the options new value, possible in relation to other options.
+- call cli.badUsage() with an error message if there's a problem.
+- Return false if the program should stop, otherwise true to let processing
+  continue.
+
+The opt is fully populated, so *opt, opt.from(), etc are all available.
 
 
 ## After Actions
+After actions run after all arguments have been parsed. After actions are 
+used to implement opt.prompt(). Any number of after actions can be added and 
+will, for each option, be called in the order they're added. 
+
+The function should:
+- Do something interesting.
+- Call cli.badUsage() and return false on error.
+- Return true if processing should continue.
 
 
 ## Multiple Source Files
@@ -1050,6 +1074,52 @@ Options:
 
 
 ## Confirm Option
+There is a short cut for a "-y, --yes" option, called cli.confirmOpt(), that 
+only lets the program run if the option is set or the user responds with 'y' 
+or 'Y' when asked if they are sure. Otherwise it sets cli.exitCode() to EX_OK 
+and causes cli.parse() to return false.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.confirmOpt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "HELLO!!!";
+    return EX_OK;
+}
+~~~
+Cover your ears...
+
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -y, --yes  Suppress prompting to allow execution.
+
+  --help     Show this message and exit.
+
+$ a.out -y
+HELLO!!!
+$ a.out
+Are you sure? [y/N]: n
+$ a.out
+Are you sure? [y/N]: y
+HELLO!!!
+~~~
+You can change the prompt:
+
+~~~ cpp
+cli.confirmOpt("Are loud noises okay?");
+~~~
+Now it asks:
+
+~~~ console
+$ a.out
+Are loud noises okay? [y/N]: y
+HELLO!!!
+~~~
 
 
 ## Option Modifiers

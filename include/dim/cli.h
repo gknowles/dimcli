@@ -250,6 +250,9 @@ public:
         int pos,
         const char src[]);
 
+    // Prompt sends a prompt message to cout and read a response from cin,
+    // the response is then passed to cli.parseValue() to set the value and
+    // run any actions.
     enum { 
         kPromptHide      = 1,   // hide user input as they type
         kPromptConfirm   = 2,   // make the user enter it twice
@@ -604,10 +607,10 @@ public:
 
     // Change the action to take when parsing this argument. The function
     // should:
-    //  - parse the src string and use the result to set the value (or
+    //  - Parse the src string and use the result to set the value (or
     //    push_back the new value for vectors).
-    //  - call cli.badUsage() with an error message if there's a problem
-    //  - return false if the program should stop, otherwise true. This
+    //  - Call cli.badUsage() with an error message if there's a problem.
+    //  - Return false if the program should stop, otherwise true. This
     //    could be due to error or just to early out like "--version" and
     //    "--help".
     //
@@ -629,10 +632,10 @@ public:
     // both do their job by adding check actions.
     //
     // The function should:
-    //  - check the options new value, possibly in relation to other options
-    //  - call cli.badUsage() with an error message if there's a problem
-    //  - return false if the program should stop, otherwise to let processing
-    //    continue.
+    //  - Check the options new value, possibly in relation to other options.
+    //  - Call cli.badUsage() with an error message if there's a problem.
+    //  - Return false if the program should stop, otherwise true to let 
+    //    processing continue.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);
@@ -640,9 +643,9 @@ public:
     // Action to run after all arguments have been parsed, any number of
     // after actions can be added and will, for each option, be called in the
     // order they're added. The function should:
-    //  - do something interesting
-    //  - call cli.badUsage() and return false on error
-    //  - return true to let processing continue
+    //  - Do something interesting.
+    //  - Call cli.badUsage() and return false on error.
+    //  - Return true if processing should continue.
     A & after(std::function<ActionFn> fn);
 
     //-----------------------------------------------------------------------
