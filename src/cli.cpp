@@ -381,7 +381,7 @@ Cli::versionOpt(const string & version, const string & progName) {
 Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
     return opt<string>("password.")
         .desc("Password required for access.")
-        .prompt(true, confirm);
+        .prompt(kPromptHide | (confirm * kPromptConfirm));
 }
 
 //===========================================================================
@@ -656,24 +656,28 @@ void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
 }
 
 //===========================================================================
-bool Cli::prompt(OptBase & opt, const string & msg, bool hide, bool confirm) {
+bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
     if (!opt.from().empty())
         return true;
     struct EnableEcho {
         ~EnableEcho() { consoleEnableEcho(true); }
     } enableEcho;
     cout << msg << ' ';
-    if (hide)
+    if (~flags & kPromptNoDefault) {
+        if (opt.m_bool)
+            cout << "[y/N]: ";
+    }
+    if (flags & kPromptHide)
         consoleEnableEcho(false);
     string val;
     getline(cin, val);
-    if (hide)
+    if (flags & kPromptHide)
         cout << endl;
-    if (confirm) {
+    if (flags & kPromptConfirm) {
         string again;
         cout << "Enter again to confirm: ";
         getline(cin, again);
-        if (hide)
+        if (flags & kPromptHide)
             cout << endl;
         if (val != again)
             return badUsage("Confirm failed, entries not the same.");

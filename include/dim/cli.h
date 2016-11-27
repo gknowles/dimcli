@@ -246,8 +246,12 @@ public:
         int pos,
         const char src[]);
 
-    bool
-    prompt(OptBase & opt, const std::string & msg, bool hide, bool confirm);
+    enum { 
+        kPromptHide      = 1,   // hide user input as they type
+        kPromptConfirm   = 2,   // make the user enter it twice
+        kPromptNoDefault = 4,   // don't include default value in prompt
+    };
+    bool prompt(OptBase & opt, const std::string & msg, int flags);
 
     //-----------------------------------------------------------------------
     // After parsing
@@ -586,15 +590,13 @@ public:
     A & clamp(const T & low, const T & high);
 
     // Enables prompting. When the option hasn't been provided on the command
-    // line the user will be prompted for it.
-    A & prompt(bool hide = false, bool confirm = false);
-    A & prompt(const char msg[], bool hide = false, bool confirm = false) {
-        return prompt(string(msg), hide, confirm);
-    }
+    // line the user will be prompted for it. Use Cli::kPrompt* flags to
+    // adjust behavior.
+    A & prompt(int flags = 0);
     A & prompt(
-        const std::string & msg, // message to prompt with instead of default
-        bool hide = false,       // hide user input as they type
-        bool confirm = false);   // make the user enter it twice
+        const std::string & msg, // custom prompt message
+        int flags = 0            // Cli::kPrompt* flags
+        );   
 
     // Change the action to take when parsing this argument. The function
     // should:
@@ -847,18 +849,15 @@ inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::prompt(bool hide, bool confirm) {
-    return prompt(this->defaultPrompt() + ":", hide, confirm);
+A & Cli::OptShim<A, T>::prompt(int flags) {
+    return prompt(this->defaultPrompt() + ":", flags);
 }
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::prompt(
-    const std::string & msg,
-    bool hide,
-    bool confirm) {
+A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
     after([=](auto & cli, auto & opt, auto & /* val */) {
-        return cli.prompt(opt, msg, hide, confirm);
+        return cli.prompt(opt, msg, flags);
     });
     return static_cast<A &>(*this);
 }

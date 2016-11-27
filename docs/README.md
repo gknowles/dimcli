@@ -522,6 +522,12 @@ Error: Invalid '-n' value: x
 ~~~
 
 
+## Check Actions
+
+
+## After Actions
+
+
 ## Multiple Source Files
 Options don't have to be defined all in one source file, separate source 
 files can each define options of interest to that file and get them populated
@@ -999,13 +1005,18 @@ There are 9 cookies.
 
 ## Password Prompting
 In addition to simple prompting, when an option is left off the command line 
-a prompt can also hide the input and/or require confirmation.
+a prompt also has some behaviors that are controlled by flags.
+
+| Flag           | Description                        |
+|----------------|------------------------------------|
+| kPromptHide    | hides the input fron the console   |
+| kPromptConfirm | require the value be entered twice |
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & pass = cli.opt<string>("password")
-        .prompt(/*hide=*/true, /*confirm=*/true);
+        .prompt(cli.kPromptHide | cli.kPromptConfirm);
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Password was: " << *pass;
