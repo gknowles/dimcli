@@ -451,7 +451,7 @@ public:
     // tied to a command line argument.
     const std::string & defaultFrom() const { return m_fromName; }
     std::string defaultPrompt() const;
-    
+
 protected:
     virtual bool parseValue(Cli & cli, const std::string & value) = 0;
     virtual bool checkValue(Cli & cli, const std::string & value) = 0;
@@ -588,6 +588,9 @@ public:
     // Enables prompting. When the option hasn't been provided on the command
     // line the user will be prompted for it.
     A & prompt(bool hide = false, bool confirm = false);
+    A & prompt(const char msg[], bool hide = false, bool confirm = false) {
+        return prompt(string(msg), hide, confirm);
+    }
     A & prompt(
         const std::string & msg, // message to prompt with instead of default
         bool hide = false,       // hide user input as they type
@@ -616,14 +619,14 @@ public:
     // Action to take after each value is parsed, unlike parsing where there
     // can only be one action, any number of check actions can be added. They
     // will be called in the order they were added and if any of them return
-    // false an error is generated. As an example, opt.clamp() and opt.range()
+    // false it stops processing. As an example, opt.clamp() and opt.range()
     // both do their job by adding check actions.
     //
     // The function should:
     //  - check the options new value, possibly in relation to other options
-    //  - call cli.badUsage() with an error message and return false if
-    //    there's a problem.
-    //  - return true if everything is fine, to let processing continue.
+    //  - call cli.badUsage() with an error message if there's a problem
+    //  - return false if the program should stop, otherwise to let processing
+    //    continue.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);

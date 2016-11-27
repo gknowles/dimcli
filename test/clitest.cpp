@@ -194,9 +194,9 @@ Commands:
     EXPECT(*a1 == 3);
     EXPECT(*a2 == 2);
     EXPECT(c2.runCommand() == "one");
-    EXPECT_PARSE2(c1, false, 64, {"-a"});
+    EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"-a"});
     EXPECT(c2.errMsg() == "Unknown option: -a");
-    EXPECT_PARSE2(c1, false, 64, {"two", "-a"});
+    EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"two", "-a"});
     EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
 
     {
@@ -206,7 +206,7 @@ Commands:
         EXPECT_PARSE(cli, {"20", "a"});
         EXPECT(*count == 10);
         EXPECT(*letter == 'a');
-        EXPECT_PARSE2(cli, false, 64, {"5", "0"});
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"5", "0"});
         EXPECT(*count == 5);
         EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
     }
@@ -227,10 +227,22 @@ Options:
   --help             Show this message and exit.
 )");
     EXPECT_PARSE(cli, {"--password=hi"});
+    EXPECT(*pass == "hi");
     if (prompt) {
-        EXPECT(*pass == "hi");
+        cout << "Expects password to be confirmed (empty is ok)." << endl;
         EXPECT_PARSE(cli, {});
         cout << "Entered password was '" << *pass << "'" << endl;
+    }
+
+    cli = {};
+    auto & ask = cli.opt<bool>("y yes").prompt("Are you sure? [y/N]:");
+    ask.check([](auto &, auto & opt, auto &) { return *opt; });
+    EXPECT_PARSE(cli, {"-y"});
+    EXPECT(*ask);
+    if (prompt) {
+        cout << "Expects answer to be no." << endl;
+        EXPECT_PARSE2(cli, false, 0, {});
+        EXPECT(!*ask);
     }
 }
 

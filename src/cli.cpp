@@ -667,14 +667,19 @@ bool Cli::prompt(OptBase & opt, const string & msg, bool hide, bool confirm) {
         consoleEnableEcho(false);
     string val;
     getline(cin, val);
-    cout << endl;
+    if (hide)
+        cout << endl;
     if (confirm) {
         string again;
         cout << "Enter again to confirm: ";
         getline(cin, again);
-        cout << endl;
+        if (hide)
+            cout << endl;
         if (val != again)
             return badUsage("Confirm failed, entries not the same.");
+    }
+    if (opt.m_bool) {
+        val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
     }
     return parseValue(opt, opt.defaultFrom(), 0, val.c_str());
 }
@@ -694,12 +699,7 @@ bool Cli::parseValue(
     } else {
         opt.unspecifiedValue();
     }
-    if (!opt.checkValue(*this, val)) {
-        if (!exitCode())
-            badUsage("Check failed for '"s + name + "'", val);
-        return false;
-    }
-    return true;
+    return opt.checkValue(*this, val);
 }
 
 //===========================================================================
