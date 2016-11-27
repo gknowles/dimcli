@@ -34,11 +34,12 @@ artifacts:
 test_script:
   - build\Win64\bin\clitest
 
-deploy:
-  description: continuous trunk build - $(appveyor_build_version)
-  provider: GitHub
-  auth_token:
-    secure: yheCA/FJ+f7CL84HoPf9MapOlDZQmrGyiqlwFeeIhxvdOudQisUdOyZuWfwq3lUU
-  prerelease: true
-  draft: false
-  force_update: true
+#deploy:
+#  tag: latest
+#  description: continuous trunk build - $(appveyor_build_version)
+#  provider: GitHub
+#  auth_token:
+#    secure: yheCA/FJ+f7CL84HoPf9MapOlDZQmrGyiqlwFeeIhxvdOudQisUdOyZuWfwq3lUU
+#  prerelease: true
+#  draft: false
+#  force_update: true
