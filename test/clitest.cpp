@@ -235,10 +235,11 @@ Commands:
 }
 
 //===========================================================================
-void promptTests() {
+void promptTests(bool prompt) {
     int line = 0;
     Dim::CliLocal cli;
 
+    cli = {};
     auto & pass = cli.passwordOpt(true);
     EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
@@ -257,6 +258,13 @@ Options:
     EXPECT(*pass == "secret");
     EXPECT(out.str() == "Password: \nEnter again to confirm: \n");
     EXPECT(in.get() == EOF);
+    if (prompt) {
+        cli.iostreams(nullptr, nullptr);
+        cout << "Expects password to be confirmed (empty is ok)." << endl
+            << "What you type should *NOT* be visible!" << endl;
+        EXPECT_PARSE(cli, {});
+        cout << "Entered password was '" << *pass << "'" << endl;
+    }
 
     cli = {};
     auto & ask = cli.confirmOpt();
@@ -269,6 +277,13 @@ Options:
     EXPECT(!*ask);
     EXPECT(out.str() == "Are you sure? [y/N]: ");
     EXPECT(in.get() == EOF);
+    if (prompt) {
+        cli.iostreams(nullptr, nullptr);
+        cout << "Expects answer to be no." << endl
+            << "What you type should be visible." << endl;
+        EXPECT_PARSE2(cli, false, 0, {});
+        EXPECT(!*ask);
+    }
 }
 
 //===========================================================================
@@ -277,10 +292,11 @@ int main(int argc, char * argv[]) {
     _set_error_mode(_OUT_TO_MSGBOX);
 
     Dim::CliLocal cli;
+    auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     basicTests();
-    promptTests();
+    promptTests(*prompt);
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
