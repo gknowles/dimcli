@@ -760,8 +760,18 @@ $ a.out @rsp/one.rsp
 Words: one two three
 ~~~
 
+Recursive response files are an error.
+~~~ console
+$ echo "@one.rsp" >one.rsp
+$ a.out @one.rsp
+Error: Recursive response file: one.rsp
+~~~
+
 While generally useful response file processing can be disabled via 
 cli.responseFiles(false).
+
+
+## Environment Variable
 
 
 ## Keep It Quiet
