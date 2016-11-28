@@ -66,36 +66,51 @@ void toArgvTest(
 void basicTests() {
     int line = 0;
     Dim::CliLocal cli;
+    istringstream in;
+    ostringstream out;
 
-    cli = {};
-    auto & sum = cli.opt<int>("n number", 1)
-                     .desc("numbers to multiply")
-                     .parse([](auto & cli, auto & arg, const string & val) {
-                         int tmp = *arg;
-                         if (!arg.parseValue(val))
-                             return cli.badUsage(
-                                 "Bad '" + arg.from() + "' value: " + val);
-                         *arg *= tmp;
-                         return true;
-                     });
-    cli.versionOpt("1.0");
-    EXPECT_PARSE(cli, {"-n2", "-n3"});
-    EXPECT(*sum == 6);
-    EXPECT_PARSE2(cli, false, 0, {"--version"});
+    {
+        cli = {};
+        auto & sum =
+            cli.opt<int>("n number", 1)
+                .desc("numbers to multiply")
+                .parse([](auto & cli, auto & arg, const string & val) {
+                    int tmp = *arg;
+                    if (!arg.parseValue(val))
+                        return cli.badUsage(
+                            "Bad '" + arg.from() + "' value: " + val);
+                    *arg *= tmp;
+                    return true;
+                });
+        EXPECT_PARSE(cli, {"-n2", "-n3"});
+        EXPECT(*sum == 6);
+    }
 
-    cli = {};
-    auto & num = cli.opt<int>("n number", 1).desc("number is an int");
-    cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
-    auto & special = cli.opt<bool>("s special !S", false).desc("snowflake");
-    auto & name =
-        cli.group("name").title("Name options").optVec<string>("name");
-    cli.group("").optVec<string>("[key]").desc(
-        "it's the key argument with a very long description that wraps the "
-        "line at least once, maybe more.");
-    cli.title(
-        "Long explanation of this very short set of options, it's so long "
-        "that it even wraps around to the next line");
-    EXPECT_HELP(cli, "", 1 + R"(
+    {
+        cli = {};
+        cli.versionOpt("1.0");
+        in.str("");
+        out.str("");
+        cli.iostreams(&in, &out);
+        EXPECT_PARSE2(cli, false, 0, {"--version"});
+        EXPECT(out.str() == "test version 1.0\n");
+    }
+
+    {
+        cli = {};
+        auto & num = cli.opt<int>("n number", 1).desc("number is an int");
+        cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
+        auto & special =
+            cli.opt<bool>("s special !S", false).desc("snowflake");
+        auto & name =
+            cli.group("name").title("Name options").optVec<string>("name");
+        cli.group("").optVec<string>("[key]").desc(
+            "it's the key argument with a very long description that wraps "
+            "the line at least once, maybe more.");
+        cli.title(
+            "Long explanation of this very short set of options, it's so "
+            "long that it even wraps around to the next line");
+        EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS] [key...]
   key       it's the key argument with a very long description that wraps the
             line at least once, maybe more.
@@ -112,23 +127,25 @@ Name options:
 
   --help                     Show this message and exit.
 )");
-    EXPECT_PARSE(cli, {"-n3"});
-    EXPECT(*num == 3);
-    EXPECT_PARSE(cli, {"--name", "two"});
-    EXPECT_PARSE(cli, {"--name=three"});
-    EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
-    EXPECT_PARSE(cli, {"key", "extra"});
-    EXPECT_PARSE(cli, {"-", "--", "-s"});
-    *num += 2;
-    EXPECT(*num == 2);
-    *special = name->empty();
-    EXPECT(*special);
+        EXPECT_PARSE(cli, {"-n3"});
+        EXPECT(*num == 3);
+        EXPECT_PARSE(cli, {"--name", "two"});
+        EXPECT_PARSE(cli, {"--name=three"});
+        EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
+        EXPECT_PARSE(cli, {"key", "extra"});
+        EXPECT_PARSE(cli, {"-", "--", "-s"});
+        *num += 2;
+        EXPECT(*num == 2);
+        *special = name->empty();
+        EXPECT(*special);
+    }
 
-    cli = {};
-    cli.footer("Multiline footer:\n"
-               "- first reference\n"
-               "- second reference\n");
-    EXPECT_HELP(cli, "", 1 + R"(
+    {
+        cli = {};
+        cli.footer("Multiline footer:\n"
+                   "- first reference\n"
+                   "- second reference\n");
+        EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
@@ -138,6 +155,7 @@ Multiline footer:
 - first reference
 - second reference
 )");
+    }
 
     {
         cli = {};
@@ -161,26 +179,29 @@ Multiline footer:
         EXPECT_PARSE(cli, {"--count"});
     }
 
-    auto fn = cli.toWindowsArgv;
-    EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
-    EXPECT_ARGV(fn, R"(a"" b ")", {"a", "b", ""});
-    EXPECT_ARGV(fn, R"("abc" d e)", {"abc", "d", "e"});
-    EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
-    EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
-    EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+    {
+        auto fn = cli.toWindowsArgv;
+        EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
+        EXPECT_ARGV(fn, R"(a"" b ")", {"a", "b", ""});
+        EXPECT_ARGV(fn, R"("abc" d e)", {"abc", "d", "e"});
+        EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+        EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
+        EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+    }
 
-    Dim::Cli c1;
-    auto & a1 = c1.command("one").opt<int>("a", 1);
-    c1.desc("First sentence of description. Rest of one's description.");
-    Dim::Cli c2;
-    auto & a2 = c2.command("two").opt<int>("a", 2);
-    EXPECT_HELP(c1, "one", 1 + R"(
+    {
+        Dim::Cli c1;
+        auto & a1 = c1.command("one").opt<int>("a", 1);
+        c1.desc("First sentence of description. Rest of one's description.");
+        Dim::Cli c2;
+        auto & a2 = c2.command("two").opt<int>("a", 2);
+        EXPECT_HELP(c1, "one", 1 + R"(
 usage: test one [OPTIONS]
 First sentence of description. Rest of one's description.
 Options:
   -a NUM
 )");
-    EXPECT_HELP(c1, "", 1 + R"(
+        EXPECT_HELP(c1, "", 1 + R"(
 usage: test [OPTIONS] command [args...]
 
 Options:
@@ -190,14 +211,15 @@ Commands:
   one       First sentence of description.
   two
 )");
-    EXPECT_PARSE(c1, {"one", "-a3"});
-    EXPECT(*a1 == 3);
-    EXPECT(*a2 == 2);
-    EXPECT(c2.runCommand() == "one");
-    EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"-a"});
-    EXPECT(c2.errMsg() == "Unknown option: -a");
-    EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"two", "-a"});
-    EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
+        EXPECT_PARSE(c1, {"one", "-a3"});
+        EXPECT(*a1 == 3);
+        EXPECT(*a2 == 2);
+        EXPECT(c2.runCommand() == "one");
+        EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"-a"});
+        EXPECT(c2.errMsg() == "Unknown option: -a");
+        EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"two", "-a"});
+        EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
+    }
 
     {
         cli = {};
@@ -213,7 +235,7 @@ Commands:
 }
 
 //===========================================================================
-void promptTests(bool prompt) {
+void promptTests() {
     int line = 0;
     Dim::CliLocal cli;
 
@@ -228,21 +250,25 @@ Options:
 )");
     EXPECT_PARSE(cli, {"--password=hi"});
     EXPECT(*pass == "hi");
-    if (prompt) {
-        cout << "Expects password to be confirmed (empty is ok)." << endl;
-        EXPECT_PARSE(cli, {});
-        cout << "Entered password was '" << *pass << "'" << endl;
-    }
+    istringstream in("secret\nsecret\n");
+    ostringstream out;
+    cli.iostreams(&in, &out);
+    EXPECT_PARSE(cli, {});
+    EXPECT(*pass == "secret");
+    EXPECT(out.str() == "Password: \nEnter again to confirm: \n");
+    EXPECT(in.get() == EOF);
 
     cli = {};
     auto & ask = cli.confirmOpt();
     EXPECT_PARSE(cli, {"-y"});
     EXPECT(*ask);
-    if (prompt) {
-        cout << "Expects answer to be no." << endl;
-        EXPECT_PARSE2(cli, false, 0, {});
-        EXPECT(!*ask);
-    }
+    in.str("n\n");
+    out.str("");
+    cli.iostreams(&in, &out);
+    EXPECT_PARSE2(cli, false, 0, {});
+    EXPECT(!*ask);
+    EXPECT(out.str() == "Are you sure? [y/N]: ");
+    EXPECT(in.get() == EOF);
 }
 
 //===========================================================================
@@ -251,11 +277,10 @@ int main(int argc, char * argv[]) {
     _set_error_mode(_OUT_TO_MSGBOX);
 
     Dim::CliLocal cli;
-    auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     basicTests();
-    promptTests(*prompt);
+    promptTests();
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

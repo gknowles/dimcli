@@ -69,6 +69,8 @@ struct Cli::Config {
     unordered_map<string, CommandConfig> cmds;
     list<unique_ptr<OptBase>> opts;
     bool responseFiles{true};
+    std::istream * conin{&cin};
+    std::ostream * conout{&cout};
 
     int exitCode{0};
     string errMsg;
@@ -284,7 +286,7 @@ void Cli::OptBase::indexLongName(
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
     stringTo(*opt, val);
     if (*opt) {
-        cli.writeHelp(cout, {}, cli.runCommand());
+        cli.writeHelp(cli.conout(), {}, cli.runCommand());
         return false;
     }
     return true;
@@ -400,7 +402,7 @@ Cli::versionOpt(const string & version, const string & progName) {
         if (prog.empty()) {
             prog = displayName(cli.progName());
         }
-        cout << prog << " version " << version << endl;
+        cli.conout() << prog << " version " << version << endl;
         return false;
     };
     return opt<bool>("version.")
@@ -487,6 +489,22 @@ const string & Cli::footer() const {
 //===========================================================================
 void Cli::responseFiles(bool enable) {
     m_cfg->responseFiles = enable;
+}
+
+//===========================================================================
+void Cli::iostreams(std::istream * in, std::ostream * out) {
+    m_cfg->conin = in ? in : &cin;
+    m_cfg->conout = out ? out : &cout;
+}
+
+//===========================================================================
+istream & Cli::conin() {
+    return *m_cfg->conin;
+}
+
+//===========================================================================
+ostream & Cli::conout() {
+    return *m_cfg->conout;
 }
 
 //===========================================================================
@@ -671,27 +689,32 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
     struct EnableEcho {
         ~EnableEcho() { consoleEnableEcho(true); }
     } enableEcho;
-    cout << msg << ' ';
+    auto & is = conin();
+    auto & os = conout();
+    os << msg << ' ';
     if (~flags & kPromptNoDefault) {
         if (opt.m_bool)
-            cout << "[y/N]: ";
+            os << "[y/N]: ";
     }
     if (flags & kPromptHide)
         consoleEnableEcho(false);
     string val;
-    getline(cin, val);
+    os.flush();
+    getline(is, val);
     if (flags & kPromptHide)
-        cout << endl;
+        os << endl;
     if (flags & kPromptConfirm) {
         string again;
-        cout << "Enter again to confirm: ";
-        getline(cin, again);
+        os << "Enter again to confirm: " << flush;
+        getline(is, again);
         if (flags & kPromptHide)
-            cout << endl;
+            os << endl;
         if (val != again)
             return badUsage("Confirm failed, entries not the same.");
     }
     if (opt.m_bool) {
+        // Honor the contract that bool parse functions are only presented
+        // with either "0" or "1".
         val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
     }
     return parseValue(opt, opt.defaultFrom(), 0, val.c_str());

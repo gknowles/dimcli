@@ -175,6 +175,13 @@ public:
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
 
+    // Changes the streams used for prompting, outputing help messages, etc.
+    // Mainly intended for testing. Setting to null restores the defaults
+    // which are cin and cout respectively.
+    void iostreams(std::istream * in, std::ostream * out);
+    std::istream & conin();
+    std::ostream & conout();
+
     //-----------------------------------------------------------------------
     // Help
 
@@ -250,9 +257,9 @@ public:
         int pos,
         const char src[]);
 
-    // Prompt sends a prompt message to cout and read a response from cin,
-    // the response is then passed to cli.parseValue() to set the value and
-    // run any actions.
+    // Prompt sends a prompt message to cout and read a response from cin
+    // (unless cli.iostreams() changed the streams to use), the response is
+    // then passed to cli.parseValue() to set the value and run any actions.
     enum {
         kPromptHide = 1,      // hide user input as they type
         kPromptConfirm = 2,   // make the user enter it twice
