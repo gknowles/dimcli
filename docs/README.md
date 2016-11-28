@@ -760,7 +760,7 @@ $ a.out @rsp/one.rsp
 Words: one two three
 ~~~
 
-Recursive response files are an error.
+Recursive response files will fail, don't worry!
 ~~~ console
 $ echo "@one.rsp" >one.rsp
 $ a.out @one.rsp
@@ -772,6 +772,46 @@ cli.responseFiles(false).
 
 
 ## Environment Variable
+You can specify an environment variable that will add arguments to the 
+command line. 
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & words = cli.optVec<string>("[words]");
+    cli.envOpts("A_OPTS");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Words:";
+    for (auto && word : *words)
+        cout << " '" << word << "'";
+    return EX_OK;
+}
+~~~
+The same can also be done manually, which is a good place to start if you 
+need something slightly different:
+
+~~~ cpp
+vector<string> args = cli.toArgv(argc, argv);
+if (const char * eopts = getenv("A_OPTS")) {
+    vector<string> eargs = cli.toArgv(eopts);
+    // Insert the environment args after arg0 (program name) but before
+    // the rest of the command line.
+    args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+}
+if (!cli.parse(cerr, args))
+    return cli.exitCode();
+~~~
+How this works:
+
+~~~ console
+$ export A_OPTS=
+$ a.out c d
+Words: 'c' 'd'
+$ export A_OPTS=a b
+$ a.out 'c' 'd'
+Words: 'a' 'b' 'c' 'd'
+~~~
 
 
 ## Keep It Quiet
