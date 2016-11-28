@@ -69,8 +69,9 @@ struct Cli::Config {
     unordered_map<string, CommandConfig> cmds;
     list<unique_ptr<OptBase>> opts;
     bool responseFiles{true};
-    std::istream * conin{&cin};
-    std::ostream * conout{&cout};
+    string envOpts;
+    istream * conin{&cin};
+    ostream * conout{&cout};
 
     int exitCode{0};
     string errMsg;
@@ -125,6 +126,24 @@ static fs::path displayName(const fs::path & file) {
     return file.filename();
 #endif
 }
+
+//===========================================================================
+// Replaces a set of contiguous values in one vector with the entire contents
+// of another, growing or shrinking it as needed.
+template <typename T>
+static void
+replace(vector<T> & out, size_t pos, size_t count, vector<T> && src) {
+    size_t srcLen = src.size();
+    if (count > srcLen) {
+        out.erase(out.begin() + pos + srcLen, out.begin() + pos + count);
+    } else if (count < srcLen) {
+        out.insert(out.begin() + pos + count, srcLen - count, {});
+    }
+    auto i = out.begin() + pos;
+    for (auto && val : src)
+        *i++ = move(val);
+}
+
 
 /****************************************************************************
 *
@@ -492,6 +511,11 @@ void Cli::responseFiles(bool enable) {
 }
 
 //===========================================================================
+void Cli::envOpts(const string & var) {
+    m_cfg->envOpts = var;
+}
+
+//===========================================================================
 void Cli::iostreams(std::istream * in, std::ostream * out) {
     m_cfg->conin = in ? in : &cin;
     m_cfg->conout = out ? out : &cout;
@@ -616,15 +640,9 @@ static bool expandResponseFile(
     auto rargs = cli.toArgv(content);
     if (!expandResponseFiles(cli, rargs, ancestors))
         return false;
-    if (rargs.empty()) {
-        args.erase(args.begin() + pos);
-    } else {
-        args.insert(args.begin() + pos + 1, rargs.size() - 1, {});
-        auto i = args.begin() + pos;
-        for (auto && arg : rargs)
-            *i++ = move(arg);
-        pos += rargs.size();
-    }
+    size_t rargLen = rargs.size();
+    replace(args, pos, 1, move(rargs));
+    pos += rargLen;
     ancestors.erase(ib.first);
     return true;
 }
@@ -776,6 +794,14 @@ bool Cli::parse(vector<string> & args) {
     assert(ndx.allowCommands || !needCmd);
 
     resetValues();
+
+    // insert environment options
+    if (m_cfg->envOpts.size()) {
+        if (const char * val = getenv(m_cfg->envOpts.c_str()))
+            replace(args, 1, 0, toArgv(val));
+    }
+
+    // expand response files
     unordered_set<string> ancestors;
     if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;

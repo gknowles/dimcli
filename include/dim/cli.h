@@ -175,6 +175,11 @@ public:
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
 
+    // Environment variable to get initial options from. Defaults to the empty
+    // string, but when set the content of the named variable is parsed into
+    // args which are then inserted into the argument list right after arg0.
+    void envOpts(const std::string & envVar);
+
     // Changes the streams used for prompting, outputing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults
     // which are cin and cout respectively.
@@ -1058,7 +1063,9 @@ public:
     void unspecifiedValue() final;
     size_t size() const final;
 
-    // Information about a specific member of the vector of values
+    // Information about a specific member of the vector of values at the 
+    // time it was parsed. If the value vector has been changed (sort, erase, 
+    // insert, etc) by the app these will no longer correspond.
     const std::string & from(size_t index) const;
     int pos(size_t index) const;
 

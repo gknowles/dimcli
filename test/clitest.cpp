@@ -287,6 +287,22 @@ Options:
 }
 
 //===========================================================================
+void envTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+
+    cli = {};
+    auto & args = cli.optVec<string>("[args]");
+    cli.envOpts("TEST_OPTS");
+    putenv("");
+    EXPECT_PARSE(cli, {"c", "d"});
+    EXPECT(args->size() == 2);
+    putenv("TEST_OPTS=a b");
+    EXPECT_PARSE(cli, {"c", "d"});
+    EXPECT(args->size() == 4);
+}
+
+//===========================================================================
 int main(int argc, char * argv[]) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
@@ -296,6 +312,7 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     basicTests();
+    envTests();
     promptTests(*prompt);
 
     if (s_errors) {
