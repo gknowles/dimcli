@@ -37,7 +37,7 @@ prefer it all on a single page.
 
 ## Include in Your Project
 - Copy the includes files
-- Link to the library, or just add "cli.cpp" to your project
+- Link to the library
 
 # Random Thoughts
 Sources of inspiration:

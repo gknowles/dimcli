@@ -14,7 +14,6 @@ How does it feel?
 ~~~ cpp
 #include "dim/cli.h"
 #include <iostream>
-#include <sysexits.h>
 using namespace std;
 
 int main(int argc, char * argv[]) {
@@ -27,10 +26,10 @@ int main(int argc, char * argv[]) {
         cout << "Using the unknown name." << endl;
     for (unsigned i = 0; i < *count; ++i)
         cout << "Hello " << *name << "!" << endl;
+    return 0;
 }
 ~~~
-
-What it looks like when run: 
+What that does when run: 
 
 ~~~ console
 $ a.out --help
@@ -62,7 +61,7 @@ EX_OK.
 ~~~ cpp
 #include "dim/cli.h"
 #include <iostream>
-#include <sysexits.h>
+#include <sysexits.h> // if you want the unix exit code macros (EX_*)
 using namespace std;
 
 int main(int argc, char * argv[]) {
@@ -89,8 +88,8 @@ Does the apple have a worm? No!
 
 The EX_* constants (along with standard values) are in sysexits.h on most 
 unixes, althrough it may not be in any standard. Equivalent enum values
-Dim::kExitOk and Dim::kExitUsage are defined, which can be useful on Windows
-where \<sysexits.h> doesn't exist.
+Dim::kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful on 
+Windows where \<sysexits.h> doesn't exist.
 
 
 ## Options
