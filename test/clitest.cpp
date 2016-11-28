@@ -261,7 +261,7 @@ Options:
     if (prompt) {
         cli.iostreams(nullptr, nullptr);
         cout << "Expects password to be confirmed (empty is ok)." << endl
-            << "What you type should *NOT* be visible!" << endl;
+             << "What you type should *NOT* be visible!" << endl;
         EXPECT_PARSE(cli, {});
         cout << "Entered password was '" << *pass << "'" << endl;
     }
@@ -280,7 +280,7 @@ Options:
     if (prompt) {
         cli.iostreams(nullptr, nullptr);
         cout << "Expects answer to be no." << endl
-            << "What you type should be visible." << endl;
+             << "What you type should be visible." << endl;
         EXPECT_PARSE2(cli, false, 0, {});
         EXPECT(!*ask);
     }

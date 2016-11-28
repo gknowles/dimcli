@@ -280,14 +280,14 @@ public:
     // Program name received in argv[0]
     const std::string & progName() const;
 
-    // Command selected by argv, empty string if there are no commands
-    // defined or none were selected.
+    // Command to run, as selected by argv, empty string if there are no
+    // commands defined or none were selected.
     const std::string & runCommand() const;
 
     // Runs the action of the selected command and returns its exit code;
     // which is also used to set cli.exitCode(). If no command was selected
     // it runs the action of the empty "" command, which can be set via
-    // cli.action() just like for any other command.
+    // cli.action() just like any other command.
     int run();
 
 protected:

@@ -2,18 +2,18 @@
 #include "pch.h"
 #pragma hdrstop
 
-#ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
-
 
 /****************************************************************************
 *
 *   Public API
 *
 ***/
+
+#ifdef _WIN32
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
 
 //===========================================================================
 void Dim::consoleEnableEcho(bool enable) {
@@ -32,13 +32,6 @@ void Dim::consoleEnableEcho(bool enable) {
 
 #include <termios.h>
 #include <unistd.h>
-
-
-/****************************************************************************
-*
-*   Public API
-*
-***/
 
 //===========================================================================
 void Dim::consoleEnableEcho(bool enable) {
