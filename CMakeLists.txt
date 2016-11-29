@@ -101,9 +101,7 @@ file(GLOB meta_sources LIST_DIRECTORIES false
     .clang-format
     .travis.yml
     appveyor.yml
-    LICENSE
-    README.md
-    CHANGELOG.md
+    *.md
     docs/*)
 update_deps_file(${meta_sources})
 add_custom_target("_meta" SOURCES ${meta_sources})

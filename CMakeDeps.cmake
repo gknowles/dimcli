@@ -2,7 +2,7 @@
 # .clang-format
 # .travis.yml
 # CHANGELOG.md
-# LICENSE
+# LICENSE.md
 # README.md
 # appveyor.yml
 # docs/README.md
