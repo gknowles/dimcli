@@ -69,6 +69,7 @@ void basicTests() {
     istringstream in;
     ostringstream out;
 
+    // parse action
     {
         cli = {};
         auto & sum =
@@ -86,6 +87,7 @@ void basicTests() {
         EXPECT(*sum == 6);
     }
 
+    // version option
     {
         cli = {};
         cli.versionOpt("1.0");
@@ -104,15 +106,15 @@ void basicTests() {
             cli.opt<bool>("s special !S", false).desc("snowflake");
         auto & name =
             cli.group("name").title("Name options").optVec<string>("name");
-        cli.group("").optVec<string>("[key]").desc(
-            "it's the key argument with a very long description that wraps "
+        auto & keys = cli.group("").optVec<string>("[key]").desc(
+            "it's the key arguments with a very long description that wraps "
             "the line at least once, maybe more.");
         cli.title(
             "Long explanation of this very short set of options, it's so "
             "long that it even wraps around to the next line");
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS] [key...]
-  key       it's the key argument with a very long description that wraps the
+  key       it's the key arguments with a very long description that wraps the
             line at least once, maybe more.
 
 Long explanation of this very short set of options, it's so long that it even
@@ -129,11 +131,27 @@ Name options:
 )");
         EXPECT_PARSE(cli, {"-n3"});
         EXPECT(*num == 3);
+        EXPECT(!*special);
+        EXPECT(!name);
+        EXPECT(!keys);
+
         EXPECT_PARSE(cli, {"--name", "two"});
+        EXPECT(*num == 0);
+        EXPECT(name.size() == 1 && (*name)[0] == "two");
+
         EXPECT_PARSE(cli, {"--name=three"});
+        EXPECT(name.size() == 1 && (*name)[0] == "three");
+
         EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
+        EXPECT(*special);
+        EXPECT(*name == vector<string>({"four"s, "four"s}));
+        EXPECT(*keys == vector<string>({"key"s}));
+
         EXPECT_PARSE(cli, {"key", "extra"});
+        EXPECT(*keys == vector<string>({"key"s, "extra"s}));
+
         EXPECT_PARSE(cli, {"-", "--", "-s"});
+        EXPECT(!special && !*special);
         *num += 2;
         EXPECT(*num == 2);
         *special = name->empty();

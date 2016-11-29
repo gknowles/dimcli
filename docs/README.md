@@ -772,14 +772,14 @@ cli.responseFiles(false).
 
 
 ## Environment Variable
-You can specify an environment variable that will add arguments to the 
-command line. 
+You can specify an environment variable that will have its contents 
+prepended to the command line. 
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & words = cli.optVec<string>("[words]");
-    cli.envOpts("A_OPTS");
+    cli.envOpts("AOUT_OPTS");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Words:";
@@ -788,12 +788,12 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ~~~
-The same can also be done manually, which is a good place to start if you 
-need something slightly different:
+The same can also be done manually, as shown below. This is a good starting 
+point if you need something slightly different:
 
 ~~~ cpp
 vector<string> args = cli.toArgv(argc, argv);
-if (const char * eopts = getenv("A_OPTS")) {
+if (const char * eopts = getenv("AOUT_OPTS")) {
     vector<string> eargs = cli.toArgv(eopts);
     // Insert the environment args after arg0 (program name) but before
     // the rest of the command line.
@@ -805,10 +805,10 @@ if (!cli.parse(cerr, args))
 How this works:
 
 ~~~ console
-$ export A_OPTS=
+$ export AOUT_OPTS=
 $ a.out c d
 Words: 'c' 'd'
-$ export A_OPTS=a b
+$ export AOUT_OPTS=a b
 $ a.out 'c' 'd'
 Words: 'a' 'b' 'c' 'd'
 ~~~
