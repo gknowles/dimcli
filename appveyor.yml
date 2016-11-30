@@ -9,7 +9,7 @@ before_build:
   - md build\Win64 
   - cd build\Win64
   - cmake -G "Visual Studio 14 2015 Win64" ..\.. 
-  - cmake .
+  - cmake -DCMAKE_INSTALL_PREFIX=publish .
   - cd ..\..
 
 build_script:
@@ -17,17 +17,14 @@ build_script:
   - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
 
 after_build:
-  - xcopy include build\publish\include\ /s
-  - cd build\publish
-  - xcopy ..\Win64\lib lib\Win64\ /s
-  - copy 
-      ..\Win64\src\dimcli.dir\RelWithDebInfo\dimcli.pdb 
-      lib\Win64\RelWithDebInfo
+  - cd ..\..
+  - cmake --build . --target install
+  - cd build\Win64\publish
   - 7z a dimcli-latest.zip include lib
   - cd ..\..
 
 artifacts:
-  - path: build\publish\dimcli-latest.zip
+  - path: build\Win64\publish\dimcli-latest.zip
     name: dimcli
     type: zip
 
