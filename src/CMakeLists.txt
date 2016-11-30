@@ -24,6 +24,9 @@ install(TARGETS dimcli
 if(NOT BUILD_SHARED_LIBS)
     get_property(archout TARGET dimcli 
         PROPERTY ARCHIVE_OUTPUT_DIRECTORY_${CMAKE_BUILD_TYPE})
+    message(STATUS "build type: ${CMAKE_BUILD_TYPE}")
+    message(STATUS "bin dir: ${CMAKE_CURRENT_BINARY_DIR}")
+    message(STATUS "arch out: ${archout}")
     set(archout "${CMAKE_CURRENT_BINARY_DIR}/${archout}")
     install(FILES "${archout}/dimcli.pdb" DESTINATION lib)
 endif()

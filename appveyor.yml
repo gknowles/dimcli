@@ -6,6 +6,7 @@ configuration:
   - Debug
 
 before_build:
+  - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
   - md build\Win64 
   - cd build\Win64
   - cmake -G "Visual Studio 14 2015 Win64" ..\.. 
@@ -17,6 +18,7 @@ build_script:
 
 after_build:
   - cd build\Win64
+  - dir *.pdb /s
   - cmake --build . --target install --config %configuration%
   - cd publish
   - 7z a dimcli-latest.zip include lib
