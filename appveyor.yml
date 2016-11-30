@@ -17,9 +17,9 @@ build_script:
   - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
 
 after_build:
-  - cd ..\..
+  - cd build\Win64
   - cmake --build . --target install
-  - cd build\Win64\publish
+  - cd publish
   - 7z a dimcli-latest.zip include lib
   - cd ..\..
 
