@@ -4,6 +4,8 @@ cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
+option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
+option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 
 # Compare the new contents with the existing file, if it exists and is the 
 # same we don't want to trigger a make by changing its timestamp.
@@ -64,31 +66,47 @@ endfunction(write_user_file)
 
 include_directories(include)
 if(MSVC)
-    # /std:c++latest - allow constructs still pending standardization
-    # /W4 - warning level 4
-    # /WX - treat warnings as errors
-    # /Zi - debug info format - defaults to no info
-    # /Zc:inline - all inline functions must have definition available
-    # /Zc:rvalueCast - enforce type conversion rules
-    # /Zc:strictStrings - disable string literal type conversion to non-const
-    # /GF - string pooling
-    # /GR- - disable RTTI
-    # /EHsc (UNUSED) - exceptions from c++ only (not from structure or "C")
-    # /Yu - use precompiled header
-    # /permissive- (UNUSED) - reject non-conforming backward compatibilitisms
+    # /utf-8  // sets source code character set to utf-8
+    # /W4  // warning level 4
+    # /WX  // treat warnings as errors
+    # /Zi  // debug info format - defaults to no info
+    # /Yupch.h  // use pch.h as precompiled header 
+    # /std:c++latest  // allow constructs still pending standardization
+    # /Zc:inline  // all inline functions must have definition available
+    # /Zc:rvalueCast  // enforce type conversion rules
+    # /Zc:strictStrings  // disable string literal type conversion to non-const
+    # /GR-  // disable RTTI
+    # /EHsc (UNUSED)  // exceptions from c++ only (not from structure or "C")
+    # /GF  // string pooling
     set(CMAKE_CXX_FLAGS "\
-        /std:c++latest /W4 /WX /Zi \
-        /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /GF /GR- /Yupch.h")
+        /utf-8 /W4 /WX /Zi /Yupch.h \
+        /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
+        /GR- /GF")
+    if(NOT MSVC_VERSION LESS 2000)
+        # /permissive-  // reject non-conforming backward compatibilitisms
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
+    endif()
 
-    # /Od - disables optimization
+    # /Od   // disables optimization
     # /RTC1 - runtime checks (stack frame over/under run and uninit var use)
-    # /MTd - multithread static debug runtime
-    set(CMAKE_CXX_FLAGS_DEBUG "/Od /D_DEBUG /RTC1 /MTd")
+    set(CMAKE_CXX_FLAGS_DEBUG "/D_DEBUG /Od /RTC1")
+    if(LINK_STATIC_RUNTIME)
+        # /MTd  // multithread debug static runtime
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+    else()
+        # /MDd  // multithread debug dll runtime
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    endif()
     
-    # /Ox - maximum optimization
-    # /MT - multithread static release runtime
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Ox /DNDEBUG /MT")
+    # /O2  // maximize speed
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/DNDEBUG /O2")
+    if(LINK_STATIC_RUNTIME)
+        # /MT  // multithread release static runtime
+        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
+    else()
+        # /MD  // multithread release dll runtime
+        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD")
+    endif()
 
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 endif()
@@ -98,14 +116,17 @@ endif()
 #   Int = $(ProjectName).dir\$(Configuration)\
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
+    LICENSE
     .clang-format
     .travis.yml
     appveyor.yml
     *.md
+    configure.bat
     docs/*)
 update_deps_file(${meta_sources})
 add_custom_target("_meta" SOURCES ${meta_sources})
 source_group("docs" REGULAR_EXPRESSION "docs/.*")
+source_group("" FILES configure.bat)
 
 enable_testing()
 add_subdirectory(src)
