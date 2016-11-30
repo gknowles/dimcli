@@ -5,4 +5,5 @@
 # LICENSE
 # README.md
 # appveyor.yml
+# configure.bat
 # docs/README.md
