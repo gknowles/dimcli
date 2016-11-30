@@ -9,7 +9,7 @@ C++ command line implementation toolkit for kids of all ages.
   - copyable
   - assignable from std::string or has an istream extraction operator
 - help page generation
-- works with exceptions and RTTI disabled
+- works with (or without) exceptions and RTTI disabled
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 

@@ -7,7 +7,7 @@ C++ command line implementation toolkit for kids of all ages.
   - copyable
   - assignable from std::string or has an istream extraction operator
 - help page generation
-- works with exceptions and RTTI disabled
+- works with (or without) exceptions and RTTI disabled
 
 How does it feel?
 
