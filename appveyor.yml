@@ -13,7 +13,7 @@ before_build:
   - cd ..\..
 
 build_script:
-  - msbuild dimcli.sln /m /v:minimal /p:Configuration=$configuration$
+  - msbuild dimcli.sln /m /v:minimal /p:Configuration=%configuration%
 
 after_build:
   - cd build\Win64
