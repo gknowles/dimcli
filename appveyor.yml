@@ -13,12 +13,11 @@ before_build:
   - cd ..\..
 
 build_script:
-  - msbuild dimcli.sln /m /v:minimal /p:Configuration=Debug
-  - msbuild dimcli.sln /m /v:minimal /p:Configuration=RelWithDebInfo
+  - msbuild dimcli.sln /m /v:minimal /p:Configuration=$(configuration)
 
 after_build:
   - cd build\Win64
-  - cmake --build . --target install
+  - cmake --build . --target install --config $(configuration)
   - cd publish
   - 7z a dimcli-latest.zip include lib
   - cd ..\..
