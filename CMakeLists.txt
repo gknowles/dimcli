@@ -3,7 +3,7 @@
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
+set(CMAKE_CONFIGURATION_TYPES Debug Release)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 
@@ -102,13 +102,13 @@ if(MSVC)
     endif()
     
     # /O2  // maximize speed
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/DNDEBUG /O2")
+    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2")
     if(LINK_STATIC_RUNTIME)
         # /MT  // multithread release static runtime
-        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     else()
         # /MD  // multithread release dll runtime
-        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     endif()
 
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
