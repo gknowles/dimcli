@@ -587,7 +587,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     content.clear();
 
     error_code err;
-    auto bytes = fs::file_size(fn, err);
+    size_t bytes = fs::file_size(fn, err);
     if (err)
         return false;
 
@@ -742,7 +742,7 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
 bool Cli::parseValue(
     OptBase & opt,
     const string & name,
-    int pos,
+    size_t pos,
     const char ptr[]) {
     opt.set(name, pos);
     string val;
@@ -813,7 +813,7 @@ bool Cli::parse(vector<string> & args) {
     unsigned pos = 0;
     bool moreOpts = true;
     m_cfg->progName = *arg;
-    int argPos = 1;
+    size_t argPos = 1;
     arg += 1;
 
     for (; argPos < argc; ++argPos, ++arg) {

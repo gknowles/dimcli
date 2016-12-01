@@ -259,7 +259,7 @@ public:
     bool parseValue(
         OptBase & out,
         const std::string & name,
-        int pos,
+        size_t pos,
         const char src[]);
 
     // Prompt sends a prompt message to cout and read a response from cin
@@ -479,7 +479,7 @@ protected:
     virtual bool parseValue(Cli & cli, const std::string & value) = 0;
     virtual bool checkValue(Cli & cli, const std::string & value) = 0;
     virtual bool afterActions(Cli & cli) = 0;
-    virtual void set(const std::string & name, int pos) = 0;
+    virtual void set(const std::string & name, size_t pos) = 0;
 
     // Allows the type unaware layer to determine if a new option is pointing
     // at the same value as an existing option -- with RTTI disabled
@@ -950,7 +950,7 @@ public:
 
 private:
     friend class Cli;
-    void set(const std::string & name, int pos) final;
+    void set(const std::string & name, size_t pos) final;
     bool sameValue(const void * value) final {
         return value == m_proxy->m_value;
     }
@@ -968,9 +968,9 @@ inline Cli::Opt<T>::Opt(
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::set(const std::string & name, int pos) {
+inline void Cli::Opt<T>::set(const std::string & name, size_t pos) {
     m_proxy->m_match.name = name;
-    m_proxy->m_match.pos = pos;
+    m_proxy->m_match.pos = (int) pos;
     m_proxy->m_explicit = true;
 }
 
@@ -1071,7 +1071,7 @@ public:
 
 private:
     friend class Cli;
-    void set(const std::string & name, int pos) final;
+    void set(const std::string & name, size_t pos) final;
     bool sameValue(const void * value) final {
         return value == m_proxy->m_values;
     }
@@ -1094,10 +1094,10 @@ inline Cli::OptVec<T>::OptVec(
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::set(const std::string & name, int pos) {
+inline void Cli::OptVec<T>::set(const std::string & name, size_t pos) {
     ArgMatch match;
     match.name = name;
-    match.pos = pos;
+    match.pos = (int) pos;
     m_proxy->m_matches.push_back(match);
 }
 
