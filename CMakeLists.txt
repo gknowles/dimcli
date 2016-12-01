@@ -7,6 +7,9 @@ set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 
+# Reference to suppress "not used" warning when manually specified
+set(tmp "${CMAKE_BUILD_TYPE}")
+
 # Compare the new contents with the existing file, if it exists and is the 
 # same we don't want to trigger a make by changing its timestamp.
 function(update_file path content)

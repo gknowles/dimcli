@@ -25,7 +25,6 @@ build_script:
 after_build:
   - cd build\Win64\publish
   - 7z a dimcli-latest.zip include lib
-  - 7z l dimcli-latest.zip
   - cd ..\..\..
 
 artifacts:
