@@ -587,7 +587,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     content.clear();
 
     error_code err;
-    size_t bytes = fs::file_size(fn, err);
+    auto bytes = (size_t) fs::file_size(fn, err);
     if (err)
         return false;
 
