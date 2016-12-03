@@ -1,4 +1,6 @@
 // pch.h - dim cli
+
+#define DIM_LIB_SOURCE
 #include "dim/cli.h"
 #include "dim/console.h"
 
@@ -8,8 +10,3 @@
 #include <iostream>
 #include <locale>
 #include <unordered_set>
-
-// getenv triggers the visual c++ security warning
-#if (_MSC_VER >= 1400)
-#pragma warning(disable:4996) // this function or variable may be unsafe.
-#endif

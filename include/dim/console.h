@@ -8,3 +8,5 @@ namespace Dim {
 void consoleEnableEcho(bool enable = true);
 
 } // namespace
+
+#include "config_suffix.h"

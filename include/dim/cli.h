@@ -2,7 +2,8 @@
 //
 // Command line parser
 //
-// For documentation and examples:
+// Instead of just trying to figure this out from the header take a look
+// at the documentation and examples:
 // https://github.com/gknowles/dimcli
 
 #pragma once
@@ -47,7 +48,7 @@ enum {
 *
 ***/
 
-class Cli {
+class DIM_LIB_DECL Cli {
 public:
     struct Config;
     struct CommandConfig;
@@ -418,7 +419,7 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
 *
 ***/
 
-class CliLocal : public Cli {
+class DIM_LIB_DECL CliLocal : public Cli {
 public:
     CliLocal();
 };
@@ -433,7 +434,7 @@ public:
 *
 ***/
 
-class Cli::OptBase {
+class DIM_LIB_DECL Cli::OptBase {
 public:
     struct ChoiceDesc {
         std::string desc;
@@ -1155,3 +1156,5 @@ template <typename T> inline size_t Cli::OptVec<T>::size() const {
 }
 
 } // namespace
+
+#include "config_suffix.h"

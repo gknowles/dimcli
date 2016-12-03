@@ -10,6 +10,11 @@ using namespace std;
 using namespace Dim;
 namespace fs = experimental::filesystem;
 
+// getenv triggers the visual c++ security warning
+#if (_MSC_VER >= 1400)
+#pragma warning(disable:4996) // this function or variable may be unsafe.
+#endif
+
 
 /****************************************************************************
 *
@@ -415,8 +420,6 @@ Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
 Cli::Opt<bool> &
 Cli::versionOpt(const string & version, const string & progName) {
     auto verAction = [version, progName](auto & cli, auto & opt, auto & val) {
-        ignore = opt;
-        ignore = val;
         fs::path prog = progName;
         if (prog.empty()) {
             prog = displayName(cli.progName());
