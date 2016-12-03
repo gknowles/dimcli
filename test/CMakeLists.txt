@@ -1,4 +1,4 @@
-# CMakeLists.txt - dim cli include
+# CMakeLists.txt - dim cli test
 
 cmake_minimum_required (VERSION 3.6)
 project (test)
