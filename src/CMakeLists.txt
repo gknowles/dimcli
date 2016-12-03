@@ -3,6 +3,8 @@
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ../bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ../bin)
 
 file(GLOB_RECURSE sources LIST_DIRECTORIES false *.h *.cpp ../include/*)
 update_deps_file("${sources}")
@@ -23,10 +25,15 @@ function(install_archive_pdb tgt dstdir)
     endforeach()
 endfunction()
 
-install(TARGETS dimcli
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
-if(NOT BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
+    install(TARGETS dimcli
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin)
+    install_archive_pdb(dimcli bin)
+else()
+    install(TARGETS dimcli
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin)
     install_archive_pdb(dimcli lib)
 endif()
-install(DIRECTORY ../include DESTINATION include)
+install(DIRECTORY ../include DESTINATION .)
