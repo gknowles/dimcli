@@ -68,6 +68,7 @@ function(write_user_file prjname)
 endfunction(write_user_file)
 
 include_directories(include)
+
 if(MSVC)
     # "/utf-8" - sets source code character set to utf-8
     # "/W4" - warning level 4
@@ -114,9 +115,9 @@ if(MSVC)
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 endif()
 
-# TODO: find a way to change:
-#   Out = $(Platform)\$(Configuration)\
-#   Int = $(ProjectName).dir\$(Configuration)\
+if(BUILD_SHARED_LIBS)
+    add_definitions(/DDIM_LIB_DYN_LINK)
+endif()
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
     LICENSE

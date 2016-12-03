@@ -14,10 +14,23 @@ source_group("" FILES ${sources})
 source_group("compiler" FILES ../include/dim/compiler/visualc.h)
 write_user_file(dimcli)
 
+# Create modifed config.h to reflect dynamic vs. static linking
+set(staticVal "//#define DIM_LIB_DYN_LINK")
+set(dynVal "#define DIM_LIB_DYN_LINK")
+set(cfgsrc "../include/dim/config.h")
+file(READ "${cfgsrc}" content)
+if(BUILD_SHARED_LIBS)
+    string(REGEX REPLACE "${staticVal}" "${dynVal}" content "${content}")
+else()
+    string(REGEX REPLACE "${dynVal}" "${staticVal}" content "${content}")
+endif()
+set(cfgout "${CMAKE_CURRENT_BINARY_DIR}/include/dim/config.h")
+update_file("${cfgout}" "${content}")
+
 # Special handling required to get PDBs of static libraries installed
 # I would hope that there's a better way to do this, but I don't know what 
 # it may be...
-function(install_archive_pdb tgt dstdir)
+function(install_static_archive_pdb tgt dstdir)
     foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
         install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir/${cfg}/${tgt}.pdb" 
             DESTINATION ${dstdir} 
@@ -25,15 +38,16 @@ function(install_archive_pdb tgt dstdir)
     endforeach()
 endfunction()
 
+install(DIRECTORY ../include DESTINATION .)
+install(FILES ${cfgout} DESTINATION include/dim)
 if(BUILD_SHARED_LIBS)
     install(TARGETS dimcli
         ARCHIVE DESTINATION lib
         RUNTIME DESTINATION bin)
-    install_archive_pdb(dimcli bin)
+    install(FILES "$<TARGET_PDB_FILE:dimcli>" DESTINATION bin)
 else()
     install(TARGETS dimcli
         ARCHIVE DESTINATION lib
         RUNTIME DESTINATION bin)
-    install_archive_pdb(dimcli lib)
+    install_static_archive_pdb(dimcli lib)
 endif()
-install(DIRECTORY ../include DESTINATION .)

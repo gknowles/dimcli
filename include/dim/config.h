@@ -11,7 +11,7 @@
 // compiler knows which symbols to look for in a dll rather than in a static 
 // library). Note that there may be some libraries that can only be linked in 
 // one way (statically or dynamically), in these cases this macro has no effect.
-#define DIM_LIB_DYN_LINK
+//#define DIM_LIB_DYN_LINK
 
 #ifdef _MSC_VER
     #ifndef DIM_LIB_SOURCE
