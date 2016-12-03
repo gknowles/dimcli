@@ -25,7 +25,7 @@ void failed(int line, const char msg[]) {
 //===========================================================================
 void helpTest(
     int line,
-    Dim::Cli & cli,
+    dimcli::Cli & cli,
     const string & cmd,
     const string & helpText) {
     ostringstream os;
@@ -37,7 +37,7 @@ void helpTest(
 //===========================================================================
 void parseTest(
     int line,
-    Dim::Cli & cli,
+    dimcli::Cli & cli,
     bool continueFlag,
     int exitCode,
     vector<const char *> args) {
@@ -65,7 +65,7 @@ void toArgvTest(
 //===========================================================================
 void basicTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    dimcli::CliLocal cli;
     istringstream in;
     ostringstream out;
 
@@ -208,10 +208,10 @@ Multiline footer:
     }
 
     {
-        Dim::Cli c1;
+        dimcli::Cli c1;
         auto & a1 = c1.command("one").opt<int>("a", 1);
         c1.desc("First sentence of description. Rest of one's description.");
-        Dim::Cli c2;
+        dimcli::Cli c2;
         auto & a2 = c2.command("two").opt<int>("a", 2);
         EXPECT_HELP(c1, "one", 1 + R"(
 usage: test one [OPTIONS]
@@ -233,9 +233,9 @@ Commands:
         EXPECT(*a1 == 3);
         EXPECT(*a2 == 2);
         EXPECT(c2.runCommand() == "one");
-        EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"-a"});
+        EXPECT_PARSE2(c1, false, dimcli::kExitUsage, {"-a"});
         EXPECT(c2.errMsg() == "Unknown option: -a");
-        EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"two", "-a"});
+        EXPECT_PARSE2(c1, false, dimcli::kExitUsage, {"two", "-a"});
         EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
     }
 
@@ -246,7 +246,7 @@ Commands:
         EXPECT_PARSE(cli, {"20", "a"});
         EXPECT(*count == 10);
         EXPECT(*letter == 'a');
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"5", "0"});
+        EXPECT_PARSE2(cli, false, dimcli::kExitUsage, {"5", "0"});
         EXPECT(*count == 5);
         EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
     }
@@ -255,7 +255,7 @@ Commands:
 //===========================================================================
 void promptTests(bool prompt) {
     int line = 0;
-    Dim::CliLocal cli;
+    dimcli::CliLocal cli;
 
     cli = {};
     auto & pass = cli.passwordOpt(true);
@@ -307,7 +307,7 @@ Options:
 //===========================================================================
 void envTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    dimcli::CliLocal cli;
 
     cli = {};
     auto & args = cli.optVec<string>("[args]");
@@ -325,7 +325,7 @@ int main(int argc, char * argv[]) {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
 
-    Dim::CliLocal cli;
+    dimcli::CliLocal cli;
     auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -335,7 +335,7 @@ int main(int argc, char * argv[]) {
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
-        return Dim::kExitSoftware;
+        return dimcli::kExitSoftware;
     }
     cout << "All tests passed" << endl;
     return 0;

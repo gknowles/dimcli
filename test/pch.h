@@ -1,5 +1,5 @@
 // pch.h - dim test cli
-#include "dim/cli.h"
+#include "dimcli/cli.h"
 
 #include <cstdlib>
 #include <iostream>

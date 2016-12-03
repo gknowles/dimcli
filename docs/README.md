@@ -12,12 +12,12 @@ C++ command line implementation toolkit for kids of all ages.
 How does it feel?
 
 ~~~ cpp
-#include "dim/cli.h"
+#include "dimcli/cli.h"
 #include <iostream>
 using namespace std;
 
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & count = cli.opt<int>("c n count", 1).desc("times to say hello");
     auto & name = cli.opt<string>("name", "Unknown").desc("who to greet");
     if (!cli.parse(cerr, argc, argv))
@@ -59,13 +59,13 @@ command line was valid, arguments have been parsed, and cli.exitCode() is
 EX_OK.
 
 ~~~ cpp
-#include "dim/cli.h"
+#include "dimcli/cli.h"
 #include <iostream>
 #include <sysexits.h> // if you want the unix exit code macros (EX_*)
 using namespace std;
 
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Does the apple have a worm? No!";
@@ -93,9 +93,9 @@ Windows where \<sysexits.h> doesn't exist.
 
 
 ## Options
-Dim::Cli is used by declaring options to receive arguments. Either via pointer
-to a predefined external variable or by implicitly creating the variable when
-the option is declared. 
+dimcli::Cli is used by declaring options to receive arguments. Either via 
+pointer to a predefined external variable or by implicitly creating the 
+variable when the option is declared. 
 
 Use cli.opt\<T>(names, defaultValue) to link positional or named arguments to 
 an option. It returns a proxy object that can be used like a pointer (* and ->) 
@@ -103,7 +103,7 @@ to access the value.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & fruit = cli.opt<string>("fruit", "apple");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -157,7 +157,7 @@ For example:
 ~~~ cpp
 int main(int argc, char * argv[]) {
     bool worm;
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.opt(&worm, "w worm").desc("make it icky");
     auto & fruit = cli.opt<string>("fruit", "apple").desc("type of fruit");
     if (!cli.parse(cerr, argc, argv))
@@ -216,7 +216,7 @@ For example:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.opt<string>("a apple [apple]").desc("apples are red");
     cli.opt<bool>("!o orange apricot.").desc("oranges are orange");
     cli.opt<string>("<pear>").desc("pears are yellow");
@@ -281,7 +281,7 @@ ways:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & shout = cli.opt<bool>("shout !whisper").desc("I can't hear you!");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -336,7 +336,7 @@ ostream & operator<< (ostream & os, const vector<T> & v) {
 }
 
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     vector<string> oranges;
     cli.optVec(&oranges, "o orange").desc("oranges");
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
@@ -374,7 +374,7 @@ position in argv\[] it came from.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & name = cli.opt<string>("n name", "Unknown");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -433,7 +433,7 @@ For example:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & v1 = cli.opt<string>("?o ?optional", "default");
     auto & v2 = cli.opt<string>("?i ?with-implicit", "default");
     v2.implicitValue("implicit");
@@ -486,7 +486,7 @@ Other things to keep in mind:
 Here's an action that multiples multiple values together:
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & sum = cli.opt<int>("n number", 1)
         .desc("numbers to multiply")
         .parse([](auto & cli, auto & opt, const string & val) {
@@ -556,7 +556,7 @@ Options don't have to be defined all in one source file, separate source
 files can each define options of interest to that file and get them populated
 when the command line is processed.
 
-When you instanticate Dim::Cli you're creating a handle to the globally 
+When you instanticate dimcli::Cli you're creating a handle to the globally 
 shared configuration. So multiple translation units can each create one and
 use it to update the shared configuration.
 
@@ -566,7 +566,7 @@ option while main.cpp registers "--version":
 ~~~ cpp
 // main.cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.versionOpt("1.0");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -577,7 +577,7 @@ int main(int argc, char * argv[]) {
 
 ~~~ cpp
 // log.cpp
-static Dim::Cli cli;
+static dimcli::Cli cli;
 static auto & failEarly = cli.opt<bool>("1").desc("Exit on first error");
 
 void logMsg(string & msg) {
@@ -598,8 +598,8 @@ Options:
   --version  Show version and exit.
 ~~~
 
-#### Dim::CliLocal
-Although it was created for testing you can also use Dim::CliLocal, a 
+#### dimcli::CliLocal
+Although it was created for testing you can also use dimcli::CliLocal, a 
 completely self-contained parser, if you need to redefine options, have 
 results from multiple parses at once, or otherwise need to avoid the shared 
 configuration.
@@ -621,23 +621,23 @@ commands are present, it will assert in debug builds and ignore them in
 release if positionals are present.
 
 ~~~ cpp
-static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
-static auto & color = Dim::Cli().opt<string>("color", "red")
+static auto & yell = dimcli::Cli().opt<bool>("yell").desc("Say it loud.");
+static auto & color = dimcli::Cli().opt<string>("color", "red")
     .command("apple")
     .desc("Change color of the apple.");
 
-int apple(Dim::Cli & cli) {
+int apple(dimcli::Cli & cli) {
     cout << "It's a " << *color << " apple" << (*yell ? "!!!" : ".");
     return EX_OK;
 }
 
-int orange(Dim::Cli & cli) {
+int orange(dimcli::Cli & cli) {
     cout << "It's an orange" << (*yell ? "!!!" : ".");
     return EX_OK;
 }
 
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.\n").action(apple);
     cli.command("orange").desc("Show orange.\n").action(orange);
     if (!cli.parse(cerr, argc, argv))
@@ -654,7 +654,7 @@ static string color;
 ...
 
 int main(int argc, char * argv[]) {
-	Dim::Cli cli;
+	dimcli::Cli cli;
     cli.opt(&yell, "yell").desc("Say it loud.");
 	cli.opt(&color, "color", "red").command("apple")
 	    .desc("Change color of the apple.");
@@ -712,7 +712,7 @@ What you write:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & words = cli.optVec<string>("[words]").desc("Things you say.");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -777,7 +777,7 @@ prepended to the command line.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & words = cli.optVec<string>("[words]");
     cli.envOpts("AOUT_OPTS");
     if (!cli.parse(cerr, argc, argv))
@@ -832,7 +832,7 @@ Use cli.versionOpt() to add simple --version processing.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.versionOpt("1.0");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -865,7 +865,7 @@ of the standard functions.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.helpOpt().desc("What you see is what you get.");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -893,7 +893,7 @@ the option that should be the default.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     string fruit;
     cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
     cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
@@ -935,7 +935,7 @@ non-boolean option setting its variable to one of multiple values.
 enum class State { go, wait, stop };
 
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & state = cli.opt<State>("streetlight", State::wait)
         .desc("Color of street light.").valueDesc("COLOR")
         .choice(State::go, "green", "Means go!")
@@ -983,7 +983,7 @@ be equal to the nearest of the two edges.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & count = cli.opt<int>("<count>").clamp(1, 10);
     auto & letter = cli.opt<char>("<letter>").range('a','z');
     if (!cli.parse(cerr, argc, argv))
@@ -1009,7 +1009,7 @@ instance:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & v = cli.optVec<bool>("v verbose");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -1034,7 +1034,7 @@ the command line.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & cookies = cli.opt<int>("cookies c").prompt();
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -1087,7 +1087,7 @@ a prompt also has some behaviors that are controlled by flags.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     auto & pass = cli.opt<string>("password")
         .prompt(cli.kPromptHide | cli.kPromptConfirm);
     if (!cli.parse(cerr, argc, argv))
@@ -1130,7 +1130,7 @@ and causes cli.parse() to return false.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.confirmOpt();
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -1171,15 +1171,6 @@ HELLO!!!
 ~~~
 
 
-## Option Modifiers
-
-| Modifier | Done | Description |
-|----------|------|-------------|
-| yes | - | are you sure? fail if not y |
-
-... none of these have been implemented.
-
-
 # Help Text
 
 ## Page Layout
@@ -1201,7 +1192,7 @@ Within text, consecutive spaces are collapsed and words are wrapped at 80
 columns. Newlines should be reserved for paragraph breaks.
 
 ~~~ cpp
-Dim::Cli cli;
+dimcli::Cli cli;
 cli.header("Heading before usage");
 cli.desc("Desciption of what the command does, including any general "
     "discussion of the various aspects of its use.");
@@ -1262,7 +1253,7 @@ the option using cli.opt\<T>() after changing the context with cli.group().
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-    Dim::Cli cli;
+    dimcli::Cli cli;
     cli.versionOpt("1.0");
     // move 1b into 'First' group after creation
     cli.opt<bool>("1b").group("First").desc("boolean 1b");
@@ -1335,7 +1326,7 @@ trouble.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-	Dim::Cli cli;
+	dimcli::Cli cli;
 	cli.command("help");
 	cli.desc("This is how you get help. There could be more details.")
 	auto & cmd = cli.opt<string>("[command]").desc("Command to explain.");

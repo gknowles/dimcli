@@ -3,15 +3,15 @@
 
 // Restore as many compiler settings as we can so they don't leak into
 // the applications
-#ifndef DIM_LIB_SOURCE
+#ifndef DIMCLI_LIB_SOURCE
 
 // clear all dim header macros so they don't leak into the application
-#ifdef DIM_LIB_STANDALONE
-    #undef DIM_LIB_STANDALONE
-    #undef DIM_LIB_DYN_LINK
+#ifdef DIMCLI_LIB_STANDALONE
+    #undef DIMCLI_LIB_STANDALONE
+    #undef DIMCLI_LIB_DYN_LINK
 
-    #undef DIM_LIB_SOURCE
-    #undef DIM_LIB_DECL
+    #undef DIMCLI_LIB_SOURCE
+    #undef DIMCLI_LIB_DECL
 #endif
 
 #ifdef _MSC_VER

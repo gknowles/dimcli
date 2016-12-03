@@ -1,8 +1,8 @@
 // pch.h - dim cli
 
-#define DIM_LIB_SOURCE
-#include "dim/cli.h"
-#include "dim/console.h"
+#define DIMCLI_LIB_SOURCE
+#include "dimcli/cli.h"
+#include "dimcli/console.h"
 
 #include <algorithm>
 #include <cstdlib>

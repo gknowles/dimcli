@@ -3,7 +3,7 @@
 
 #include "config.h"
 
-namespace Dim {
+namespace dimcli {
 
 void consoleEnableEcho(bool enable = true);
 

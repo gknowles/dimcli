@@ -11,21 +11,18 @@ update_deps_file("${sources}")
 
 add_library(dimcli ${sources})
 source_group("" FILES ${sources})
-source_group("compiler" FILES ../include/dim/compiler/visualc.h)
+source_group("compiler" FILES ../include/dimcli/compiler/visualc.h)
 write_user_file(dimcli)
 
 # Create modifed config.h to reflect dynamic vs. static linking
-set(staticVal "//#define DIM_LIB_DYN_LINK")
-set(dynVal "#define DIM_LIB_DYN_LINK")
-set(cfgsrc "../include/dim/config.h")
-file(READ "${cfgsrc}" content)
-if(BUILD_SHARED_LIBS)
-    string(REGEX REPLACE "${staticVal}" "${dynVal}" content "${content}")
-else()
-    string(REGEX REPLACE "${dynVal}" "${staticVal}" content "${content}")
-endif()
-set(cfgout "${CMAKE_CURRENT_BINARY_DIR}/include/dim/config.h")
-update_file("${cfgout}" "${content}")
+set(cfgname "include/dimcli/config.h")
+file(READ "../${cfgname}" content)
+foreach(val DIMCLI_LIB_DYN_LINK)
+    string(REGEX REPLACE 
+        "$//#define ${val}" "$#define ${val}" 
+        content "${content}")
+endforeach()
+update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
 
 # Special handling required to get PDBs of static libraries installed
 # I would hope that there's a better way to do this, but I don't know what 
@@ -39,7 +36,7 @@ function(install_static_archive_pdb tgt dstdir)
 endfunction()
 
 install(DIRECTORY ../include DESTINATION .)
-install(FILES ${cfgout} DESTINATION include/dim)
+install(FILES ${cfgout} DESTINATION include/dimcli)
 if(BUILD_SHARED_LIBS)
     install(TARGETS dimcli
         ARCHIVE DESTINATION lib
