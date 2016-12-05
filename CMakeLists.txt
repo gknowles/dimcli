@@ -116,7 +116,7 @@ if(MSVC)
 endif()
 
 if(BUILD_SHARED_LIBS)
-    add_definitions(/DDIMCLI_LIB_DYN_LINK)
+    add_definitions(/DDIM_LIB_DYN_LINK)
 endif()
 
 file(GLOB meta_sources LIST_DIRECTORIES false 

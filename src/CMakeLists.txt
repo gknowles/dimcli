@@ -17,7 +17,7 @@ write_user_file(dimcli)
 # Create modifed config.h to reflect dynamic vs. static linking
 set(cfgname "include/dimcli/config.h")
 file(READ "../${cfgname}" content)
-foreach(val DIMCLI_LIB_DYN_LINK)
+foreach(val DIM_LIB_DYN_LINK)
     string(REGEX REPLACE 
         "$//#define ${val}" "$#define ${val}" 
         content "${content}")

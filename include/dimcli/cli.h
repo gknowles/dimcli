@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace dimcli {
+namespace Dim {
 
 // forward declarations
 class Cli;
@@ -48,7 +48,7 @@ enum {
 *
 ***/
 
-class DIMCLI_LIB_DECL Cli {
+class DIM_LIB_DECL Cli {
 public:
     struct Config;
     struct CommandConfig;
@@ -419,7 +419,7 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
 *
 ***/
 
-class DIMCLI_LIB_DECL CliLocal : public Cli {
+class DIM_LIB_DECL CliLocal : public Cli {
 public:
     CliLocal();
 };
@@ -434,7 +434,7 @@ public:
 *
 ***/
 
-class DIMCLI_LIB_DECL Cli::OptBase {
+class DIM_LIB_DECL Cli::OptBase {
 public:
     struct ChoiceDesc {
         std::string desc;

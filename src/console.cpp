@@ -16,7 +16,7 @@
 #include <Windows.h>
 
 //===========================================================================
-void dimcli::consoleEnableEcho(bool enable) {
+void Dim::consoleEnableEcho(bool enable) {
     HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
     DWORD mode = 0;
     GetConsoleMode(hInput, &mode);
@@ -34,7 +34,7 @@ void dimcli::consoleEnableEcho(bool enable) {
 #include <unistd.h>
 
 //===========================================================================
-void dimcli::consoleEnableEcho(bool enable) {
+void Dim::consoleEnableEcho(bool enable) {
     termios tty;
     tcgetattr(STDIN_FILENO, &tty);
     if (enable) {

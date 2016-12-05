@@ -7,7 +7,7 @@
 #pragma hdrstop
 
 using namespace std;
-using namespace dimcli;
+using namespace Dim;
 namespace fs = experimental::filesystem;
 
 // getenv triggers the visual c++ security warning

@@ -7,7 +7,7 @@
 #pragma hdrstop
 
 using namespace std;
-using namespace dimcli;
+using namespace Dim;
 
 
 /****************************************************************************
