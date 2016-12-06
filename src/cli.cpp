@@ -513,10 +513,12 @@ void Cli::responseFiles(bool enable) {
     m_cfg->responseFiles = enable;
 }
 
+#if !defined(DIM_LIB_NO_ENV)
 //===========================================================================
 void Cli::envOpts(const string & var) {
     m_cfg->envOpts = var;
 }
+#endif
 
 //===========================================================================
 void Cli::iostreams(std::istream * in, std::ostream * out) {
@@ -798,11 +800,13 @@ bool Cli::parse(vector<string> & args) {
 
     resetValues();
 
+#if !defined(DIM_LIB_NO_ENV)
     // insert environment options
     if (m_cfg->envOpts.size()) {
         if (const char * val = getenv(m_cfg->envOpts.c_str()))
             replace(args, 1, 0, toArgv(val));
     }
+#endif
 
     // expand response files
     unordered_set<string> ancestors;

@@ -176,10 +176,12 @@ public:
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
 
+#if !defined(DIM_LIB_NO_ENV)
     // Environment variable to get initial options from. Defaults to the empty
     // string, but when set the content of the named variable is parsed into
     // args which are then inserted into the argument list right after arg0.
     void envOpts(const std::string & envVar);
+#endif
 
     // Changes the streams used for prompting, outputing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults

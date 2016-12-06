@@ -9,7 +9,14 @@
 *
 ***/
 
-#ifdef _WIN32
+#if defined(DIM_LIB_NO_CONSOLE)
+
+//===========================================================================
+void Dim::consoleEnableEcho(bool enable) {
+    assert(enable && "disabling console echo not supported");
+}
+
+#elif defined(_WIN32)
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

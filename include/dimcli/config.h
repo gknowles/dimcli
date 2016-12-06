@@ -14,11 +14,21 @@
 // effect.
 //#define DIM_LIB_DYN_LINK
 
+// DIM_LIB_WINAPI_FAMILY_APP: Removes all functions that rely on windows
+// WINAPI_FAMILY_DESKTOP mode, such as the console and environment 
+// variables. Ignored for non-windows builds.
+//#define DIM_LIB_WINAPI_FAMILY_APP
+
 #ifdef _MSC_VER
     #ifndef DIM_LIB_SOURCE
         #pragma warning(push)
     #endif
     #pragma warning(disable : 4100) // unreferenced formal parameter
+
+    #ifdef DIM_LIB_WINAPI_FAMILY_APP
+        #define DIM_LIB_NO_ENV
+        #define DIM_LIB_NO_CONSOLE
+    #endif
 #endif
 
 #ifdef DIM_LIB_DYN_LINK

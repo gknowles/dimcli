@@ -306,6 +306,7 @@ Options:
 
 //===========================================================================
 void envTests() {
+#if !defined(DIM_LIB_NO_CONSOLE)
     int line = 0;
     Dim::CliLocal cli;
 
@@ -318,6 +319,7 @@ void envTests() {
     putenv("TEST_OPTS=a b");
     EXPECT_PARSE(cli, {"c", "d"});
     EXPECT(args->size() == 4);
+#endif
 }
 
 //===========================================================================

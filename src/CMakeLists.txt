@@ -17,7 +17,7 @@ write_user_file(dimcli)
 # Create modifed config.h to reflect dynamic vs. static linking
 set(cfgname "include/dimcli/config.h")
 file(READ "../${cfgname}" content)
-foreach(val DIM_LIB_DYN_LINK)
+foreach(val ${config_defines})
     string(REGEX REPLACE 
         "$//#define ${val}" "$#define ${val}" 
         content "${content}")
@@ -36,7 +36,7 @@ function(install_static_archive_pdb tgt dstdir)
 endfunction()
 
 install(DIRECTORY ../include DESTINATION .)
-install(FILES ${cfgout} DESTINATION include/dimcli)
+install(FILES ${cfgname} DESTINATION include/dimcli)
 if(BUILD_SHARED_LIBS)
     install(TARGETS dimcli
         ARCHIVE DESTINATION lib

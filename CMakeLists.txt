@@ -6,6 +6,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
+option(BUILD_WINAPI_FAMILY_APP "Restrict to Universal Windows Platform" OFF)
 
 # Reference to suppress "not used" warning when manually specified
 set(tmp "${CMAKE_BUILD_TYPE}")
@@ -115,9 +116,16 @@ if(MSVC)
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 endif()
 
+# set list of defines that need to go in config.h
 if(BUILD_SHARED_LIBS)
-    add_definitions(/DDIM_LIB_DYN_LINK)
+    list(APPEND config_defines DIM_LIB_DYN_LINK)
 endif()
+if(BUILD_WINAPI_FAMILY_APP)
+    list(APPEND config_defines DIM_LIB_WINAPI_FAMILY_APP)
+endif()
+foreach(var ${config_defines})
+    add_definitions(/D${var})
+endforeach()
 
 file(GLOB meta_sources LIST_DIRECTORIES false 
     LICENSE
