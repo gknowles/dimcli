@@ -14,7 +14,7 @@ source_group("" FILES ${sources})
 source_group("compiler" FILES ../include/dimcli/compiler/visualc.h)
 write_user_file(dimcli)
 
-# Create modifed config.h to reflect dynamic vs. static linking
+# Create modifed config.h to reflect build defines
 set(cfgname "include/dimcli/config.h")
 file(READ "../${cfgname}" content)
 foreach(val ${config_defines})
@@ -36,7 +36,8 @@ function(install_static_archive_pdb tgt dstdir)
 endfunction()
 
 install(DIRECTORY ../include DESTINATION .)
-install(FILES ${cfgname} DESTINATION include/dimcli)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
+    DESTINATION include/dimcli)
 if(BUILD_SHARED_LIBS)
     install(TARGETS dimcli
         ARCHIVE DESTINATION lib
