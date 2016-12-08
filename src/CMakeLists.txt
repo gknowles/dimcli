@@ -2,9 +2,12 @@
 
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
-set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ../bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ../bin)
+
+if(MSVC)
+    set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+endif()
 
 file(GLOB_RECURSE sources LIST_DIRECTORIES false *.h *.cpp ../include/*)
 update_deps_file("${sources}")
