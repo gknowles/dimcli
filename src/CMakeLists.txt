@@ -19,7 +19,7 @@ set(cfgname "include/dimcli/config.h")
 file(READ "../${cfgname}" content)
 foreach(val ${config_defines})
     string(REGEX REPLACE 
-        "$//#define ${val}" "$#define ${val}" 
+        "\n//#define ${val}" "\n#define ${val}" 
         content "${content}")
 endforeach()
 update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")

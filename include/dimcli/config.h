@@ -1,6 +1,17 @@
 // config.h - dim core
 #pragma once
 
+
+/****************************************************************************
+*
+*   Configuration
+*
+***/
+
+//---------------------------------------------------------------------------
+// Configuration of this installation, these are options that must be the 
+// same when building the app as when building the library.
+
 // DIM_LIB_STANDALONE: Defines this as standalone library that is not 
 // being built as part of the DIM framework.
 #define DIM_LIB_STANDALONE
@@ -19,16 +30,38 @@
 // variables. Ignored for non-windows builds.
 //#define DIM_LIB_WINAPI_FAMILY_APP
 
+
+//---------------------------------------------------------------------------
+// Configuration of the application. These options, if desired, are set by the 
+// application before including the library headers.
+
+// DIM_LIB_KEEP_MACROS: By default the DIM_LIB_* macros defined internally
+// (including in this file) are undef'd so they don't leak out to application
+// code. Setting this macro leaves them available for the application to use.
+// Also included are other platform specific adjustments, such as suppression
+// of specific compiler warnings.
+
+
+/****************************************************************************
+*
+*   Internal
+*
+***/
+
+#if defined(DIM_LIB_SOURCE) && !defined(DIM_LIB_KEEP_MACROS)
+    #define DIM_LIB_KEEP_MACROS
+#endif
+
+#ifdef DIM_LIB_WINAPI_FAMILY_APP
+    #define DIM_LIB_NO_ENV
+    #define DIM_LIB_NO_CONSOLE
+#endif
+
 #ifdef _MSC_VER
     #ifndef DIM_LIB_SOURCE
         #pragma warning(push)
     #endif
     #pragma warning(disable : 4100) // unreferenced formal parameter
-
-    #ifdef DIM_LIB_WINAPI_FAMILY_APP
-        #define DIM_LIB_NO_ENV
-        #define DIM_LIB_NO_CONSOLE
-    #endif
 #endif
 
 #ifdef DIM_LIB_DYN_LINK
