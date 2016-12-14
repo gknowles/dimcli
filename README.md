@@ -17,7 +17,20 @@ you did! Contains thorough documentation including many examples. Or click
 [here](https://github.com/gknowles/dimcli/blob/master/docs/README.md) if you 
 prefer it all on a single page.
 
-## Build
+## Include in Your Project
+### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
+- vcpkg install dimcli
+
+### Using cmake
+Get the latest snapshot: [dimcli 1.0.3](https://https://github.com/gknowles/dimcli/archive/v1.0.3.zip)
+
+Build it:
+- cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 14 2015 Win64"
+- cmake --build .
+- ctest -C Debug
+- cmake --build . --target install
+
+## Working on the dimcli Project
 - Prerequisites
   - install cmake >= 3.6
   - install Visual Studio 2015 
@@ -35,10 +48,6 @@ prefer it all on a single page.
   - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln) for github
     integration to work
 
-## Include in Your Project
-- Copy the includes files
-- Link to the library
-
 # Random Thoughts
 Sources of inspiration:
 
@@ -51,3 +60,4 @@ Things that were harder than expected:
 - parsing command lines with bash style quoting
 - response files - because of the need to transcode utf-16 on windows
 - password prompting - there's no standard way to disable console echo :(
+- build system - you can do a lot with cmake, but it's not always easy
