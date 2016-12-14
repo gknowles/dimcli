@@ -13,7 +13,7 @@ C++ command line parser toolkit for kids of all ages.
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
-you did! Contains thorough documentation including many examples. Or click 
+you did! Contains thorough documentation with many examples. Or click 
 [here](https://github.com/gknowles/dimcli/blob/master/docs/README.md) if you 
 prefer it all on a single page.
 
@@ -22,9 +22,11 @@ prefer it all on a single page.
 - vcpkg install dimcli
 
 ### Using cmake
-Get the latest snapshot: [dimcli 1.0.3](https://https://github.com/gknowles/dimcli/archive/v1.0.3.zip)
+Get the latest snapshot: 
+[dimcli 1.0.3](https://https://github.com/gknowles/dimcli/archive/v1.0.3.zip)
 
-Build it:
+Build it (this example uses Visual C++ 2015 to install a 64-bit build to 
+c:\dimcli on a windows machine):
 - cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 14 2015 Win64"
 - cmake --build .
 - ctest -C Debug
