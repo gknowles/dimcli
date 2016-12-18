@@ -8,5 +8,5 @@
 
 // getenv/putenv trigger the visual c++ security warning
 #if (_MSC_VER >= 1400)
-#pragma warning(disable:4996) // this function or variable may be unsafe.
+#pragma warning(disable : 4996) // this function or variable may be unsafe.
 #endif

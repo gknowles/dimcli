@@ -973,7 +973,7 @@ inline Cli::Opt<T>::Opt(
 template <typename T>
 inline void Cli::Opt<T>::set(const std::string & name, size_t pos) {
     m_proxy->m_match.name = name;
-    m_proxy->m_match.pos = (int) pos;
+    m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
 }
 
@@ -1066,8 +1066,8 @@ public:
     void unspecifiedValue() final;
     size_t size() const final;
 
-    // Information about a specific member of the vector of values at the 
-    // time it was parsed. If the value vector has been changed (sort, erase, 
+    // Information about a specific member of the vector of values at the
+    // time it was parsed. If the value vector has been changed (sort, erase,
     // insert, etc) by the app these will no longer correspond.
     const std::string & from(size_t index) const;
     int pos(size_t index) const;
@@ -1100,7 +1100,7 @@ template <typename T>
 inline void Cli::OptVec<T>::set(const std::string & name, size_t pos) {
     ArgMatch match;
     match.name = name;
-    match.pos = (int) pos;
+    match.pos = (int)pos;
     m_proxy->m_matches.push_back(match);
 }
 

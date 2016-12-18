@@ -12,7 +12,7 @@ namespace fs = experimental::filesystem;
 
 // getenv triggers the visual c++ security warning
 #if (_MSC_VER >= 1400)
-#pragma warning(disable:4996) // this function or variable may be unsafe.
+#pragma warning(disable : 4996) // this function or variable may be unsafe.
 #endif
 
 
@@ -592,7 +592,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     content.clear();
 
     error_code err;
-    auto bytes = (size_t) fs::file_size(fn, err);
+    auto bytes = (size_t)fs::file_size(fn, err);
     if (err)
         return false;
 
