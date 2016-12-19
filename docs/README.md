@@ -1,13 +1,16 @@
 # Overview
 C++ command line parser toolkit for kids of all ages.
 
-- parses directly to supplied (or implicitly created) variables
-- supports parsing to any type that is:
+- can parse directly to any supplied (or implicitly created) variables 
+  that are:
   - default constructable
   - copyable
   - assignable from std::string or has an istream extraction operator
-- help page generation
-- works with (or without) exceptions and RTTI disabled
+- help generation
+- options don't have to be defined all in one file
+- git style subcommands
+- response files
+- works with exceptions and RTTI enabled or disabled
 
 How does it feel?
 
