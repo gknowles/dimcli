@@ -5,7 +5,7 @@ C++ command line parser toolkit for kids of all ages.
   that are:
   - default constructable
   - copyable
-  - assignable from std::string or has an istream extraction operator
+  - assignable from std::string or have an istream extraction operator
 - help generation
 - options don't have to be defined all in one file
 - git style subcommands
