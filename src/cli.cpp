@@ -1106,7 +1106,8 @@ static void writeChoices(
         key.sortKey = cd.second.sortKey.c_str();
         keys.push_back(key);
     }
-    colWidth = max(min(colWidth + 5, kMaxDescCol), kMinDescCol);
+    const size_t indent = 6;
+    colWidth = max(min(colWidth + indent + 1, kMaxDescCol), kMinDescCol);
     sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
         if (int rc = strcmp(a.sortKey, b.sortKey))
             return rc < 0;
@@ -1114,8 +1115,8 @@ static void writeChoices(
     });
 
     for (auto && k : keys) {
-        wp.prefix.assign(8, ' ');
-        writeToken(os, wp, "      "s + k.key);
+        wp.prefix.assign(indent + 2, ' ');
+        writeToken(os, wp, string(indent, ' ') + k.key);
         writeDescCol(os, wp, k.desc, colWidth);
         os << '\n';
         wp.pos = 0;
@@ -1281,6 +1282,7 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
         wp.prefix.clear();
         writeNewline(os, wp);
         writeChoices(os, wp, key.opt->m_choiceDescs);
+        wp.prefix.clear();
     }
 }
 

@@ -69,6 +69,30 @@ void basicTests() {
     istringstream in;
     ostringstream out;
 
+    // choice
+    {
+        enum class State { go, wait, stop };
+        cli = {};
+        auto & state = cli.opt("streetlight", State::wait)
+            .desc("Color of street light.").valueDesc("COLOR")
+            .choice(State::go, "green", "Means go!")
+            .choice(State::wait, "yellow", "Means wait, even if you're late.")
+            .choice(State::stop, "red", "Means stop.");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --streetlight=COLOR  Color of street light.
+      green   Means go!
+      yellow  Means wait, even if you're late.
+      red     Means stop.
+
+  --help               Show this message and exit.
+)");
+        EXPECT_PARSE(cli, {"--streetlight", "red"});
+        EXPECT(*state == State::stop);
+    }
+
     // parse action
     {
         cli = {};
@@ -158,6 +182,7 @@ Name options:
         EXPECT(*special);
     }
 
+    // multiline footer
     {
         cli = {};
         cli.footer("Multiline footer:\n"
@@ -175,6 +200,7 @@ Multiline footer:
 )");
     }
 
+    // flagValue
     {
         cli = {};
         string fruit;
@@ -187,6 +213,7 @@ Multiline footer:
         EXPECT(orange.pos() == 1);
     }
 
+    // implicit value
     {
         cli = {};
         int count;
@@ -197,6 +224,7 @@ Multiline footer:
         EXPECT_PARSE(cli, {"--count"});
     }
 
+    // windows style argument parsing
     {
         auto fn = cli.toWindowsArgv;
         EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
@@ -207,6 +235,7 @@ Multiline footer:
         EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
     }
 
+    // subcommands
     {
         Dim::Cli c1;
         auto & a1 = c1.command("one").opt<int>("a", 1);
@@ -239,6 +268,7 @@ Commands:
         EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
     }
 
+    // clamp and range
     {
         cli = {};
         auto & count = cli.opt<int>("<count>", 1).clamp(1, 10);
@@ -256,10 +286,14 @@ Commands:
 void promptTests(bool prompt) {
     int line = 0;
     Dim::CliLocal cli;
+    istringstream in;
+    ostringstream out;
 
-    cli = {};
-    auto & pass = cli.passwordOpt(true);
-    EXPECT_HELP(cli, "", 1 + R"(
+    // password prompt
+    {
+        cli = {};
+        auto & pass = cli.passwordOpt(true);
+        EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
@@ -267,40 +301,44 @@ Options:
 
   --help             Show this message and exit.
 )");
-    EXPECT_PARSE(cli, {"--password=hi"});
-    EXPECT(*pass == "hi");
-    istringstream in("secret\nsecret\n");
-    ostringstream out;
-    cli.iostreams(&in, &out);
-    EXPECT_PARSE(cli, {});
-    EXPECT(*pass == "secret");
-    EXPECT(out.str() == "Password: \nEnter again to confirm: \n");
-    EXPECT(in.get() == EOF);
-    if (prompt) {
-        cli.iostreams(nullptr, nullptr);
-        cout << "Expects password to be confirmed (empty is ok)." << endl
-             << "What you type should *NOT* be visible!" << endl;
+        EXPECT_PARSE(cli, {"--password=hi"});
+        EXPECT(*pass == "hi");
+        in.str("secret\nsecret\n");
+        out.str("");
+        cli.iostreams(&in, &out);
         EXPECT_PARSE(cli, {});
-        cout << "Entered password was '" << *pass << "'" << endl;
+        EXPECT(*pass == "secret");
+        EXPECT(out.str() == "Password: \nEnter again to confirm: \n");
+        EXPECT(in.get() == EOF);
+        if (prompt) {
+            cli.iostreams(nullptr, nullptr);
+            cout << "Expects password to be confirmed (empty is ok)." << endl
+                 << "What you type should *NOT* be visible!" << endl;
+            EXPECT_PARSE(cli, {});
+            cout << "Entered password was '" << *pass << "'" << endl;
+        }
     }
 
-    cli = {};
-    auto & ask = cli.confirmOpt();
-    EXPECT_PARSE(cli, {"-y"});
-    EXPECT(*ask);
-    in.str("n\n");
-    out.str("");
-    cli.iostreams(&in, &out);
-    EXPECT_PARSE2(cli, false, 0, {});
-    EXPECT(!*ask);
-    EXPECT(out.str() == "Are you sure? [y/N]: ");
-    EXPECT(in.get() == EOF);
-    if (prompt) {
-        cli.iostreams(nullptr, nullptr);
-        cout << "Expects answer to be no." << endl
-             << "What you type should be visible." << endl;
+    // comfirmation prompt
+    {
+        cli = {};
+        auto & ask = cli.confirmOpt();
+        EXPECT_PARSE(cli, {"-y"});
+        EXPECT(*ask);
+        in.str("n\n");
+        out.str("");
+        cli.iostreams(&in, &out);
         EXPECT_PARSE2(cli, false, 0, {});
         EXPECT(!*ask);
+        EXPECT(out.str() == "Are you sure? [y/N]: ");
+        EXPECT(in.get() == EOF);
+        if (prompt) {
+            cli.iostreams(nullptr, nullptr);
+            cout << "Expects answer to be no." << endl
+                 << "What you type should be visible." << endl;
+            EXPECT_PARSE2(cli, false, 0, {});
+            EXPECT(!*ask);
+        }
     }
 }
 
