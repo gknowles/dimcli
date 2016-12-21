@@ -73,11 +73,14 @@ void basicTests() {
     {
         enum class State { go, wait, stop };
         cli = {};
-        auto & state = cli.opt("streetlight", State::wait)
-            .desc("Color of street light.").valueDesc("COLOR")
-            .choice(State::go, "green", "Means go!")
-            .choice(State::wait, "yellow", "Means wait, even if you're late.")
-            .choice(State::stop, "red", "Means stop.");
+        auto & state =
+            cli.opt("streetlight", State::wait)
+                .desc("Color of street light.")
+                .valueDesc("COLOR")
+                .choice(State::go, "green", "Means go!")
+                .choice(
+                    State::wait, "yellow", "Means wait, even if you're late.")
+                .choice(State::stop, "red", "Means stop.");
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
