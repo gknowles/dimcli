@@ -10,13 +10,12 @@
 
 #include "config.h"
 
-#include "util.h"
-
 #include <cassert>
 #include <experimental/filesystem>
 #include <functional>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -218,6 +217,10 @@ public:
     bool parse(std::vector<std::string> & args);
     bool parse(std::ostream & os, std::vector<std::string> & args);
 
+    // Sets all options to their defaults, called internally when parsing
+    // starts.
+    void resetValues();
+
     // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.
     static std::vector<std::string> toArgv(const std::string & cmdline);
@@ -239,9 +242,8 @@ public:
     // Parse using Windows rules
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
-    // Sets all options to their defaults, called internally when parsing
-    // starts.
-    void resetValues();
+    template <typename T>
+    static bool stringTo(T & out, const std::string & src);
 
     //-----------------------------------------------------------------------
     // Support for parsing callbacks
@@ -410,6 +412,52 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
     // Since there was no pre-existing proxy to raw value, create new proxy.
     return std::make_shared<V>(ptr);
 }
+
+//===========================================================================
+// stringTo - converts from string to T
+//===========================================================================
+// static
+template <typename T>
+bool Cli::stringTo(T & out, const std::string & src) {
+    // versions of stringTo_impl taking ints as extra parameters are
+    // preferred, if they don't exist for T (because no out=src assignment
+    // operator exists) only then are versions taking a long considered.
+    return CliDetail::stringTo_impl(out, src, 0, 0);
+}
+
+namespace CliDetail {
+//===========================================================================
+template <typename T>
+auto stringTo_impl(T & out, const std::string & src, int, int)
+    -> decltype(out = src, bool()) {
+    out = src;
+    return true;
+}
+
+//===========================================================================
+template <typename T>
+auto stringTo_impl(T & out, const std::string & src, int, long) 
+    -> decltype(std::declval<std::stringstream &>() >> out, bool()) {
+    std::stringstream interpreter(src);
+    if (!(interpreter >> out) || !(interpreter >> std::ws).eof()) {
+        out = {};
+        return false;
+    }
+    return true;
+}
+
+//===========================================================================
+template <typename T>
+bool stringTo_impl(T & out, const std::string & src, long, long) {
+    // In order to parse an argument there must be one of:
+    //  - assignment operator for std::string to T
+    //  - istream extraction operator for T
+    //  - parse action attached to the Opt<T> instance that doesn't call
+    //    opt.parseValue(), such as opt.choice().
+    assert(false && "no assignment from string or stream extraction operator");
+    return false;
+}
+} // namespace
 
 
 /****************************************************************************
@@ -991,7 +1039,7 @@ template <typename T>
 inline bool Cli::Opt<T>::parseValue(const std::string & value) {
     if (this->m_flagValue) {
         bool flagged;
-        if (!stringTo(flagged, value))
+        if (!Cli::stringTo(flagged, value))
             return false;
         if (flagged)
             *m_proxy->m_value = this->defaultValue();
@@ -1004,7 +1052,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         *m_proxy->m_value = this->m_choices[i->second.pos];
         return true;
     }
-    return stringTo(*m_proxy->m_value, value);
+    return Cli::stringTo(*m_proxy->m_value, value);
 }
 
 //===========================================================================
@@ -1126,7 +1174,7 @@ template <typename T>
 inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
     if (this->m_flagValue) {
         bool flagged;
-        if (!stringTo(flagged, value))
+        if (!Cli::stringTo(flagged, value))
             return false;
         if (flagged)
             m_proxy->m_values->push_back(this->defaultValue());
@@ -1141,7 +1189,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
     }
 
     T tmp;
-    if (!stringTo(tmp, value))
+    if (!Cli::stringTo(tmp, value))
         return false;
     m_proxy->m_values->push_back(std::move(tmp));
     return true;

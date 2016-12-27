@@ -3,7 +3,6 @@
 # ../include/dimcli/config.h
 # ../include/dimcli/config_suffix.h
 # ../include/dimcli/console.h
-# ../include/dimcli/util.h
 # argv.cpp
 # cli.cpp
 # console.cpp

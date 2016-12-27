@@ -308,7 +308,7 @@ void Cli::OptBase::indexLongName(
 
 //===========================================================================
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
-    stringTo(*opt, val);
+    Cli::stringTo(*opt, val);
     if (*opt) {
         cli.writeHelp(cli.conout(), {}, cli.runCommand());
         return false;
