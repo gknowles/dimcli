@@ -417,8 +417,7 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
 // stringTo - converts from string to T
 //===========================================================================
 // static
-template <typename T>
-bool Cli::stringTo(T & out, const std::string & src) {
+template <typename T> bool Cli::stringTo(T & out, const std::string & src) {
     // versions of stringTo_impl taking ints as extra parameters are
     // preferred, if they don't exist for T (because no out=src assignment
     // operator exists) only then are versions taking a long considered.
@@ -436,7 +435,7 @@ auto stringTo_impl(T & out, const std::string & src, int, int)
 
 //===========================================================================
 template <typename T>
-auto stringTo_impl(T & out, const std::string & src, int, long) 
+auto stringTo_impl(T & out, const std::string & src, int, long)
     -> decltype(std::declval<std::stringstream &>() >> out, bool()) {
     std::stringstream interpreter(src);
     if (!(interpreter >> out) || !(interpreter >> std::ws).eof()) {
