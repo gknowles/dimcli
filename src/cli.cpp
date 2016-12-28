@@ -92,7 +92,7 @@ struct Cli::Config {
     istream * conin{&cin};
     ostream * conout{&cout};
 
-    int exitCode{0};
+    int exitCode{kExitOk};
     string errMsg;
     string errDetail;
     string progName;
