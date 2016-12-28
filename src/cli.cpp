@@ -1251,7 +1251,7 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
         return;
 
     sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
-        return tie(a.opt->m_group, a.sort) < tie(b.opt->m_group, b.sort);
+        return a.sort < b.sort;
     });
 
     WrapPos wp;
