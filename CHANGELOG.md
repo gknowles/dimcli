@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Added - opt.writeUsageEx() includes option names in usage text
-
 - Fixed - opt.choice() should be usable when no string conversion exists
 - Fixed - help text for choices not aligned
 - Fixed - option groups sorted by name instead of sort key
