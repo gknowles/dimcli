@@ -59,9 +59,12 @@ public:
     template <typename T> class OptVec;
     struct OptIndex;
 
+    struct ArgKey;
     struct ArgMatch;
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
+
+    enum NameListType : int;
 
 public:
     // Creates a handle to the shared command line configuration, this
@@ -201,6 +204,12 @@ public:
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}) const;
+    // Same as writeUsage(), except lists all non-default options instead of
+    // just the [OPTIONS] catchall.
+    int writeUsageEx(
+        std::ostream & os,
+        const std::string & progName = {},
+        const std::string & cmd = {}) const;
 
     void
     writePositionals(std::ostream & os, const std::string & cmd = {}) const;
@@ -321,13 +330,24 @@ private:
     GroupConfig & grpCfg();
     const GroupConfig & grpCfg() const;
 
+    int writeUsageImpl(
+        std::ostream & os,
+        const std::string & arg0,
+        const std::string & cmd,
+        bool expandedOptions) const;
     void
     index(OptIndex & ndx, const std::string & cmd, bool requireVisible) const;
-    std::string nameList(const OptBase & opt, const OptIndex & ndx) const;
-    std::string nameList(
-        const OptBase & opt,
+    bool findNamedArgs(
+        std::vector<ArgKey> & namedArgs,
+        size_t & colWidth,
         const OptIndex & ndx,
-        bool disableOptions) const;
+        CommandConfig & cmd,
+        NameListType type,
+        bool flatten) const;
+    std::string nameList(
+        const OptIndex & ndx,
+        const OptBase & opt,
+        NameListType type) const;
 
     bool fail(int code, const std::string & msg);
 
@@ -531,6 +551,9 @@ protected:
     virtual bool afterActions(Cli & cli) = 0;
     virtual void set(const std::string & name, size_t pos) = 0;
 
+    // True for flags (bool on command line) that default to true.
+    virtual bool inverted() const = 0;
+
     // Allows the type unaware layer to determine if a new option is pointing
     // at the same value as an existing option -- with RTTI disabled
     virtual bool sameValue(const void * value) = 0;
@@ -717,6 +740,7 @@ public:
 
 protected:
     bool parseValue(Cli & cli, const std::string & value) final;
+    bool inverted() const final;
     bool checkValue(Cli & cli, const std::string & value) final;
     bool afterActions(Cli & cli) final;
     bool exec(
@@ -746,6 +770,20 @@ inline bool
 Cli::OptShim<A, T>::parseValue(Cli & cli, const std::string & val) {
     auto self = static_cast<A *>(this);
     return m_parse(cli, *self, val);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline bool Cli::OptShim<A, T>::inverted() const {
+    return this->m_bool && this->m_flagValue && this->m_flagDefault;
+}
+
+//===========================================================================
+template <> inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
+    assert(this->m_bool);
+    if (this->m_flagValue)
+        return this->m_flagDefault;
+    return this->defaultValue();
 }
 
 //===========================================================================

@@ -45,6 +45,20 @@ struct OptName {
 };
 } // namespace
 
+// Filter option names for opts that are externally bool
+enum Cli::NameListType {
+    kNameEnable,     // include names that enable the opt
+    kNameDisable,    // include names that disable
+    kNameAll,        // include all names
+    kNameNonDefault, // include names that change from the default
+};
+
+struct Cli::ArgKey {
+    string sort; // sort key
+    string list;
+    OptBase * opt;
+};
+
 struct Cli::OptIndex {
     unordered_map<char, OptName> shortNames;
     unordered_map<string, OptName> longNames;
@@ -1152,10 +1166,14 @@ int Cli::writeHelp(
 }
 
 //===========================================================================
-int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
-    const {
+int Cli::writeUsageImpl(
+    ostream & os,
+    const string & arg0,
+    const string & cmdName,
+    bool expandedOptions) const {
     OptIndex ndx;
-    index(ndx, cmd, true);
+    index(ndx, cmdName, true);
+    auto & cmd = findCmdAlways(*m_cfg, cmdName);
     string prog = displayName(arg0.empty() ? progName() : arg0).string();
     const string usageStr{"usage: "};
     os << usageStr << prog;
@@ -1163,11 +1181,21 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     wp.maxWidth = 79;
     wp.pos = prog.size() + size(usageStr);
     wp.prefix = string(wp.pos, ' ');
-    if (cmd.size())
-        writeToken(os, wp, cmd);
-    if (!ndx.shortNames.empty() || !ndx.longNames.empty())
-        writeToken(os, wp, "[OPTIONS]");
-    if (cmd.empty() && m_cfg->cmds.size() > 1) {
+    if (cmdName.size())
+        writeToken(os, wp, cmdName);
+    if (!ndx.shortNames.empty() || !ndx.longNames.empty()) {
+        if (!expandedOptions) {
+            writeToken(os, wp, "[OPTIONS]");
+        } else {
+            size_t colWidth = 0;
+            vector<ArgKey> namedArgs;
+            findNamedArgs(
+                namedArgs, colWidth, ndx, cmd, kNameNonDefault, true);
+            for (auto && key : namedArgs)
+                writeToken(os, wp, "[" + key.list + "]");
+        }
+    }
+    if (cmdName.empty() && m_cfg->cmds.size() > 1) {
         writeToken(os, wp, "command");
         writeToken(os, wp, "[args...]");
     } else {
@@ -1186,6 +1214,18 @@ int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
     }
     os << '\n';
     return exitCode();
+}
+
+//===========================================================================
+int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
+    const {
+    return writeUsageImpl(os, arg0, cmd, false);
+}
+
+//===========================================================================
+int Cli::writeUsageEx(ostream & os, const string & arg0, const string & cmd)
+    const {
+    return writeUsageImpl(os, arg0, cmd, true);
 }
 
 //===========================================================================
@@ -1215,22 +1255,16 @@ void Cli::writePositionals(ostream & os, const string & cmd) const {
 }
 
 //===========================================================================
-void Cli::writeOptions(ostream & os, const string & cmdName) const {
-    OptIndex ndx;
-    index(ndx, cmdName, true);
-    auto & cmd = findCmdAlways(*m_cfg, cmdName);
-
-    // find named args and the longest name list
-    size_t colWidth = 0;
-
-    struct ArgKey {
-        string sort; // sort key
-        string list;
-        OptBase * opt;
-    };
-    vector<ArgKey> namedArgs;
+bool Cli::findNamedArgs(
+    vector<ArgKey> & namedArgs,
+    size_t & colWidth,
+    const OptIndex & ndx,
+    CommandConfig & cmd,
+    NameListType type,
+    bool flatten) const {
+    namedArgs.clear();
     for (auto && opt : m_cfg->opts) {
-        string list = nameList(*opt, ndx);
+        string list = nameList(ndx, *opt, type);
         if (size_t width = list.size()) {
             colWidth = max(colWidth, width);
             ArgKey key;
@@ -1240,19 +1274,31 @@ void Cli::writeOptions(ostream & os, const string & cmdName) const {
             // sort by group sort key followed by name list with leading
             // dashes removed
             key.sort = findGrpAlways(cmd, opt->m_group).sortKey;
+            if (flatten && key.sort != s_internalOptionGroup)
+                key.sort.clear();
             key.sort += '\0';
             key.sort += list.substr(list.find_first_not_of('-'));
             namedArgs.push_back(key);
         }
     }
-    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
-
-    if (namedArgs.empty())
-        return;
-
     sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
         return a.sort < b.sort;
     });
+    return !namedArgs.empty();
+}
+
+//===========================================================================
+void Cli::writeOptions(ostream & os, const string & cmdName) const {
+    OptIndex ndx;
+    index(ndx, cmdName, true);
+    auto & cmd = findCmdAlways(*m_cfg, cmdName);
+
+    // find named args and the longest name list
+    size_t colWidth = 0;
+    vector<ArgKey> namedArgs;
+    if (!findNamedArgs(namedArgs, colWidth, ndx, cmd, kNameAll, false))
+        return;
+    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
 
     WrapPos wp;
     const char * gname{nullptr};
@@ -1340,33 +1386,50 @@ void Cli::writeCommands(ostream & os) const {
 }
 
 //===========================================================================
-string Cli::nameList(const OptBase & opt, const OptIndex & ndx) const {
-    string list = nameList(opt, ndx, true);
-    if (opt.m_bool) {
-        string invert = nameList(opt, ndx, false);
-        if (!invert.empty()) {
-            list += list.empty() ? "/ " : " / ";
-            list += invert;
+static bool includeName(
+    const OptName & name,
+    Cli::NameListType type,
+    const Cli::OptBase & opt,
+    bool boolean,
+    bool inverted) {
+    if (name.opt != &opt)
+        return false;
+    if (boolean) {
+        switch (type) {
+        case Cli::kNameEnable: return !name.invert;
+        case Cli::kNameDisable: return name.invert;
+        case Cli::kNameNonDefault: return inverted == name.invert;
         }
     }
-    return list;
+    return true;
 }
 
 //===========================================================================
 string Cli::nameList(
-    const OptBase & opt,
-    const OptIndex & ndx,
-    bool enableOptions) const {
+    const Cli::OptIndex & ndx,
+    const Cli::OptBase & opt,
+    NameListType type) const {
     string list;
+
+    if (type == kNameAll) {
+        list = nameList(ndx, opt, kNameEnable);
+        if (opt.m_bool) {
+            string invert = nameList(ndx, opt, kNameDisable);
+            if (!invert.empty()) {
+                list += list.empty() ? "/ " : " / ";
+                list += invert;
+            }
+        }
+        return list;
+    }
+
     bool foundLong = false;
     bool optional = false;
 
     // names
     for (auto && sn : ndx.shortNames) {
-        if (sn.second.opt != &opt
-            || opt.m_bool && sn.second.invert == enableOptions) {
+        if (!includeName(sn.second, type, opt, opt.m_bool, opt.inverted()))
             continue;
-        }
         optional = sn.second.optional;
         if (!list.empty())
             list += ", ";
@@ -1374,10 +1437,8 @@ string Cli::nameList(
         list += sn.first;
     }
     for (auto && ln : ndx.longNames) {
-        if (ln.second.opt != &opt
-            || opt.m_bool && ln.second.invert == enableOptions) {
+        if (!includeName(ln.second, type, opt, opt.m_bool, opt.inverted()))
             continue;
-        }
         optional = ln.second.optional;
         if (!list.empty())
             list += ", ";

@@ -10,6 +10,7 @@ static int s_errors;
     if (!bool(e)) \
     failed(line ? line : __LINE__, #e)
 #define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
+#define EXPECT_USAGE(cli, cmd, text) usageTest(__LINE__, cli, cmd, text)
 #define EXPECT_PARSE(cli, ...) parseTest(__LINE__, cli, true, 0, __VA_ARGS__)
 #define EXPECT_PARSE2(cli, cont, ec, ...) \
     parseTest(__LINE__, cli, cont, ec, __VA_ARGS__)
@@ -32,6 +33,18 @@ void helpTest(
     cli.writeHelp(os, "test.exe", cmd);
     auto tmp = os.str();
     EXPECT(os.str() == helpText);
+}
+
+//===========================================================================
+void usageTest(
+    int line,
+    Dim::Cli & cli,
+    const string & cmd,
+    const string & usageText) {
+    ostringstream os;
+    cli.writeUsageEx(os, "test.exe", cmd);
+    auto tmp = os.str();
+    EXPECT(os.str() == usageText);
 }
 
 //===========================================================================
@@ -91,6 +104,9 @@ Options:
       red     Means stop.
 
   --help               Show this message and exit.
+)");
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [--streetlight=COLOR] [--help]
 )");
         EXPECT_PARSE(cli, {"--streetlight", "red"});
         EXPECT(*state == State::stop);
@@ -156,6 +172,10 @@ Name options:
 
   --help                     Show this message and exit.
 )");
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [-c COUNT] [-n, --number=NUM] [--name=STRING] [-s, --special]
+            [--help] [key...]
+)");
         EXPECT_PARSE(cli, {"-n3"});
         EXPECT(*num == 3);
         EXPECT(!*special);
@@ -210,6 +230,9 @@ Multiline footer:
         auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
         cli.opt(&fruit, "a", "apple").flagValue(true);
         cli.opt(orange, "p", "pear").flagValue();
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [-o] [-p] [--help]
+)");
         EXPECT_PARSE(cli, {"-o"});
         EXPECT(*orange == "orange");
         EXPECT(orange.from() == "-o");

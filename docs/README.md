@@ -1317,7 +1317,7 @@ previous ones.
 Within your help printer you can use help functions to do some of the work:
 
 - cli.writeHelp
-- cli.writeUsage
+- cli.writeUsage / cli.writeUsageEx
 - cli.writePositionals
 - cli.writeOptions
 - cli.writeCommands
