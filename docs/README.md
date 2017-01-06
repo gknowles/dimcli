@@ -10,7 +10,7 @@ C++ command line parser toolkit for kids of all ages.
 - options don't have to be defined all in one file
 - git style subcommands
 - response files
-- works with exceptions and RTTI enabled or disabled
+- works with exceptions and/or RTTI enabled or disabled
 
 How does it feel?
 
