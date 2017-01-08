@@ -3,12 +3,15 @@
 cmake_minimum_required (VERSION 3.6)
 project (dimcli)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set(CMAKE_CONFIGURATION_TYPES Debug Release)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 
 # Reference to suppress "not used" warning when manually specified
 set(tmp "${CMAKE_BUILD_TYPE}")
+
+set(CMAKE_CONFIGURATION_TYPES Debug Release)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
 
 # Compare the new contents with the existing file, if it exists and is the 
 # same we don't want to trigger a make by changing its timestamp.
@@ -67,6 +70,22 @@ function(write_user_file prjname)
 ]=])
 endfunction()
 
+function(install_static_archive_pdb tgt dstdir)
+    if(BUILD_SHARED_LIBS)
+        install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
+    else()
+        # Special handling required to get PDBs of static libraries installed.
+        # I would hope that there's a better way to do this, but I don't know 
+        # what it may be...
+        foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
+            install(FILES 
+                "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir/${cfg}/${tgt}.pdb" 
+                DESTINATION ${dstdir} 
+                CONFIGURATIONS ${cfg})
+        endforeach()
+    endif()
+endfunction()
+
 include_directories(include)
 
 if(MSVC)
@@ -78,7 +97,7 @@ if(MSVC)
     # "/std:c++latest" - allow constructs still pending standardization
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
-    # "/Zc:strictStrings" - disable string literal type conversion to non-const
+    # "/Zc:strictStrings" - disable string literal conversion to non-const
     # "/GR-" - disable RTTI
     # "/EHsc" (UNUSED) - exceptions from c++ only (not from structure or "C")
     # "/GF" - string pooling
@@ -126,7 +145,20 @@ foreach(var ${config_defines})
     add_definitions(/D${var})
 endforeach()
 
-file(GLOB meta_sources LIST_DIRECTORIES false 
+# Create modifed config.h to reflect build defines
+set(cfgname "include/dimcli/config.h")
+file(READ "${cfgname}" content)
+foreach(val ${config_defines})
+    string(REGEX REPLACE 
+        "\n//#define ${val}" "\n#define ${val}" 
+        content "${content}")
+endforeach()
+update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
+
+enable_testing()
+
+# meta target
+file(GLOB sources LIST_DIRECTORIES false 
     LICENSE
     .clang-format
     .travis.yml
@@ -134,14 +166,46 @@ file(GLOB meta_sources LIST_DIRECTORIES false
     *.md
     configure.bat
     docs/*)
-update_deps_file(${meta_sources})
-add_custom_target("_meta" SOURCES ${meta_sources})
+list(APPEND deps ${sources})
+add_custom_target("_meta" SOURCES ${sources})
 source_group("docs" REGULAR_EXPRESSION "docs/.*")
 source_group("" FILES configure.bat)
 
-enable_testing()
-add_subdirectory(src)
-add_subdirectory(test)
+# install includes
+install(DIRECTORY include DESTINATION .)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
+    DESTINATION include/dimcli)
+
+# lib target
+if(MSVC)
+    set_property(SOURCE "src/pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+endif()
+file(GLOB_RECURSE sources LIST_DIRECTORIES false src/*.h src/*.cpp include/*)
+list(APPEND deps ${sources})
+add_library(dimcli ${sources})
+source_group("" FILES ${sources})
+source_group("compiler" FILES include/dimcli/compiler/visualc.h)
+write_user_file(dimcli)
+
+install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin)
+install_static_archive_pdb(${PROJECT_NAME} lib)
+
+# test target
+if(MSVC)
+    set_property(SOURCE "test/pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+endif()
+file(GLOB_RECURSE sources LIST_DIRECTORIES false test/*.h test/*.cpp)
+list(APPEND deps ${sources})
+add_executable(clitest ${sources})
+target_link_libraries(clitest dimcli)
+source_group("" FILES ${sources})
+write_user_file(clitest)
+add_test(NAME clitest COMMAND clitest)
+
+# update deps file
+update_deps_file(${deps})
 
 # The solution file isn't generated until after this script finishes, 
 # which means that:
