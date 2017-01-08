@@ -2,7 +2,6 @@
 
 #define DIM_LIB_SOURCE
 #include "dimcli/cli.h"
-#include "dimcli/console.h"
 
 #include <algorithm>
 #include <cstdlib>

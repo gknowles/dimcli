@@ -313,6 +313,8 @@ protected:
     Cli(std::shared_ptr<Config> cfg);
 
 private:
+    static void consoleEnableEcho(bool enable = true);
+
     bool defaultParse(OptBase & opt, const std::string & val);
 
     void addOpt(std::unique_ptr<OptBase> opt);

@@ -1,6 +1,9 @@
-// console.cpp - dim core
+// console.cpp - dim cli
 #include "pch.h"
 #pragma hdrstop
+
+using namespace std;
+using namespace Dim;
 
 
 /****************************************************************************
@@ -12,7 +15,7 @@
 #if defined(DIM_LIB_NO_CONSOLE)
 
 //===========================================================================
-void Dim::consoleEnableEcho(bool enable) {
+void Cli::consoleEnableEcho(bool enable) {
     assert(enable && "disabling console echo not supported");
 }
 
@@ -23,7 +26,7 @@ void Dim::consoleEnableEcho(bool enable) {
 #include <Windows.h>
 
 //===========================================================================
-void Dim::consoleEnableEcho(bool enable) {
+void Cli::consoleEnableEcho(bool enable) {
     HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
     DWORD mode = 0;
     GetConsoleMode(hInput, &mode);
@@ -41,7 +44,7 @@ void Dim::consoleEnableEcho(bool enable) {
 #include <unistd.h>
 
 //===========================================================================
-void Dim::consoleEnableEcho(bool enable) {
+void Cli::consoleEnableEcho(bool enable) {
     termios tty;
     tcgetattr(STDIN_FILENO, &tty);
     if (enable) {

@@ -10,7 +10,6 @@
 # include/dimcli/cli.h
 # include/dimcli/config.h
 # include/dimcli/config_suffix.h
-# include/dimcli/console.h
 # src/argv.cpp
 # src/cli.cpp
 # src/console.cpp
