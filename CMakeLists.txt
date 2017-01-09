@@ -70,7 +70,7 @@ function(write_user_file prjname)
 ]=])
 endfunction()
 
-function(install_static_archive_pdb tgt dstdir)
+function(install_archive_pdb tgt dstdir)
     if(BUILD_SHARED_LIBS)
         install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
     else()
@@ -190,7 +190,7 @@ write_user_file(dimcli)
 install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin)
-install_static_archive_pdb(${PROJECT_NAME} lib)
+install_archive_pdb(${PROJECT_NAME} lib)
 
 # test target
 if(MSVC)
