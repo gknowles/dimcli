@@ -723,9 +723,6 @@ void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
 bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
     if (!opt.from().empty())
         return true;
-    struct EnableEcho {
-        ~EnableEcho() { consoleEnableEcho(true); }
-    } enableEcho;
     auto & is = conin();
     auto & os = conout();
     os << msg << ' ';
@@ -734,18 +731,23 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
             os << "[y/N]: ";
     }
     if (flags & kPromptHide)
-        consoleEnableEcho(false);
+        consoleEnableEcho(false); // disable if hide, must be re-enabled
     string val;
     os.flush();
     getline(is, val);
-    if (flags & kPromptHide)
+    if (flags & kPromptHide) {
         os << endl;
+        if (~flags & kPromptConfirm)
+            consoleEnableEcho(true); // re-enable when hide and !confirm
+    }
     if (flags & kPromptConfirm) {
         string again;
         os << "Enter again to confirm: " << flush;
         getline(is, again);
-        if (flags & kPromptHide)
+        if (flags & kPromptHide) {
             os << endl;
+            consoleEnableEcho(true); // re-enable when hide and confirm
+        }
         if (val != again)
             return badUsage("Confirm failed, entries not the same.");
     }
