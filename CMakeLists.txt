@@ -263,13 +263,15 @@ if(NOT VENDOR_ONLY)
 endif()
 
 # includes
-if(IS_DIRECTORY include)
+get_filename_component(path include ABSOLUTE)
+if(IS_DIRECTORY "${path}")
     install(DIRECTORY include DESTINATION .)
 endif()
 # Create modifed config.h to reflect build defines
 set(cfgname "include/${PROJECT_NAME}/config.h")
-if(EXISTS "${cfgname}")
-    file(READ "${cfgname}" content)
+get_filename_component(path ${cfgname} ABSOLUTE)
+if(EXISTS "${path}")
+    file(READ "${path}" content)
     foreach(val ${config_defines})
         string(REGEX REPLACE 
             "\n//#define ${val}" "\n#define ${val}" 
