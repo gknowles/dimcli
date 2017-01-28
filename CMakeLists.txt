@@ -263,8 +263,11 @@ if(NOT VENDOR_ONLY)
 endif()
 
 # includes
+if(IS_DIRECTORY include)
+    install(DIRECTORY include DESTINATION .)
+endif()
 # Create modifed config.h to reflect build defines
-set(cfgname "include/dim/config.h")
+set(cfgname "include/${PROJECT_NAME}/config.h")
 if(EXISTS "${cfgname}")
     file(READ "${cfgname}" content)
     foreach(val ${config_defines})
@@ -274,9 +277,8 @@ if(EXISTS "${cfgname}")
     endforeach()
     update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
 
-    install(DIRECTORY include DESTINATION .)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
-        DESTINATION include/dim)
+        DESTINATION include/${PROJECT_NAME})
 endif()
 
 # lib targets
