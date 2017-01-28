@@ -15,6 +15,6 @@
 # src/console.cpp
 # src/pch.cpp
 # src/pch.h
-# test/clitest.cpp
-# test/pch.cpp
-# test/pch.h
+# tests/cli/clitest.cpp
+# tests/cli/pch.cpp
+# tests/cli/pch.h

@@ -33,7 +33,7 @@ artifacts:
     type: zip
 
 test_script:
-  - build\Win64\bin\clitest
+  - build\Win64\bin\cli
 
 #deploy:
 #  tag: latest

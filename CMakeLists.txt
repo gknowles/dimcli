@@ -1,12 +1,28 @@
-# CMakeLists.txt - dim cli
+# CMakeLists.txt - general project generator
+#
+# Required project layout:
+#   /<project_name>
+#   /<project_name>/CMakeLists.txt - this file
+#   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
+#   /<project_name>/include
+#   /<project_name>/src/{*.h,*.cpp}
+#   /<project_name>/src/<sublibrary>/**/{*.h,*.cpp}
+#   /<project_name>/tests/<test_project_name>/
+#   /<project_name>/tools/<tool_project_name>/
+#   /<project_name>/vendor/<vendor_project_name>/
+#   /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt
 
 cmake_minimum_required (VERSION 3.6)
-project (dimcli)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 
+# get name of project from containing directory
+get_filename_component(prjname "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+project(${prjname})
+
 # Reference to suppress "not used" warning when manually specified
+# by vcpkg
 set(tmp "${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
@@ -58,10 +74,16 @@ function(write_user_file prjname)
         xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 ]=])
     foreach(cfgname ${CMAKE_CONFIGURATION_TYPES})
+        if(${cfgname} STREQUAL Release)
+            set(libpath "lib")
+        else()
+            set(libpath "${cfgname}/lib")
+        endif()
         file(APPEND ${user_file} [=[
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'==']=] "${cfgname}" [=[|x64'">
         <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
         <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+        <VcpkgLibPath>]=] "${libpath}" [=[</VcpkgLibPath>
     </PropertyGroup>
 ]=])
     endforeach()
@@ -86,6 +108,70 @@ function(install_archive_pdb tgt dstdir)
     endif()
 endfunction()
 
+function(add_exec_project tgt srcdir)
+    if(MSVC)
+        set_property(SOURCE "${srcdir}/pch.cpp" 
+            APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+    endif()
+    file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*.h ${srcdir}/*.cpp)
+    list(APPEND deps ${sources})
+    set(deps ${deps} PARENT_SCOPE)
+    add_executable(${tgt} ${sources})
+    set_target_properties(${tgt} PROPERTIES LINK_FLAGS /Debug)
+    foreach(var ${libnames})
+        get_filename_component(libname "${var}" NAME)
+        target_link_libraries(${tgt} ${libname})
+    endforeach()
+    source_group("" FILES ${sources})
+    write_user_file(${tgt})
+endfunction()
+
+function(add_lib_project_with_sources tgt srcdir)
+    if(MSVC)
+        set_property(SOURCE "${srcdir}/pch.cpp" 
+            APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+    endif()
+    set(sources ${ARGV})
+    list(REMOVE_AT sources 0 1)
+    list(APPEND deps ${sources})
+    set(deps ${deps} PARENT_SCOPE)
+    set(cpps ${sources})
+    list(FILTER cpps INCLUDE REGEX ".*\.cpp$")
+    list(LENGTH cpps cpps)
+    if(cpps)
+        add_library(${tgt} ${sources})
+        list(APPEND libnames ${tgt})
+        set(libnames ${libnames} PARENT_SCOPE)
+
+        install(TARGETS ${tgt}
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin)
+        install_archive_pdb(${tgt} lib)
+    else()
+        add_custom_target(${tgt} SOURCES ${sources})
+    endif()
+    set_target_properties(${tgt} PROPERTIES FOLDER libs)
+    source_group("" FILES ${sources})
+    write_user_file(${tgt})
+endfunction()
+
+function(add_lib_project tgt srcdir)
+    file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*.h ${srcdir}/*.cpp)
+    add_lib_project_with_sources(${tgt} ${srcdir} ${sources})
+    set(deps ${deps} PARENT_SCOPE)
+    set(libnames ${libnames} PARENT_SCOPE)
+endfunction()
+
+
+get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
+if(NOT "${parent}" STREQUAL "")
+    set(VENDOR_ONLY true)
+endif()
+
+if(VENDOR_ONLY)
+    set_property(DIRECTORY "${parent}" APPEND PROPERTY INCLUDE_DIRECTORIES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+endif()
 include_directories(include)
 
 if(MSVC)
@@ -97,14 +183,14 @@ if(MSVC)
     # "/std:c++latest" - allow constructs still pending standardization
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
-    # "/Zc:strictStrings" - disable string literal conversion to non-const
-    # "/GR-" - disable RTTI
-    # "/EHsc" (UNUSED) - exceptions from c++ only (not from structure or "C")
+    # "/Zc:strictStrings" - disable string literal type conversion to non-const
+    # "/GR-" (UNUSED) - disable RTTI
+    # "/EHsc" - exceptions from c++ only (not from structure or "C")
     # "/GF" - string pooling
     set(CMAKE_CXX_FLAGS "\
         /utf-8 /W4 /WX /Zi /Yupch.h \
         /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /GR- /GF")
+        /EHsc /GF")
     if(NOT MSVC_VERSION LESS 2000)
         # /permissive-  // reject non-conforming backward compatibilitisms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
@@ -145,64 +231,99 @@ foreach(var ${config_defines})
     add_definitions(/D${var})
 endforeach()
 
+set(deps, "")
+
+if(NOT VENDOR_ONLY)
+    # vendor dependencies
+    file(GLOB allnames vendor/*)
+    foreach(var ${allnames})
+        if(IS_DIRECTORY "${var}")
+            list(APPEND deps "${var}")
+            get_filename_component(prjname "${var}" NAME)
+            if(EXISTS "${var}/CMakeLists.txt")
+                add_subdirectory("${var}")
+            endif()
+        endif()
+    endforeach()
+
+    # meta target
+    file(GLOB sources LIST_DIRECTORIES false 
+        LICENSE
+        .clang-format
+        .travis.yml
+        appveyor.yml
+        *.md
+        configure.bat
+        docs/*)
+    list(APPEND deps ${sources})
+    add_custom_target("_meta" SOURCES ${sources})
+    set_target_properties(_meta PROPERTIES FOLDER _meta)
+    source_group("docs" REGULAR_EXPRESSION "docs/.*")
+    source_group("" FILES configure.bat)
+endif()
+
+# includes
 # Create modifed config.h to reflect build defines
-set(cfgname "include/dimcli/config.h")
-file(READ "${cfgname}" content)
-foreach(val ${config_defines})
-    string(REGEX REPLACE 
-        "\n//#define ${val}" "\n#define ${val}" 
-        content "${content}")
+set(cfgname "include/dim/config.h")
+if(EXISTS "${cfgname}")
+    file(READ "${cfgname}" content)
+    foreach(val ${config_defines})
+        string(REGEX REPLACE 
+            "\n//#define ${val}" "\n#define ${val}" 
+            content "${content}")
+    endforeach()
+    update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
+
+    install(DIRECTORY include DESTINATION .)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
+        DESTINATION include/dim)
+endif()
+
+# lib targets
+file(GLOB allnames src/*)
+set(local_libs "")
+foreach(var ${allnames})
+    if(IS_DIRECTORY "${var}")
+        list(APPEND local_libs "${var}")
+    endif()
 endforeach()
-update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
+foreach(var ${local_libs})
+    get_filename_component(prjname "${var}" NAME)
+    add_lib_project(${PROJECT_NAME}-${prjname} "${var}")
+endforeach()
 
+file(GLOB_RECURSE global_srcs LIST_DIRECTORIES false include/*)
+file(GLOB local_srcs LIST_DIRECTORIES false src/*.h src/*.cpp)
+set(sources ${global_srcs} ${local_srcs})
+add_lib_project_with_sources(${PROJECT_NAME} src ${sources})
+
+if(VENDOR_ONLY)
+    set(libnames ${libnames} PARENT_SCOPE)
+    return()
+endif()
+
+# tool targets
+file(GLOB allnames tools/*)
+foreach(var ${allnames})
+    if(IS_DIRECTORY "${var}")
+        get_filename_component(prjname "${var}" NAME)
+        add_exec_project(${prjname} "${var}")
+        set_target_properties(${prjname} PROPERTIES FOLDER tools)
+        # install(TARGETS ${prjname} RUNTIME DESTINATION bin)
+    endif()
+endforeach()
+
+# test targets
 enable_testing()
-
-# meta target
-file(GLOB sources LIST_DIRECTORIES false 
-    LICENSE
-    .clang-format
-    .travis.yml
-    appveyor.yml
-    *.md
-    configure.bat
-    docs/*)
-list(APPEND deps ${sources})
-add_custom_target("_meta" SOURCES ${sources})
-source_group("docs" REGULAR_EXPRESSION "docs/.*")
-source_group("" FILES configure.bat)
-
-# install includes
-install(DIRECTORY include DESTINATION .)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
-    DESTINATION include/dimcli)
-
-# lib target
-if(MSVC)
-    set_property(SOURCE "src/pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
-endif()
-file(GLOB_RECURSE sources LIST_DIRECTORIES false src/*.h src/*.cpp include/*)
-list(APPEND deps ${sources})
-add_library(dimcli ${sources})
-source_group("" FILES ${sources})
-source_group("compiler" FILES include/dimcli/compiler/visualc.h)
-write_user_file(dimcli)
-
-install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin)
-install_archive_pdb(${PROJECT_NAME} lib)
-
-# test target
-if(MSVC)
-    set_property(SOURCE "test/pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
-endif()
-file(GLOB_RECURSE sources LIST_DIRECTORIES false test/*.h test/*.cpp)
-list(APPEND deps ${sources})
-add_executable(clitest ${sources})
-target_link_libraries(clitest dimcli)
-source_group("" FILES ${sources})
-write_user_file(clitest)
-add_test(NAME clitest COMMAND clitest)
+file(GLOB allnames tests/*)
+foreach(var ${allnames})
+    if(IS_DIRECTORY "${var}")
+        get_filename_component(prjname "${var}" NAME)
+        add_exec_project(${prjname} "${var}")
+        set_target_properties(${prjname} PROPERTIES FOLDER tests)
+        add_test(NAME ${prjname} COMMAND ${prjname})
+    endif()
+endforeach()
 
 # update deps file
 update_deps_file(${deps})
@@ -213,9 +334,9 @@ update_deps_file(${deps})
 #   - you need to run cmake twice to ensure any new solution was copied
 set(sln_binpath ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
 if(EXISTS ${sln_binpath})
-    # Load solution file from bin-dir and change the relative references to 
-    # project files so that the in memory copy is as if it had been built in 
-    # the source dir.
+    # Load solution file from bin-dir and change the relative references 
+    # to project files so that the in memory copy is as if it had been 
+    # built in the source dir.
     file(RELATIVE_PATH prefix 
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}")
