@@ -5,6 +5,7 @@
 #   /<project_name>/CMakeLists.txt - this file
 #   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
 #   /<project_name>/include
+#   /<project_name>/include/${PROJECT_NAME}/config.h
 #   /<project_name>/src/{*.h,*.cpp}
 #   /<project_name>/src/<sublibrary>/**/{*.h,*.cpp}
 #   /<project_name>/tests/<test_project_name>/
@@ -257,7 +258,7 @@ if(NOT VENDOR_ONLY)
         docs/*)
     list(APPEND deps ${sources})
     add_custom_target("_meta" SOURCES ${sources})
-    set_target_properties(_meta PROPERTIES FOLDER _meta)
+    set_target_properties(_meta PROPERTIES FOLDER config)
     source_group("docs" REGULAR_EXPRESSION "docs/.*")
     source_group("" FILES configure.bat)
 endif()
