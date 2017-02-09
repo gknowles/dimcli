@@ -22,7 +22,9 @@ prefer it all on a single page.
 
 ## Include in Your Project
 ### Copy source directly into your project
-- all you need is cli.h and cli.cpp
+All you need to copy is:
+- include/dimcli/cli.h
+- src/cli.cpp
 
 ### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 - vcpkg install dimcli
