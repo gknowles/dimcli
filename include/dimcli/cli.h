@@ -8,7 +8,94 @@
 
 #pragma once
 
-#include "config.h"
+
+/****************************************************************************
+*
+*   Configuration
+*
+***/
+
+//---------------------------------------------------------------------------
+// Configuration of this installation, these are options that must be the
+// same when building the app as when building the library.
+
+// DIM_LIB_STANDALONE: Defines this as standalone library that is not
+// being built as part of the DIM framework.
+#define DIM_LIB_STANDALONE
+
+// DIM_LIB_DYN_LINK: Forces all libraries that have separate source, to be
+// linked as dll's rather than static libraries on Microsoft Windows (this
+// macro is used to turn on __declspec(dllimport) modifiers, so that the
+// compiler knows which symbols to look for in a dll rather than in a static
+// library). Note that there may be some libraries that can only be linked in
+// one way (statically or dynamically), in these cases this macro has no
+// effect.
+//#define DIM_LIB_DYN_LINK
+
+// DIM_LIB_WINAPI_FAMILY_APP: Removes all functions that rely on windows
+// WINAPI_FAMILY_DESKTOP mode, such as the console and environment
+// variables.
+//#define DIM_LIB_WINAPI_FAMILY_APP
+
+
+//---------------------------------------------------------------------------
+// Configuration of the application. These options, if desired, are set by the
+// application before including the library headers.
+
+// DIM_LIB_KEEP_MACROS: By default the DIM_LIB_* macros defined internally
+// (including in this file) are undef'd so they don't leak out to application
+// code. Setting this macro leaves them available for the application to use.
+// Also included are other platform specific adjustments, such as suppression
+// of specific compiler warnings.
+
+
+//===========================================================================
+// Internal
+//===========================================================================
+
+#if defined(DIM_LIB_SOURCE) && !defined(DIM_LIB_KEEP_MACROS)
+#define DIM_LIB_KEEP_MACROS
+#endif
+
+#ifdef DIM_LIB_WINAPI_FAMILY_APP
+#define DIM_LIB_NO_ENV
+#define DIM_LIB_NO_CONSOLE
+#endif
+
+#ifdef _MSC_VER
+#ifndef DIM_LIB_KEEP_MACROS
+#pragma warning(push)
+#endif
+#endif
+
+#ifdef DIM_LIB_DYN_LINK
+#if defined(_MSC_VER)
+// 'identifier': class 'type' needs to have dll-interface to be used
+// by clients of class 'type2'
+#pragma warning(disable : 4251)
+#endif
+
+#if defined(_WIN32)
+#ifdef DIM_LIB_SOURCE
+#define DIM_LIB_DECL __declspec(dllexport)
+#else
+#define DIM_LIB_DECL __declspec(dllimport)
+#endif
+#endif
+#else
+#define DIM_LIB_DECL
+#endif
+
+#ifndef _CPPUNWIND
+#define _HAS_EXCEPTIONS 0
+#endif
+
+
+/****************************************************************************
+*
+*   Includes
+*
+***/
 
 #include <cassert>
 #include <experimental/filesystem>
@@ -20,6 +107,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 
 namespace Dim {
 
@@ -469,7 +557,7 @@ auto stringTo_impl(T & out, const std::string & src, int, long)
 
 //===========================================================================
 template <typename T>
-bool stringTo_impl(T & out, const std::string & src, long, long) {
+bool stringTo_impl(T & /* out */, const std::string & /* src */, long, long) {
     // In order to parse an argument there must be one of:
     //  - assignment operator for std::string to T
     //  - istream extraction operator for T
@@ -1246,4 +1334,32 @@ template <typename T> inline size_t Cli::OptVec<T>::size() const {
 
 } // namespace
 
-#include "config_suffix.h"
+
+/****************************************************************************
+*
+*   Restore settings
+*
+***/
+
+// Restore as many compiler settings as we can so they don't leak into
+// the applications
+#ifndef DIM_LIB_KEEP_MACROS
+
+// clear all dim header macros so they don't leak into the application
+#ifdef DIM_LIB_STANDALONE
+#undef DIM_LIB_DYN_LINK
+#undef DIM_LIB_KEEP_MACROS
+#undef DIM_LIB_STANDALONE
+#undef DIM_LIB_WINAPI_FAMILY_APP
+
+#undef DIM_LIB_DECL
+#undef DIM_LIB_NO_ENV
+#undef DIM_LIB_NO_CONSOLE
+#undef DIM_LIB_SOURCE
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+#endif

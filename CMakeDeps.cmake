@@ -8,13 +8,7 @@
 # configure.bat
 # docs/README.md
 # include/dimcli/cli.h
-# include/dimcli/config.h
-# include/dimcli/config_suffix.h
-# src/argv.cpp
 # src/cli.cpp
-# src/console.cpp
-# src/pch.cpp
-# src/pch.h
 # tests/cli/clitest.cpp
 # tests/cli/pch.cpp
 # tests/cli/pch.h
