@@ -21,11 +21,11 @@ you did! Contains thorough documentation with many examples. Or click
 prefer it all on a single page.
 
 ## Include in Your Project
-### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
-- vcpkg install dimcli
-
 ### Copy source directly into your project
 - all you need is cli.h and cli.cpp
+
+### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
+- vcpkg install dimcli
 
 ### Using cmake
 Get the latest snapshot: 
