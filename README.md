@@ -24,6 +24,9 @@ prefer it all on a single page.
 ### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 - vcpkg install dimcli
 
+### Copy source directly into your project
+- all you need is cli.h and cli.cpp
+
 ### Using cmake
 Get the latest snapshot: 
 [dimcli 1.0.3](https://https://github.com/gknowles/dimcli/archive/v1.0.3.zip)
