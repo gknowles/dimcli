@@ -22,7 +22,7 @@ prefer it all on a single page.
 
 ## Include in Your Project
 ### Copy source directly into your project
-All you need to copy is:
+All you need is:
 - include/dimcli/cli.h
 - src/cli.cpp
 
