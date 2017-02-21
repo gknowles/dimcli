@@ -305,7 +305,8 @@ endforeach()
 file(GLOB_RECURSE global_srcs LIST_DIRECTORIES false include/*)
 file(GLOB local_srcs LIST_DIRECTORIES false src/*.h src/*.cpp)
 set(sources ${global_srcs} ${local_srcs})
-add_lib_project_with_sources(${PROJECT_NAME} src ${sources})
+add_lib_project_with_sources(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src 
+	${sources})
 
 if(VENDOR_ONLY)
     set(libnames ${libnames} PARENT_SCOPE)
