@@ -822,8 +822,8 @@ For some applications, such as Windows services, it's important not to
 interact with the console. Simple steps to avoid cli.parse() doing console IO:
 
 1. Don't use things (such as opt.prompt()) that explicitly ask for IO.
-2. Add your own "help" argument to override the default, you can still 
-turn around and call cli.writeHelp(ostream&) if desired.
+2. Add your own "help" argument to override the default, you can still turn 
+around and call cli.printHelp(ostream&) if desired.
 3. Use the two argument version of cli.parse() and get the error message from
 cli.errMsg() and cli.errDetail() if it fails.
 
@@ -1304,7 +1304,7 @@ If generated help doesn't work for you, you can override the builtin help
 option with your own.
 
 ~~~ cpp
-auto & help = cli.opt<bool>("help");
+auto & help = cli.opt<bool>("help"); // or maybe "help." to suppress --no-help
 if (!cli.parse(cerr, argv, argc))
     return cli.exitCode();
 if (*help)
@@ -1314,18 +1314,21 @@ if (*help)
 This works because the last definition for named options overrides any 
 previous ones.
 
-Within your help printer you can use help functions to do some of the work:
+Within your help printer you can use the existing functions to do some of the 
+work:
 
-- cli.writeHelp
-- cli.writeUsage / cli.writeUsageEx
-- cli.writePositionals
-- cli.writeOptions
-- cli.writeCommands
+- cli.printHelp
+- cli.printUsage / cli.printUsageEx
+- cli.printPositionals
+- cli.printOptions
+- cli.printCommands
 
 
 ## Help Subcommand
 There is no default help subcommand, but you can make a basic one without much
 trouble.
+
+One way to do it:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -1334,13 +1337,15 @@ int main(int argc, char * argv[]) {
 	cli.desc("This is how you get help. There could be more details.")
 	auto & cmd = cli.opt<string>("[command]").desc("Command to explain.");
 	cli.action([&cmd](auto & cli) {
-		return cli.writeHelp(cout, {}, *cmd);
+		return cli.printHelp(cout, {}, *cmd);
 	});
 	if (!cli.parse(argc, argv))
 		return cli.exitCode();
 	return cli.run();
 }
 ~~~
+
+And what you get:
 
 ~~~ console
 $ a.out --help

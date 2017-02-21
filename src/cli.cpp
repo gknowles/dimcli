@@ -343,7 +343,7 @@ void Cli::OptBase::indexLongName(
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
     Cli::stringTo(*opt, val);
     if (*opt) {
-        cli.writeHelp(cli.conout(), {}, cli.runCommand());
+        cli.printHelp(cli.conout(), {}, cli.runCommand());
         return false;
     }
     return true;
@@ -1527,7 +1527,7 @@ static void writeChoices(
 }
 
 //===========================================================================
-int Cli::writeHelp(
+int Cli::printHelp(
     ostream & os,
     const string & progName,
     const string & cmdName) const {
@@ -1537,15 +1537,15 @@ int Cli::writeHelp(
         writeText(os, wp, cmd.header);
         writeNewline(os, wp);
     }
-    writeUsage(os, progName, cmdName);
+    printUsage(os, progName, cmdName);
     if (!cmd.desc.empty()) {
         WrapPos wp;
         writeText(os, wp, cmd.desc);
     }
-    writePositionals(os, cmdName);
-    writeOptions(os, cmdName);
+    printPositionals(os, cmdName);
+    printOptions(os, cmdName);
     if (cmdName.empty())
-        writeCommands(os);
+        printCommands(os);
     if (!cmd.footer.empty()) {
         WrapPos wp;
         writeNewline(os, wp);
@@ -1606,19 +1606,19 @@ int Cli::writeUsageImpl(
 }
 
 //===========================================================================
-int Cli::writeUsage(ostream & os, const string & arg0, const string & cmd)
+int Cli::printUsage(ostream & os, const string & arg0, const string & cmd)
     const {
     return writeUsageImpl(os, arg0, cmd, false);
 }
 
 //===========================================================================
-int Cli::writeUsageEx(ostream & os, const string & arg0, const string & cmd)
+int Cli::printUsageEx(ostream & os, const string & arg0, const string & cmd)
     const {
     return writeUsageImpl(os, arg0, cmd, true);
 }
 
 //===========================================================================
-void Cli::writePositionals(ostream & os, const string & cmd) const {
+void Cli::printPositionals(ostream & os, const string & cmd) const {
     OptIndex ndx;
     index(ndx, cmd, true);
     size_t colWidth = 0;
@@ -1677,7 +1677,7 @@ bool Cli::findNamedArgs(
 }
 
 //===========================================================================
-void Cli::writeOptions(ostream & os, const string & cmdName) const {
+void Cli::printOptions(ostream & os, const string & cmdName) const {
     OptIndex ndx;
     index(ndx, cmdName, true);
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
@@ -1737,7 +1737,7 @@ static string trim(const string & val) {
 }
 
 //===========================================================================
-void Cli::writeCommands(ostream & os) const {
+void Cli::printCommands(ostream & os) const {
     size_t colWidth = 0;
     struct CmdKey {
         const char * name;

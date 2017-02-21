@@ -283,26 +283,26 @@ public:
     //-----------------------------------------------------------------------
     // Help
 
-    // writeHelp & writeUsage return the current exitCode()
-    int writeHelp(
+    // printHelp & printUsage return the current exitCode()
+    int printHelp(
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}) const;
-    int writeUsage(
+    int printUsage(
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}) const;
-    // Same as writeUsage(), except lists all non-default options instead of
-    // just the [OPTIONS] catchall.
-    int writeUsageEx(
+    // Same as printUsage(), except individually lists all non-default options 
+    // instead of the [OPTIONS] catchall.
+    int printUsageEx(
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}) const;
 
     void
-    writePositionals(std::ostream & os, const std::string & cmd = {}) const;
-    void writeOptions(std::ostream & os, const std::string & cmd = {}) const;
-    void writeCommands(std::ostream & os) const;
+    printPositionals(std::ostream & os, const std::string & cmd = {}) const;
+    void printOptions(std::ostream & os, const std::string & cmd = {}) const;
+    void printCommands(std::ostream & os) const;
 
     //-----------------------------------------------------------------------
     // Parsing
@@ -731,10 +731,10 @@ public:
     // Set group under which this argument will show up in the help text.
     A & group(const std::string & val);
 
-    // Set desciption to associate with the argument in writeHelp()
+    // Set desciption to associate with the argument in printHelp()
     A & desc(const std::string & val);
 
-    // Set name of meta-variable in writeHelp. For example, in "--count NUM"
+    // Set name of meta-variable in printHelp. For example, in "--count NUM"
     // this is used to change "NUM" to something else.
     A & valueDesc(const std::string & val);
 

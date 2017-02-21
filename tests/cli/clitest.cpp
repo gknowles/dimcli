@@ -30,7 +30,7 @@ void helpTest(
     const string & cmd,
     const string & helpText) {
     ostringstream os;
-    cli.writeHelp(os, "test.exe", cmd);
+    cli.printHelp(os, "test.exe", cmd);
     auto tmp = os.str();
     EXPECT(os.str() == helpText);
 }
@@ -42,7 +42,7 @@ void usageTest(
     const string & cmd,
     const string & usageText) {
     ostringstream os;
-    cli.writeUsageEx(os, "test.exe", cmd);
+    cli.printUsageEx(os, "test.exe", cmd);
     auto tmp = os.str();
     EXPECT(os.str() == usageText);
 }
