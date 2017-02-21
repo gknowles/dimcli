@@ -43,7 +43,7 @@ c:\dimcli on a windows machine):
 ## Working on the dimcli Project
 - Prerequisites
   - install cmake >= 3.6
-  - install Visual Studio 2015 
+  - install Visual Studio 2015
     - include the "Github Extension for Visual Studio" (if you care)
     - include git
 - Make the library
@@ -62,7 +62,7 @@ c:\dimcli on a windows machine):
 Sources of inspiration:
 
 - LLVM's CommandLine module
-- click - Python composable command line utility
+- click - Python command line interface creation kit
 - My own bad experiences
 
 Things that were harder than expected:

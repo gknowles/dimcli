@@ -410,11 +410,11 @@ Hello Mary!
 
 ## Special Arguments
 
-| Value      | Description                                                |
-|------------|------------------------------------------------------------|
-| "-"        | Passed in as a positional argument.                        |
-| "--"       | Thrown away, but makes all remaining arguments positional  |
-| "@\<file>" | [Response file](Response Files) with additional arguments  |
+| Value      | Description                                                      |
+|------------|------------------------------------------------------------------|
+| "-"        | Passed in as a positional argument.                              |
+| "--"       | Thrown away, but makes all remaining arguments positional        |
+| "@\<file>" | [Response file](Response Files) containing additional arguments  |
 
 
 ## Optional Values

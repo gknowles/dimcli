@@ -1,9 +1,9 @@
 // cli.h - dim cli
 //
-// Command line parser
+// Command line parser toolkit
 //
-// Instead of just trying to figure this out from the header take a look
-// at the documentation and examples:
+// Instead of trying to figure it all out from just this header please take 
+// a moment and look at the documentation and examples:
 // https://github.com/gknowles/dimcli
 
 #pragma once
