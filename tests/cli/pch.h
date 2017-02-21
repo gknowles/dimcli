@@ -4,6 +4,7 @@
 #include "dimcli/cli.h"
 
 #include <cstdlib>
+#include <experimental/filesystem>
 #include <iostream>
 
 // getenv/putenv trigger the visual c++ security warning

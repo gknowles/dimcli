@@ -306,6 +306,23 @@ Commands:
         EXPECT(*count == 5);
         EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
     }
+
+    // filesystem
+    {
+        cli = {};
+        experimental::filesystem::path path;
+        cli.opt(&path, "path").desc("std::experimental::filesystem::path");
+        EXPECT_PARSE(cli, {"--path", "one"});
+        EXPECT(path == "one");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --path=FILE  std::experimental::filesystem::path
+
+  --help       Show this message and exit.
+)");
+    }
 }
 
 //===========================================================================
