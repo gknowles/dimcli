@@ -536,12 +536,12 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
 //===========================================================================
 // stringTo - converts from string to T
 //===========================================================================
-// static
 template <typename T> 
 bool Cli::stringTo(T & out, const std::string & src) const {
     // versions of stringTo_impl taking ints as extra parameters are
-    // preferred, if they don't exist for T (because no out=src assignment
-    // operator exists) only then are versions taking a long considered.
+    // preferred (better conversion from 0), if they don't exist for T 
+    // (because no out=src assignment operator exists) only then are versions 
+    // taking longs considered.
     return stringTo_impl(out, src, 0, 0);
 }
 
