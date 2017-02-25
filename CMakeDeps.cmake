@@ -12,3 +12,7 @@
 # tests/cli/clitest.cpp
 # tests/cli/pch.cpp
 # tests/cli/pch.h
+# tests/perf/args.h
+# tests/perf/pch.cpp
+# tests/perf/pch.h
+# tests/perf/perftest.cpp
