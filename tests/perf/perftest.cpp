@@ -46,7 +46,7 @@ int main()
         for (int x = 0; x < 100'000; ++x)
         {
             Dim::CliLocal cli;
-            cli.header("This is a test program.");
+            cli.desc("This is a test program.");
             cli.footer("This goes after the options.");
             auto & i = cli.opt<int>("i int").valueDesc("integer").desc("The integer flag");
             auto & c = cli.optVec<char>("c char").valueDesc("characters").desc("The character flag");
