@@ -263,8 +263,8 @@ A few things to keep in mind about positional arguments:
 
 - Positional arguments are mapped by the order they are added, except that 
   required ones appear before optional ones. 
-- If there are multiple variadic positionals with unlimited (nargs = -1) 
-  arity all but the first will be treated as if they had nargs = 1. 
+- If there are multiple vector positionals with unlimited (nargs = -1) arity 
+  all but the first will be treated as if they had nargs = 1. 
 - If the unlimited one is required it will prevent any optional positionals 
   from getting populated, since it eats up all the arguments before they get 
   a turn.
@@ -319,9 +319,9 @@ I am A.OUT!!!!111
 ~~~
 
 
-## Variadic Options
+## Vector Options
 Allows for an unlimited (or specific) number of values to be returned in a 
-vector. Variadic options are declared using cli.optVec() which binds to a 
+vector. Vector options are declared using cli.optVec() which binds to a 
 std::vector\<T>.
 
 Example: 
@@ -340,8 +340,10 @@ ostream & operator<< (ostream & os, const vector<T> & v) {
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
+	// for oranges demonstrate using a separate vector
     vector<string> oranges;
     cli.optVec(&oranges, "o orange").desc("oranges");
+	// for apples demonstrate just using the proxy object
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -363,6 +365,18 @@ Options:
 
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
+~~~
+
+While the * and -> operators get you full access to the underlying vector, 
+size() and [] are also available directly on the OptVec<T>. Which may 
+occasionally save a little bit of typing.
+
+~~~ cpp
+auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
+...
+cout << "There were " << apples.size() << " apples." << endl;
+if (apples)
+	cout << "The first was " << apples[0] << endl;
 ~~~
 
 

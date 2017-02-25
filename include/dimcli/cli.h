@@ -546,7 +546,7 @@ auto stringTo_impl(T & out, const std::string & src, int, int)
 //===========================================================================
 template <typename T>
 auto stringTo_impl(T & out, const std::string & src, int, long)
-    -> decltype(std::declval<std::stringstream &>() >> out, bool()) {
+-> decltype(std::declval<std::stringstream &>() >> out, bool()) {
     std::stringstream interpreter(src);
     if (!(interpreter >> out) || !(interpreter >> std::ws).eof()) {
         out = {};
@@ -1229,6 +1229,8 @@ public:
 
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
+
+    T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
 
     // True if values where added from the command line
     explicit operator bool() const { return !m_proxy->m_values->empty(); }
