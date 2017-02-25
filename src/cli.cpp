@@ -205,6 +205,12 @@ void Cli::OptBase::setNameIfEmpty(const string & name) {
 }
 
 //===========================================================================
+bool Cli::OptBase::parseValue(const std::string & value) {
+    Cli cli;
+    return fromString(cli, value);
+}
+
+//===========================================================================
 string Cli::OptBase::defaultPrompt() const {
     string name = m_fromName;
     while (name.size() && name[0] == '-')
@@ -307,7 +313,7 @@ void Cli::OptBase::indexShortName(
     bool invert,
     bool optional) {
     ndx.shortNames[name] = {this, invert, optional};
-    setNameIfEmpty('-' + string(1, name));
+    setNameIfEmpty("-"s += name);
 }
 
 //===========================================================================
@@ -326,10 +332,10 @@ void Cli::OptBase::indexLongName(
         }
         key.pop_back();
     }
-    setNameIfEmpty("--" + key);
+    setNameIfEmpty("--"s += key);
     ndx.longNames[key] = {this, invert, optional};
     if (m_bool && allowNo)
-        ndx.longNames["no-" + key] = {this, !invert, optional};
+        ndx.longNames["no-"s += key] = {this, !invert, optional};
 }
 
 
@@ -341,7 +347,7 @@ void Cli::OptBase::indexLongName(
 
 //===========================================================================
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
-    Cli::stringTo(*opt, val);
+    cli.stringTo(*opt, val);
     if (*opt) {
         cli.printHelp(cli.conout(), {}, cli.runCommand());
         return false;
@@ -351,7 +357,7 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
 
 //===========================================================================
 bool Cli::defaultParse(OptBase & opt, const string & val) {
-    if (!opt.parseValue(val)) {
+    if (!opt.fromString(*this, val)) {
         badUsage("Invalid '" + opt.from() + "' value", val);
         if (!opt.m_choiceDescs.empty()) {
             ostringstream os;
@@ -1156,12 +1162,12 @@ bool Cli::parseValue(
     string val;
     if (ptr) {
         val = ptr;
-        if (!opt.parseValue(*this, val))
+        if (!opt.parseAction(*this, val))
             return false;
     } else {
         opt.unspecifiedValue();
     }
-    return opt.checkValue(*this, val);
+    return opt.checkAction(*this, val);
 }
 
 //===========================================================================
@@ -1233,10 +1239,11 @@ bool Cli::parse(vector<string> & args) {
             ptr += 1;
             for (; *ptr && *ptr != '-'; ++ptr) {
                 auto it = ndx.shortNames.find(*ptr);
+                name = '-';
+                name += *ptr;
                 if (it == ndx.shortNames.end())
-                    return badUsage("Unknown option", "-"s + *ptr);
+                    return badUsage("Unknown option", name);
                 argName = it->second;
-                name = "-"s + *ptr;
                 if (argName.opt->m_bool) {
                     if (!parseValue(
                             *argName.opt,
@@ -1268,10 +1275,11 @@ bool Cli::parse(vector<string> & args) {
                 ptr = "";
             }
             auto it = ndx.longNames.find(key);
+            name = "--";
+            name += key;
             if (it == ndx.longNames.end())
-                return badUsage("Unknown option", "--"s + key);
+                return badUsage("Unknown option", name);
             argName = it->second;
-            name = "--" + key;
             if (argName.opt->m_bool) {
                 if (equal)
                     return badUsage("Unknown option", name + "=");
@@ -1832,7 +1840,8 @@ string Cli::nameList(
         if (!list.empty())
             list += ", ";
         foundLong = true;
-        list += "--" + ln.first;
+        list += "--";
+        list += ln.first;
     }
     if (opt.m_bool || list.empty())
         return list;
