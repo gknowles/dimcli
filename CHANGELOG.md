@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]
 - Changed - renamed opt.write*() functions to opt.print*()
 - Added - reduced footprint to just two files (cli.h & cli.cpp)
