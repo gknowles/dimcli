@@ -448,7 +448,7 @@ private:
     auto stringTo_impl(T & out, const std::string & src, int, long) const
         -> decltype(std::declval<std::istringstream &>() >> out, bool());
     template <typename T>
-    bool stringTo_impl(T & /* out */, const std::string & /* src */, long, long) const;
+    bool stringTo_impl(T & out, const std::string & src, long, long) const;
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;

@@ -458,7 +458,11 @@ Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
 //===========================================================================
 Cli::Opt<bool> &
 Cli::versionOpt(const string & version, const string & progName) {
-    auto verAction = [version, progName](auto & cli, auto & /* opt */, auto & /* val */) {
+    auto verAction = [version, progName](
+        auto & cli, 
+        auto &, // opt 
+        auto &  // val
+    ) {
         fs::path prog = progName;
         if (prog.empty()) {
             prog = displayName(cli.progName());
@@ -675,7 +679,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
 // is escaped, quoted, or in a comment.
 // - unquoted: any char following a backslash is replaced by that char,
 //   except newline, which is removed. An unquoted '#' starts a comment.
-// - comment: everything up to, but not including, the next newline is ignored
+// - comment: everything up to, but not including, the next newline is ignored 
 // - single quotes: preserve the string exactly, no escape sequences, not
 //   even \'
 // - double quotes: some chars ($ ' " \ and newline) are escaped when
