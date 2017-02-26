@@ -39,8 +39,8 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  -c, -n, --count INTEGER  times to say hello
-  --name STRING            who to greet
+  -c, -n, --count=INTEGER  times to say hello (default: 1)
+  --name STRING            who to greet (default: Unknown)
 
   --help                   Show this message and exit.
 
@@ -122,11 +122,13 @@ $ a.out --help
 Usage: a.out [OPTIONS]  
 
 Options:  
-  --fruit STRING  
+  --fruit=STRING  (default: apple)
 
   --help          Show this message and exit.  
 
 $ a.out --fruit=orange
+Does the orange have a worm? No!
+$ a.out --fruit orange
 Does the orange have a worm? No!
 ~~~
 
@@ -144,7 +146,7 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --fruit FRUIT  type of fruit
+  --fruit=FRUIT  type of fruit (default: apple)
 
   --help         Show this message and exit.  
 ~~~
@@ -176,8 +178,8 @@ And what it looks like:
 $ a.out --help  
 Usage: a.out [OPTIONS]  
 
-Options:  
-  --fruit STRING  type of fruit
+Options:
+  --fruit=STRING  type of fruit (default: apple)
   -w, --worm      make it icky
 
   --help          Show this message and exit.  
@@ -237,7 +239,7 @@ Usage: a.out [OPTIONS] pear [apple]
   apple     apples are red
 
 Options:  
-  -a, --apple STRING          apples are red
+  -a, --apple=STRING          apples are red
   --apricot, --orange / -o, --no-orange  
                               oranges are orange
 
@@ -359,7 +361,7 @@ Usage: a.out [OPTIONS] [apple...]
   apple     red fruit
 
 Options:
-  -o, --orange STRING  oranges
+  -o, --orange=STRING  oranges
 
   --help               Show this message and exit.
 
@@ -525,7 +527,7 @@ Let's do some math!
 $ a.out --help
 usage: a.out [OPTIONS]
 Options:
-  -n, --number=NUM  numbers to multiply
+  -n, --number=NUM  numbers to multiply (default: 1)
 
   --help            Show this message and exit.
 
@@ -714,7 +716,7 @@ usage: a.out apple [OPTIONS]
 Show apple. No other fruit.
 
 Options:
-  --color=STRING  Change color of the apple.
+  --color=STRING  Change color of the apple. (default: red)
 
   --help          Show this message and exit.
 ~~~
@@ -912,6 +914,10 @@ the option that should be the default.
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     string fruit;
+	// "~" is default option group for --help, --version, etc. It defaults to 
+	// an empty title, give it one so it doesn't look like more fruit.
+	cli.group("~").title("Other options");
+	cli.group("Type of fruit");
     cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
     cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
     if (!cli.parse(cerr, argc, argv))
@@ -926,10 +932,11 @@ Which looks like:
 $ a.out --help
 Usage: a.out [OPTIONS]
 
-Options:
-  -a            red fruit
+Type of fruit:
+  -a            red fruit (default)
   -o, --orange  oranges
 
+Other options:
   --help        Show this message and exit.
 
 $ a.out
@@ -976,7 +983,7 @@ usage: a.out [OPTIONS]
 Options:
   --streetlight=COLOR  Color of street light.
       green   Means go!
-      yellow  Means wait, even if you're late.
+      yellow  Means wait, even if you're late. (default)
       red     Means stop.
 
   --help               Show this message and exit.

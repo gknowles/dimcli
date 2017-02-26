@@ -100,7 +100,7 @@ usage: test [OPTIONS]
 Options:
   --streetlight=COLOR  Color of street light.
       green   Means go!
-      yellow  Means wait, even if you're late.
+      yellow  Means wait, even if you're late. (default)
       red     Means stop.
 
   --help               Show this message and exit.
@@ -162,8 +162,8 @@ usage: test [OPTIONS] [key...]
 
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
-  -c COUNT                   alias for number
-  -n, --number=NUM           number is an int
+  -c COUNT                   alias for number (default: 0)
+  -n, --number=NUM           number is an int (default: 1)
   -s, --special / -S, --no-special
                              snowflake
 
@@ -227,11 +227,24 @@ Multiline footer:
     {
         cli = {};
         string fruit;
+        cli.group("fruit").title("Type of fruit");
         auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
         cli.opt(&fruit, "a", "apple").flagValue(true);
         cli.opt(orange, "p", "pear").flagValue();
+        cli.group("~").title("Other");
         EXPECT_USAGE(cli, "", 1 + R"(
 usage: test [-o] [-p] [--help]
+)");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Type of fruit:
+  -a        (default)
+  -o
+  -p
+
+Other:
+  --help    Show this message and exit.
 )");
         EXPECT_PARSE(cli, {"-o"});
         EXPECT(*orange == "orange");
@@ -272,7 +285,7 @@ usage: test [-o] [-p] [--help]
 usage: test one [OPTIONS]
 First sentence of description. Rest of one's description.
 Options:
-  -a NUM
+  -a NUM    (default: 1)
 )");
         EXPECT_HELP(c1, "", 1 + R"(
 usage: test [OPTIONS] command [args...]
@@ -311,14 +324,15 @@ Commands:
     {
         cli = {};
         experimental::filesystem::path path;
-        cli.opt(&path, "path").desc("std::experimental::filesystem::path");
+        cli.opt(&path, "path", "path")
+            .desc("std::experimental::filesystem::path");
         EXPECT_PARSE(cli, {"--path", "one"});
         EXPECT(path == "one");
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
-  --path=FILE  std::experimental::filesystem::path
+  --path=FILE  std::experimental::filesystem::path (default: path)
 
   --help       Show this message and exit.
 )");

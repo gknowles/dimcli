@@ -347,7 +347,7 @@ void Cli::OptBase::indexLongName(
 
 //===========================================================================
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
-    cli.stringTo(*opt, val);
+    cli.fromString(*opt, val);
     if (*opt) {
         cli.printHelp(cli.conout(), {}, cli.runCommand());
         return false;
@@ -1498,6 +1498,24 @@ writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
 }
 
 //===========================================================================
+string Cli::descStr(const Cli::OptBase & opt) const {
+    string desc = opt.m_desc;
+    string tmp;
+    if (!opt.m_choiceDescs.empty()) {
+        // "default" tag is added to individual choices later
+    } else if (opt.m_flagValue && opt.m_flagDefault) {
+        desc += " (default)";
+    } else if (!opt.m_multiple 
+        && !opt.m_bool
+        && opt.defaultValueStr(tmp, *this)
+        && !tmp.empty()
+    ) {
+        desc += " (default: " + tmp + ")";
+    }
+    return desc;
+}
+
+//===========================================================================
 static void writeChoices(
     ostream & os,
     WrapPos & wp,
@@ -1510,6 +1528,7 @@ static void writeChoices(
         const char * key;
         const char * desc;
         const char * sortKey;
+        bool def;
     };
     vector<ChoiceKey> keys;
     for (auto && cd : choices) {
@@ -1519,6 +1538,7 @@ static void writeChoices(
         key.key = cd.first.c_str();
         key.desc = cd.second.desc.c_str();
         key.sortKey = cd.second.sortKey.c_str();
+        key.def = cd.second.def;
         keys.push_back(key);
     }
     const size_t indent = 6;
@@ -1529,10 +1549,14 @@ static void writeChoices(
         return a.pos < b.pos;
     });
 
+    string desc;
     for (auto && k : keys) {
         wp.prefix.assign(indent + 2, ' ');
         writeToken(os, wp, string(indent, ' ') + k.key);
-        writeDescCol(os, wp, k.desc, colWidth);
+        desc = k.desc;
+        if (k.def)
+            desc += " (default)";
+        writeDescCol(os, wp, desc, colWidth);
         os << '\n';
         wp.pos = 0;
     }
@@ -1648,7 +1672,7 @@ void Cli::printPositionals(ostream & os, const string & cmd) const {
     for (auto && pa : ndx.argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  " + pa.name);
-        writeDescCol(os, wp, pa.opt->m_desc, colWidth);
+        writeDescCol(os, wp, descStr(*pa.opt), colWidth);
         os << '\n';
         wp.pos = 0;
         writeChoices(os, wp, pa.opt->m_choiceDescs);
@@ -1725,7 +1749,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) const {
         os << ' ';
         wp.pos = 1;
         writeText(os, wp, key.list);
-        writeDescCol(os, wp, key.opt->m_desc, colWidth);
+        writeDescCol(os, wp, descStr(*key.opt), colWidth);
         wp.prefix.clear();
         writeNewline(os, wp);
         writeChoices(os, wp, key.opt->m_choiceDescs);
