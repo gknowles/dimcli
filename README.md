@@ -9,7 +9,7 @@ C++ command line parser toolkit for kids of all ages.
   - copyable
   - assignable from std::string or have an istream extraction operator
 - help generation
-- options don't have to be defined all in one file
+- option definitions can be scattered across multiple files
 - git style subcommands
 - response files
 - works with exceptions and/or RTTI enabled or disabled
@@ -71,3 +71,12 @@ Things that were harder than expected:
 - response files - because of the need to transcode utf-16 on windows
 - password prompting - there's no standard way to disable console echo :(
 - build system - you can do a lot with cmake, but it's not always easy
+
+Other interesting c++ command line parsers:
+
+- [program_options](http://www.boost.org/doc/libs/release/libs/program_options/)
+  \- from boost
+- [gflags](https://gflags.github.io/gflags/) - from google
+- [tclap](http://tclap.sourceforge.net) - header only
+- [args](https://github.com/Taywee/args) - single header
+- [cxxopts](https://github.com/jarro2783/cxxopts) - single header

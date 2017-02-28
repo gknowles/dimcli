@@ -7,7 +7,7 @@ C++ command line parser toolkit for kids of all ages.
   - copyable
   - assignable from std::string or have an istream extraction operator
 - help generation
-- options don't have to be defined all in one file
+- option definitions can be scattered across multiple files
 - git style subcommands
 - response files
 - works with exceptions and/or RTTI enabled or disabled
