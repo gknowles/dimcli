@@ -6,9 +6,10 @@ using namespace std;
 
 static int s_errors;
 
-#define EXPECT(e) \
-    if (!bool(e)) \
-    failed(line ? line : __LINE__, #e)
+
+#define EXPECT(...) \
+    if (!bool(__VA_ARGS__)) \
+    failed(line ? line : __LINE__, #__VA_ARGS__)
 #define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
 #define EXPECT_USAGE(cli, cmd, text) usageTest(__LINE__, cli, cmd, text)
 #define EXPECT_PARSE(cli, ...) parseTest(__LINE__, cli, true, 0, __VA_ARGS__)
