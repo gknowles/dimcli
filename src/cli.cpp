@@ -1823,6 +1823,7 @@ static bool includeName(
         switch (type) {
         case Cli::kNameEnable: return !name.invert;
         case Cli::kNameDisable: return name.invert;
+        case Cli::kNameAll: return true;
         case Cli::kNameNonDefault: return inverted == name.invert;
         }
     }
