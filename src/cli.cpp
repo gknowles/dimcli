@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <locale>
@@ -1009,7 +1010,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 
     content.resize(bytes);
     ifstream f(fn, ios::binary);
-    f.read(content.data(), content.size());
+    f.read(const_cast<char *>(content.data()), content.size());
     if (!f) {
         content.clear();
         return false;
@@ -1109,7 +1110,7 @@ void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
         if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
             opt->index(ndx);
     }
-    for (unsigned i = 0; i < size(ndx.argNames); ++i) {
+    for (unsigned i = 0; i < ndx.argNames.size(); ++i) {
         auto & key = ndx.argNames[i];
         if (key.name.empty())
             key.name = "arg" + to_string(i + 1);
@@ -1310,7 +1311,7 @@ bool Cli::parse(vector<string> & args) {
             continue;
         }
 
-        if (pos >= size(ndx.argNames))
+        if (pos >= ndx.argNames.size())
             return badUsage("Unexpected argument", ptr);
         argName = ndx.argNames[pos];
         name = argName.name;
@@ -1339,7 +1340,7 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    if (!needCmd && pos < size(ndx.argNames) && !ndx.argNames[pos].optional)
+    if (!needCmd && pos < ndx.argNames.size() && !ndx.argNames[pos].optional)
         return badUsage("Missing argument", ndx.argNames[pos].name);
 
     for (auto && opt : m_cfg->opts) {
@@ -1604,7 +1605,7 @@ int Cli::writeUsageImpl(
     os << usageStr << prog;
     WrapPos wp;
     wp.maxWidth = 79;
-    wp.pos = prog.size() + size(usageStr);
+    wp.pos = prog.size() + usageStr.size();
     wp.prefix = string(wp.pos, ' ');
     if (cmdName.size())
         writeToken(os, wp, cmdName);
