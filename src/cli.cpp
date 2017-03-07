@@ -54,7 +54,7 @@ struct OptName {
 } // namespace
 
 // Filter option names for opts that are externally bool
-enum Cli::NameListType {
+enum Cli::NameListType : int {
     kNameEnable,     // include names that enable the opt
     kNameDisable,    // include names that disable
     kNameAll,        // include all names
