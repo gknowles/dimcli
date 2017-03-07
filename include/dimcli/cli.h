@@ -152,8 +152,6 @@ public:
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
 
-    enum NameListType : int;
-
 public:
     // Creates a handle to the shared command line configuration, this
     // indirection allows options to be statically registered from multiple
@@ -435,12 +433,12 @@ private:
         size_t & colWidth,
         const OptIndex & ndx,
         CommandConfig & cmd,
-        NameListType type,
+        int type,
         bool flatten) const;
     std::string nameList(
         const OptIndex & ndx,
         const OptBase & opt,
-        NameListType type) const;
+        int type) const;
 
     bool fail(int code, const std::string & msg);
 

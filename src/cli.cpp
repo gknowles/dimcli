@@ -52,15 +52,15 @@ struct OptName {
     bool optional; // value doesn't have to be present? (non-bools only)
     string name;   // name of argument (only for positionals)
 };
-} // namespace
 
-// Filter option names for opts that are externally bool
-enum Cli::NameListType : int {
+// Option name filters for opts that are externally bool
+enum NameListType : int {
     kNameEnable,     // include names that enable the opt
     kNameDisable,    // include names that disable
     kNameAll,        // include all names
     kNameNonDefault, // include names that change from the default
 };
+} // namespace
 
 struct Cli::ArgKey {
     string sort; // sort key
@@ -1686,7 +1686,7 @@ bool Cli::findNamedArgs(
     size_t & colWidth,
     const OptIndex & ndx,
     CommandConfig & cmd,
-    NameListType type,
+    int type,
     bool flatten) const {
     namedArgs.clear();
     for (auto && opt : m_cfg->opts) {
@@ -1814,7 +1814,7 @@ void Cli::printCommands(ostream & os) const {
 //===========================================================================
 static bool includeName(
     const OptName & name,
-    Cli::NameListType type,
+    int type,
     const Cli::OptBase & opt,
     bool boolean,
     bool inverted) {
@@ -1822,11 +1822,12 @@ static bool includeName(
         return false;
     if (boolean) {
         switch (type) {
-        case Cli::kNameEnable: return !name.invert;
-        case Cli::kNameDisable: return name.invert;
-        case Cli::kNameAll: return true;
-        case Cli::kNameNonDefault: return inverted == name.invert;
+        case kNameEnable: return !name.invert;
+        case kNameDisable: return name.invert;
+        case kNameAll: return true;
+        case kNameNonDefault: return inverted == name.invert;
         }
+        assert(0 && "unknown NameListType");
     }
     return true;
 }
@@ -1835,7 +1836,7 @@ static bool includeName(
 string Cli::nameList(
     const Cli::OptIndex & ndx,
     const Cli::OptBase & opt,
-    NameListType type) const {
+    int type) const {
     string list;
 
     if (type == kNameAll) {
