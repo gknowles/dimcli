@@ -27,3 +27,4 @@ artifacts:
 test_script:
   - cd build
   - ctest -C %configuration%
+  - bin/cli
