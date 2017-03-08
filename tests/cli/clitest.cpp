@@ -27,21 +27,6 @@ static int s_errors;
 
 
 //===========================================================================
-string nocr(string line) {
-    char * out = const_cast<char *>(strchr(line.data(), '\r'));
-    if (!out)
-        return line;
-    const char * in = out;
-    while (*out) {
-        while (*in == '\r')
-            in += 1;
-        *out++ = *in++;
-    }
-    line.resize(out - line.data());
-    return line;
-}
-
-//===========================================================================
 void failed(int line, const char msg[]) {
     cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
     s_errors += 1;
@@ -55,7 +40,7 @@ void helpTest(
     const string & helpText) {
     ostringstream os;
     cli.printHelp(os, kCommand, cmd);
-    auto tmp = nocr(os.str());
+    auto tmp = os.str();
     EXPECT(tmp == helpText);
     if (tmp != helpText)
         cout << tmp;
@@ -167,7 +152,10 @@ usage: test [--streetlight=COLOR] [--help]
         cli.iostreams(&in, &out);
         EXPECT_PARSE2(cli, false, 0, {"--version"});
         auto tmp = out.str();
-        EXPECT(tmp == "test version 1.0\n");
+        string expect = "test version 1.0\n";
+        EXPECT(tmp == expect);
+        if (tmp != expect)
+            cout << tmp;
     }
 
     {
@@ -353,8 +341,10 @@ Commands:
     {
         namespace fs = experimental::filesystem;
         cli = {};
-        fs::path path;
-        cli.opt(&path, "path", "path")
+        fs::path path = "path";
+        ostringstream os;
+        os << path;
+        cli.opt(&path, "path", path)
             .desc("std::experimental::filesystem::path");
         EXPECT_PARSE(cli, {"--path", "one"});
         EXPECT(path == "one");
@@ -362,7 +352,9 @@ Commands:
 usage: test [OPTIONS]
 
 Options:
-  --path=FILE  std::experimental::filesystem::path (default: path)
+  --path=FILE  std::experimental::filesystem::path (default: )" 
+        + os.str() 
+        + R"()
 
   --help       Show this message and exit.
 )");

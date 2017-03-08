@@ -25,6 +25,4 @@ artifacts:
     type: zip
 
 test_script:
-  - cd build
-  - ctest -C %configuration%
-  - Win64\bin\cli
+  - build\Win64\bin\cli
