@@ -323,11 +323,7 @@ Commands:
 
     // filesystem
     {
-#if defined(_MSC_VER)
         namespace fs = experimental::filesystem;
-#else
-        namespace fs = filesystem;
-#endif
         cli = {};
         fs::path path;
         cli.opt(&path, "path", "path")
