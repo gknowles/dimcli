@@ -8,8 +8,8 @@ addons:
   apt:
     packages:
       - g++-6
-      - clang-3.7
-    sources:
+      - clang
+    sources: &sources
       - ubuntu-toolchain-r-test
 
 # Why must we work so hard to get a recent cmake?
