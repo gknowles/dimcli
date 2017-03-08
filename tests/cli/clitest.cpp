@@ -19,6 +19,21 @@ static int s_errors;
     toArgvTest(__LINE__, fn, cmdline, __VA_ARGS__)
 
 //===========================================================================
+string nocr(string line) {
+    char * out = const_cast<char *>(strchr(line.data(), '\r'));
+    if (!out)
+        return line;
+    const char * in = out;
+    while (*out) {
+        while (*in == '\r')
+            in += 1;
+        *out++ = *in++;
+    }
+    line.resize(out - line.data());
+    return line;
+}
+
+//===========================================================================
 void failed(int line, const char msg[]) {
     cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
     s_errors += 1;
@@ -29,11 +44,14 @@ void helpTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
-    const string & helpText) {
+    string helpText) {
     ostringstream os;
     cli.printHelp(os, "test.exe", cmd);
-    auto tmp = os.str();
-    EXPECT(os.str() == helpText);
+    auto tmp = nocr(os.str());
+    helpText = nocr(helpText);
+    EXPECT(tmp == helpText);
+    if (tmp != helpText)
+        cout << helpText;
 }
 
 //===========================================================================
@@ -41,11 +59,11 @@ void usageTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
-    const string & usageText) {
+    string usageText) {
     ostringstream os;
     cli.printUsageEx(os, "test.exe", cmd);
-    auto tmp = os.str();
-    EXPECT(os.str() == usageText);
+    auto tmp = nocr(os.str());
+    EXPECT(tmp == nocr(usageText));
 }
 
 //===========================================================================
@@ -139,7 +157,8 @@ usage: test [--streetlight=COLOR] [--help]
         out.str("");
         cli.iostreams(&in, &out);
         EXPECT_PARSE2(cli, false, 0, {"--version"});
-        EXPECT(out.str() == "test version 1.0\n");
+        auto tmp = nocr(out.str());
+        EXPECT(tmp == "test version 1.0\n");
     }
 
     {

@@ -32,7 +32,6 @@ script:
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
-  - find . -name cli
   - ./cli
   - ctest
 

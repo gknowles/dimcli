@@ -27,4 +27,4 @@ artifacts:
 test_script:
   - cd build
   - ctest -C %configuration%
-  - bin\Win64\cli
+  - Win64\bin\cli
