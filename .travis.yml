@@ -33,8 +33,8 @@ script:
   - cmake ..
   - cmake --build .
   - find . -name cli
-  - cli
-  - cmake
+  - ./cli
+  - ctest
 
 notifications:
   email:
