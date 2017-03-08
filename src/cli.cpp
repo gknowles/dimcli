@@ -17,7 +17,12 @@
 
 using namespace std;
 using namespace Dim;
+
+#if defined(_MSC_VER)
 namespace fs = experimental::filesystem;
+#else
+namespace fs = filesystem;
+#endif
 
 // getenv triggers the visual c++ security warning
 #if (_MSC_VER >= 1400)

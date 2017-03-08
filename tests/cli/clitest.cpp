@@ -323,8 +323,13 @@ Commands:
 
     // filesystem
     {
+#if defined(_MSC_VER)
+        namespace fs = experimental::filesystem;
+#else
+        namespace fs = filesystem;
+#endif
         cli = {};
-        experimental::filesystem::path path;
+        fs::path path;
         cli.opt(&path, "path", "path")
             .desc("std::experimental::filesystem::path");
         EXPECT_PARSE(cli, {"--path", "one"});
@@ -420,7 +425,7 @@ void envTests() {
 
 //===========================================================================
 int main(int argc, char * argv[]) {
-#if defined(_WIN32)
+#if defined(_MSC_VER)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
 #endif
