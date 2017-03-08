@@ -57,7 +57,7 @@ void parseTest(
     vector<const char *> args) {
     args.insert(args.begin(), "test.exe");
     args.push_back(nullptr);
-    bool rc = cli.parse(size(args) - 1, const_cast<char **>(data(args)));
+    bool rc = cli.parse(args.size() - 1, const_cast<char **>(args.data()));
     if (rc != continueFlag || exitCode != cli.exitCode()) {
         if (exitCode)
             cerr << cli.errMsg() << endl;
@@ -420,8 +420,10 @@ void envTests() {
 
 //===========================================================================
 int main(int argc, char * argv[]) {
+#if defined(_WIN32)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     _set_error_mode(_OUT_TO_MSGBOX);
+#endif
 
     Dim::CliLocal cli;
     auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting");
