@@ -51,7 +51,7 @@ void helpTest(
     helpText = nocr(helpText);
     EXPECT(tmp == helpText);
     if (tmp != helpText)
-        cout << helpText;
+        cout << tmp;
 }
 
 //===========================================================================
@@ -63,7 +63,10 @@ void usageTest(
     ostringstream os;
     cli.printUsageEx(os, "test.exe", cmd);
     auto tmp = nocr(os.str());
-    EXPECT(tmp == nocr(usageText));
+    usageText = nocr(usageText);
+    EXPECT(tmp == usageText);
+    if (tmp != usageText)
+        cout << tmp;
 }
 
 //===========================================================================
