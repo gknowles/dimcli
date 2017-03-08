@@ -25,4 +25,5 @@ artifacts:
     type: zip
 
 test_script:
+  - cd build
   - ctest -C Debug

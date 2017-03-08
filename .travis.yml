@@ -32,7 +32,7 @@ script:
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
-  - ctest -C Debug
+  - build/bin/cli
 
 notifications:
   email:
