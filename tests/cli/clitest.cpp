@@ -409,10 +409,10 @@ void envTests() {
     cli = {};
     auto & args = cli.optVec<string>("[args]");
     cli.envOpts("TEST_OPTS");
-    putenv("");
+    putenv((char *) "");
     EXPECT_PARSE(cli, {"c", "d"});
     EXPECT(args->size() == 2);
-    putenv("TEST_OPTS=a b");
+    putenv((char *) "TEST_OPTS=a b");
     EXPECT_PARSE(cli, {"c", "d"});
     EXPECT(args->size() == 4);
 #endif
