@@ -152,11 +152,11 @@ findCmdAlways(Cli::Config & cfg, const string & name) {
 }
 
 //===========================================================================
-static fs::path displayName(const fs::path & file) {
+static string displayName(const fs::path & file) {
 #if defined(_WIN32)
-    return file.stem();
+    return file.stem().string();
 #else
-    return file.filename();
+    return file.filename().string();
 #endif
 }
 
@@ -469,7 +469,7 @@ Cli::versionOpt(const string & version, const string & progName) {
         auto &, // opt 
         auto &  // val
     ) {
-        fs::path prog = progName;
+        string prog = progName;
         if (prog.empty()) {
             prog = displayName(cli.progName());
         }
@@ -1605,7 +1605,7 @@ int Cli::writeUsageImpl(
     OptIndex ndx;
     index(ndx, cmdName, true);
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
-    string prog = displayName(arg0.empty() ? progName() : arg0).string();
+    string prog = displayName(arg0.empty() ? progName() : arg0);
     const string usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
