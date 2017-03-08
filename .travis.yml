@@ -14,6 +14,7 @@ addons:
 
 # Why must we work so hard to get a recent cmake?
 install:
+  - clang --version
   - export CXX=g++-6 CC=gcc-6
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
