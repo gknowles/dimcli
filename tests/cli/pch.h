@@ -4,6 +4,7 @@
 #include "dimcli/cli.h"
 
 #include <cstdlib>
+#include <cstring>
 #include <experimental/filesystem>
 #include <iostream>
 
