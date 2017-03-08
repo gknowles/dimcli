@@ -4,8 +4,6 @@
 
 using namespace std;
 
-static int s_errors;
-
 
 #define EXPECT(...) \
     if (!bool(__VA_ARGS__)) \
@@ -17,6 +15,16 @@ static int s_errors;
     parseTest(__LINE__, cli, cont, ec, __VA_ARGS__)
 #define EXPECT_ARGV(fn, cmdline, ...) \
     toArgvTest(__LINE__, fn, cmdline, __VA_ARGS__)
+
+
+#if defined(_WIN32)
+const char kCommand[] = "test.exe";
+#else
+const char kCommand[] = "test";
+#endif
+
+static int s_errors;
+
 
 //===========================================================================
 string nocr(string line) {
@@ -44,11 +52,10 @@ void helpTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
-    string helpText) {
+    const string & helpText) {
     ostringstream os;
-    cli.printHelp(os, "test.exe", cmd);
+    cli.printHelp(os, kCommand, cmd);
     auto tmp = nocr(os.str());
-    helpText = nocr(helpText);
     EXPECT(tmp == helpText);
     if (tmp != helpText)
         cout << tmp;
@@ -59,11 +66,10 @@ void usageTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
-    string usageText) {
+    const string & usageText) {
     ostringstream os;
-    cli.printUsageEx(os, "test.exe", cmd);
-    auto tmp = nocr(os.str());
-    usageText = nocr(usageText);
+    cli.printUsageEx(os, kCommand, cmd);
+    auto tmp = os.str();
     EXPECT(tmp == usageText);
     if (tmp != usageText)
         cout << tmp;
@@ -76,7 +82,7 @@ void parseTest(
     bool continueFlag,
     int exitCode,
     vector<const char *> args) {
-    args.insert(args.begin(), "test.exe");
+    args.insert(args.begin(), kCommand);
     args.push_back(nullptr);
     bool rc = cli.parse(args.size() - 1, const_cast<char **>(args.data()));
     if (rc != continueFlag || exitCode != cli.exitCode()) {
@@ -160,7 +166,7 @@ usage: test [--streetlight=COLOR] [--help]
         out.str("");
         cli.iostreams(&in, &out);
         EXPECT_PARSE2(cli, false, 0, {"--version"});
-        auto tmp = nocr(out.str());
+        auto tmp = out.str();
         EXPECT(tmp == "test version 1.0\n");
     }
 
