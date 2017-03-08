@@ -60,6 +60,11 @@ enum NameListType : int {
     kNameAll,        // include all names
     kNameNonDefault, // include names that change from the default
 };
+
+struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
+    // public destructor required for use with wstring_convert
+    ~CodecvtWchar() {}
+};
 } // namespace
 
 struct Cli::ArgKey {
@@ -649,7 +654,7 @@ std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
 std::vector<std::string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
-    wstring_convert<codecvt<wchar_t, char, mbstate_t>, wchar_t> wcvt(
+    wstring_convert<CodecvtWchar> wcvt(
         "BAD_ENCODING");
     for (; *argv; ++argv) {
         string tmp = wcvt.to_bytes(*argv);
@@ -1020,10 +1025,6 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     if (content.size() < 2)
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
-        struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
-            // public destructor required for use with wstring_convert
-            ~CodecvtWchar() {}
-        };
         wstring_convert<CodecvtWchar> wcvt("");
         const wchar_t * base =
             reinterpret_cast<const wchar_t *>(content.data());
