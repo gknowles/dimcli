@@ -32,7 +32,8 @@ script:
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
-  - build/bin/cli
+  - find . -name cli
+  - cmake -C Debug
 
 notifications:
   email:

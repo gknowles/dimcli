@@ -26,4 +26,4 @@ artifacts:
 
 test_script:
   - cd build
-  - ctest -C Debug
+  - ctest -C %configuration%
