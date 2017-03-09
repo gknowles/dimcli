@@ -8,7 +8,7 @@ cache:
 addons:
   apt:
     packages:
-      - g++-6.2
+      - g++-6
       - clang-3.6
       - clang-3.9
     sources: &sources
@@ -34,7 +34,7 @@ install:
 
 matrix:
   include:
-    - env: CXX_NAME=g++-6.2 CC_NAME=gcc-6.2
+    - env: CXX_NAME=g++-6 CC_NAME=gcc-6
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
 

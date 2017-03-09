@@ -7,7 +7,7 @@ configuration:
 
 build_script:
   # hack to stop sea of Xamarin (which isn't being used at all) warnings
-  # during the cmake install
+  # during cmake configuration
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
   - md build\Win64 
