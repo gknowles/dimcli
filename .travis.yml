@@ -1,4 +1,5 @@
 language: cpp
+sudo: false
 
 cache:
   directories:
@@ -15,7 +16,6 @@ addons:
 
 # Why must we work so hard to get a recent cmake?
 install:
-  - export CXX=g++-6 CC=gcc-6
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
   - |
@@ -30,8 +30,18 @@ install:
     fi
   - cd ${TRAVIS_BUILD_DIR}
 
+compiler:
+  - gcc
+  - clang
+
+matrix:
+  include:
+    - compiler: gcc
+      env: CXX=g++-6 CC=gcc-6
+    - compiler: clang
+      env: CXX=clang++ CC=clang
+
 script:
-  - clang --version
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
