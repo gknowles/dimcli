@@ -1,5 +1,7 @@
-﻿[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master "msvc 2015")
-[![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli "gcc 6.2, clang 3.6, clang 3.9")
+﻿[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)
+  ](https://ci.appveyor.com/project/gknowles/dimcli/branch/master "msvc 2015, msvc 2017")
+[![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)
+  ](https://travis-ci.org/gknowles/dimcli "gcc 6.2, clang 3.6, clang 3.9")
 # dimcli
 
 C++ command line parser toolkit for kids of all ages.

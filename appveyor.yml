@@ -1,4 +1,5 @@
 version: 0.1.{build}
+image: Visual Studio 2017
 
 platform:
   - x64
@@ -8,6 +9,7 @@ configuration:
 environment:
   matrix:
     - toolset: Visual Studio 14 2015 Win64
+    - toolset: Visual Studio 15 2017 Win64
 
 build_script:
   # hack to stop sea of Xamarin (which isn't being used at all) warnings
