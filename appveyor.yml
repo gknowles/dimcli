@@ -13,9 +13,8 @@ build_script:
   # during cmake configuration
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
-  - set
-  - if %VisualStudioVersion% EQU 14.0 set toolset=Visual Studio 14 2015 Win64
-  - if %VisualStudioVersion% EQU 15.0 set toolset=Visual Studio 15 2017 Win64
+  - if "%APPVEYOR_JOB_NAME%" EQU "Image: Visual Studio 2015" set toolset=Visual Studio 14 2015 Win64
+  - if "%APPVEYOR_JOB_NAME%" EQU "Image: Visual Studio 2017" set toolset=Visual Studio 15 2017 Win64
   - echo %toolset%
   - md build\Win64 
   - cd build\Win64
