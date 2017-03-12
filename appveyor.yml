@@ -13,19 +13,24 @@ build_script:
   # during cmake configuration
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
-  - md build\Win64 
-  - cd build\Win64
-  - cmake ..\..
+  - md build 
+  - cd build
+  - ps: |
+    if ($env:APPVEYOR_JOB_NAME -eq "Image: Visual Studio 2015") {
+      cmake -G "Visual Studio 14 2015 Win64" ..
+    } else {
+      cmake -G "Visual Studio 15 2017 Win64" ..
+    }
   - cmake -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_INSTALL_PREFIX=publish .
   - cmake --build . --target install --config %configuration%
   - cd publish
   - 7z a dimcli-latest.zip include lib
-  - cd ..\..\..
+  - cd ..\..
 
 artifacts:
-  - path: build\Win64\publish\dimcli-latest.zip
+  - path: build\publish\dimcli-latest.zip
     name: dimcli
     type: zip
 
 test_script:
-  - build\Win64\bin\cli
+  - build\bin\cli
