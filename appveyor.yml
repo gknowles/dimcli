@@ -18,8 +18,7 @@ build_script:
   - ps: |
       if ($env:APPVEYOR_JOB_NAME -eq "Image: Visual Studio 2015") {
         Invoke-Expression 'cmake -G "Visual Studio 14 2015 Win64" ..'
-      } 
-      else {
+      } else {
         Invoke-Expression 'cmake -G "Visual Studio 15 2017 Win64" ..'
       }
   - cmake -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_INSTALL_PREFIX=publish .
