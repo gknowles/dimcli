@@ -1,20 +1,20 @@
 version: 0.1.{build}
-image: Visual Studio 2015
+image: 
+  - Visual Studio 2015
+  - Visual Studio 2017
 
 platform:
   - x64
 configuration:
   - Debug
 
-environment:
-  matrix:
-    - toolset: Visual Studio 14 2015 Win64
-    - toolset: Visual Studio 15 2017 Win64
-
 build_script:
   # hack to stop sea of Xamarin (which isn't being used at all) warnings
   # during cmake configuration
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+
+  - if %VisualStudioVersion% EQU 14.0 set toolset=Visual Studio 14 2015 Win64
+  - if %VisualStudioVersion% EQU 15.0 set toolset=Visual Studio 15 2017 Win64
   - echo %toolset%
   - md build\Win64 
   - cd build\Win64
