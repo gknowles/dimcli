@@ -15,17 +15,18 @@ build_script:
   # during cmake configuration
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
+  - set
   - md build 
   - cd build
   - ps: |
       if ($env:platform -eq "x64") {
-        if ($env:APPVEYOR_JOB_NAME -eq "Image: Visual Studio 2015") {
+        if ($env:APPVEYOR_JOB_NAME.contains("Image: Visual Studio 2015")) {
           Invoke-Expression 'cmake -G "Visual Studio 14 2015 Win64" ..'
         } else {
           Invoke-Expression 'cmake -G "Visual Studio 15 2017 Win64" ..'
         }
       } else {
-        if ($env:APPVEYOR_JOB_NAME -eq "Image: Visual Studio 2015") {
+        if ($env:APPVEYOR_JOB_NAME.contains("Image: Visual Studio 2015")) {
           Invoke-Expression 'cmake -G "Visual Studio 14 2015" ..'
         } else {
           Invoke-Expression 'cmake -G "Visual Studio 15 2017" ..'
