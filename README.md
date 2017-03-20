@@ -26,8 +26,8 @@ prefer it all on a single page.
 ## Include in Your Project
 ### Copy source directly into your project
 All you need is:
-- include/dimcli/cli.h
-- src/cli.cpp
+- libs/dimcli/cli.h
+- libs/dimcli/cli.cpp
 
 ### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 - vcpkg install dimcli

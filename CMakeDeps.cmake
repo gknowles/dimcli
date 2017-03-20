@@ -7,8 +7,8 @@
 # appveyor.yml
 # configure.bat
 # docs/README.md
-# include/dimcli/cli.h
-# src/cli.cpp
+# libs/dimcli/cli.cpp
+# libs/dimcli/cli.h
 # tests/cli/clitest.cpp
 # tests/cli/pch.cpp
 # tests/cli/pch.h

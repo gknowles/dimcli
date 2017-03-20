@@ -4,14 +4,13 @@
 #   /<project_name>
 #   /<project_name>/CMakeLists.txt - this file
 #   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
-#   /<project_name>/include
-#   /<project_name>/include/${PROJECT_NAME}/config.h
-#   /<project_name>/src/{*.h,*.cpp}
-#   /<project_name>/src/<sublibrary>/**/{*.h,*.cpp}
+#   /<project_name>/libs/<lib_project_name>/**
+#   /<project_name>/libs/${PROJECT_NAME}/config.h
+#       has special transformation
 #   /<project_name>/tests/<test_project_name>/
 #   /<project_name>/tools/<tool_project_name>/
 #   /<project_name>/vendor/<vendor_project_name>/
-#   /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt
+#       if /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
 
 cmake_minimum_required (VERSION 3.6)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -135,13 +134,12 @@ function(add_exec_project tgt srcdir)
     write_user_file(${tgt})
 endfunction()
 
-function(add_lib_project_with_sources tgt srcdir)
+function(add_lib_project tgt srcdir)
     if(MSVC)
         set_property(SOURCE "${srcdir}/pch.cpp" 
             APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
     endif()
-    set(sources ${ARGV})
-    list(REMOVE_AT sources 0 1)
+    file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*)
     list(APPEND deps ${sources})
     set(deps ${deps} PARENT_SCOPE)
     set(cpps ${sources})
@@ -159,6 +157,14 @@ function(add_lib_project_with_sources tgt srcdir)
     else()
         add_custom_target(${tgt} SOURCES ${sources})
     endif()
+    file(GLOB incls LIST_DIRECTORIES false 
+        RELATIVE "${srcdir}" "${srcdir}/*.h")
+    foreach(var ${incls})
+        get_filename_component(name "${var}" NAME)
+        if(NOT name MATCHES ".*int\.h")
+            install(FILES "${srcdir}/${var}" DESTINATION include/${tgt})
+        endif()
+    endforeach()
     set_target_properties(${tgt} PROPERTIES FOLDER libs)
     if(NOT EXISTS "${srcdir}/pch.h")
         if(MSVC)
@@ -169,13 +175,6 @@ function(add_lib_project_with_sources tgt srcdir)
     write_user_file(${tgt})
 endfunction()
 
-function(add_lib_project tgt srcdir)
-    file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*.h ${srcdir}/*.cpp)
-    add_lib_project_with_sources(${tgt} ${srcdir} ${sources})
-    set(deps ${deps} PARENT_SCOPE)
-    set(libnames ${libnames} PARENT_SCOPE)
-endfunction()
-
 
 get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
 if(NOT "${parent}" STREQUAL "")
@@ -184,9 +183,9 @@ endif()
 
 if(VENDOR_ONLY)
     set_property(DIRECTORY "${parent}" APPEND PROPERTY INCLUDE_DIRECTORIES 
-        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+        "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 endif()
-include_directories(include)
+include_directories(libs)
 
 if(MSVC)
     # "/utf-8" - sets source code character set to utf-8
@@ -278,45 +277,17 @@ if(NOT VENDOR_ONLY)
     source_group("" FILES configure.bat)
 endif()
 
-# includes
-get_filename_component(path include ABSOLUTE)
-if(IS_DIRECTORY "${path}")
-    install(DIRECTORY include DESTINATION .)
-endif()
-# Create modifed config.h to reflect build defines
-set(cfgname "include/${PROJECT_NAME}/config.h")
-get_filename_component(path ${cfgname} ABSOLUTE)
-if(EXISTS "${path}")
-    file(READ "${path}" content)
-    foreach(val ${config_defines})
-        string(REGEX REPLACE 
-            "\n//#define ${val}" "\n#define ${val}" 
-            content "${content}")
-    endforeach()
-    update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
-
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
-        DESTINATION include/${PROJECT_NAME})
-endif()
-
 # lib targets
-file(GLOB allnames src/*)
-set(local_libs "")
+file(GLOB allnames libs/*)
 foreach(var ${allnames})
     if(IS_DIRECTORY "${var}")
-        list(APPEND local_libs "${var}")
+        get_filename_component(prjname "${var}" NAME)
+        if(NOT prjname STREQUAL ${PROJECT_NAME})
+            set(prjname ${PROJECT_NAME}-${prjname})
+        endif()
+        add_lib_project(${prjname} "${var}")
     endif()
 endforeach()
-foreach(var ${local_libs})
-    get_filename_component(prjname "${var}" NAME)
-    add_lib_project(${PROJECT_NAME}-${prjname} "${var}")
-endforeach()
-
-file(GLOB_RECURSE global_srcs LIST_DIRECTORIES false include/*)
-file(GLOB local_srcs LIST_DIRECTORIES false src/*.h src/*.cpp)
-set(sources ${global_srcs} ${local_srcs})
-add_lib_project_with_sources(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src 
-	${sources})
 
 if(VENDOR_ONLY)
     set(libnames ${libnames} PARENT_SCOPE)
@@ -348,6 +319,22 @@ endforeach()
 
 # update deps file
 update_deps_file(${deps})
+
+# Create modifed config.h to reflect build defines
+set(cfgname "libs/${PROJECT_NAME}/config.h")
+get_filename_component(path ${cfgname} ABSOLUTE)
+if(EXISTS "${path}")
+    file(READ "${path}" content)
+    foreach(val ${config_defines})
+        string(REGEX REPLACE 
+            "\n//#define ${val}" "\n#define ${val}" 
+            content "${content}")
+    endforeach()
+    update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
+
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
+        DESTINATION include/${PROJECT_NAME})
+endif()
 
 # The solution file isn't generated until after this script finishes, 
 # which means that:
