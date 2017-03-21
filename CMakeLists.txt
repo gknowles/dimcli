@@ -147,6 +147,7 @@ function(add_lib_project tgt srcdir)
     list(LENGTH cpps cpps)
     if(cpps)
         add_library(${tgt} ${sources})
+        target_compile_definitions(${tgt} PRIVATE DIM_LIB_SOURCE)
         list(APPEND libnames ${tgt})
         set(libnames ${libnames} PARENT_SCOPE)
 

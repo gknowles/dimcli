@@ -3,7 +3,9 @@
 // For documentation and examples:
 // https://github.com/gknowles/dimcli
 
+#ifndef DIM_LIB_SOURCE
 #define DIM_LIB_SOURCE
+#endif
 #include "dimcli/cli.h"
 
 #include <algorithm>
