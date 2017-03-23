@@ -1,5 +1,8 @@
 # CMakeLists.txt - general project generator
 #
+# Copyright Glen Knowles 2016 - 2017.
+# Distributed under the Boost Software License, Version 1.0.
+#
 # Required project layout:
 #   /<project_name>
 #   /<project_name>/CMakeLists.txt - this file

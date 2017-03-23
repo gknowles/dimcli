@@ -1,3 +1,8 @@
+<!--
+Copyright Glen Knowles 2016 - 2017.
+Distributed under the Boost Software License, Version 1.0.
+-->
+
 # Overview
 C++ command line parser toolkit for kids of all ages.
 
