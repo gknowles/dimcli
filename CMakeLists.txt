@@ -195,6 +195,8 @@ project(${prjname})
 get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
 if("${parent}" STREQUAL "")
     set(ROOT_PROJECT true)
+else()
+    set(ROOT_PROJECT false)
 endif()
 
 # In order to make a copy of the solution at the source root (where it's 
@@ -307,6 +309,20 @@ endforeach()
 
 set(deps, "")
 
+if(ROOT_PROJECT)
+    # vendor dependencies
+    file(GLOB allnames vendor/*)
+    foreach(var ${allnames})
+        if(IS_DIRECTORY "${var}")
+            list(APPEND deps "${var}")
+            get_filename_component(prjname "${var}" NAME)
+            if(EXISTS "${var}/CMakeLists.txt")
+                add_subdirectory("${var}")
+            endif()
+        endif()
+    endforeach()
+endif()
+
 # lib targets
 file(GLOB allnames libs/*)
 foreach(var ${allnames})
@@ -323,18 +339,6 @@ if(NOT ROOT_PROJECT)
     set(libnames ${libnames} PARENT_SCOPE)
     return()
 endif()
-
-# vendor dependencies
-file(GLOB allnames vendor/*)
-foreach(var ${allnames})
-    if(IS_DIRECTORY "${var}")
-        list(APPEND deps "${var}")
-        get_filename_component(prjname "${var}" NAME)
-        if(EXISTS "${var}/CMakeLists.txt")
-            add_subdirectory("${var}")
-        endif()
-    endif()
-endforeach()
 
 # meta target
 file(GLOB sources LIST_DIRECTORIES false 
