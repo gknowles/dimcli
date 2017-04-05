@@ -201,11 +201,10 @@ else()
 endif()
 
 # In order to make a copy of the solution at the source root (where it's 
-# required to be for the git integration) we need to copy - and tweak -
-# the it post generation. But cmake doesn't allow for post generation hooks,
-# so we launch another instance of cmake and do transform and copy after it
-# returns. After that we do the generation (again), potentially followed by
-# build and/or install.
+# required to be for the github integration) we need to copy - and tweak - it
+# post generation. But cmake doesn't allow for post generation hooks, so we 
+# launch another instance of cmake and then transform and copy the solution 
+# file after that instance returns.
 if(ROOT_PROJECT AND NOT RECURSIVE_GENERATE)
     message(STATUS "Recursive generate started")
     execute_process(
@@ -241,7 +240,9 @@ if(ROOT_PROJECT AND NOT RECURSIVE_GENERATE)
         set(sln_srcpath ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln)
         update_file("${sln_srcpath}" "${sln_content}")
     endif()
-    return()
+
+    # Fallthrough so that (in addition to a duplicate generate :P) any 
+    # --build or --install gets to run with all the facts.
 endif()
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
