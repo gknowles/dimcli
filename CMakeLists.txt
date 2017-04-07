@@ -74,7 +74,8 @@ option(RECURSIVE_GENERATE "Recursive call to cmake" OFF)
 
 # Reference to suppress "not used" warning when manually specified
 # by vcpkg
-set(tmp "${CMAKE_BUILD_TYPE}")
+set(tmp "${CMAKE_BUILD_TYPE}")      # not used
+set(tmp "${LINK_STATIC_RUNTIME}")   # not used by gcc or clang builds
 
 
 #############################################################################
@@ -355,6 +356,7 @@ if(MSVC)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
 endif()
+
 
 if(BUILD_UNICODE)
     add_definitions(/D_UNICODE)
