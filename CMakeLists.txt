@@ -162,15 +162,23 @@ function(install_archive_pdb tgt dstdir)
     endif()
 endfunction()
 
-function(add_exec_project tgt srcdir)
-    if(MSVC)
+function(set_pch tgt srcdir)
+    if(MSVC AND EXISTS "${srcdir}/pch.h")
+        # use pch.cpp to create precompiled header
         set_property(SOURCE "${srcdir}/pch.cpp" 
             APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+        # use pch.h as precompiled header
+        set_property(TARGET ${tgt} APPEND PROPERTY COMPILE_FLAGS "/Yupch.h")
     endif()
-    file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*.h ${srcdir}/*.cpp)
+endfunction()
+
+function(add_exec_project tgt srcdir)
+    file(GLOB_RECURSE sources 
+        LIST_DIRECTORIES false ${srcdir}/*.h ${srcdir}/*.cpp)
     list(APPEND deps ${sources})
     set(deps ${deps} PARENT_SCOPE)
     add_executable(${tgt} ${sources})
+    set_pch(${tgt} ${srcdir})
 	if(MSVC)
 		set_target_properties(${tgt} PROPERTIES LINK_FLAGS /Debug)
 	endif()
@@ -188,10 +196,6 @@ function(add_exec_project tgt srcdir)
 endfunction()
 
 function(add_lib_project tgt srcdir)
-    if(MSVC)
-        set_property(SOURCE "${srcdir}/pch.cpp" 
-            APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
-    endif()
     file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*)
     list(APPEND deps ${sources})
     set(deps ${deps} PARENT_SCOPE)
@@ -212,7 +216,10 @@ function(add_lib_project tgt srcdir)
         endif()
     else()
         add_custom_target(${tgt} SOURCES ${sources})
+        set_target_properties(${tgt} EXCLUDE_FROM_ALL false)
     endif()
+    set_target_properties(${tgt} PROPERTIES FOLDER libs)
+    set_pch(${tgt} ${srcdir})
     if(INSTALL_LIBS)
         file(GLOB incls LIST_DIRECTORIES false 
             RELATIVE "${srcdir}" "${srcdir}/*.h")
@@ -222,12 +229,6 @@ function(add_lib_project tgt srcdir)
                 install(FILES "${srcdir}/${var}" DESTINATION include/${tgt})
             endif()
         endforeach()
-    endif()
-    set_target_properties(${tgt} PROPERTIES FOLDER libs)
-    if(NOT EXISTS "${srcdir}/pch.h")
-        if(MSVC)
-            set_property(TARGET ${tgt} APPEND PROPERTY COMPILE_FLAGS "/Y-")
-        endif()
     endif()
     write_user_file(${tgt})
 endfunction()
@@ -313,7 +314,6 @@ if(MSVC)
     # "/W4" - warning level 4
     # "/WX" - treat warnings as errors
     # "/Zi" - debug info format - defaults to no info
-    # "/Yupch.h" - use pch.h as precompiled header 
     # "/std:c++latest" - allow constructs still pending standardization
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
@@ -322,7 +322,7 @@ if(MSVC)
     # "/EHsc" - exceptions from c++ only (not from structure or "C")
     # "/GF" - string pooling
     set(CMAKE_CXX_FLAGS "\
-        /utf-8 /W4 /WX /Zi /Yupch.h \
+        /utf-8 /W4 /WX /Zi \
         /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
         /EHsc /GF")
     if(NOT MSVC_VERSION LESS 2000)
@@ -415,7 +415,9 @@ file(GLOB sources LIST_DIRECTORIES false
     docs/*)
 list(APPEND deps ${sources})
 add_custom_target(about SOURCES ${sources})
-set_target_properties(about PROPERTIES FOLDER files)
+set_target_properties(about PROPERTIES 
+    FOLDER files
+    EXCLUDE_FROM_ALL false)
 
 # tool targets
 file(GLOB allnames tools/*)
