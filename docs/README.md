@@ -196,7 +196,7 @@ Does the apple have a worm? Yes :(
 ~~~
 
 You can also point multiple "options" at the same variable, as is common with
-[feature switches](Feature Switches).
+[feature switches](Feature%20Switches).
 
 
 ## Option Names
@@ -216,7 +216,7 @@ and all names may have modifier flags:
 | Flag | Type   | Description                                                     |
 | :--: |--------|-----------------------------------------------------------------|
 | !    | prefix | for boolean values, when setting the value it is first inverted |
-| ?    | prefix | for non-boolean named options, makes the value [optional](Optional Values) |
+| ?    | prefix | for non-boolean named options, makes the value [optional](Optional%20Values) |
 | .    | suffix | for long names, suppresses the implicit "no-" version           |
 
 By default, long names for boolean values get a second "no-" version implicitly
@@ -287,7 +287,7 @@ ways:
   - explicitly using the "!" modifier
   - define a long name and use the implicitly created "no-" prefix version
 - use opt.flagValue() to set the value, see 
-  [feature switches](Feature Switches).
+  [feature switches](Feature%20Switches).
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -435,11 +435,11 @@ Hello Mary!
 |------------|------------------------------------------------------------------|
 | "-"        | Passed in as a positional argument.                              |
 | "--"       | Thrown away, but makes all remaining arguments positional        |
-| "@\<file>" | [Response file](Response Files) containing additional arguments  |
+| "@\<file>" | [Response file](Response%20Files) containing additional arguments  |
 
 
 ## Optional Values
-You use the '?' [flag](Option Names) on an argument name to indicate that
+You use the '?' [flag](Option%20Names) on an argument name to indicate that
 its value is optional. Only non-booleans can have optional values, booleans 
 are evaluated just on their presence or absence and don't otherwise have 
 values.
@@ -488,7 +488,7 @@ v1 =, v2 = two, p = one
 Sometimes, you want an argument to completely change the execution flow. For 
 instance, to provide more detailed errors about badly formatted arguments. Or 
 to make "--version" print some crazy ascii artwork and exit the program (for 
-a non-crazy --version use [opt.versionOpt()](Version Option)).
+a non-crazy --version use [opt.versionOpt()](Version%20Option)).
 
 Parsing actions are attached to options and get invoked when a value becomes 
 available for it. Any std::function compatible object that accepts references 
@@ -956,7 +956,7 @@ Sometimes you want an option to have a fixed set of possible values, such as
 for an enum. You use opt.choice() to add legal choices, one at a time, to an
 option.
 
-Choices are similar to [feature switches](Feature Switches) but instead of
+Choices are similar to [feature switches](Feature%20Switches) but instead of
 multiple boolean options populating a single variable it is a single 
 non-boolean option setting its variable to one of multiple values.
 
@@ -1053,7 +1053,7 @@ $ a.out -vvv
 Verbosity: 3
 ~~~
 
-This could also be done with a [parse action](Parse Actions), but that seems
+This could also be done with a [parse action](Parse%20Actions), but that seems
 like more work.
 
 
@@ -1204,7 +1204,7 @@ HELLO!!!
 
 ## Page Layout
 The main help page, and the help pages for subcommands, are built the same
-way and made up of the same six (not counting [option groups](Option Groups))
+way and made up of the same six (not counting [option groups](Option%20Groups))
 sections.
 
 | Section | Changed by | Description |
