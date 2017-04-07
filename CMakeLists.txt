@@ -3,23 +3,68 @@
 # Copyright Glen Knowles 2016 - 2017.
 # Distributed under the Boost Software License, Version 1.0.
 #
-# Required project layout:
+# Use this one file *unmodified* for all projects that follow the convections.
+# All the careful tweaking is for Visual Studio, but it works on linux with 
+# both gcc and clang (at least well enough to do travis builds :P).
+#
+# Project layout:
 #   /<project_name>
 #   /<project_name>/CMakeLists.txt - this file
 #   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
 #   /<project_name>/libs/<lib_project_name>/**
 #   /<project_name>/libs/${PROJECT_NAME}/config.h
 #       has special transformation
-#   /<project_name>/tests/<test_project_name>/
-#   /<project_name>/tools/<tool_project_name>/
+#   /<project_name>/tests/<test_project_name>/**
+#   /<project_name>/tools/<tool_project_name>/**
 #   /<project_name>/vendor/<vendor_project_name>/
 #       if /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
+#
+# Code files:
+# Source files are expected to be "*.cpp" and "*.h".
+#
+# Precompiled headers:
+# If a lib, test, or tool has a "pch.h" it should also have a "pch.cpp", and 
+# it's cpp files will (under msvc) have "/Yupch.h" - except pch.cpp which gets 
+# "/Ycpch.h".
+#
+# Building libraries:
+# If a library has no cpp files a non-building custom target is made for it 
+# instead of a lib target.
+# For library builds the DIM_LIB_SOURCE macro is defined, used in combination
+# with DIM_LIB_DYN_LINK to help mark up the interface with the correct 
+# dllexport/dllimport attributes.
+# 
+# Testing:
+# CTest will run all tests, and pass them the "--test" argument.
+#
+# Installing:
+# By default only libs are installed, tests are not, and tools require the
+# INSTALL_TOOLS option. Install creates the following (vcpkg conventions):
+#   include - subdir for each lib containing all of its headers except those 
+#             like "*int.h"
+#   include/${PROJECT_NAME}/config.h - if it (and they) exist, the following 
+#           lines are commented/uncommented according to the selected options.
+#       "#define DIM_LIB_DYN_LINK" - BUILD_SHARED_LIBS
+#       "#define DIM_LIB_WINAPI_FAMILY_APP - WINDOWS_STORE
+#   bin - only release build targets
+#       libs with BUILD_SHARED_LIBS: *.dll and *.pdb
+#       tools: *.exe and *.pdb
+#   lib - only release build targets
+#       libs with BUILD_SHARED_LIBS: *.lib
+#       libs otherwise: *.lib and *.pdb
+#   debug/bin - like bin above, but debug targets
+#   debug/lib - like lib above, but debug targets
+#
+# Vendor submodules:
+# add_subdirectory is called for every vendor project directory that has
+# a CMakeLists.txt file. It is expected to be a compatible version of this
+# file, and only it's lib projects will be included in the root solution. 
 
 cmake_minimum_required (VERSION 3.6)
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 option(BUILD_UNICODE "Build with unicode charset" OFF)
+option(INSTALL_TOOLS "Install includes tool binaries" OFF)
 
 # For internal use by this script
 option(RECURSIVE_GENERATE "Recursive call to cmake" OFF)
@@ -136,7 +181,6 @@ function(add_exec_project tgt srcdir)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
 		target_link_libraries(${tgt} "stdc++fs")
     endif()
-    source_group("" FILES ${sources})
     write_user_file(${tgt})
 endfunction()
 
@@ -178,7 +222,6 @@ function(add_lib_project tgt srcdir)
             set_property(TARGET ${tgt} APPEND PROPERTY COMPILE_FLAGS "/Y-")
         endif()
     endif()
-    source_group("" FILES ${sources})
     write_user_file(${tgt})
 endfunction()
 
@@ -200,7 +243,7 @@ else()
     set(ROOT_PROJECT false)
 endif()
 
-# In order to make a copy of the solution at the source root (where it's 
+# In order to make a copy of the solution to the source root (where it's 
 # required to be for the github integration) we need to copy - and tweak - it
 # post generation. But cmake doesn't allow for post generation hooks, so we 
 # launch another instance of cmake and then transform and copy the solution 
@@ -244,6 +287,9 @@ if(ROOT_PROJECT AND NOT RECURSIVE_GENERATE)
     # Fallthrough so that (in addition to a duplicate generate :P) any 
     # --build or --install gets to run with all the facts.
 endif()
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER cmake)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
@@ -351,7 +397,7 @@ if(NOT ROOT_PROJECT)
     return()
 endif()
 
-# meta target
+# file targets
 file(GLOB sources LIST_DIRECTORIES false 
     LICENSE
     .clang-format
@@ -361,10 +407,8 @@ file(GLOB sources LIST_DIRECTORIES false
     configure.bat
     docs/*)
 list(APPEND deps ${sources})
-add_custom_target("_meta" SOURCES ${sources})
-set_target_properties(_meta PROPERTIES FOLDER config)
-source_group("docs" REGULAR_EXPRESSION "docs/.*")
-source_group("" FILES configure.bat)
+add_custom_target(about SOURCES ${sources})
+set_target_properties(about PROPERTIES FOLDER files)
 
 # tool targets
 file(GLOB allnames tools/*)
@@ -373,21 +417,25 @@ foreach(var ${allnames})
         get_filename_component(prjname "${var}" NAME)
         add_exec_project(${prjname} "${var}")
         set_target_properties(${prjname} PROPERTIES FOLDER tools)
-        # install(TARGETS ${prjname} RUNTIME DESTINATION bin)
+        if(INSTALL_TOOLS)
+            install(TARGETS ${prjname} RUNTIME DESTINATION bin)
+        endif()
     endif()
 endforeach()
 
 # test targets
-enable_testing()
 file(GLOB allnames tests/*)
 foreach(var ${allnames})
     if(IS_DIRECTORY "${var}")
         get_filename_component(prjname "${var}" NAME)
         add_exec_project(${prjname} "${var}")
         set_target_properties(${prjname} PROPERTIES FOLDER tests)
-        add_test(NAME ${prjname} COMMAND ${prjname})
+        add_test(NAME ${prjname} COMMAND ${prjname} --test)
     endif()
 endforeach()
+
+source_group(" " REGULAR_EXPRESSION ".*")
+source_group("docs" REGULAR_EXPRESSION "docs/.*")
 
 # update deps file
 update_deps_file(${deps})
