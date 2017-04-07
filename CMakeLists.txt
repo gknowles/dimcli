@@ -29,7 +29,7 @@
 #
 # Building libraries:
 # If a library has no cpp files a non-building custom target is made for it 
-# instead of a lib target.
+# instead of a lib target (good for header only libs).
 # For library builds the DIM_LIB_SOURCE macro is defined, used in combination
 # with DIM_LIB_DYN_LINK to help mark up the interface with the correct 
 # dllexport/dllimport attributes.
@@ -48,6 +48,7 @@
 #       "#define DIM_LIB_WINAPI_FAMILY_APP - WINDOWS_STORE
 #   bin - only release build targets
 #       libs with BUILD_SHARED_LIBS: *.dll and *.pdb
+#       libs otherwise: no files
 #       tools: *.exe and *.pdb
 #   lib - only release build targets
 #       libs with BUILD_SHARED_LIBS: *.lib
@@ -64,7 +65,9 @@ cmake_minimum_required (VERSION 3.6)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 option(BUILD_UNICODE "Build with unicode charset" OFF)
+option(INSTALL_LIBS "Install includes libs" OFF)
 option(INSTALL_TOOLS "Install includes tool binaries" OFF)
+option(INSTALL_TESTS "Install includes test binaries" OFF)
 
 # For internal use by this script
 option(RECURSIVE_GENERATE "Recursive call to cmake" OFF)
@@ -201,21 +204,25 @@ function(add_lib_project tgt srcdir)
         list(APPEND libnames ${tgt})
         set(libnames ${libnames} PARENT_SCOPE)
 
-        install(TARGETS ${tgt}
-            ARCHIVE DESTINATION lib
-            RUNTIME DESTINATION bin)
-        install_archive_pdb(${tgt} lib)
+        if(INSTALL_LIBS)
+            install(TARGETS ${tgt}
+                ARCHIVE DESTINATION lib
+                RUNTIME DESTINATION bin)
+            install_archive_pdb(${tgt} lib)
+        endif()
     else()
         add_custom_target(${tgt} SOURCES ${sources})
     endif()
-    file(GLOB incls LIST_DIRECTORIES false 
-        RELATIVE "${srcdir}" "${srcdir}/*.h")
-    foreach(var ${incls})
-        get_filename_component(name "${var}" NAME)
-        if(NOT name MATCHES ".*int\.h")
-            install(FILES "${srcdir}/${var}" DESTINATION include/${tgt})
-        endif()
-    endforeach()
+    if(INSTALL_LIBS)
+        file(GLOB incls LIST_DIRECTORIES false 
+            RELATIVE "${srcdir}" "${srcdir}/*.h")
+        foreach(var ${incls})
+            get_filename_component(name "${var}" NAME)
+            if(NOT name MATCHES ".*int\.h")
+                install(FILES "${srcdir}/${var}" DESTINATION include/${tgt})
+            endif()
+        endforeach()
+    endif()
     set_target_properties(${tgt} PROPERTIES FOLDER libs)
     if(NOT EXISTS "${srcdir}/pch.h")
         if(MSVC)
@@ -431,6 +438,9 @@ foreach(var ${allnames})
         add_exec_project(${prjname} "${var}")
         set_target_properties(${prjname} PROPERTIES FOLDER tests)
         add_test(NAME ${prjname} COMMAND ${prjname} --test)
+        if(INSTALL_TESTS)
+            install(TARGETS ${prjname} RUNTIME DESTINATION bin)
+        endif()
     endif()
 endforeach()
 
@@ -452,6 +462,8 @@ if(EXISTS "${path}")
     endforeach()
     update_file("${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" "${content}")
 
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
-        DESTINATION include/${PROJECT_NAME})
+    if(INSTALL_LIBS)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cfgname}" 
+            DESTINATION include/${PROJECT_NAME})
+    endif()
 endif()
