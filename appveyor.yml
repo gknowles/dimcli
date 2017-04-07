@@ -33,7 +33,9 @@ build_script:
           Invoke-Expression 'cmake -G "Visual Studio 15 2017" ..'
         }
       }
-  - cmake -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_INSTALL_PREFIX=publish .
+  - cmake . -DCMAKE_BUILD_TYPE=%configuration% 
+        -DCMAKE_INSTALL_PREFIX=publish 
+        -DINSTALL_LIBS:BOOL=ON
   - cmake --build . --target install --config %configuration%
   - cd publish
   - 7z a dimcli-latest.zip include lib
