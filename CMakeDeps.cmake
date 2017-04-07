@@ -7,6 +7,7 @@
 # appveyor.yml
 # configure.bat
 # docs/README.md
+# docs/Sidebar.md
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
 # tests/cli/clitest.cpp
