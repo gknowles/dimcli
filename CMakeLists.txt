@@ -357,7 +357,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
 endif()
 
-
 if(BUILD_UNICODE)
     add_definitions(/D_UNICODE)
 endif()
