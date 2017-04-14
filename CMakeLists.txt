@@ -38,8 +38,9 @@
 # CTest will run all tests, and pass them the "--test" argument.
 #
 # Installing:
-# By default only libs are installed, tests are not, and tools require the
-# INSTALL_TOOLS option. Install creates the following (vcpkg conventions):
+# By default nothing is installed. Installation of libs, tools, and tests
+# are enabled using the INSTALL_LIBS, INSTALL_TOOLS, and INSTALL_TESTS options
+# respectively. Install creates the following (vcpkg conventions):
 #   include - subdir for each lib containing all of its headers except those 
 #             like "*int.h"
 #   include/${PROJECT_NAME}/config.h - if it (and they) exist, the following 
@@ -49,7 +50,7 @@
 #   bin - only release build targets
 #       libs with BUILD_SHARED_LIBS: *.dll and *.pdb
 #       libs otherwise: no files
-#       tools: *.exe and *.pdb
+#       tools and tests: *.exe and *.pdb
 #   lib - only release build targets
 #       libs with BUILD_SHARED_LIBS: *.lib
 #       libs otherwise: *.lib and *.pdb
@@ -73,8 +74,7 @@ option(INSTALL_TESTS "Install includes test binaries" OFF)
 option(RECURSIVE_GENERATE "Recursive call to cmake" OFF)
 
 # Reference to suppress "not used" warning when manually specified
-# by vcpkg
-set(tmp "${CMAKE_BUILD_TYPE}")      # not used
+set(tmp "${CMAKE_BUILD_TYPE}")      # not used (vcpkg sets it)
 set(tmp "${LINK_STATIC_RUNTIME}")   # not used by gcc or clang builds
 
 
@@ -372,7 +372,11 @@ foreach(var ${config_defines})
     add_definitions(/D${var})
 endforeach()
 
-set(deps, "")
+# Setting source_group to a single space is weird and relys on Visual Studio 
+# treating it as no group, ideally we'd set it to the empty string to mean 
+# no group, but - just for regexs (bug?) - that causes cmake to use defaults.
+source_group(" " REGULAR_EXPRESSION ".*")
+source_group("docs" REGULAR_EXPRESSION "docs/.*")
 
 if(ROOT_PROJECT)
     # vendor dependencies
@@ -401,6 +405,7 @@ foreach(var ${allnames})
 endforeach()
 
 if(NOT ROOT_PROJECT)
+    set(deps ${deps} PARENT_SCOPE)
     set(libnames ${libnames} PARENT_SCOPE)
     return()
 endif()
@@ -446,9 +451,6 @@ foreach(var ${allnames})
         endif()
     endif()
 endforeach()
-
-source_group(" " REGULAR_EXPRESSION ".*")
-source_group("docs" REGULAR_EXPRESSION "docs/.*")
 
 # update deps file
 update_deps_file(${deps})
