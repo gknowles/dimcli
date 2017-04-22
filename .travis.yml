@@ -46,7 +46,6 @@ script:
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
-  - ./cli
   - ../bin/cli
 
 notifications:
