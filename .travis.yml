@@ -11,8 +11,8 @@ addons:
   apt:
     packages:
       - g++-6
-      - clang-3.6
-      - clang-3.9
+#      - clang-3.6
+#      - clang-3.9
     sources: &sources
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.6
@@ -46,7 +46,9 @@ script:
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
-  - ../bin/cli
+  - ./cli
+  - ls
+  - pwd
 
 notifications:
   email:
