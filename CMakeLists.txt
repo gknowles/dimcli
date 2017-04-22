@@ -122,6 +122,9 @@ function(update_deps_file)
 endfunction()
 
 function(write_user_file prjname)
+    if(NOT MSVC)
+        return()
+    endif()
     set(user_file "${CMAKE_CURRENT_BINARY_DIR}/${prjname}.vcxproj.user")
     file(WRITE ${user_file} [=[
 <?xml version="1.0" encoding="utf-8"?>
@@ -134,8 +137,9 @@ function(write_user_file prjname)
         else()
             set(libpath "${cfgname}/lib")
         endif()
+        set(cfgplat "${cfgname}|${MSVC_CXX_ARCHITECTURE_ID}")
         file(APPEND ${user_file} [=[
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'==']=] "${cfgname}" [=[|x64'">
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'==']=] "${cfgplat}" [=['">
         <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
         <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
         <VcpkgLibPath>]=] "${libpath}" [=[</VcpkgLibPath>
@@ -148,6 +152,9 @@ function(write_user_file prjname)
 endfunction()
 
 function(install_archive_pdb tgt dstdir)
+    if(NOT MSVC)
+        return()
+    endif()
     if(BUILD_SHARED_LIBS)
         install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
     else()
@@ -234,6 +241,18 @@ function(add_lib_project tgt srcdir)
     write_user_file(${tgt})
 endfunction()
 
+function(add_file_project tgt)
+    file(GLOB sources LIST_DIRECTORIES false ${ARGN})
+    if(NOT sources STREQUAL '')
+        list(APPEND deps ${sources})
+        set(deps ${deps} PARENT_SCOPE)
+        add_custom_target(${tgt} SOURCES ${sources})
+        set_target_properties(${tgt} PROPERTIES
+            FOLDER files
+            EXCLUDE_FROM_ALL false)
+    endif()
+endfunction()
+
 
 #############################################################################
 #
@@ -257,7 +276,7 @@ endif()
 # post generation. But cmake doesn't allow for post generation hooks, so we 
 # launch another instance of cmake and then transform and copy the solution 
 # file after that instance returns.
-if(ROOT_PROJECT AND NOT RECURSIVE_GENERATE)
+if(MSVC AND ROOT_PROJECT AND NOT RECURSIVE_GENERATE)
     message(STATUS "Recursive generate started")
     execute_process(
         COMMAND ${CMAKE_COMMAND} 
@@ -301,8 +320,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER cmake)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin)
 
 if(NOT ROOT_PROJECT)
     set_property(DIRECTORY "${parent}" APPEND PROPERTY INCLUDE_DIRECTORIES 
@@ -319,13 +338,15 @@ if(MSVC)
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
     # "/Zc:strictStrings" - disable string literal type conversion to non-const
+    # "/nologo" - suppress startup banner and informational messages
     # "/GR-" (UNUSED) - disable RTTI
     # "/EHsc" - exceptions from c++ only (not from structure or "C")
     # "/GF" - string pooling
+    # "/guard:cf" - control flow guard
     set(CMAKE_CXX_FLAGS "\
         /utf-8 /W4 /WX /Zi \
         /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /EHsc /GF")
+        /nologo /EHsc /GF /guard:cf")
     if(NOT MSVC_VERSION LESS 2000)
         # /permissive-  // reject non-conforming backward compatibilitisms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
@@ -411,7 +432,7 @@ if(NOT ROOT_PROJECT)
 endif()
 
 # file targets
-file(GLOB sources LIST_DIRECTORIES false 
+add_file_project(about 
     LICENSE
     .clang-format
     .travis.yml
@@ -419,11 +440,8 @@ file(GLOB sources LIST_DIRECTORIES false
     *.md
     configure.bat
     docs/*)
-list(APPEND deps ${sources})
-add_custom_target(about SOURCES ${sources})
-set_target_properties(about PROPERTIES 
-    FOLDER files
-    EXCLUDE_FROM_ALL false)
+add_file_project(conf 
+    bin/conf/*)
 
 # tool targets
 file(GLOB allnames tools/*)
