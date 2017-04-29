@@ -182,7 +182,7 @@ endfunction()
 
 function(add_exec_project tgt srcdir)
     file(GLOB_RECURSE sources 
-        LIST_DIRECTORIES false ${srcdir}/*.h ${srcdir}/*.cpp)
+        LIST_DIRECTORIES false ${srcdir}/*)
     list(APPEND deps ${sources})
     set(deps ${deps} PARENT_SCOPE)
     add_executable(${tgt} ${sources})
