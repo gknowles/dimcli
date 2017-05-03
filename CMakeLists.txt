@@ -344,11 +344,11 @@ if(MSVC)
     # "/GR-" (UNUSED) - disable RTTI
     # "/EHsc" - exceptions from c++ only (not from structure or "C")
     # "/GF" - string pooling
-    # "/guard:cf" - control flow guard
+    # "/guard:cf" (UNUSED) - control flow guard
     set(CMAKE_CXX_FLAGS "\
         /utf-8 /W4 /WX /Zi \
         /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /nologo /EHsc /GF /guard:cf")
+        /nologo /EHsc /GF")
     if(NOT MSVC_VERSION LESS 2000)
         # /permissive-  // reject non-conforming backward compatibilitisms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
