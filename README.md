@@ -72,7 +72,7 @@ Why not a single header file?
 - On large projects with many binaries (tests, utilities, etc) it's good for 
   compile times to move as much stuff out of the headers as you easily can.
 - Inflicting <Windows.h> (and to a much lesser extent <termios.h> & <unistd.h>)
-  on all clients seemed a bridge too far.
+  on all clients seems a bridge too far.
 
 Sources of inspiration:
 
