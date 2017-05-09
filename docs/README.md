@@ -516,7 +516,7 @@ int main(int argc, char * argv[]) {
         .parse([](auto & cli, auto & opt, const string & val) {
             int tmp = *opt; // save the old value
             if (!opt.parseValue(val)) // parse the new value into opt
-                return cli.badUsage("Bad '" + opt.from() + "' value: " + val);
+                return cli.badUsage("Bad '" + opt.from() + "' number: " + val);
             *opt *= tmp; // multiply old and new together
             return true;
         });
@@ -541,7 +541,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-Error: Invalid '-n' value: x
+Error: Bad '-n' number: x
 ~~~
 
 
@@ -565,9 +565,13 @@ The opt is fully populated, so *opt, opt.from(), etc are all available.
 
 
 ## After Actions
-After actions run after all arguments have been parsed. After actions are 
-used to implement opt.prompt(). Any number of after actions can be added and 
-will, for each option, be called in the order they're added. 
+After actions run after all arguments have been parsed. For example, 
+opt.prompt() is implemented as an after action. Any number of after actions 
+can be added and will, for each option, be called in the order they're added. 
+They are called with the three parameters, like other option actions, that 
+are references to cli, opt, and const string respectively. However the const 
+string is always empty(), so any information about the value must come from 
+the opt reference.
 
 The function should:
 - Do something interesting.
