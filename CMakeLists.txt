@@ -349,7 +349,7 @@ if(MSVC)
         /utf-8 /W4 /WX /Zi \
         /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
         /nologo /EHsc /GF")
-    if(NOT MSVC_VERSION LESS 2000)
+    if(NOT MSVC_VERSION LESS 1910)
         # /permissive-  // reject non-conforming backward compatibilitisms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
     endif()
