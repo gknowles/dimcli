@@ -677,6 +677,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
     for (auto && arg : args)
         argv.push_back(arg.data());
     argv.push_back(nullptr);
+    argv.pop_back();
     return argv;
 }
 
