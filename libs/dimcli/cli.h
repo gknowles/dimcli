@@ -246,8 +246,8 @@ public:
     // Actions are executed when cli.run() is called by the application. The
     // parse function should:
     //  - do something useful
-    //  - return an exitCode.
-    using ActionFn = int(Cli & cli);
+    //  - return false on errors (and use fail() to set exitCode, et al)
+    using ActionFn = bool(Cli & cli);
     Cli & action(std::function<ActionFn> fn);
 
     // Arbitrary text can be added to the generated help for each command,
@@ -396,11 +396,17 @@ public:
     // commands defined or none were selected.
     const std::string & runCommand() const;
 
-    // Runs the action of the selected command and returns its exit code;
-    // which is also used to set cli.exitCode(). If no command was selected
-    // it runs the action of the empty "" command, which can be set via
-    // cli.action() just like any other command.
-    int run();
+    // Executes the action of the selected command; returns true if it 
+    // worked. On failure it's expected to have set exitCode(), errMsg(), and
+    // maybe errDetail() via fail(). If no command was selected it runs the 
+    // action of the empty "" command, which can be set via cli.action() just 
+    // like any other command.
+    bool exec();
+
+    // Sets exitCode(), errMsg(), and errDetail(), intended to be called from
+    // command actions, parsing related failures should use badUsage().
+    bool 
+    fail(int code, const std::string & msg, const std::string & detail = {});
 
 protected:
     Cli(std::shared_ptr<Config> cfg);
@@ -444,8 +450,6 @@ private:
         const OptIndex & ndx,
         const OptBase & opt,
         int type) const;
-
-    bool fail(int code, const std::string & msg);
 
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int) const

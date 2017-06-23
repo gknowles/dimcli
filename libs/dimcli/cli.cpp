@@ -9,7 +9,7 @@
 #ifndef DIM_LIB_SOURCE
 #define DIM_LIB_SOURCE
 #endif
-#include "dimcli/cli.h"
+#include "cli.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -395,12 +395,13 @@ bool Cli::defaultParse(OptBase & opt, const string & val) {
 
 //===========================================================================
 static int cmdAction(Cli & cli) {
+    ostringstream os;
     if (cli.runCommand().empty()) {
-        cerr << "No command given." << endl;
+        os << "No command given.";
     } else {
-        cerr << "Command '" << cli.runCommand()
-             << "' has not been implemented." << endl;
+        os << "Command '" << cli.runCommand() << "' has not been implemented.";
     }
+    cli.fail(kExitSoftware, os.str());
     return kExitSoftware;
 }
 
@@ -451,9 +452,9 @@ Cli & Cli::operator=(const Cli & from) {
 //===========================================================================
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes")
-        .desc("Suppress prompting to allow execution.")
-        .check([](auto &, auto & opt, auto &) { return *opt; })
-        .prompt(prompt.empty() ? "Are you sure?" : prompt);
+                     .desc("Suppress prompting to allow execution.")
+                     .check([](auto &, auto & opt, auto &) { return *opt; })
+                     .prompt(prompt.empty() ? "Are you sure?" : prompt);
     return ask;
 }
 
@@ -464,9 +465,9 @@ Cli::Opt<bool> & Cli::helpOpt() {
         return *cmd.helpOpt;
 
     auto & hlp = opt<bool>("help.")
-        .desc("Show this message and exit.")
-        .parse(helpAction)
-        .group(s_internalOptionGroup);
+                     .desc("Show this message and exit.")
+                     .parse(helpAction)
+                     .group(s_internalOptionGroup);
     if (!m_command.empty())
         hlp.show(false);
     cmd.helpOpt = &hlp;
@@ -691,6 +692,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
     for (auto && arg : args)
         argv.push_back(arg.data());
     argv.push_back(nullptr);
+    argv.pop_back();
     return argv;
 }
 
@@ -1216,9 +1218,10 @@ bool Cli::badUsage(const string & msg) {
 }
 
 //===========================================================================
-bool Cli::fail(int code, const string & msg) {
-    m_cfg->errMsg = msg;
+bool Cli::fail(int code, const string & msg, const string & detail) {
     m_cfg->exitCode = code;
+    m_cfg->errMsg = msg;
+    m_cfg->errDetail = detail;
     return false;
 }
 
@@ -1432,13 +1435,15 @@ const string & Cli::runCommand() const {
 }
 
 //===========================================================================
-int Cli::run() {
+bool Cli::exec() {
     auto & name = runCommand();
     assert(m_cfg->cmds.find(name) != m_cfg->cmds.end());
     auto & cmd = m_cfg->cmds[name];
-    int code = cmd.action(*this);
-    fail(code, "");
-    return code;
+    if (!cmd.action(*this)) {
+        assert(exitCode());
+        return false;
+    }
+    return true;
 }
 
 
