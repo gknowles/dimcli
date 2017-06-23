@@ -19,6 +19,7 @@ addons:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.6
       - llvm-toolchain-precise-3.9
+      - llvm-toolchain-trusty-4.0
 
 # Why must we work so hard to get a recent cmake?
 install:
