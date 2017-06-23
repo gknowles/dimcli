@@ -11,7 +11,6 @@ addons:
   apt:
     packages:
       - g++-6
-      - g++-7
       - clang-3.6
       - clang-3.9
       - clang-4.0
@@ -41,7 +40,6 @@ install:
 matrix:
   include:
     - env: CXX_NAME=g++-6 CC_NAME=gcc-6
-    - env: CXX_NAME=g++-7 CC_NAME=gcc-7
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
     - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
