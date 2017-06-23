@@ -347,10 +347,10 @@ ostream & operator<< (ostream & os, const vector<T> & v) {
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-	// for oranges demonstrate using a separate vector
+    // for oranges demonstrate using a separate vector
     vector<string> oranges;
     cli.optVec(&oranges, "o orange").desc("oranges");
-	// for apples demonstrate just using the proxy object
+    // for apples demonstrate just using the proxy object
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -383,7 +383,7 @@ auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
 ...
 cout << "There were " << apples.size() << " apples." << endl;
 if (apples)
-	cout << "The first was " << apples[0] << endl;
+    cout << "The first was " << apples[0] << endl;
 ~~~
 
 
@@ -682,11 +682,11 @@ static string color;
 ...
 
 int main(int argc, char * argv[]) {
-	Dim::Cli cli;
+    Dim::Cli cli;
     cli.opt(&yell, "yell").desc("Say it loud.");
-	cli.opt(&color, "color", "red").command("apple")
-	    .desc("Change color of the apple.");
-	...
+    cli.opt(&color, "color", "red").command("apple")
+        .desc("Change color of the apple.");
+    ...
 ~~~
 
 The end result from the console:
@@ -923,10 +923,10 @@ the option that should be the default.
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     string fruit;
-	// "~" is default option group for --help, --version, etc. It defaults to 
-	// an empty title, give it one so it doesn't look like more fruit.
-	cli.group("~").title("Other options");
-	cli.group("Type of fruit");
+    // "~" is default option group for --help, --version, etc. It defaults to 
+    // an empty title, give it one so it doesn't look like more fruit.
+    cli.group("~").title("Other options");
+    cli.group("Type of fruit");
     cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
     cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
     if (!cli.parse(cerr, argc, argv))
@@ -1362,16 +1362,16 @@ One way to do it:
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
-	Dim::Cli cli;
-	cli.command("help");
-	cli.desc("This is how you get help. There could be more details.")
-	auto & cmd = cli.opt<string>("[command]").desc("Command to explain.");
-	cli.action([&cmd](auto & cli) {
-		return cli.printHelp(cout, {}, *cmd);
-	});
-	if (!cli.parse(argc, argv))
-		return cli.exitCode();
-	return cli.run();
+    Dim::Cli cli;
+    cli.command("help");
+    cli.desc("This is how you get help. There could be more details.")
+    auto & cmd = cli.opt<string>("[command]").desc("Command to explain.");
+    cli.action([&cmd](auto & cli) {
+        return cli.printHelp(cout, {}, *cmd);
+    });
+    if (!cli.parse(argc, argv))
+        return cli.exitCode();
+    return cli.run();
 }
 ~~~
 
