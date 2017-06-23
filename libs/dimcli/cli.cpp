@@ -412,8 +412,7 @@ static int cmdAction(Cli & cli) {
 ***/
 
 //===========================================================================
-// Default constructor creates a handle to the shared configuration, this
-// allows options to be statically registered from multiple source files.
+// Creates a handle to the shared configuration
 Cli::Cli() {
     static auto s_cfg = make_shared<Config>();
     m_cfg = s_cfg;
@@ -421,10 +420,25 @@ Cli::Cli() {
 }
 
 //===========================================================================
+Cli::Cli(const Cli & from) 
+    : m_cfg(from.m_cfg)
+    , m_command(from.m_command)
+    , m_group(from.m_group)
+{}
+
+//===========================================================================
 // protected
 Cli::Cli(shared_ptr<Config> cfg)
     : m_cfg(cfg) {
     helpOpt();
+}
+
+//===========================================================================
+Cli & Cli::operator=(const Cli & from) {
+    m_cfg = from.m_cfg;
+    m_command = from.m_command;
+    m_group = from.m_group;
+    return *this;
 }
 
 
@@ -437,9 +451,9 @@ Cli::Cli(shared_ptr<Config> cfg)
 //===========================================================================
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes")
-                     .desc("Suppress prompting to allow execution.")
-                     .check([](auto &, auto & opt, auto &) { return *opt; })
-                     .prompt(prompt.empty() ? "Are you sure?" : prompt);
+        .desc("Suppress prompting to allow execution.")
+        .check([](auto &, auto & opt, auto &) { return *opt; })
+        .prompt(prompt.empty() ? "Are you sure?" : prompt);
     return ask;
 }
 
@@ -450,9 +464,9 @@ Cli::Opt<bool> & Cli::helpOpt() {
         return *cmd.helpOpt;
 
     auto & hlp = opt<bool>("help.")
-                     .desc("Show this message and exit.")
-                     .parse(helpAction)
-                     .group(s_internalOptionGroup);
+        .desc("Show this message and exit.")
+        .parse(helpAction)
+        .group(s_internalOptionGroup);
     if (!m_command.empty())
         hlp.show(false);
     cmd.helpOpt = &hlp;
