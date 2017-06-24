@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - Cli() copy constructor
 - Fixed - cli.toPtrArgv() trailing nullptr improperly added
 - Changed - rename cli.run() to cli.exec() and invert the return value
+- Fixed - internal group name relies on static init order
 
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]
