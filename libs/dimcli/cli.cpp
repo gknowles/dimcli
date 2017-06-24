@@ -127,7 +127,7 @@ struct Cli::Config {
 
 // forward declarations
 static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static int cmdAction(Cli & cli);
+static bool cmdAction(Cli & cli);
 
 //===========================================================================
 static Cli::GroupConfig &
@@ -368,41 +368,40 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
 
 //===========================================================================
 bool Cli::defaultParse(OptBase & opt, const string & val) {
-    if (!opt.fromString(*this, val)) {
-        badUsage("Invalid '" + opt.from() + "' value", val);
-        if (!opt.m_choiceDescs.empty()) {
-            ostringstream os;
-            os << "Must be ";
-            size_t pos = 0;
-            for (auto && cd : opt.m_choiceDescs) {
-                pos += 1;
-                os << '"' << cd.first << '"';
-                auto num = opt.m_choiceDescs.size();
-                if (pos == num)
-                    break;
-                if (pos + 1 == num) {
-                    os << ((pos == 1) ? " or " : ", or ");
-                } else {
-                    os << ", ";
-                }
+    if (opt.fromString(*this, val)) 
+        return true;
+
+    badUsage("Invalid '" + opt.from() + "' value", val);
+    if (!opt.m_choiceDescs.empty()) {
+        ostringstream os;
+        os << "Must be ";
+        size_t pos = 0;
+        for (auto && cd : opt.m_choiceDescs) {
+            pos += 1;
+            os << '"' << cd.first << '"';
+            auto num = opt.m_choiceDescs.size();
+            if (pos == num)
+                break;
+            if (pos + 1 == num) {
+                os << ((pos == 1) ? " or " : ", or ");
+            } else {
+                os << ", ";
             }
-            m_cfg->errDetail = os.str();
         }
-        return false;
+        m_cfg->errDetail = os.str();
     }
-    return true;
+    return false;
 }
 
 //===========================================================================
-static int cmdAction(Cli & cli) {
+static bool cmdAction(Cli & cli) {
     ostringstream os;
     if (cli.runCommand().empty()) {
         os << "No command given.";
     } else {
         os << "Command '" << cli.runCommand() << "' has not been implemented.";
     }
-    cli.fail(kExitSoftware, os.str());
-    return kExitSoftware;
+    return cli.fail(kExitSoftware, os.str());
 }
 
 
