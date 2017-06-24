@@ -636,11 +636,11 @@ configuration.
 ## Subcommands
 Git style subcommands are created by either cli.command("cmd"), which changes
 the cli objects context to the command, or with opt.command("cmd"), which 
-changes the command the option is for. Once the context has been changed the 
-cli object can than be used to set the desciption, footer, add options, etc 
-for the command. Exactly the same as when working with a simple command line. 
-If you pass an empty string to cli.command() or opt.command() it represents 
-the top level processing that takes place before a command has been found.
+changes the command the option is for. Once the cli object context has been 
+changed it can than be used to add (desciption, footer, options, etc) to the 
+command. Exactly the same as when working with a simple command line. If you 
+pass an empty string to cli.command() or opt.command() it represents the top 
+level processing that takes place before a command has been found.
 
 Options are processed on the top level up to the first positional. The first 
 positional is the command, and the rest of the arguments are processed in the 

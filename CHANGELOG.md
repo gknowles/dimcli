@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - support for gcc 6.2
 - Added - show default option values in help text
 - Added - Cli() copy constructor
+- Fixed - cli.toPtrArgv() trailing nullptr improperly added
 - Changed - rename cli.run() to cli.exec() and invert the return value
-- Fixed - nullptr included in count of args in return of toPtrArgv()
 
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]
