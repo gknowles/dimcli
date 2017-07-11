@@ -304,6 +304,7 @@ Other:
         EXPECT_HELP(c1, "one", 1 + R"(
 usage: test one [OPTIONS]
 First sentence of description. Rest of one's description.
+
 Options:
   -a NUM    (default: 1)
 )");
