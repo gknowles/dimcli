@@ -1606,6 +1606,7 @@ int Cli::printHelp(
     if (!cmd.desc.empty()) {
         WrapPos wp;
         writeText(os, wp, cmd.desc);
+        writeNewline(os, wp);
     }
     printPositionals(os, cmdName);
     printOptions(os, cmdName);
