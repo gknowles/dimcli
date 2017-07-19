@@ -666,8 +666,8 @@ int orange(Dim::Cli & cli) {
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.command("apple").desc("Show apple. No other fruit.\n").action(apple);
-    cli.command("orange").desc("Show orange.\n").action(orange);
+    cli.command("apple").desc("Show apple. No other fruit.").action(apple);
+    cli.command("orange").desc("Show orange.").action(orange);
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     return cli.run();
@@ -697,14 +697,14 @@ Error: No command given.
 $ a.out --help
 usage: a.out [OPTIONS] command [args...]
 
+Commands:
+  apple     Show apple.
+  orange    Show orange.
+
 Options:
   --yell    Say it loud.
 
   --help    Show this message and exit.
-
-Commands:
-  apple     Show apple.
-  orange    Show orange.
 
 $ a.out apple
 It's a red apple.

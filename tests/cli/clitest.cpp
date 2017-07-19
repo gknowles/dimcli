@@ -307,16 +307,18 @@ First sentence of description. Rest of one's description.
 
 Options:
   -a NUM    (default: 1)
+
+  --help    Show this message and exit.
 )");
         EXPECT_HELP(c1, "", 1 + R"(
 usage: test [OPTIONS] command [args...]
 
-Options:
-  --help    Show this message and exit.
-
 Commands:
   one       First sentence of description.
   two
+
+Options:
+  --help    Show this message and exit.
 )");
         EXPECT_PARSE(c1, {"one", "-a3"});
         EXPECT(*a1 == 3);

@@ -467,8 +467,6 @@ Cli::Opt<bool> & Cli::helpOpt() {
         .desc("Show this message and exit.")
         .parse(helpAction)
         .group(kInternalOptionGroup);
-    if (!m_command.empty())
-        hlp.show(false);
     cmd.helpOpt = &hlp;
     return hlp;
 }
@@ -1608,10 +1606,10 @@ int Cli::printHelp(
         writeText(os, wp, cmd.desc);
         writeNewline(os, wp);
     }
-    printPositionals(os, cmdName);
-    printOptions(os, cmdName);
     if (cmdName.empty())
         printCommands(os);
+    printPositionals(os, cmdName);
+    printOptions(os, cmdName);
     if (!cmd.footer.empty()) {
         WrapPos wp;
         writeNewline(os, wp);
