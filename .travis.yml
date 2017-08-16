@@ -51,10 +51,11 @@ matrix:
         apt:
           packages: ['g++-7']
           sources: *sources
+    # uses experimental/filesystem from g++-6 package... :/
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
       addons:
         apt:
-          packages: ['clang-3.6', 'g++-6']
+          packages: ['clang-3.6', 'g++-6'] 
           sources: *sources
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
