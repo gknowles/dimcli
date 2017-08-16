@@ -39,23 +39,28 @@ matrix:
       addons:
         apt:
           packages: ['g++-6']
+          sources: *sources
     - env: CXX_NAME=g++-7 CC_NAME=gcc-7
       addons:
         apt:
           packages: ['g++-7']
+          sources: *sources
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
       addons:
         apt:
           packages: ['clang-3.6']
+          sources: *sources
       dist: precise
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
         apt:
           packages: ['clang-3.9']
+          sources: *sources
     - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
       addons:
         apt:
           packages: ['clang-4.0']
+          sources: *sources
       dist: precise
 
 script:
