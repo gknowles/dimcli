@@ -6,6 +6,12 @@ dist: trusty
 
 addons:
   apt:
+    packages: &packages
+      - g++-6
+      - g++-7
+      - clang-3.6
+      - clang-3.9
+      - clang-4.0
     sources: &sources
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.6
@@ -48,12 +54,13 @@ matrix:
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
       addons:
         apt:
-          packages: ['clang-3.6']
+          packages: *packages
           sources: *sources
+      dist: precise
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
         apt:
-          packages: ['clang-3.9']
+          packages: *packages
           sources: *sources
     - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
       addons:
