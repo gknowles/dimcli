@@ -7,19 +7,6 @@ cache:
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/cmake
 
-addons:
-  apt:
-    packages:
-      - g++-6
-      - clang-3.6
-      - clang-3.9
-      - clang-4.0
-    sources: &sources
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.6
-      - llvm-toolchain-precise-3.9
-      - llvm-toolchain-trusty-4.0
-
 # Why must we work so hard to get a recent cmake?
 install:
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
@@ -40,9 +27,30 @@ install:
 matrix:
   include:
     - env: CXX_NAME=g++-6 CC_NAME=gcc-6
+      addons:
+        apt:
+          packages: ['g++-6']
+          sources: ['ubuntu-toolchain-r-test']
+    - env: CXX_NAME=g++-7 CC_NAME=gcc-7
+      addons:
+        apt:
+          packages: ['g++-7']
+          sources: ['ubuntu-toolchain-r-test']
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
+      addons:
+        apt:
+          packages: ['clang-3.6']
+          sources: ['llvm-toolchain-precise-3.6']
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
+      addons:
+        apt:
+          packages: ['clang-3.9']
+          sources: ['llvm-toolchain-precise-3.9']
     - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
+      addons:
+        apt:
+          packages: ['clang-4.0']
+          sources: ['llvm-toolchain-trusty-4.0']
 
 script:
   - export CXX=${CXX_NAME} CC=${CC_NAME}

@@ -10,8 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-- Added - support for clang 3.6
-- Added - support for gcc 6.2
+- Added - support for clang >= 3.6
+- Added - support for gcc >= 6.2
 - Added - show default option values in help text
 - Added - Cli() copy constructor
 - Fixed - cli.toPtrArgv() trailing nullptr improperly added
