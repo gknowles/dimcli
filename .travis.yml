@@ -2,6 +2,7 @@
 # Distributed under the Boost Software License, Version 1.0.
 language: cpp
 sudo: false
+dist: trusty
 
 cache:
   directories:
