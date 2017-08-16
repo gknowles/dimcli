@@ -50,7 +50,6 @@ matrix:
         apt:
           packages: ['clang-3.6']
           sources: *sources
-      dist: precise
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
         apt:
@@ -61,7 +60,6 @@ matrix:
         apt:
           packages: ['clang-4.0']
           sources: *sources
-      dist: precise
 
 script:
   - export CXX=${CXX_NAME} CC=${CC_NAME}
