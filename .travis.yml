@@ -42,19 +42,16 @@ matrix:
         apt:
           packages: ['clang-3.6']
           sources: &sources ['llvm-toolchain-precise-3.6']
-      dist: precise
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
         apt:
           packages: ['clang-3.9']
-          sources: ['llvm-toolchain-precise-3.9']
-      dist: precise
+          sources: &sources ['llvm-toolchain-precise-3.9']
     - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
       addons:
         apt:
           packages: ['clang-4.0']
-          sources: ['llvm-toolchain-trusty-4.0']
-      dist: precise
+          sources: &sources ['llvm-toolchain-trusty-4.0']
 
 script:
   - export CXX=${CXX_NAME} CC=${CC_NAME}
