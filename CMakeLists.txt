@@ -492,3 +492,5 @@ if(EXISTS "${path}")
             DESTINATION include/${PROJECT_NAME})
     endif()
 endif()
+
+include(CPack)
