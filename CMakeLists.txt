@@ -30,9 +30,9 @@
 # Building libraries:
 # If a library has no cpp files a non-building custom target is made for it 
 # instead of a lib target (good for header only libs).
-# For library builds the DIM_LIB_SOURCE macro is defined, used in combination
-# with DIM_LIB_DYN_LINK to help mark up the interface with the correct 
-# dllexport/dllimport attributes.
+# For library builds the ${PROJECT_NAME}_LIB_SOURCE macro is defined, used in 
+# combination with ${PROJECT_NAME}_LIB_DYN_LINK to help mark up the interface 
+# with the correct dllexport/dllimport attributes.
 # 
 # Testing:
 # CTest will run all tests, and pass them the "--test" argument.
@@ -45,8 +45,8 @@
 #             like "*int.h"
 #   include/${PROJECT_NAME}/config.h - if it (and they) exist, the following 
 #           lines are commented/uncommented according to the selected options.
-#       "#define DIM_LIB_DYN_LINK" - BUILD_SHARED_LIBS
-#       "#define DIM_LIB_WINAPI_FAMILY_APP - WINDOWS_STORE
+#       "#define ${PROJECT_NAME}_LIB_DYN_LINK" - BUILD_SHARED_LIBS
+#       "#define ${PROJECT_NAME}_LIB_WINAPI_FAMILY_APP - WINDOWS_STORE
 #   bin - only release build targets
 #       libs with BUILD_SHARED_LIBS: *.dll and *.pdb
 #       libs otherwise: no files
@@ -212,7 +212,7 @@ function(add_lib_project tgt srcdir)
     list(LENGTH cpps cpps)
     if(cpps)
         add_library(${tgt} ${sources})
-        target_compile_definitions(${tgt} PRIVATE DIM_LIB_SOURCE)
+        target_compile_definitions(${tgt} PRIVATE ${DEFINE_PREFIX}_LIB_SOURCE)
         list(APPEND libnames ${tgt})
         set(libnames ${libnames} PARENT_SCOPE)
 
@@ -264,6 +264,7 @@ endfunction()
 # get name of project from containing directory
 get_filename_component(prjname "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 project(${prjname})
+string(TOUPPER "${prjname}" DEFINE_PREFIX)
 
 get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
 if("${parent}" STREQUAL "")
@@ -386,10 +387,10 @@ endif()
 
 # set list of defines that need to go in config.h
 if(BUILD_SHARED_LIBS)
-    list(APPEND config_defines DIM_LIB_DYN_LINK)
+    list(APPEND config_defines ${DEFINE_PREFIX}_LIB_DYN_LINK)
 endif()
 if(WINDOWS_STORE)
-    list(APPEND config_defines DIM_LIB_WINAPI_FAMILY_APP)
+    list(APPEND config_defines ${DEFINE_PREFIX}_LIB_WINAPI_FAMILY_APP)
 endif()
 foreach(var ${config_defines})
     add_definitions(/D${var})

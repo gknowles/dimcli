@@ -429,7 +429,7 @@ Options:
 
 //===========================================================================
 void envTests() {
-#if !defined(DIM_LIB_NO_CONSOLE)
+#if !defined(DIMCLI_LIB_NO_CONSOLE)
     int line = 0;
     Dim::CliLocal cli;
 

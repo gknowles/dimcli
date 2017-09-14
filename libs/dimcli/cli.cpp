@@ -6,8 +6,8 @@
 // For documentation and examples:
 // https://github.com/gknowles/dimcli
 
-#ifndef DIM_LIB_SOURCE
-#define DIM_LIB_SOURCE
+#ifndef DIMCLI_LIB_SOURCE
+#define DIMCLI_LIB_SOURCE
 #endif
 #include "cli.h"
 
@@ -579,7 +579,7 @@ void Cli::responseFiles(bool enable) {
     m_cfg->responseFiles = enable;
 }
 
-#if !defined(DIM_LIB_NO_ENV)
+#if !defined(DIMCLI_LIB_NO_ENV)
 //===========================================================================
 void Cli::envOpts(const string & var) {
     m_cfg->envOpts = var;
@@ -1238,7 +1238,7 @@ bool Cli::parse(vector<string> & args) {
 
     resetValues();
 
-#if !defined(DIM_LIB_NO_ENV)
+#if !defined(DIMCLI_LIB_NO_ENV)
     // insert environment options
     if (m_cfg->envOpts.size()) {
         if (const char * val = getenv(m_cfg->envOpts.c_str()))
@@ -1922,7 +1922,7 @@ string Cli::nameList(
 *
 ***/
 
-#if defined(DIM_LIB_NO_CONSOLE)
+#if defined(DIMCLI_LIB_NO_CONSOLE)
 
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {

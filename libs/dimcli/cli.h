@@ -22,56 +22,52 @@
 // Configuration of this installation, these are options that must be the
 // same when building the app as when building the library.
 
-// DIM_LIB_STANDALONE: Defines this as standalone library that is not
-// being built as part of the DIM framework.
-#define DIM_LIB_STANDALONE
-
-// DIM_LIB_DYN_LINK: Forces all libraries that have separate source, to be
+// DIMCLI_LIB_DYN_LINK: Forces all libraries that have separate source, to be
 // linked as dll's rather than static libraries on Microsoft Windows (this
 // macro is used to turn on __declspec(dllimport) modifiers, so that the
 // compiler knows which symbols to look for in a dll rather than in a static
 // library). Note that there may be some libraries that can only be linked in
 // one way (statically or dynamically), in these cases this macro has no
 // effect.
-//#define DIM_LIB_DYN_LINK
+//#define DIMCLI_LIB_DYN_LINK
 
-// DIM_LIB_WINAPI_FAMILY_APP: Removes all functions that rely on windows
+// DIMCLI_LIB_WINAPI_FAMILY_APP: Removes all functions that rely on windows
 // WINAPI_FAMILY_DESKTOP mode, such as the console and environment
 // variables.
-//#define DIM_LIB_WINAPI_FAMILY_APP
+//#define DIMCLI_LIB_WINAPI_FAMILY_APP
 
 
 //---------------------------------------------------------------------------
 // Configuration of the application. These options, if desired, are set by the
 // application before including the library headers.
 
-// DIM_LIB_KEEP_MACROS: By default the DIM_LIB_* macros defined internally
-// (including in this file) are undef'd so they don't leak out to application
-// code. Setting this macro leaves them available for the application to use.
-// Also included are other platform specific adjustments, such as suppression
-// of specific compiler warnings.
+// DIMCLI_LIB_KEEP_MACROS: By default the DIMCLI_LIB_* macros defined 
+// internally (including in this file) are undef'd so they don't leak out to 
+// application code. Setting this macro leaves them available for the 
+// application to use. Also included are other platform specific adjustments, 
+// such as suppression of specific compiler warnings.
 
 
 //===========================================================================
 // Internal
 //===========================================================================
 
-#if defined(DIM_LIB_SOURCE) && !defined(DIM_LIB_KEEP_MACROS)
-#define DIM_LIB_KEEP_MACROS
+#if defined(DIMCLI_LIB_SOURCE) && !defined(DIMCLI_LIB_KEEP_MACROS)
+#define DIMCLI_LIB_KEEP_MACROS
 #endif
 
-#ifdef DIM_LIB_WINAPI_FAMILY_APP
-#define DIM_LIB_NO_ENV
-#define DIM_LIB_NO_CONSOLE
+#ifdef DIMCLI_LIB_WINAPI_FAMILY_APP
+#define DIMCLI_LIB_NO_ENV
+#define DIMCLI_LIB_NO_CONSOLE
 #endif
 
 #ifdef _MSC_VER
-#ifndef DIM_LIB_KEEP_MACROS
+#ifndef DIMCLI_LIB_KEEP_MACROS
 #pragma warning(push)
 #endif
 #endif
 
-#ifdef DIM_LIB_DYN_LINK
+#ifdef DIMCLI_LIB_DYN_LINK
 #if defined(_MSC_VER)
 // 'identifier': class 'type' needs to have dll-interface to be used
 // by clients of class 'type2'
@@ -79,14 +75,14 @@
 #endif
 
 #if defined(_WIN32)
-#ifdef DIM_LIB_SOURCE
-#define DIM_LIB_DECL __declspec(dllexport)
+#ifdef DIMCLI_LIB_SOURCE
+#define DIMCLI_LIB_DECL __declspec(dllexport)
 #else
-#define DIM_LIB_DECL __declspec(dllimport)
+#define DIMCLI_LIB_DECL __declspec(dllimport)
 #endif
 #endif
 #else
-#define DIM_LIB_DECL
+#define DIMCLI_LIB_DECL
 #endif
 
 #ifndef _CPPUNWIND
@@ -101,6 +97,7 @@
 ***/
 
 #include <cassert>
+#include <cstddef>
 #include <experimental/filesystem>
 #include <functional>
 #include <list>
@@ -138,7 +135,7 @@ enum {
 *
 ***/
 
-class DIM_LIB_DECL Cli {
+class DIMCLI_LIB_DECL Cli {
 public:
     struct Config;
     struct CommandConfig;
@@ -269,7 +266,7 @@ public:
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
 
-#if !defined(DIM_LIB_NO_ENV)
+#if !defined(DIMCLI_LIB_NO_ENV)
     // Environment variable to get initial options from. Defaults to the empty
     // string, but when set the content of the named variable is parsed into
     // args which are then inserted into the argument list right after arg0.
@@ -642,7 +639,7 @@ bool Cli::toString_impl(std::string & out, const T &, long) const {
 *
 ***/
 
-class DIM_LIB_DECL CliLocal : public Cli {
+class DIMCLI_LIB_DECL CliLocal : public Cli {
 public:
     CliLocal();
 };
@@ -657,7 +654,7 @@ public:
 *
 ***/
 
-class DIM_LIB_DECL Cli::OptBase {
+class DIMCLI_LIB_DECL Cli::OptBase {
 public:
     struct ChoiceDesc {
         std::string desc;
@@ -1434,20 +1431,18 @@ template <typename T> inline size_t Cli::OptVec<T>::size() const {
 
 // Restore as many compiler settings as we can so they don't leak into
 // the applications
-#ifndef DIM_LIB_KEEP_MACROS
+#ifndef DIMCLI_LIB_KEEP_MACROS
 
 // clear all dim header macros so they don't leak into the application
-#ifdef DIM_LIB_STANDALONE
-#undef DIM_LIB_DYN_LINK
-#undef DIM_LIB_KEEP_MACROS
-#undef DIM_LIB_STANDALONE
-#undef DIM_LIB_WINAPI_FAMILY_APP
+#undef DIMCLI_LIB_DYN_LINK
+#undef DIMCLI_LIB_KEEP_MACROS
+#undef DIMCLI_LIB_STANDALONE
+#undef DIMCLI_LIB_WINAPI_FAMILY_APP
 
-#undef DIM_LIB_DECL
-#undef DIM_LIB_NO_ENV
-#undef DIM_LIB_NO_CONSOLE
-#undef DIM_LIB_SOURCE
-#endif
+#undef DIMCLI_LIB_DECL
+#undef DIMCLI_LIB_NO_ENV
+#undef DIMCLI_LIB_NO_CONSOLE
+#undef DIMCLI_LIB_SOURCE
 
 #ifdef _MSC_VER
 #pragma warning(pop)
