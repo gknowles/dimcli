@@ -3,7 +3,6 @@
 //
 // pch.h - dim test cli
 
-#define DIMCLI_LIB_KEEP_MACROS
 #include "dimcli/cli.h"
 
 #include <cstdlib>

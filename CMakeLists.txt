@@ -465,6 +465,8 @@ foreach(var ${allnames})
     if(IS_DIRECTORY "${var}")
         get_filename_component(prjname "${var}" NAME)
         add_exec_project(${prjname} "${var}")
+        target_compile_definitions(${prjname} 
+            PRIVATE ${DEFINE_PREFIX}_LIB_KEEP_MACROS)
         set_target_properties(${prjname} PROPERTIES FOLDER tests)
         add_test(NAME ${prjname} COMMAND ${prjname} --test)
         if(INSTALL_TESTS)
