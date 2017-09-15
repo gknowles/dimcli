@@ -326,12 +326,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin)
 
-if(NOT ROOT_PROJECT)
-    set_property(DIRECTORY "${parent}" APPEND PROPERTY INCLUDE_DIRECTORIES 
-        "${CMAKE_CURRENT_SOURCE_DIR}/libs")
-endif()
-include_directories(libs)
-
 if(MSVC)
     # "/utf-8" - sets source code character set to utf-8
     # "/W4" - warning level 4
@@ -378,7 +372,11 @@ if(MSVC)
 
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "5")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    endif()
 endif()
 
 if(BUILD_UNICODE)
@@ -403,6 +401,8 @@ source_group(" " REGULAR_EXPRESSION ".*")
 source_group("docs" REGULAR_EXPRESSION "docs/.*")
 
 if(ROOT_PROJECT)
+    include_directories(libs)
+
     # vendor dependencies
     file(GLOB allnames vendor/*)
     foreach(var ${allnames})
@@ -410,9 +410,13 @@ if(ROOT_PROJECT)
             list(APPEND deps "${var}")
             get_filename_component(prjname "${var}" NAME)
             if(EXISTS "${var}/CMakeLists.txt")
-                add_subdirectory("${var}")
+                list(APPEND submodules "${var}")
+                include_directories(${var}/libs)
             endif()
         endif()
+    endforeach()
+    foreach(var ${submodules})
+        add_subdirectory("${var}")
     endforeach()
 endif()
 
