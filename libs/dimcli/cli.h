@@ -18,6 +18,14 @@
 *
 ***/
 
+#ifdef __has_include
+#if __has_include("dimcli_userconfig.h")
+#include "dimcli_userconfig.h"
+#elif __has_include("cppconf/dimcli_userconfig.h")
+#include "cppconf/dimcli_userconfig.h"
+#endif
+#endif
+
 //---------------------------------------------------------------------------
 // Configuration of this installation, these are options that must be the
 // same when building the app as when building the library.
@@ -85,7 +93,7 @@
 #define DIMCLI_LIB_DECL
 #endif
 
-#ifndef _CPPUNWIND
+#if !defined(_CPPUNWIND) && !defined(_HAS_EXCEPTIONS)
 #define _HAS_EXCEPTIONS 0
 #endif
 
