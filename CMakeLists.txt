@@ -372,10 +372,10 @@ if(MSVC)
 
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "5")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
-    else()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
     endif()
 endif()
 
