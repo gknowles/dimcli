@@ -40,7 +40,8 @@ void helpTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
-    const string & helpText) {
+    const string & helpText
+) {
     ostringstream os;
     cli.printHelp(os, kCommand, cmd);
     auto tmp = os.str();
@@ -54,7 +55,8 @@ void usageTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
-    const string & usageText) {
+    const string & usageText
+) {
     ostringstream os;
     cli.printUsageEx(os, kCommand, cmd);
     auto tmp = os.str();
@@ -69,7 +71,8 @@ void parseTest(
     Dim::Cli & cli,
     bool continueFlag,
     int exitCode,
-    vector<const char *> args) {
+    vector<const char *> args
+) {
     args.insert(args.begin(), kCommand);
     args.push_back(nullptr);
     bool rc = cli.parse(args.size() - 1, const_cast<char **>(args.data()));
@@ -84,9 +87,10 @@ void parseTest(
 //===========================================================================
 void toArgvTest(
     int line,
-    std::function<vector<string>(const string &)> fn,
-    const std::string & cmdline,
-    const vector<string> & argv) {
+    function<vector<string>(const string &)> fn,
+    const string & cmdline,
+    const vector<string> & argv
+) {
     auto args = fn(cmdline);
     EXPECT(args == argv);
 }
@@ -280,7 +284,9 @@ Other:
         cli.opt(&count, "c ?count").implicitValue(3);
         cli.opt(&help, "? h help");
         EXPECT_PARSE(cli, {"-hc2", "-?"});
+        EXPECT(count == 2);
         EXPECT_PARSE(cli, {"--count"});
+        EXPECT(count == 3);
     }
 
     // windows style argument parsing
@@ -328,6 +334,25 @@ Options:
         EXPECT(c2.errMsg() == "Unknown option: -a");
         EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"two", "-a"});
         EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
+    }
+
+    // require
+    {
+        cli = {};
+        auto & count = cli.opt<int>("c", 1).require();
+        EXPECT_PARSE(cli, {"-c10"});
+        EXPECT(*count == 10);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {});
+        EXPECT(*count == 1);
+        EXPECT(cli.errMsg() == "No value given for -c");
+        cli = {};
+        auto & imp = cli.opt<int>("i ?index").require().implicitValue(5);
+        EXPECT_PARSE(cli, {"--index=10"});
+        EXPECT(*imp == 10);
+        EXPECT_PARSE(cli, {"--index"});
+        EXPECT(*imp == 5);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {});
+        EXPECT(cli.errMsg() == "No value given for --index");
     }
 
     // clamp and range

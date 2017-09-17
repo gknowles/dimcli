@@ -165,24 +165,23 @@ public:
     // indirection allows options to be statically registered from multiple
     // source files.
     Cli();
-    Cli(const Cli & from);
-    Cli & operator=(const Cli & from);
 
     //-----------------------------------------------------------------------
     // Configuration
 
-    template <
-        typename T,
-        typename U,
-        typename =
-            typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    template <typename T, typename U, typename =
+        typename std::enable_if<std::is_convertible<U, T>::value>::type
+    >
     Opt<T> & opt(T * value, const std::string & keys, const U & def);
 
     template <typename T> Opt<T> & opt(T * value, const std::string & keys);
 
     template <typename T>
-    OptVec<T> &
-    optVec(std::vector<T> * values, const std::string & keys, int nargs = -1);
+    OptVec<T> & optVec(
+        std::vector<T> * values, 
+        const std::string & keys, 
+        int nargs = -1
+    );
 
     template <typename T>
     Opt<T> & opt(const std::string & keys, const T & def = {});
@@ -190,19 +189,20 @@ public:
     template <typename T>
     OptVec<T> & optVec(const std::string & keys, int nargs = -1);
 
-    template <
-        typename T,
-        typename U,
-        typename =
-            typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    template <typename T, typename U, typename =
+        typename std::enable_if<std::is_convertible<U, T>::value>::type
+    >
     Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
 
     template <typename T>
     Opt<T> & opt(Opt<T> & value, const std::string & keys);
 
     template <typename T>
-    OptVec<T> &
-    optVec(OptVec<T> & values, const std::string & keys, int nargs = -1);
+    OptVec<T> & optVec(
+        OptVec<T> & values, 
+        const std::string & keys, 
+        int nargs = -1
+    );
 
     // Add -y, --yes option that exits early when false and has an "are you
     // sure?" style prompt when it's not present.
@@ -219,8 +219,10 @@ public:
 
     // Add --version option that shows "${progName.filename()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
-    Opt<bool> &
-    versionOpt(const std::string & ver, const std::string & progName = {});
+    Opt<bool> & versionOpt(
+        const std::string & ver, 
+        const std::string & progName = {}
+    );
 
     //-----------------------------------------------------------------------
     // A group collects options into sections in the help text. Options are
@@ -295,20 +297,25 @@ public:
     int printHelp(
         std::ostream & os,
         const std::string & progName = {},
-        const std::string & cmd = {}) const;
+        const std::string & cmd = {}
+    ) const;
     int printUsage(
         std::ostream & os,
         const std::string & progName = {},
-        const std::string & cmd = {}) const;
+        const std::string & cmd = {}
+    ) const;
     // Same as printUsage(), except individually lists all non-default options 
     // instead of the [OPTIONS] catchall.
     int printUsageEx(
         std::ostream & os,
         const std::string & progName = {},
-        const std::string & cmd = {}) const;
+        const std::string & cmd = {}
+    ) const;
 
-    void
-    printPositionals(std::ostream & os, const std::string & cmd = {}) const;
+    void printPositionals(
+        std::ostream & os, 
+        const std::string & cmd = {}
+    ) const;
     void printOptions(std::ostream & os, const std::string & cmd = {}) const;
     void printCommands(std::ostream & os) const;
 
@@ -337,8 +344,9 @@ public:
     // includes trailing null, so use "size() - 1" for argc. The return
     // values point into the source string vector and are only valid until
     // that vector is resized or destroyed.
-    static std::vector<const char *>
-    toPtrArgv(const std::vector<std::string> & args);
+    static std::vector<const char *> toPtrArgv(
+        const std::vector<std::string> & args
+    );
 
     // Parse according to glib conventions, based on the UNIX98 shell spec
     static std::vector<std::string> toGlibArgv(const std::string & cmdline);
@@ -372,7 +380,8 @@ public:
         OptBase & out,
         const std::string & name,
         size_t pos,
-        const char src[]);
+        const char src[]
+    );
 
     // Prompt sends a prompt message to cout and read a response from cin
     // (unless cli.iostreams() changed the streams to use), the response is
@@ -410,8 +419,11 @@ public:
 
     // Sets exitCode(), errMsg(), and errDetail(), intended to be called from
     // command actions, parsing related failures should use badUsage().
-    bool 
-    fail(int code, const std::string & msg, const std::string & detail = {});
+    bool fail(
+        int code, 
+        const std::string & msg, 
+        const std::string & detail = {}
+    );
 
 protected:
     Cli(std::shared_ptr<Config> cfg);
@@ -420,9 +432,9 @@ private:
     static void consoleEnableEcho(bool enable = true);
 
     bool defaultParse(OptBase & opt, const std::string & val);
+    bool require(OptBase & opt);
 
     void addOpt(std::unique_ptr<OptBase> opt);
-
     template <typename A> A & addOpt(std::unique_ptr<A> ptr);
 
     template <typename Opt, typename Value, typename T>
@@ -441,20 +453,26 @@ private:
         std::ostream & os,
         const std::string & arg0,
         const std::string & cmd,
-        bool expandedOptions) const;
-    void
-    index(OptIndex & ndx, const std::string & cmd, bool requireVisible) const;
+        bool expandedOptions
+    ) const;
+    void index(
+        OptIndex & ndx, 
+        const std::string & cmd, 
+        bool requireVisible
+    ) const;
     bool findNamedArgs(
         std::vector<ArgKey> & namedArgs,
         size_t & colWidth,
         const OptIndex & ndx,
         CommandConfig & cmd,
         int type,
-        bool flatten) const;
+        bool flatten
+    ) const;
     std::string nameList(
         const OptIndex & ndx,
         const OptBase & opt,
-        int type) const;
+        int type
+    ) const;
 
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int) const
@@ -479,8 +497,11 @@ private:
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline Cli::Opt<T> &
-Cli::opt(T * value, const std::string & keys, const U & def) {
+inline Cli::Opt<T> & Cli::opt(
+    T * value, 
+    const std::string & keys, 
+    const U & def
+) {
     auto proxy = getProxy<Opt<T>, Value<T>>(value);
     auto ptr = std::make_unique<Opt<T>>(proxy, keys);
     ptr->defaultValue(def);
@@ -495,8 +516,11 @@ inline Cli::Opt<T> & Cli::opt(T * value, const std::string & keys) {
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> &
-Cli::optVec(std::vector<T> * values, const std::string & keys, int nargs) {
+inline Cli::OptVec<T> & Cli::optVec(
+    std::vector<T> * values, 
+    const std::string & keys, 
+    int nargs
+) {
     auto proxy = getProxy<OptVec<T>, ValueVec<T>>(values);
     auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
     return addOpt(std::move(ptr));
@@ -504,8 +528,11 @@ Cli::optVec(std::vector<T> * values, const std::string & keys, int nargs) {
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline Cli::Opt<T> &
-Cli::opt(Opt<T> & alias, const std::string & keys, const U & def) {
+inline Cli::Opt<T> & Cli::opt(
+    Opt<T> & alias, 
+    const std::string & keys, 
+    const U & def
+) {
     return opt(&*alias, keys, def);
 }
 
@@ -517,8 +544,11 @@ inline Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & keys) {
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> &
-Cli::optVec(OptVec<T> & alias, const std::string & keys, int nargs) {
+inline Cli::OptVec<T> & Cli::optVec(
+    OptVec<T> & alias, 
+    const std::string & keys, 
+    int nargs
+) {
     return optVec(&*alias, keys, nargs);
 }
 
@@ -535,7 +565,8 @@ inline Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 }
 
 //===========================================================================
-template <typename A> inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
+template <typename A> 
+inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
     opt.parse(&Cli::defaultParse).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
@@ -600,6 +631,9 @@ bool Cli::fromString_impl(
     // In order to parse an argument there must be one of:
     //  - assignment operator for std::string to T
     //  - istream extraction operator for T
+    //  - specialization of Cli::fromString template for T, something like:
+    //      template<> bool Cli::fromString<Foo>::(
+    //          Foo & out, const std::string & src) const { ... }
     //  - parse action attached to the Opt<T> instance that doesn't call
     //    opt.parseValue(), such as opt.choice().
     assert(false && "no assignment from string or stream extraction operator");
@@ -675,6 +709,13 @@ public:
     OptBase(const std::string & keys, bool boolean);
     virtual ~OptBase() {}
 
+    //-----------------------------------------------------------------------
+    // Queries
+
+    // True if the value was populated from the command line, whether the 
+    // resulting value is the same as the default is immaterial.
+    explicit operator bool() const { return assigned(); }
+
     // Name of the last argument to populated the value, or an empty string if
     // it wasn't populated. For vectors, it's what populated the last value.
     virtual const std::string & from() const = 0;
@@ -688,6 +729,17 @@ public:
     // (which should set the position to 0) instead of the command args.
     virtual int pos() const = 0;
 
+    // number of values, non-vecs are always 1
+    virtual size_t size() const = 0;
+
+    // Defaults to use when populating the option from an action that's not
+    // tied to a command line argument.
+    const std::string & defaultFrom() const { return m_fromName; }
+    std::string defaultPrompt() const;
+
+    //-----------------------------------------------------------------------
+    // Update value
+
     // set to passed in default value
     virtual void reset() = 0;
 
@@ -696,14 +748,6 @@ public:
 
     // set to (or add to vec) value for missing optional
     virtual void unspecifiedValue() = 0;
-
-    // number of values, non-vecs are always 1
-    virtual size_t size() const = 0;
-
-    // defaults to use when populating the option from an action that's not
-    // tied to a command line argument.
-    const std::string & defaultFrom() const { return m_fromName; }
-    std::string defaultPrompt() const;
 
 protected:
     virtual bool fromString(Cli & cli, const std::string & value) = 0;
@@ -715,7 +759,8 @@ protected:
     virtual bool parseAction(Cli & cli, const std::string & value) = 0;
     virtual bool checkAction(Cli & cli, const std::string & value) = 0;
     virtual bool afterActions(Cli & cli) = 0;
-    virtual void set(const std::string & name, size_t pos) = 0;
+    virtual bool assigned() const = 0;
+    virtual void assign(const std::string & name, size_t pos) = 0;
 
     // True for flags (bool on command line) that default to true.
     virtual bool inverted() const = 0;
@@ -724,7 +769,7 @@ protected:
     // at the same value as an existing option -- with RTTI disabled
     virtual bool sameValue(const void * value) const = 0;
 
-    template <typename T> void setValueName();
+    template <typename T> void setValueDesc();
 
     void setNameIfEmpty(const std::string & name);
 
@@ -735,7 +780,8 @@ protected:
         OptIndex & ndx,
         const std::string & name,
         bool invert,
-        bool optional);
+        bool optional
+    );
 
     std::string m_command;
     std::string m_group;
@@ -763,7 +809,7 @@ private:
 };
 
 //===========================================================================
-template <typename T> inline void Cli::OptBase::setValueName() {
+template <typename T> inline void Cli::OptBase::setValueDesc() {
     if (std::is_integral<T>::value) {
         m_valueDesc = "NUM";
     } else if (std::is_convertible<T, std::string>::value) {
@@ -775,7 +821,7 @@ template <typename T> inline void Cli::OptBase::setValueName() {
 
 //===========================================================================
 template <>
-inline void Cli::OptBase::setValueName<std::experimental::filesystem::path>() {
+inline void Cli::OptBase::setValueDesc<std::experimental::filesystem::path>() {
     m_valueDesc = "FILE";
 }
 
@@ -798,14 +844,14 @@ public:
     //-----------------------------------------------------------------------
     // Configuration
 
-    // Controls whether or not the option appears in help pages.
-    A & show(bool visible = true);
-
     // Set subcommand for which this is an option.
     A & command(const std::string & val);
 
     // Set group under which this argument will show up in the help text.
     A & group(const std::string & val);
+
+    // Controls whether or not the option appears in help pages.
+    A & show(bool visible = true);
 
     // Set desciption to associate with the argument in printHelp()
     A & desc(const std::string & val);
@@ -820,6 +866,10 @@ public:
     // The implicit value is used for arguments with optional values when
     // the argument was specified in the command line without a value.
     A & implicitValue(const T & val);
+
+    // Causes a check whether the option value was set during parsing, and 
+    // reports badUsage() if it wasn't.
+    A & require();
 
     // Turns the argument into a feature switch, there are normally multiple
     // switches pointed at a single external value, one of which should be
@@ -837,7 +887,8 @@ public:
         const T & val,
         const std::string & key,
         const std::string & desc = {},
-        const std::string & sortKey = {});
+        const std::string & sortKey = {}
+    );
 
     // Fail if the value given for this option is not in within the range
     // (inclusive) of low to high.
@@ -854,7 +905,7 @@ public:
     A & prompt(
         const std::string & msg, // custom prompt message
         int flags = 0            // Cli::kPrompt* flags
-        );
+    );
 
     // Change the action to take when parsing this argument. The function
     // should:
@@ -912,7 +963,8 @@ protected:
     bool exec(
         Cli & cli,
         const std::string & value,
-        std::vector<std::function<ActionFn>> actions);
+        std::vector<std::function<ActionFn>> actions
+    );
 
     std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
@@ -926,8 +978,9 @@ protected:
 //===========================================================================
 template <typename A, typename T>
 inline Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
-    : OptBase(keys, boolean) {
-    setValueName<T>();
+    : OptBase(keys, boolean) 
+{
+    setValueDesc<T>();
 }
 
 //===========================================================================
@@ -937,7 +990,8 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 }
 
 //===========================================================================
-template <> inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
+template <> 
+inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     assert(this->m_bool);
     if (this->m_flagValue)
         return this->m_flagDefault;
@@ -946,16 +1000,20 @@ template <> inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
 
 //===========================================================================
 template <typename A, typename T>
-inline bool
-Cli::OptShim<A, T>::parseAction(Cli & cli, const std::string & val) {
+inline bool Cli::OptShim<A, T>::parseAction(
+    Cli & cli, 
+    const std::string & val
+) {
     auto self = static_cast<A *>(this);
     return m_parse(cli, *self, val);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline bool
-Cli::OptShim<A, T>::checkAction(Cli & cli, const std::string & val) {
+inline bool Cli::OptShim<A, T>::checkAction(
+    Cli & cli, 
+    const std::string & val
+) {
     return exec(cli, val, m_checks);
 }
 
@@ -970,20 +1028,14 @@ template <typename A, typename T>
 inline bool Cli::OptShim<A, T>::exec(
     Cli & cli,
     const std::string & val,
-    std::vector<std::function<ActionFn>> actions) {
+    std::vector<std::function<ActionFn>> actions
+) {
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
         if (!fn(cli, *self, val))
             return false;
     }
     return true;
-}
-
-//===========================================================================
-template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::show(bool visible) {
-    m_visible = visible;
-    return static_cast<A &>(*this);
 }
 
 //===========================================================================
@@ -997,6 +1049,13 @@ inline A & Cli::OptShim<A, T>::command(const std::string & val) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::group(const std::string & val) {
     m_group = val;
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::show(bool visible) {
+    m_visible = visible;
     return static_cast<A &>(*this);
 }
 
@@ -1027,7 +1086,7 @@ inline A & Cli::OptShim<A, T>::defaultValue(const T & val) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
-        // they don't have separate values, just their presence/absence
+        // bools don't have separate values, just their presence/absence
         assert(!m_bool && "bool argument values are never implicit");
     } else {
         m_implicitValue = val;
@@ -1060,7 +1119,8 @@ inline A & Cli::OptShim<A, T>::choice(
     const T & val,
     const std::string & key,
     const std::string & desc,
-    const std::string & sortKey) {
+    const std::string & sortKey
+) {
     assert(!key.empty());
     ChoiceDesc & cd = m_choiceDescs[key];
     cd.pos = m_choices.size();
@@ -1094,9 +1154,17 @@ inline A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
 
 //===========================================================================
 template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::require() {
+    return after([](auto & cli, auto & opt, auto & /* val */) {
+        return cli.require(opt);
+    });
+}
+
+//===========================================================================
+template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
     assert(low < high && !(high < low));
-    check([low, high](auto & cli, auto & opt, auto & val) {
+    return check([low, high](auto & cli, auto & opt, auto & val) {
         if (*opt < low || high < *opt) {
             std::ostringstream os;
             os << "Out of range '" << opt.from() << "' value [" << low << " - "
@@ -1105,14 +1173,13 @@ inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
         }
         return true;
     });
-    return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
     assert(low < high && !(high < low));
-    check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
+    return check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
         if (*opt < low) {
             *opt = low;
         } else if (high < *opt) {
@@ -1120,7 +1187,6 @@ inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
         }
         return true;
     });
-    return static_cast<A &>(*this);
 }
 
 //===========================================================================
@@ -1131,10 +1197,9 @@ template <typename A, typename T> A & Cli::OptShim<A, T>::prompt(int flags) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
-    after([=](auto & cli, auto & opt, auto & /* val */) {
+    return after([=](auto & cli, auto & opt, auto & /* val */) {
         return cli.prompt(opt, msg, flags);
     });
-    return static_cast<A &>(*this);
 }
 
 
@@ -1193,10 +1258,6 @@ public:
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
 
-    // True if the value was populated from the command line and while the
-    // value may be the same as the default it wasn't simply left that way.
-    explicit operator bool() const { return m_proxy->m_explicit; }
-
     // OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
     int pos() const final { return m_proxy->m_match.pos; }
@@ -1208,7 +1269,8 @@ private:
     friend class Cli;
     bool fromString(Cli & cli, const std::string & value) final;
     bool defaultValueStr(std::string & out, const Cli & cli) const final;
-    void set(const std::string & name, size_t pos) final;
+    void assign(const std::string & name, size_t pos) final;
+    bool assigned() const final { return m_proxy->m_explicit; }
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_value;
     }
@@ -1220,13 +1282,15 @@ private:
 template <typename T>
 inline Cli::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
-    const std::string & keys)
+    const std::string & keys
+)
     : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
-    , m_proxy{value} {}
+    , m_proxy{value} 
+{}
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::set(const std::string & name, size_t pos) {
+inline void Cli::Opt<T>::assign(const std::string & name, size_t pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
@@ -1263,8 +1327,11 @@ inline bool Cli::Opt<T>::fromString(Cli & cli, const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> inline bool 
-Cli::Opt<T>::defaultValueStr(std::string & out, const Cli & cli) const {
+template <typename T> 
+inline bool Cli::Opt<T>::defaultValueStr(
+    std::string & out, 
+    const Cli & cli
+) const {
     return cli.toString(out, this->defaultValue());
 }
 
@@ -1296,7 +1363,8 @@ template <typename T> struct Cli::ValueVec {
     std::vector<T> m_internal;
 
     ValueVec(std::vector<T> * value)
-        : m_values(value ? value : &m_internal) {}
+        : m_values(value ? value : &m_internal) 
+    {}
 };
 
 
@@ -1311,15 +1379,13 @@ public:
     OptVec(
         std::shared_ptr<ValueVec<T>> values,
         const std::string & keys,
-        int nargs);
+        int nargs
+    );
 
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
     T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
-
-    // True if values where added from the command line
-    explicit operator bool() const { return !m_proxy->m_values->empty(); }
 
     // OptBase
     const std::string & from() const final { return from(size() - 1); }
@@ -1338,7 +1404,8 @@ private:
     friend class Cli;
     bool fromString(Cli & cli, const std::string & value) final;
     bool defaultValueStr(std::string & out, const Cli & cli) const final;
-    void set(const std::string & name, size_t pos) final;
+    void assign(const std::string & name, size_t pos) final;
+    bool assigned() const final { return !m_proxy->m_values->empty(); }
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_values;
     }
@@ -1361,7 +1428,7 @@ inline Cli::OptVec<T>::OptVec(
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::set(const std::string & name, size_t pos) {
+inline void Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
     ArgMatch match;
     match.name = name;
     match.pos = (int)pos;
@@ -1375,12 +1442,14 @@ inline const std::string & Cli::OptVec<T>::from(size_t index) const {
 }
 
 //===========================================================================
-template <typename T> inline int Cli::OptVec<T>::pos(size_t index) const {
+template <typename T> 
+inline int Cli::OptVec<T>::pos(size_t index) const {
     return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
 //===========================================================================
-template <typename T> inline void Cli::OptVec<T>::reset() {
+template <typename T> 
+inline void Cli::OptVec<T>::reset() {
     m_proxy->m_values->clear();
     m_proxy->m_matches.clear();
 }
@@ -1412,19 +1481,24 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> inline bool 
-Cli::OptVec<T>::defaultValueStr(std::string & out, const Cli &) const {
+template <typename T> 
+inline bool Cli::OptVec<T>::defaultValueStr(
+    std::string & out, 
+    const Cli &
+) const {
     out.clear();
     return false;
 }
 
 //===========================================================================
-template <typename T> inline void Cli::OptVec<T>::unspecifiedValue() {
+template <typename T> 
+inline void Cli::OptVec<T>::unspecifiedValue() {
     m_proxy->m_values->push_back(this->implicitValue());
 }
 
 //===========================================================================
-template <typename T> inline size_t Cli::OptVec<T>::size() const {
+template <typename T> 
+inline size_t Cli::OptVec<T>::size() const {
     return m_proxy->m_values->size();
 }
 

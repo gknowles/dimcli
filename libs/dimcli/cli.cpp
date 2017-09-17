@@ -130,8 +130,10 @@ static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static bool cmdAction(Cli & cli);
 
 //===========================================================================
-static Cli::GroupConfig &
-findGrpAlways(Cli::CommandConfig & cmd, const string & name) {
+static Cli::GroupConfig & findGrpAlways(
+    Cli::CommandConfig & cmd, 
+    const string & name
+) {
     auto i = cmd.groups.find(name);
     if (i != cmd.groups.end())
         return i->second;
@@ -141,8 +143,10 @@ findGrpAlways(Cli::CommandConfig & cmd, const string & name) {
 }
 
 //===========================================================================
-static Cli::CommandConfig &
-findCmdAlways(Cli::Config & cfg, const string & name) {
+static Cli::CommandConfig & findCmdAlways(
+    Cli::Config & cfg, 
+    const string & name
+) {
     auto i = cfg.cmds.find(name);
     if (i != cfg.cmds.end())
         return i->second;
@@ -169,8 +173,12 @@ static string displayName(const fs::path & file) {
 // Replaces a set of contiguous values in one vector with the entire contents
 // of another, growing or shrinking it as needed.
 template <typename T>
-static void
-replace(vector<T> & out, size_t pos, size_t count, vector<T> && src) {
+static void replace(
+    vector<T> & out, 
+    size_t pos, 
+    size_t count, 
+    vector<T> && src
+) {
     size_t srcLen = src.size();
     if (count > srcLen) {
         out.erase(out.begin() + pos + srcLen, out.begin() + pos + count);
@@ -191,7 +199,8 @@ replace(vector<T> & out, size_t pos, size_t count, vector<T> && src) {
 
 //===========================================================================
 CliLocal::CliLocal()
-    : Cli(make_shared<Config>()) {}
+    : Cli(make_shared<Config>()) 
+{}
 
 
 /****************************************************************************
@@ -203,7 +212,8 @@ CliLocal::CliLocal()
 //===========================================================================
 Cli::OptBase::OptBase(const string & names, bool boolean)
     : m_bool{boolean}
-    , m_names{names} {
+    , m_names{names} 
+{
     // set m_fromName and assert if names is malformed
     OptIndex ndx;
     index(ndx);
@@ -216,7 +226,7 @@ void Cli::OptBase::setNameIfEmpty(const string & name) {
 }
 
 //===========================================================================
-bool Cli::OptBase::parseValue(const std::string & value) {
+bool Cli::OptBase::parseValue(const string & value) {
     Cli cli;
     return fromString(cli, value);
 }
@@ -322,7 +332,8 @@ void Cli::OptBase::indexShortName(
     OptIndex & ndx,
     char name,
     bool invert,
-    bool optional) {
+    bool optional
+) {
     ndx.shortNames[name] = {this, invert, optional};
     setNameIfEmpty("-"s += name);
 }
@@ -332,7 +343,8 @@ void Cli::OptBase::indexLongName(
     OptIndex & ndx,
     const string & name,
     bool invert,
-    bool optional) {
+    bool optional
+) {
     bool allowNo = true;
     string key{name};
     if (key.back() == '.') {
@@ -394,6 +406,20 @@ bool Cli::defaultParse(OptBase & opt, const string & val) {
 }
 
 //===========================================================================
+bool Cli::require(OptBase & opt) {
+    if (opt)
+        return true;
+    OptIndex ndx;
+    opt.index(ndx);
+    const string & name = !ndx.argNames.empty() ? ndx.argNames[0].name
+        : !ndx.longNames.empty() ? "--" + ndx.longNames.begin()->first
+        : !ndx.shortNames.empty() 
+            ? "-" + string(1, ndx.shortNames.begin()->first)
+        : "UNKNOWN";
+    return badUsage("No value given for " + name);
+}
+
+//===========================================================================
 static bool cmdAction(Cli & cli) {
     ostringstream os;
     if (cli.runCommand().empty()) {
@@ -420,25 +446,11 @@ Cli::Cli() {
 }
 
 //===========================================================================
-Cli::Cli(const Cli & from) 
-    : m_cfg(from.m_cfg)
-    , m_command(from.m_command)
-    , m_group(from.m_group)
-{}
-
-//===========================================================================
 // protected
 Cli::Cli(shared_ptr<Config> cfg)
-    : m_cfg(cfg) {
+    : m_cfg(cfg) 
+{
     helpOpt();
-}
-
-//===========================================================================
-Cli & Cli::operator=(const Cli & from) {
-    m_cfg = from.m_cfg;
-    m_command = from.m_command;
-    m_group = from.m_group;
-    return *this;
 }
 
 
@@ -479,13 +491,11 @@ Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
 }
 
 //===========================================================================
-Cli::Opt<bool> &
-Cli::versionOpt(const string & version, const string & progName) {
-    auto verAction = [version, progName](
-        auto & cli, 
-        auto &, // opt 
-        auto &  // val
-    ) {
+Cli::Opt<bool> & Cli::versionOpt(
+    const string & version, 
+    const string & progName
+) {
+    auto act = [version, progName](auto & cli, auto &/*opt*/, auto &/*val*/) {
         string prog = progName;
         if (prog.empty()) {
             prog = displayName(cli.progName());
@@ -495,7 +505,7 @@ Cli::versionOpt(const string & version, const string & progName) {
     };
     return opt<bool>("version.")
         .desc("Show version and exit.")
-        .parse(verAction)
+        .parse(act)
         .group(kInternalOptionGroup);
 }
 
@@ -587,7 +597,7 @@ void Cli::envOpts(const string & var) {
 #endif
 
 //===========================================================================
-void Cli::iostreams(std::istream * in, std::ostream * out) {
+void Cli::iostreams(istream * in, ostream * out) {
     m_cfg->conin = in ? in : &cin;
     m_cfg->conout = out ? out : &cout;
 }
@@ -657,7 +667,7 @@ vector<string> Cli::toArgv(const string & cmdline) {
 
 //===========================================================================
 // static
-std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
+vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     vector<string> out;
     out.reserve(argc);
     for (; *argv; ++argv)
@@ -668,7 +678,7 @@ std::vector<std::string> Cli::toArgv(size_t argc, char * argv[]) {
 
 //===========================================================================
 // static
-std::vector<std::string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
+vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
     wstring_convert<CodecvtWchar> wcvt(
@@ -1018,7 +1028,8 @@ IN_QUOTED:
 static bool expandResponseFiles(
     Cli & cli,
     vector<string> & args,
-    unordered_set<string> & ancestors);
+    unordered_set<string> & ancestors
+);
 
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
@@ -1063,7 +1074,8 @@ static bool expandResponseFile(
     Cli & cli,
     vector<string> & args,
     size_t & pos,
-    unordered_set<string> & ancestors) {
+    unordered_set<string> & ancestors
+) {
     string content;
     error_code err;
     fs::path fn = args[pos].substr(1);
@@ -1093,7 +1105,8 @@ static bool expandResponseFile(
 static bool expandResponseFiles(
     Cli & cli,
     vector<string> & args,
-    unordered_set<string> & ancestors) {
+    unordered_set<string> & ancestors
+) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
             if (!expandResponseFile(cli, args, pos, ancestors))
@@ -1123,8 +1136,11 @@ void Cli::resetValues() {
 }
 
 //===========================================================================
-void Cli::index(OptIndex & ndx, const string & cmd, bool requireVisible)
-    const {
+void Cli::index(
+    OptIndex & ndx, 
+    const string & cmd, 
+    bool requireVisible
+) const {
     ndx.argNames.clear();
     ndx.longNames.clear();
     ndx.shortNames.clear();
@@ -1185,8 +1201,9 @@ bool Cli::parseValue(
     OptBase & opt,
     const string & name,
     size_t pos,
-    const char ptr[]) {
-    opt.set(name, pos);
+    const char ptr[]
+) {
+    opt.assign(name, pos);
     string val;
     if (ptr) {
         val = ptr;
@@ -1546,7 +1563,8 @@ string Cli::descStr(const Cli::OptBase & opt) const {
 static void writeChoices(
     ostream & os,
     WrapPos & wp,
-    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices) {
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+) {
     if (choices.empty())
         return;
     size_t colWidth = 0;
@@ -1593,7 +1611,8 @@ static void writeChoices(
 int Cli::printHelp(
     ostream & os,
     const string & progName,
-    const string & cmdName) const {
+    const string & cmdName
+) const {
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
     if (!cmd.header.empty()) {
         WrapPos wp;
@@ -1623,7 +1642,8 @@ int Cli::writeUsageImpl(
     ostream & os,
     const string & arg0,
     const string & cmdName,
-    bool expandedOptions) const {
+    bool expandedOptions
+) const {
     OptIndex ndx;
     index(ndx, cmdName, true);
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
@@ -1670,14 +1690,20 @@ int Cli::writeUsageImpl(
 }
 
 //===========================================================================
-int Cli::printUsage(ostream & os, const string & arg0, const string & cmd)
-    const {
+int Cli::printUsage(
+    ostream & os, 
+    const string & arg0, 
+    const string & cmd
+) const {
     return writeUsageImpl(os, arg0, cmd, false);
 }
 
 //===========================================================================
-int Cli::printUsageEx(ostream & os, const string & arg0, const string & cmd)
-    const {
+int Cli::printUsageEx(
+    ostream & os, 
+    const string & arg0, 
+    const string & cmd
+) const {
     return writeUsageImpl(os, arg0, cmd, true);
 }
 
@@ -1714,7 +1740,8 @@ bool Cli::findNamedArgs(
     const OptIndex & ndx,
     CommandConfig & cmd,
     int type,
-    bool flatten) const {
+    bool flatten
+) const {
     namedArgs.clear();
     for (auto && opt : m_cfg->opts) {
         string list = nameList(ndx, *opt, type);
@@ -1844,7 +1871,8 @@ static bool includeName(
     int type,
     const Cli::OptBase & opt,
     bool boolean,
-    bool inverted) {
+    bool inverted
+) {
     if (name.opt != &opt)
         return false;
     if (boolean) {
@@ -1863,7 +1891,8 @@ static bool includeName(
 string Cli::nameList(
     const Cli::OptIndex & ndx,
     const Cli::OptBase & opt,
-    int type) const {
+    int type
+) const {
     string list;
 
     if (type == kNameAll) {
