@@ -102,6 +102,12 @@ void basicTests() {
     istringstream in;
     ostringstream out;
 
+    // assignment operator
+    {
+        Dim::Cli tmp{cli};
+        tmp = cli;
+    }
+
     // choice
     {
         enum class State { go, wait, stop };

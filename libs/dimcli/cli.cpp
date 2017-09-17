@@ -612,11 +612,24 @@ Cli::Cli() {
 }
 
 //===========================================================================
+Cli::Cli(const Cli & from) 
+    : m_cfg(from.m_cfg)
+    , m_command(from.m_command)
+    , m_group(from.m_group)
+{}
+
+//===========================================================================
 // protected
 Cli::Cli(shared_ptr<Config> cfg)
     : m_cfg(cfg) 
 {
     helpOpt();
+}
+
+//===========================================================================
+Cli & Cli::operator=(const Cli & from) {
+    // forward to move assignment
+    return *this = Cli{from};
 }
 
 

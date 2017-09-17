@@ -164,6 +164,9 @@ public:
     // indirection allows options to be statically registered from multiple
     // source files.
     Cli();
+    Cli(const Cli & from);
+    Cli & operator=(const Cli & from);
+    Cli & operator=(Cli && from) = default;
 
     //-----------------------------------------------------------------------
     // Configuration
