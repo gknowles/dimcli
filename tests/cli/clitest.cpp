@@ -346,7 +346,7 @@ Options:
         EXPECT(*count == 1);
         EXPECT(cli.errMsg() == "No value given for -c");
         cli = {};
-        auto & imp = cli.opt<int>("i ?index").require().implicitValue(5);
+        auto & imp = cli.opt<int>("?index i").require().implicitValue(5);
         EXPECT_PARSE(cli, {"--index=10"});
         EXPECT(*imp == 10);
         EXPECT_PARSE(cli, {"--index"});

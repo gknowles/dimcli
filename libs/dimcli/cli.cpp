@@ -58,8 +58,14 @@ struct OptName {
     string name;   // name of argument (only for positionals)
 };
 
+struct ArgKey {
+    string sort; // sort key
+    string list;
+    Cli::OptBase * opt;
+};
+
 // Option name filters for opts that are externally bool
-enum NameListType : int {
+enum NameListType {
     kNameEnable,     // include names that enable the opt
     kNameDisable,    // include names that disable
     kNameAll,        // include all names
@@ -72,17 +78,40 @@ struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
 };
 } // namespace
 
-struct Cli::ArgKey {
-    string sort; // sort key
-    string list;
-    OptBase * opt;
-};
-
 struct Cli::OptIndex {
-    unordered_map<char, OptName> shortNames;
-    unordered_map<string, OptName> longNames;
-    vector<OptName> argNames;
-    bool allowCommands{false};
+    unordered_map<char, OptName> m_shortNames;
+    unordered_map<string, OptName> m_longNames;
+    vector<OptName> m_argNames;
+    bool m_allowCommands{false};
+
+    void index(
+        const Cli & cli,
+        const std::string & cmd, 
+        bool requireVisible
+    );
+    bool findNamedArgs(
+        std::vector<ArgKey> & namedArgs,
+        size_t & colWidth,
+        const Cli & cli,
+        CommandConfig & cmd,
+        NameListType type,
+        bool flatten
+    ) const;
+    std::string nameList(
+        const Cli & cli,
+        const OptBase & opt,
+        NameListType type
+    ) const;
+
+    void index(OptBase & opt);
+    void indexName(OptBase & opt, const string & name);
+    void indexShortName(OptBase & opt, char name, bool invert, bool optional);
+    void indexLongName(
+        OptBase & opt,
+        const string & name,
+        bool invert,
+        bool optional
+    );
 };
 
 struct Cli::GroupConfig {
@@ -216,7 +245,7 @@ Cli::OptBase::OptBase(const string & names, bool boolean)
 {
     // set m_fromName and assert if names is malformed
     OptIndex ndx;
-    index(ndx);
+    ndx.index(*this);
 }
 
 //===========================================================================
@@ -241,9 +270,150 @@ string Cli::OptBase::defaultPrompt() const {
     return name;
 }
 
+
+/****************************************************************************
+*
+*   Cli::OptIndex
+*
+***/
+
 //===========================================================================
-void Cli::OptBase::index(OptIndex & ndx) {
-    const char * ptr = m_names.data();
+void Cli::OptIndex::index(
+    const Cli & cli, 
+    const string & cmd, 
+    bool requireVisible
+) {
+    m_argNames.clear();
+    m_longNames.clear();
+    m_shortNames.clear();
+    m_allowCommands = cmd.empty();
+    for (auto && opt : cli.m_cfg->opts) {
+        if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
+            index(*opt);
+    }
+    for (unsigned i = 0; i < m_argNames.size(); ++i) {
+        auto & key = m_argNames[i];
+        if (key.name.empty())
+            key.name = "arg" + to_string(i + 1);
+    }
+}
+
+//===========================================================================
+bool Cli::OptIndex::findNamedArgs(
+    vector<ArgKey> & namedArgs,
+    size_t & colWidth,
+    const Cli & cli,
+    CommandConfig & cmd,
+    NameListType type,
+    bool flatten
+) const {
+    namedArgs.clear();
+    for (auto && opt : cli.m_cfg->opts) {
+        string list = nameList(cli, *opt, type);
+        if (size_t width = list.size()) {
+            colWidth = max(colWidth, width);
+            ArgKey key;
+            key.opt = opt.get();
+            key.list = list;
+
+            // sort by group sort key followed by name list with leading
+            // dashes removed
+            key.sort = findGrpAlways(cmd, opt->m_group).sortKey;
+            if (flatten && key.sort != kInternalOptionGroup)
+                key.sort.clear();
+            key.sort += '\0';
+            key.sort += list.substr(list.find_first_not_of('-'));
+            namedArgs.push_back(key);
+        }
+    }
+    sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
+        return a.sort < b.sort;
+    });
+    return !namedArgs.empty();
+}
+
+//===========================================================================
+static bool includeName(
+    const OptName & name,
+    NameListType type,
+    const Cli::OptBase & opt,
+    bool boolean,
+    bool inverted
+) {
+    if (name.opt != &opt)
+        return false;
+    if (boolean) {
+        switch (type) {
+        case kNameEnable: return !name.invert;
+        case kNameDisable: return name.invert;
+        case kNameAll: return true;
+        case kNameNonDefault: return inverted == name.invert;
+        }
+        assert(0 && "unknown NameListType");
+    }
+    return true;
+}
+
+//===========================================================================
+string Cli::OptIndex::nameList(
+    const Cli & cli,
+    const Cli::OptBase & opt,
+    NameListType type
+) const {
+    string list;
+
+    if (type == kNameAll) {
+        list = nameList(cli, opt, kNameEnable);
+        if (opt.m_bool) {
+            string invert = nameList(cli, opt, kNameDisable);
+            if (!invert.empty()) {
+                list += list.empty() ? "/ " : " / ";
+                list += invert;
+            }
+        }
+        return list;
+    }
+
+    bool foundLong = false;
+    bool optional = false;
+
+    // names
+    for (auto && sn : m_shortNames) {
+        if (!includeName(sn.second, type, opt, opt.m_bool, opt.inverted()))
+            continue;
+        optional = sn.second.optional;
+        if (!list.empty())
+            list += ", ";
+        list += '-';
+        list += sn.first;
+    }
+    for (auto && ln : m_longNames) {
+        if (!includeName(ln.second, type, opt, opt.m_bool, opt.inverted()))
+            continue;
+        optional = ln.second.optional;
+        if (!list.empty())
+            list += ", ";
+        foundLong = true;
+        list += "--";
+        list += ln.first;
+    }
+    if (opt.m_bool || list.empty())
+        return list;
+
+    // value
+    if (optional) {
+        list += foundLong ? "[=" : " [";
+        list += opt.m_valueDesc + "]";
+    } else {
+        list += foundLong ? '=' : ' ';
+        list += opt.m_valueDesc;
+    }
+    return list;
+}
+
+//===========================================================================
+void Cli::OptIndex::index(OptBase & opt) {
+    const char * ptr = opt.m_names.data();
     string name;
     char close;
     bool hasPos = false;
@@ -270,7 +440,7 @@ void Cli::OptBase::index(OptIndex & ndx) {
             if (close != ' ')
                 hasPos = true;
             name = string(b, ptr - b);
-            indexName(ndx, name);
+            indexName(opt, name);
         }
         if (!*ptr)
             return;
@@ -278,69 +448,69 @@ void Cli::OptBase::index(OptIndex & ndx) {
 }
 
 //===========================================================================
-void Cli::OptBase::indexName(OptIndex & ndx, const string & name) {
+void Cli::OptIndex::indexName(OptBase & opt, const string & name) {
     const bool invert = true;
     const bool optional = true;
 
-    auto where = ndx.argNames.end();
+    auto where = m_argNames.end();
     switch (name[0]) {
     case '-': assert(name[0] != '-' && "bad argument name"); return;
     case '[':
-        ndx.argNames.push_back({this, !invert, optional, name.data() + 1});
-        where = ndx.argNames.end() - 1;
+        m_argNames.push_back({&opt, !invert, optional, name.data() + 1});
+        where = m_argNames.end() - 1;
         goto INDEX_POS_NAME;
     case '<':
         where =
-            find_if(ndx.argNames.begin(), ndx.argNames.end(), [](auto && key) {
+            find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
                 return key.optional;
             });
-        where = ndx.argNames.insert(
-            where, {this, !invert, !optional, name.data() + 1});
+        where = m_argNames.insert(
+            where, {&opt, !invert, !optional, name.data() + 1});
     INDEX_POS_NAME:
-        setNameIfEmpty(where->name);
-        if (m_command.empty())
-            ndx.allowCommands = false;
+        opt.setNameIfEmpty(where->name);
+        if (opt.m_command.empty())
+            m_allowCommands = false;
         return;
     }
     if (name.size() == 1)
-        return indexShortName(ndx, name[0], !invert, !optional);
+        return indexShortName(opt, name[0], !invert, !optional);
     switch (name[0]) {
     case '!':
-        if (!m_bool) {
-            assert(!m_bool && "bad modifier '!' for non-bool argument");
+        if (!opt.m_bool) {
+            assert(!opt.m_bool && "bad modifier '!' for non-bool argument");
             return;
         }
         if (name.size() == 2)
-            return indexShortName(ndx, name[1], invert, !optional);
-        indexLongName(ndx, name.substr(1), invert, !optional);
+            return indexShortName(opt, name[1], invert, !optional);
+        indexLongName(opt, name.substr(1), invert, !optional);
         return;
     case '?':
-        if (m_bool) {
-            assert(!m_bool && "bad modifier '?' for bool argument");
+        if (opt.m_bool) {
+            assert(!opt.m_bool && "bad modifier '?' for bool argument");
             return;
         }
         if (name.size() == 2)
-            return indexShortName(ndx, name[1], !invert, optional);
-        indexLongName(ndx, name.substr(1), !invert, optional);
+            return indexShortName(opt, name[1], !invert, optional);
+        indexLongName(opt, name.substr(1), !invert, optional);
         return;
     }
-    indexLongName(ndx, name, !invert, !optional);
+    indexLongName(opt, name, !invert, !optional);
 }
 
 //===========================================================================
-void Cli::OptBase::indexShortName(
-    OptIndex & ndx,
+void Cli::OptIndex::indexShortName(
+    OptBase & opt,
     char name,
     bool invert,
     bool optional
 ) {
-    ndx.shortNames[name] = {this, invert, optional};
-    setNameIfEmpty("-"s += name);
+    m_shortNames[name] = {&opt, invert, optional};
+    opt.setNameIfEmpty("-"s += name);
 }
 
 //===========================================================================
-void Cli::OptBase::indexLongName(
-    OptIndex & ndx,
+void Cli::OptIndex::indexLongName(
+    OptBase & opt,
     const string & name,
     bool invert,
     bool optional
@@ -355,10 +525,10 @@ void Cli::OptBase::indexLongName(
         }
         key.pop_back();
     }
-    setNameIfEmpty("--"s += key);
-    ndx.longNames[key] = {this, invert, optional};
-    if (m_bool && allowNo)
-        ndx.longNames["no-"s += key] = {this, !invert, optional};
+    opt.setNameIfEmpty("--"s += key);
+    m_longNames[key] = {&opt, invert, optional};
+    if (opt.m_bool && allowNo)
+        m_longNames["no-"s += key] = {&opt, !invert, optional};
 }
 
 
@@ -409,12 +579,8 @@ bool Cli::defaultParse(OptBase & opt, const string & val) {
 bool Cli::require(OptBase & opt) {
     if (opt)
         return true;
-    OptIndex ndx;
-    opt.index(ndx);
-    const string & name = !ndx.argNames.empty() ? ndx.argNames[0].name
-        : !ndx.longNames.empty() ? "--" + ndx.longNames.begin()->first
-        : !ndx.shortNames.empty() 
-            ? "-" + string(1, ndx.shortNames.begin()->first)
+    const string & name = !opt.defaultFrom().empty()
+        ? opt.defaultFrom()
         : "UNKNOWN";
     return badUsage("No value given for " + name);
 }
@@ -1136,27 +1302,6 @@ void Cli::resetValues() {
 }
 
 //===========================================================================
-void Cli::index(
-    OptIndex & ndx, 
-    const string & cmd, 
-    bool requireVisible
-) const {
-    ndx.argNames.clear();
-    ndx.longNames.clear();
-    ndx.shortNames.clear();
-    ndx.allowCommands = cmd.empty();
-    for (auto && opt : m_cfg->opts) {
-        if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
-            opt->index(ndx);
-    }
-    for (unsigned i = 0; i < ndx.argNames.size(); ++i) {
-        auto & key = ndx.argNames[i];
-        if (key.name.empty())
-            key.name = "arg" + to_string(i + 1);
-    }
-}
-
-//===========================================================================
 bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
     if (!opt.from().empty())
         return true;
@@ -1245,13 +1390,13 @@ bool Cli::parse(vector<string> & args) {
     assert(!args.empty());
 
     OptIndex ndx;
-    index(ndx, "", false);
+    ndx.index(*this, "", false);
     bool needCmd = m_cfg->cmds.size() > 1;
 
     // Commands can't be added when the top level command has a positional
     // argument, command processing requires that the first positional is
     // available to identify the command.
-    assert(ndx.allowCommands || !needCmd);
+    assert(ndx.m_allowCommands || !needCmd);
 
     resetValues();
 
@@ -1284,10 +1429,10 @@ bool Cli::parse(vector<string> & args) {
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
             for (; *ptr && *ptr != '-'; ++ptr) {
-                auto it = ndx.shortNames.find(*ptr);
+                auto it = ndx.m_shortNames.find(*ptr);
                 name = '-';
                 name += *ptr;
-                if (it == ndx.shortNames.end())
+                if (it == ndx.m_shortNames.end())
                     return badUsage("Unknown option", name);
                 argName = it->second;
                 if (argName.opt->m_bool) {
@@ -1320,10 +1465,10 @@ bool Cli::parse(vector<string> & args) {
                 key = ptr;
                 ptr = "";
             }
-            auto it = ndx.longNames.find(key);
+            auto it = ndx.m_longNames.find(key);
             name = "--";
             name += key;
-            if (it == ndx.longNames.end())
+            if (it == ndx.m_longNames.end())
                 return badUsage("Unknown option", name);
             argName = it->second;
             if (argName.opt->m_bool) {
@@ -1348,13 +1493,13 @@ bool Cli::parse(vector<string> & args) {
                 return badUsage("Unknown command", cmd);
             needCmd = false;
             m_cfg->command = cmd;
-            index(ndx, cmd, false);
+            ndx.index(*this, cmd, false);
             continue;
         }
 
-        if (pos >= ndx.argNames.size())
+        if (pos >= ndx.m_argNames.size())
             return badUsage("Unexpected argument", ptr);
-        argName = ndx.argNames[pos];
+        argName = ndx.m_argNames[pos];
         name = argName.name;
         if (!parseValue(*argName.opt, name, argPos, ptr))
             return false;
@@ -1381,8 +1526,8 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    if (!needCmd && pos < ndx.argNames.size() && !ndx.argNames[pos].optional)
-        return badUsage("Missing argument", ndx.argNames[pos].name);
+    if (!needCmd && pos < ndx.m_argNames.size() && !ndx.m_argNames[pos].optional)
+        return badUsage("Missing argument", ndx.m_argNames[pos].name);
 
     for (auto && opt : m_cfg->opts) {
         if (!opt->afterActions(*this))
@@ -1645,7 +1790,7 @@ int Cli::writeUsageImpl(
     bool expandedOptions
 ) const {
     OptIndex ndx;
-    index(ndx, cmdName, true);
+    ndx.index(*this, cmdName, true);
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
     string prog = displayName(arg0.empty() ? progName() : arg0);
     const string usageStr{"usage: "};
@@ -1656,14 +1801,20 @@ int Cli::writeUsageImpl(
     wp.prefix = string(wp.pos, ' ');
     if (cmdName.size())
         writeToken(os, wp, cmdName);
-    if (!ndx.shortNames.empty() || !ndx.longNames.empty()) {
+    if (!ndx.m_shortNames.empty() || !ndx.m_longNames.empty()) {
         if (!expandedOptions) {
             writeToken(os, wp, "[OPTIONS]");
         } else {
             size_t colWidth = 0;
             vector<ArgKey> namedArgs;
-            findNamedArgs(
-                namedArgs, colWidth, ndx, cmd, kNameNonDefault, true);
+            ndx.findNamedArgs(
+                namedArgs, 
+                colWidth, 
+                *this, 
+                cmd, 
+                kNameNonDefault, 
+                true
+            );
             for (auto && key : namedArgs)
                 writeToken(os, wp, "[" + key.list + "]");
         }
@@ -1672,7 +1823,7 @@ int Cli::writeUsageImpl(
         writeToken(os, wp, "command");
         writeToken(os, wp, "[args...]");
     } else {
-        for (auto && pa : ndx.argNames) {
+        for (auto && pa : ndx.m_argNames) {
             string token = pa.name.find(' ') == string::npos
                 ? pa.name
                 : "<" + pa.name + ">";
@@ -1710,10 +1861,10 @@ int Cli::printUsageEx(
 //===========================================================================
 void Cli::printPositionals(ostream & os, const string & cmd) const {
     OptIndex ndx;
-    index(ndx, cmd, true);
+    ndx.index(*this, cmd, true);
     size_t colWidth = 0;
     bool hasDesc = false;
-    for (auto && pa : ndx.argNames) {
+    for (auto && pa : ndx.m_argNames) {
         // find widest positional argument name, with space for <>'s
         colWidth = max(colWidth, pa.name.size() + 2);
         hasDesc = hasDesc || pa.opt->m_desc.size();
@@ -1723,7 +1874,7 @@ void Cli::printPositionals(ostream & os, const string & cmd) const {
         return;
 
     WrapPos wp;
-    for (auto && pa : ndx.argNames) {
+    for (auto && pa : ndx.m_argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  " + pa.name);
         writeDescCol(os, wp, descStr(*pa.opt), colWidth);
@@ -1734,49 +1885,15 @@ void Cli::printPositionals(ostream & os, const string & cmd) const {
 }
 
 //===========================================================================
-bool Cli::findNamedArgs(
-    vector<ArgKey> & namedArgs,
-    size_t & colWidth,
-    const OptIndex & ndx,
-    CommandConfig & cmd,
-    int type,
-    bool flatten
-) const {
-    namedArgs.clear();
-    for (auto && opt : m_cfg->opts) {
-        string list = nameList(ndx, *opt, type);
-        if (size_t width = list.size()) {
-            colWidth = max(colWidth, width);
-            ArgKey key;
-            key.opt = opt.get();
-            key.list = list;
-
-            // sort by group sort key followed by name list with leading
-            // dashes removed
-            key.sort = findGrpAlways(cmd, opt->m_group).sortKey;
-            if (flatten && key.sort != kInternalOptionGroup)
-                key.sort.clear();
-            key.sort += '\0';
-            key.sort += list.substr(list.find_first_not_of('-'));
-            namedArgs.push_back(key);
-        }
-    }
-    sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
-        return a.sort < b.sort;
-    });
-    return !namedArgs.empty();
-}
-
-//===========================================================================
 void Cli::printOptions(ostream & os, const string & cmdName) const {
     OptIndex ndx;
-    index(ndx, cmdName, true);
+    ndx.index(*this, cmdName, true);
     auto & cmd = findCmdAlways(*m_cfg, cmdName);
 
     // find named args and the longest name list
     size_t colWidth = 0;
     vector<ArgKey> namedArgs;
-    if (!findNamedArgs(namedArgs, colWidth, ndx, cmd, kNameAll, false))
+    if (!ndx.findNamedArgs(namedArgs, colWidth, *this, cmd, kNameAll, false))
         return;
     colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
 
@@ -1863,85 +1980,6 @@ void Cli::printCommands(ostream & os) const {
         os << '\n';
         wp.pos = 0;
     }
-}
-
-//===========================================================================
-static bool includeName(
-    const OptName & name,
-    int type,
-    const Cli::OptBase & opt,
-    bool boolean,
-    bool inverted
-) {
-    if (name.opt != &opt)
-        return false;
-    if (boolean) {
-        switch (type) {
-        case kNameEnable: return !name.invert;
-        case kNameDisable: return name.invert;
-        case kNameAll: return true;
-        case kNameNonDefault: return inverted == name.invert;
-        }
-        assert(0 && "unknown NameListType");
-    }
-    return true;
-}
-
-//===========================================================================
-string Cli::nameList(
-    const Cli::OptIndex & ndx,
-    const Cli::OptBase & opt,
-    int type
-) const {
-    string list;
-
-    if (type == kNameAll) {
-        list = nameList(ndx, opt, kNameEnable);
-        if (opt.m_bool) {
-            string invert = nameList(ndx, opt, kNameDisable);
-            if (!invert.empty()) {
-                list += list.empty() ? "/ " : " / ";
-                list += invert;
-            }
-        }
-        return list;
-    }
-
-    bool foundLong = false;
-    bool optional = false;
-
-    // names
-    for (auto && sn : ndx.shortNames) {
-        if (!includeName(sn.second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        optional = sn.second.optional;
-        if (!list.empty())
-            list += ", ";
-        list += '-';
-        list += sn.first;
-    }
-    for (auto && ln : ndx.longNames) {
-        if (!includeName(ln.second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        optional = ln.second.optional;
-        if (!list.empty())
-            list += ", ";
-        foundLong = true;
-        list += "--";
-        list += ln.first;
-    }
-    if (opt.m_bool || list.empty())
-        return list;
-
-    // value
-    if (optional) {
-        list += foundLong ? "[=" : " [";
-        list += opt.m_valueDesc + "]";
-    } else {
-        list += foundLong ? '=' : ' ';
-        list += opt.m_valueDesc;
-    }
-    return list;
 }
 
 

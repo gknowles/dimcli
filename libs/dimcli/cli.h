@@ -155,7 +155,6 @@ public:
     template <typename T> class OptVec;
     struct OptIndex;
 
-    struct ArgKey;
     struct ArgMatch;
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
@@ -454,24 +453,6 @@ private:
         const std::string & arg0,
         const std::string & cmd,
         bool expandedOptions
-    ) const;
-    void index(
-        OptIndex & ndx, 
-        const std::string & cmd, 
-        bool requireVisible
-    ) const;
-    bool findNamedArgs(
-        std::vector<ArgKey> & namedArgs,
-        size_t & colWidth,
-        const OptIndex & ndx,
-        CommandConfig & cmd,
-        int type,
-        bool flatten
-    ) const;
-    std::string nameList(
-        const OptIndex & ndx,
-        const OptBase & opt,
-        int type
     ) const;
 
     template <typename T>
@@ -772,16 +753,6 @@ protected:
     template <typename T> void setValueDesc();
 
     void setNameIfEmpty(const std::string & name);
-
-    void index(OptIndex & ndx);
-    void indexName(OptIndex & ndx, const std::string & name);
-    void indexShortName(OptIndex & ndx, char name, bool invert, bool optional);
-    void indexLongName(
-        OptIndex & ndx,
-        const std::string & name,
-        bool invert,
-        bool optional
-    );
 
     std::string m_command;
     std::string m_group;
