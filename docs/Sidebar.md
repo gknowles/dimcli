@@ -29,6 +29,7 @@ Options and Modifiers
 - [Help Option](Help%20Option)
 - [Feature Switches](Feature%20Switches)  
 - [Choice Options](Choice%20Options)
+- [Require](Require)
 - [Range and Clamp](Range%20and%20Clamp)
 - [Counting](Counting)  
 - [Prompting](Prompting)

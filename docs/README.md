@@ -894,7 +894,7 @@ of the standard functions.
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.helpOpt().desc("What you see is what you get.");
+    cli.helpOpt();
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     return EX_OK;
@@ -902,6 +902,24 @@ int main(int argc, char * argv[]) {
 ~~~
 
 And when run...
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+~~~
+
+It can be modified like any other bool option.
+~~~ cpp
+cli.helpOpt().desc("What you see is what you get.");
+~~~
+~~~ cpp
+auto & help = cli.helpOpt();
+help.desc("What you see is what you get.");
+~~~
+
+Either of which gets you this:
 ~~~ console
 $ a.out --help
 usage: a.out [OPTIONS]
@@ -1006,6 +1024,43 @@ Error: Invalid "--streetlight" value: purple
 Error: Must be "green", "red", or "yellow"
 $ a.out --streetlight=green
 Go!
+~~~
+
+
+## Require
+A simple way to make sure an option is specified is to mark it required with
+opt.require(). This adds an after action that fails if no explicit value was
+set for the option.
+
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & file = cli.opt<string>("file f").require();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Selected file: " << *file << endl;
+    return EX_OK;
+}
+~~~
+
+What you get:
+~~~ console
+$ a.out
+Error: No value given for --file
+$ a.out -ffile.txt
+Selected file: file.txt
+~~~
+
+The error message references the first name in the list so if you flip it
+around...
+~~~ cpp
+auto & file = cli.opt<string>("f file").require();
+~~~
+
+... it will complain about '-f' instead of '--file'.
+~~~ console
+$ a.out
+Error: No value given for -f
 ~~~
 
 
