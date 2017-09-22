@@ -363,7 +363,7 @@ public:
     bool toString(std::string & out, const T & src) const;
 
     //-----------------------------------------------------------------------
-    // Support for parsing callbacks
+    // Support functions for use from parsing actions
 
     // Intended for use from return statements in action callbacks. Sets
     // exit code (to EX_USAGE) and error msg, then returns false.
@@ -901,11 +901,11 @@ public:
     using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
     A & parse(std::function<ActionFn> fn);
 
-    // Action to take after each value is parsed, unlike parsing where there
-    // can only be one action, any number of check actions can be added. They
-    // will be called in the order they were added and if any of them return
-    // false it stops processing. As an example, opt.clamp() and opt.range()
-    // both do their job by adding check actions.
+    // Action to take immediately after each value is parsed, unlike parsing 
+    // itself where there can only be one action, any number of check actions 
+    // can be added. They will be called in the order they were added and if 
+    // any of them return false it stops processing. As an example, 
+    // opt.clamp() and opt.range() both do their job by adding check actions.
     //
     // The function should:
     //  - Check the options new value, possibly in relation to other options.
@@ -918,7 +918,8 @@ public:
 
     // Action to run after all arguments have been parsed, any number of
     // after actions can be added and will, for each option, be called in the
-    // order they're added. The function should:
+    // order they're added. When using subcommands, the after actions bound 
+    // to unselected subcommands are not executed. The function should:
     //  - Do something interesting.
     //  - Call cli.badUsage() and return false on error.
     //  - Return true if processing should continue.

@@ -566,12 +566,16 @@ The opt is fully populated, so *opt, opt.from(), etc are all available.
 
 ## After Actions
 After actions run after all arguments have been parsed. For example, 
-opt.prompt() is implemented as an after action. Any number of after actions 
-can be added and will, for each option, be called in the order they're added. 
-They are called with the three parameters, like other option actions, that 
-are references to cli, opt, and const string respectively. However the const 
-string is always empty(), so any information about the value must come from 
-the opt reference.
+opt.prompt() and opt.require() are both implemented as after actions. Any 
+number of after actions can be added and will, for each option, be called in 
+the order they're added. They are called with the three parameters, like other 
+option actions, that are references to cli, opt, and source value respectively. 
+However the const string& source is always empty(), so any information about 
+the value must come from the opt reference.
+
+When using subcommands, only the after actions bound to the top level or the
+selected command are executed. After actions on the options of all other 
+commands are, like the options themselves, ignored.
 
 The function should:
 - Do something interesting.

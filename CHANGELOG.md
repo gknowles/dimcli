@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed - rename cli.run() to cli.exec() and invert the return value
 - Fixed - internal group name relies on static init order
 - Added - opt.require()
+- Fixed - after actions of unselected commands should not be run
 
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]

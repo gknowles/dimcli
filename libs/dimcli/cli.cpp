@@ -1543,6 +1543,8 @@ bool Cli::parse(vector<string> & args) {
         return badUsage("Missing argument", ndx.m_argNames[pos].name);
 
     for (auto && opt : m_cfg->opts) {
+        if (!opt->m_command.empty() && opt->m_command != m_cfg->command)
+            continue;
         if (!opt->afterActions(*this))
             return false;
     }
