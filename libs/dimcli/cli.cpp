@@ -1539,8 +1539,12 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    if (!needCmd && pos < ndx.m_argNames.size() && !ndx.m_argNames[pos].optional)
+    if (!needCmd 
+        && pos < ndx.m_argNames.size() 
+        && !ndx.m_argNames[pos].optional
+    ) {
         return badUsage("Missing argument", ndx.m_argNames[pos].name);
+    }
 
     for (auto && opt : m_cfg->opts) {
         if (!opt->m_command.empty() && opt->m_command != m_cfg->command)
