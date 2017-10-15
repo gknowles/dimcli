@@ -366,13 +366,18 @@ public:
     // Support functions for use from parsing actions
 
     // Intended for use from return statements in action callbacks. Sets
-    // exit code (to EX_USAGE) and error msg, then returns false.
+    // exit code (to EX_USAGE) and error msg, then returns false. If it's a
+    // subcommand the msg is prefixed with:
+    //  "Command: '<command>': "
     bool badUsage(const std::string & msg);
-    // Calls badUsage(msg) with msg set to, depending on if its a subcommand,
-    // one of the following:
+
+    // Calls badUsage(msg) with msg set to:
     //  "<prefix>: <value>"
-    //  "Command: '<command>': <prefix>: <value>"
     bool badUsage(const std::string & prefix, const std::string & value);
+
+    // Calls badUsage(prefix, value) with prefix set to:
+    //  "Invalid '" + opt.from() + "' value"
+    bool badUsage(const OptBase & opt, const std::string & value);
 
     // Used to populate an option with an arbitrary input string through the
     // standard parsing logic. Since it causes the parse and check actions to

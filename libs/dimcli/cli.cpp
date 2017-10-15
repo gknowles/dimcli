@@ -553,7 +553,7 @@ bool Cli::defaultParse(OptBase & opt, const string & val) {
     if (opt.fromString(*this, val)) 
         return true;
 
-    badUsage("Invalid '" + opt.from() + "' value", val);
+    badUsage(opt, val);
     if (!opt.m_choiceDescs.empty()) {
         ostringstream os;
         os << "Must be ";
@@ -1374,12 +1374,6 @@ bool Cli::parseValue(
 }
 
 //===========================================================================
-bool Cli::badUsage(const string & prefix, const string & value) {
-    string msg = prefix + ": " + value;
-    return badUsage(msg);
-}
-
-//===========================================================================
 bool Cli::badUsage(const string & msg) {
     string out;
     string & cmd = m_cfg->command;
@@ -1387,6 +1381,19 @@ bool Cli::badUsage(const string & msg) {
         out = "Command '" + cmd + "': ";
     out += msg;
     return fail(kExitUsage, out);
+}
+
+//===========================================================================
+bool Cli::badUsage(const string & prefix, const string & value) {
+    string msg = prefix + ": " + value;
+    return badUsage(msg);
+}
+
+//===========================================================================
+bool Cli::badUsage(const OptBase & opt, const string & value) {
+    string prefix = "Invalid '" + opt.from() + "' value";
+    string msg = prefix + ": " + value;
+    return badUsage(prefix, value);
 }
 
 //===========================================================================
