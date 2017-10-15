@@ -516,7 +516,7 @@ int main(int argc, char * argv[]) {
         .parse([](auto & cli, auto & opt, const string & val) {
             int tmp = *opt; // save the old value
             if (!opt.parseValue(val)) // parse the new value into opt
-                return cli.badUsage("Bad '" + opt.from() + "' number: " + val);
+                return cli.badUsage(opt, val);
             *opt *= tmp; // multiply old and new together
             return true;
         });
@@ -541,7 +541,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-Error: Bad '-n' number: x
+Error: Invalid '-n' value: x
 ~~~
 
 
@@ -550,28 +550,65 @@ Check actions run for each value that is successfully parsed and are a good
 place for additional work. For example, opt.range() and opt.clamp() are 
 implemented as check actions. Just like parse actions the callback is any
 std::function compatible object that accepts references to cli, opt, and
-string parameters and returns bool. 
+string as parameters and returns bool. 
 
 An option can have any number of check actions and they are called in the
 order they were added.
 
 The function should:
-- check the options new value, possible in relation to other options.
-- call cli.badUsage() with an error message if there's a problem.
+- Check the options new value. Beware that options are process in the order
+  they appear on the command line, so comparing with another option is 
+  usually better done in an [after action](After%20Actions).
+- Call cli.badUsage() with an error message if there's a problem.
 - Return false if the program should stop, otherwise true to let processing
   continue.
 
 The opt is fully populated, so *opt, opt.from(), etc are all available.
 
+Sample check action that rounds up to an even number of socks:
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & socks = cli.opt<int>("socks")
+        .desc("Number of socks, rounded up to even number.")
+        .check([](auto & cli, auto & opt, auto & val) {
+            *opt += *opt % 2;
+            return true;
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << *socks << " socks";
+    if (*socks) cout << ", where are the people?";
+    cout << endl;
+    return EX_OK;
+}
+~~~
+
+Let's... wash some socks?
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+Options:
+  -socks=NUM  Number of socks, rounded up to even number.
+
+  --help      Show this message and exit.
+
+$ a.out
+0 socks
+$ a.out --socks 3
+4 socks, where are the people?
+~~~
+
 
 ## After Actions
 After actions run after all arguments have been parsed. For example, 
 opt.prompt() and opt.require() are both implemented as after actions. Any 
-number of after actions can be added and will, for each option, be called in 
-the order they're added. They are called with the three parameters, like other 
-option actions, that are references to cli, opt, and source value respectively. 
-However the const string& source is always empty(), so any information about 
-the value must come from the opt reference.
+number of after actions can be added and will, for every (not just the 
+selected ones!) registered option, be called in the order they're added. They 
+are called with the three parameters, like other option actions, that are 
+references to cli, opt, and the value string respectively. However the const 
+string& value is always empty(), so any information about the value must come 
+from the opt reference.
 
 When using subcommands, only the after actions bound to the top level or the
 selected command are executed. After actions on the options of all other 
@@ -581,6 +618,42 @@ The function should:
 - Do something interesting.
 - Call cli.badUsage() and return false on error.
 - Return true if processing should continue.
+
+Action to make sure the high is not less than the low:
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & low = cli.opt<int>("l").desc("Low value.");
+    auto & high = cli.opt<int>("h")
+        .desc("High value, must be greater than the low.")
+        .after([&](auto & cli, auto & opt, auto &) {
+            return (*opt >= *low) 
+                || cli.badUsage("High must not be less than the low.");
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout << "Range is from " << *low << " to " << *high << endl;
+    return EX_OK;
+}
+~~~
+
+Set the range:
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+Options:
+  -h=NUM    High value, must be greater than the low.
+  -l=NUM    Low value.
+
+  --help    Show this message and exit.
+
+$ a.out
+Range is from 0 to 0
+$ a.out -l1
+High must not be less than the low.
+$ a.out -h5 -l2
+Range is from 2 to 5
+~~~
 
 
 ## Multiple Source Files
