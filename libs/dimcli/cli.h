@@ -740,7 +740,7 @@ public:
 
 protected:
     virtual bool fromString(Cli & cli, const std::string & value) = 0;
-    virtual bool defaultValueStr(
+    virtual bool defaultValueToString(
         std::string & out, 
         const Cli & cli
     ) const = 0;
@@ -768,6 +768,10 @@ protected:
     bool m_visible{true};
     std::string m_desc;
     std::string m_valueDesc;
+
+    // empty() to use default, size 1 and *data == '\0' to suppress
+    std::string m_defaultDesc; 
+    
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
     // Are multiple values are allowed, and how many there can be (-1 for
@@ -832,12 +836,17 @@ public:
     // Controls whether or not the option appears in help pages.
     A & show(bool visible = true);
 
-    // Set desciption to associate with the argument in printHelp()
+    // Set desciption to associate with the argument in help text.
     A & desc(const std::string & val);
 
-    // Set name of meta-variable in printHelp. For example, in "--count NUM"
+    // Set name of meta-variable in help text. For example, in "--count NUM"
     // this is used to change "NUM" to something else.
     A & valueDesc(const std::string & val);
+
+    // Set text to appear in the default clause of this options the help text. 
+    // Can change the "0" in "(default: 0)" to something else, or use an empty
+    // string to suppress the entire clause.
+    A & defaultDesc(const std::string & val);
 
     // Allows the default to be changed after the opt has been created.
     A & defaultValue(const T & val);
@@ -1055,6 +1064,15 @@ inline A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
 
 //===========================================================================
 template <typename A, typename T>
+inline A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
+    m_defaultDesc = val;
+    if (val.empty()) 
+        m_defaultDesc.push_back('\0');
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::defaultValue(const T & val) {
     m_defValue = val;
     for (auto && cd : m_choiceDescs)
@@ -1248,7 +1266,7 @@ public:
 private:
     friend class Cli;
     bool fromString(Cli & cli, const std::string & value) final;
-    bool defaultValueStr(std::string & out, const Cli & cli) const final;
+    bool defaultValueToString(std::string & out, const Cli & cli) const final;
     void assign(const std::string & name, size_t pos) final;
     bool assigned() const final { return m_proxy->m_explicit; }
     bool sameValue(const void * value) const final {
@@ -1308,7 +1326,7 @@ inline bool Cli::Opt<T>::fromString(Cli & cli, const std::string & value) {
 
 //===========================================================================
 template <typename T> 
-inline bool Cli::Opt<T>::defaultValueStr(
+inline bool Cli::Opt<T>::defaultValueToString(
     std::string & out, 
     const Cli & cli
 ) const {
@@ -1383,7 +1401,7 @@ public:
 private:
     friend class Cli;
     bool fromString(Cli & cli, const std::string & value) final;
-    bool defaultValueStr(std::string & out, const Cli & cli) const final;
+    bool defaultValueToString(std::string & out, const Cli & cli) const final;
     void assign(const std::string & name, size_t pos) final;
     bool assigned() const final { return !m_proxy->m_values->empty(); }
     bool sameValue(const void * value) const final {
@@ -1462,7 +1480,7 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, const std::string & value) {
 
 //===========================================================================
 template <typename T> 
-inline bool Cli::OptVec<T>::defaultValueStr(
+inline bool Cli::OptVec<T>::defaultValueToString(
     std::string & out, 
     const Cli &
 ) const {

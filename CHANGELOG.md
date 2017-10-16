@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed - Internal group name relies on static init order
 - Added - opt.require()
 - Fixed - After actions of unselected commands should not be run
+- Added - opt.defaultDesc()
 
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]

@@ -1349,7 +1349,7 @@ sections.
 | Usage | cli.opt() | Generated text list the defined positional arguments. |
 | Description | cli.desc() | Text descirbing how to use the command and what it does. Sometimes used instead of the positionals list. |
 | Positionals | cli.opt(), opt.desc() | List of positional arguments and their descriptions, omitted if none have descriptions. |
-| Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
+| Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
 | Commands | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
 | Footer | cli.footer() | Shown at the end, often contains references to further information. |
 
@@ -1363,6 +1363,9 @@ cli.desc("Desciption of what the command does, including any general "
     "discussion of the various aspects of its use.");
 cli.opt<bool>("[positional]");
 cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
+cli.opt<int>("p", 1).desc("Option p.");
+cli.opt<int>("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
+cli.opt<int>("r", 3).desc("Option r.").defaultDesc("");
 cli.footer(
     "Footer at end, usually with where to find more info.\n"
     "- first reference\n"
@@ -1383,6 +1386,9 @@ various aspects of its use.
 
 Options:
   --option=OPT_VAL  About this options.
+  -p NUM            Option p. (default: 1)
+  -q NUM            Option q. (default: two, yes TWO!)
+  -r NUM            Option r.
 
   --help            Show this message and exit.
 

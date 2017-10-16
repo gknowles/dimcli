@@ -1720,12 +1720,17 @@ string Cli::descStr(const Cli::OptBase & opt) const {
         // "default" tag is added to individual choices later
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         desc += " (default)";
-    } else if (!opt.m_multiple 
-        && !opt.m_bool
-        && opt.defaultValueStr(tmp, *this)
-        && !tmp.empty()
-    ) {
-        desc += " (default: " + tmp + ")";
+    } else if (!opt.m_multiple && !opt.m_bool) {
+        if (opt.m_defaultDesc.empty()) {
+            if (!opt.defaultValueToString(tmp, *this))
+                tmp.clear();
+        } else {
+            tmp = opt.m_defaultDesc;
+            if (!tmp[0])
+                tmp.clear();
+        }
+        if (!tmp.empty()) 
+            desc += " (default: " + tmp + ")";
     }
     return desc;
 }

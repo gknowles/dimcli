@@ -175,6 +175,8 @@ usage: test [--streetlight=COLOR] [--help]
         cli = {};
         auto & num = cli.opt<int>("n number", 1).desc("number is an int");
         cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
+        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc("");
+        cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
         auto & special =
             cli.opt<bool>("s special !S", false).desc("snowflake");
         auto & name =
@@ -194,6 +196,8 @@ Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
   -c COUNT                   alias for number (default: 0)
   -n, --number=NUM           number is an int (default: 1)
+  --n2=NUM                   no defaultDesc
+  --n3=NUM                   custom defaultDesc (default: three)
   -s, --special / -S, --no-special
                              snowflake
 
@@ -203,8 +207,8 @@ Name options:
   --help                     Show this message and exit.
 )");
         EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [-c COUNT] [-n, --number=NUM] [--name=STRING] [-s, --special]
-            [--help] [key...]
+usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
+            [-s, --special] [--help] [key...]
 )");
         EXPECT_PARSE(cli, {"-n3"});
         EXPECT(*num == 3);
