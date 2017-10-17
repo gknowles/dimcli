@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 3.0.0 (2017-10-17)
 - Added - Support for clang >= 3.6
 - Added - Support for gcc >= 6.2
 - Added - Show default option values in help text
