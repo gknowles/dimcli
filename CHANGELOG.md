@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed - "No command given." should return kExitUsage
 - Changed - Command header and footer default to the top level values
 - Changed - opt.print*() functions now non-const
+- Added - cli.helpCmd()
 
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]

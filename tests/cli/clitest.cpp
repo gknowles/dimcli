@@ -415,6 +415,45 @@ Options:
   --help       Show this message and exit.
 )");
     }
+
+    // helpCmd
+    {
+        cli = {};
+        cli.helpCmd();
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] command [args...]
+
+Commands:
+  help      Show help for individual commands and exit.
+
+Options:
+  --help    Show this message and exit.
+)");
+        auto helpText = 1 + R"(
+usage: test help [OPTIONS] [command]
+
+Show help for individual commands and exit. If no command is given the list of
+commands and general options are shown.
+  command    Command to show help information about.
+
+Options:
+  -u, --usage / --no-usage  Only show condensed usage.
+
+  --help                    Show this message and exit.
+)";
+        EXPECT_HELP(cli, "help", helpText);
+        EXPECT_PARSE2(cli, true, Dim::kExitOk, {"help", "help"});
+        out.str("");
+        cli.iostreams(nullptr, &out);
+        EXPECT(cli.exec());
+        EXPECT(out.str() == helpText);
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [--help] command [args...]
+)");
+        EXPECT_USAGE(cli, "help", 1 + R"(
+usage: test help [-u, --usage] [--help] [command]
+)");
+    }
 }
 
 //===========================================================================
@@ -463,7 +502,7 @@ Options:
         in.str("n\n");
         out.str("");
         cli.iostreams(&in, &out);
-        EXPECT_PARSE2(cli, false, 0, {});
+        EXPECT_PARSE2(cli, false, Dim::kExitOk, {});
         EXPECT(!*ask);
         EXPECT(out.str() == "Are you sure? [y/N]: ");
         EXPECT(in.get() == EOF);
@@ -471,7 +510,7 @@ Options:
             cli.iostreams(nullptr, nullptr);
             cout << "Expects answer to be no." << endl
                  << "What you type should be visible." << endl;
-            EXPECT_PARSE2(cli, false, 0, {});
+            EXPECT_PARSE2(cli, false, Dim::kExitOk, {});
             EXPECT(!*ask);
         }
     }

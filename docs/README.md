@@ -1509,52 +1509,56 @@ Internally Generated:
 
 
 ## Help Subcommand
-There is no default help subcommand, but you can make a basic one without much
-trouble.
+A simple help command can be added via cli.helpCmd(). Having a help command
+allows users to run the more natural "a.out help command" to get help with a
+subcommand instead of the more annoying "a.out command --help".
 
-One way to do it:
-
+How to add it:
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.command("help");
-    cli.desc("This is how you get help. There could be more details.")
-    auto & cmd = cli.opt<string>("[command]").desc("Command to explain.");
-    cli.action([&cmd](auto & cli) {
-        return cli.printHelp(cout, {}, *cmd);
-    });
+    cli.helpCmd();
     if (!cli.parse(argc, argv))
         return cli.exitCode();
     return cli.run();
 }
 ~~~
 
-And what you get:
-
+Programs that only have a simple help command aren't very helpful, but it 
+should give you an idea. If you have more commands they will show up as you'd 
+expect.
 ~~~ console
-$ a.out --help
+$ a.out help
 usage: a.out [OPTIONS] command [args...]
 
+Commands:
+  help      Show help for individual commands and exit.
+
 Options:
   --help    Show this message and exit.
-
-Commands:
-  help      This is how you get help.
 
 $ a.out help help
-usage: a.out help [OPTIONS] command
+usage: a.out help [OPTIONS] [command]
 
-This is how you get help. There could be more details.
-  command   Command to explain.
+Show help for individual commands and exit. If no command is given the list of
+commands and general options are shown.
+  command    Command to show help information about.
 
 Options:
-  --help    Show this message and exit.
+  -u, --usage / --no-usage  Only show condensed usage.
+
+  --help                    Show this message and exit.
+
+$ a.out help -u
+usage: a.out [--help] command [args..]
+$ a.out help help -u
+usage: a.out help [-u, --usage] [--help] [command]
 ~~~
 
 
 ## Going Your Own Way
 If generated help doesn't work for you, you can override the builtin help 
-option with your own.
+with your own.
 
 ~~~ cpp
 auto & help = cli.opt<bool>("help"); // or maybe "help." to suppress --no-help

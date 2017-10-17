@@ -655,6 +655,20 @@ static bool defCmdAction(Cli & cli) {
     }
 }
 
+//===========================================================================
+static bool helpCmdAction(Cli & cli) {
+    Cli::OptIndex ndx;
+    ndx.index(cli, cli.runCommand(), false);
+    auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
+    auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
+    if (usage) {
+        cli.printUsageEx(cli.conout(), {}, cmd);
+    } else {
+        cli.printHelp(cli.conout(), {}, cmd);
+    }
+    return true;
+}
+
 
 /****************************************************************************
 *
@@ -818,6 +832,21 @@ const string & Cli::desc() const {
 //===========================================================================
 const string & Cli::footer() const {
     return Config::findCmdOrDie(*this).footer;
+}
+
+//===========================================================================
+Cli & Cli::helpCmd() {
+    // Use new instance so the current context command is preserved.
+    Cli cli{*this};
+    cli.command("help")
+        .desc("Show help for individual commands and exit. If no command is "
+            "given the list of commands and general options are shown.")
+        .action(helpCmdAction);
+    cli.opt<string>("[command]")
+        .desc("Command to show help information about.");
+    cli.opt<bool>("u usage")
+        .desc("Only show condensed usage.");
+    return *this;
 }
 
 //===========================================================================

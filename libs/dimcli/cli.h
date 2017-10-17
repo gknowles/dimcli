@@ -275,6 +275,11 @@ public:
     const std::string & desc() const;
     const std::string & footer() const;
 
+    // Add "help" command that shows the help text for other commands. Allows
+    // users to run the more natural "prog help command" instead of the more
+    // annoying "prog command --help".
+    Cli & helpCmd();
+
     //-----------------------------------------------------------------------
     // Enabled by default, reponse file expansion replaces arguments of the
     // form "@file" with the contents of the file.

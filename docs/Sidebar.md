@@ -39,5 +39,5 @@ Options and Modifiers
 Help Text
 - [Page Layout](Page%20Layout)
 - [Option Groups](Option%20Groups)
-- [Going Your Own Way](Going%20Your%20Own%20Way)
 - [Help Subcommand](Help%20Subcommand)
+- [Going Your Own Way](Going%20Your%20Own%20Way)
