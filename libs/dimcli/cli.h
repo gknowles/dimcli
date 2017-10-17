@@ -439,6 +439,11 @@ public:
         const std::string & detail = {}
     );
 
+    // Returns true if the named command has been defined, used by the help
+    // command implementation. Not reliable before cli.parse() has been called
+    // and had a chance to update the internal data structures.
+    bool commandExists(const std::string & name) const;
+
 protected:
     Cli(std::shared_ptr<Config> cfg);
 

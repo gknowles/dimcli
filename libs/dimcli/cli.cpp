@@ -148,6 +148,7 @@ struct Cli::Config {
     string progName;
     string command;
 
+    static void touchAllCmds(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli, const string & name);
     static const CommandConfig & findCmdOrDie(const Cli & cli);
@@ -219,6 +220,13 @@ CliLocal::CliLocal()
 *   Cli::Config
 *
 ***/
+
+//===========================================================================
+void Cli::Config::touchAllCmds(Cli & cli) {
+    // Make sure all opts have a backing command config
+    for (auto && opt : cli.m_cfg->opts)
+        Config::findCmdAlways(cli, opt->m_command);
+}
 
 //===========================================================================
 CommandConfig & Cli::Config::findCmdAlways(Cli & cli) {
@@ -645,11 +653,10 @@ static bool helpOptAction(
 
 //===========================================================================
 static bool defCmdAction(Cli & cli) {
-    ostringstream os;
     if (cli.runCommand().empty()) {
-        os << "No command given.";
-        return cli.fail(kExitUsage, os.str());
+        return cli.fail(kExitUsage, "No command given.");
     } else {
+        ostringstream os;
         os << "Command '" << cli.runCommand() << "' has not been implemented.";
         return cli.fail(kExitSoftware, os.str());
     }
@@ -661,6 +668,12 @@ static bool helpCmdAction(Cli & cli) {
     ndx.index(cli, cli.runCommand(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
+    if (!cli.commandExists(cmd)) {
+        return cli.fail(
+            kExitUsage, 
+            "Command 'help': Help requested for unknown command: " + cmd
+        );
+    }
     if (usage) {
         cli.printUsageEx(cli.conout(), {}, cmd);
     } else {
@@ -1442,7 +1455,7 @@ bool Cli::parseValue(
 //===========================================================================
 bool Cli::badUsage(const string & msg) {
     string out;
-    string & cmd = m_cfg->command;
+    auto & cmd = runCommand();
     if (cmd.size())
         out = "Command '" + cmd + "': ";
     out += msg;
@@ -1475,6 +1488,7 @@ bool Cli::parse(vector<string> & args) {
     // the 0th (name of this program) opt should always be present
     assert(!args.empty());
 
+    Config::touchAllCmds(*this);
     OptIndex ndx;
     ndx.index(*this, "", false);
     bool needCmd = m_cfg->cmds.size() > 1;
@@ -1574,8 +1588,7 @@ bool Cli::parse(vector<string> & args) {
         // positional value
         if (needCmd) {
             string cmd = ptr;
-            auto i = m_cfg->cmds.find(cmd);
-            if (i == m_cfg->cmds.end())
+            if (!commandExists(cmd))
                 return badUsage("Unknown command", cmd);
             needCmd = false;
             m_cfg->command = cmd;
@@ -1620,7 +1633,7 @@ bool Cli::parse(vector<string> & args) {
     }
 
     for (auto && opt : m_cfg->opts) {
-        if (!opt->m_command.empty() && opt->m_command != m_cfg->command)
+        if (!opt->m_command.empty() && opt->m_command != runCommand())
             continue;
         if (!opt->afterActions(*this))
             return false;
@@ -1688,13 +1701,19 @@ const string & Cli::runCommand() const {
 //===========================================================================
 bool Cli::exec() {
     auto & name = runCommand();
-    assert(m_cfg->cmds.find(name) != m_cfg->cmds.end());
+    assert(commandExists(name));
     auto & cmd = m_cfg->cmds[name];
     if (!cmd.action(*this)) {
         assert(exitCode());
         return false;
     }
     return true;
+}
+
+//===========================================================================
+bool Cli::commandExists(const std::string & name) const {
+    auto & cmds = m_cfg->cmds;
+    return cmds.find(name) != cmds.end();
 }
 
 
@@ -2053,6 +2072,8 @@ static string trim(const string & val) {
 
 //===========================================================================
 void Cli::printCommands(ostream & os) {
+    Config::touchAllCmds(*this);
+
     size_t colWidth = 0;
     struct CmdKey {
         const char * name;

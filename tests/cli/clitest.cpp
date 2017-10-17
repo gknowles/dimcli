@@ -447,12 +447,17 @@ Options:
         cli.iostreams(nullptr, &out);
         EXPECT(cli.exec());
         EXPECT(out.str() == helpText);
+        cli.iostreams(nullptr, nullptr);
         EXPECT_USAGE(cli, "", 1 + R"(
 usage: test [--help] command [args...]
 )");
         EXPECT_USAGE(cli, "help", 1 + R"(
 usage: test help [-u, --usage] [--help] [command]
 )");
+        EXPECT_PARSE2(cli, true, Dim::kExitOk, {"help", "badfood"});
+        EXPECT(!cli.exec());
+        EXPECT(cli.errMsg() == 1 + R"(
+Command 'help': Help requested for unknown command: badfood)");
     }
 }
 
