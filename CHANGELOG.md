@@ -19,7 +19,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed - Internal group name relies on static init order
 - Added - opt.require()
 - Fixed - After actions of unselected commands should not be run
-- Added - opt.defaultDesc()
+- Added - opt.defaultDesc() to modify "(default: )" clause
+- Fixed - "No command given." should return kExitUsage
+- Changed - Command header and footer default to the top level values
+- Changed - opt.print*() functions now non-const
 
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]

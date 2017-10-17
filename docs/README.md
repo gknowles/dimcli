@@ -531,6 +531,7 @@ Let's do some math!
 ~~~ console
 $ a.out --help
 usage: a.out [OPTIONS]
+
 Options:
   -n, --number=NUM  numbers to multiply (default: 1)
 
@@ -588,6 +589,7 @@ Let's... wash some socks?
 ~~~ console
 $ a.out --help
 usage: a.out [OPTIONS]
+
 Options:
   -socks=NUM  Number of socks, rounded up to even number.
 
@@ -641,6 +643,7 @@ Set the range:
 ~~~ console
 $ a.out --help
 usage: a.out [OPTIONS]
+
 Options:
   -h=NUM    High value, must be greater than the low.
   -l=NUM    Low value.
@@ -653,6 +656,102 @@ $ a.out -l1
 High must not be less than the low.
 $ a.out -h5 -l2
 Range is from 2 to 5
+~~~
+
+
+## Subcommands
+Git style subcommands are created by either cli.command("cmd"), which changes
+the cli objects context to the command, or with opt.command("cmd"), which 
+changes the command the option is for. Once the cli object context has been 
+changed it can than be used to add (desciption, footer, options, etc) to the 
+command. Exactly the same as when working with a simple command line. If you 
+pass an empty string to cli.command() or opt.command() it represents the top 
+level processing that takes place before a command has been found.
+
+Options are processed on the top level up to the first positional. The first 
+positional is the command, and the rest of the arguments are processed in the 
+context of that command. Since the top level doesn't process positionals when 
+commands are present, it will assert in debug builds and ignore them in 
+release if positionals are defined.
+~~~ cpp
+static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
+static auto & color = Dim::Cli().opt<string>("color", "red")
+    .command("apple")
+    .desc("Change color of the apple.");
+
+int apple(Dim::Cli & cli) {
+    cout << "It's a " << *color << " apple" << (*yell ? "!!!" : ".");
+    return EX_OK;
+}
+
+int orange(Dim::Cli & cli) {
+    cout << "It's an orange" << (*yell ? "!!!" : ".");
+    return EX_OK;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.command("apple").desc("Show apple. No other fruit.").action(apple);
+    cli.command("orange").desc("Show orange.").action(orange);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return cli.run();
+}
+~~~
+
+The same thing could also be done with external variables:
+~~~ cpp
+static bool yell;
+static string color;
+...
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.opt(&yell, "yell").desc("Say it loud.");
+    cli.opt(&color, "color", "red").command("apple")
+        .desc("Change color of the apple.");
+    ...
+~~~
+
+The end result from the console:
+~~~ console
+$ a.out
+Error: No command given.
+$ a.out --help
+usage: a.out [OPTIONS] command [args...]
+
+Commands:
+  apple     Show apple.
+  orange    Show orange.
+
+Options:
+  --yell    Say it loud.
+
+  --help    Show this message and exit.
+
+$ a.out apple
+It's a red apple.
+$ a.out apple --color=yellow
+It's a yellow apple.
+$ a.out orange
+It's an orange.
+$ a.out --yell orange
+It's an orange!!!
+~~~
+
+In the commands list, the cli.desc() is only used up to the first period, but 
+in command specific pages you see the whole thing:
+
+~~~ console
+$ a.out apple --help
+usage: a.out apple [OPTIONS]
+
+Show apple. No other fruit.
+
+Options:
+  --color=STRING  Change color of the apple. (default: red)
+
+  --help          Show this message and exit.
 ~~~
 
 
@@ -703,109 +802,51 @@ Options:
   --version  Show version and exit.
 ~~~
 
+When you want to put a bundle of stuff in a separate source file, such as a 
+[command](Subcommands) and its options, it can be convenient to group them 
+into a single static struc.
+~~~ cpp
+// somefile.cpp
+static int myCmd(Dim::Cli & cli);
+
+static struct CmdOpts {
+    int option1;
+    string option2;
+    string option3;
+
+    CmdOpts() {
+        Cli cli;
+        cli.command("my").action(myCmd).desc("What my command does.");
+        cli.opt(&option1, "1 one", 1).desc("First option.");
+        cli.opt(&option2, "2", "two").desc("Second option.");
+        cli.opt(&option3, "three", "three").desc("Third option.");
+    }
+} s_opts;
+~~~
+
+Then in myCmd() and throughout the rest of somefile.cpp you can reference the 
+options as **s_opts.option1**, **s_opts.option2**, and **s_opts.option3**.
+
+And the help text will be:
+~~~ console
+$ a.out my --help
+usage: a.out my [OPTIONS]
+
+What my command does.
+
+Options:
+  -1, --one  First option. (default: 1)
+  -2         Second option. (default: two)
+  --three    Third option. (default: three)
+
+  --help     Show this message and exit.
+~~~
+
 #### Dim::CliLocal
 Although it was created for testing you can also use Dim::CliLocal, a 
 completely self-contained parser, if you need to redefine options, have 
-results from multiple parses at once, or otherwise need to avoid the shared 
+results from multiple parses at once, or otherwise avoid the shared 
 configuration.
-
-
-## Subcommands
-Git style subcommands are created by either cli.command("cmd"), which changes
-the cli objects context to the command, or with opt.command("cmd"), which 
-changes the command the option is for. Once the cli object context has been 
-changed it can than be used to add (desciption, footer, options, etc) to the 
-command. Exactly the same as when working with a simple command line. If you 
-pass an empty string to cli.command() or opt.command() it represents the top 
-level processing that takes place before a command has been found.
-
-Options are processed on the top level up to the first positional. The first 
-positional is the command, and the rest of the arguments are processed in the 
-context of that command. Since the top level doesn't process positionals when 
-commands are present, it will assert in debug builds and ignore them in 
-release if positionals are defined.
-
-~~~ cpp
-static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
-static auto & color = Dim::Cli().opt<string>("color", "red")
-    .command("apple")
-    .desc("Change color of the apple.");
-
-int apple(Dim::Cli & cli) {
-    cout << "It's a " << *color << " apple" << (*yell ? "!!!" : ".");
-    return EX_OK;
-}
-
-int orange(Dim::Cli & cli) {
-    cout << "It's an orange" << (*yell ? "!!!" : ".");
-    return EX_OK;
-}
-
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    cli.command("apple").desc("Show apple. No other fruit.").action(apple);
-    cli.command("orange").desc("Show orange.").action(orange);
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    return cli.run();
-}
-~~~
-
-The same thing could also be done with external variables:
-
-~~~ cpp
-static bool yell;
-static string color;
-...
-
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    cli.opt(&yell, "yell").desc("Say it loud.");
-    cli.opt(&color, "color", "red").command("apple")
-        .desc("Change color of the apple.");
-    ...
-~~~
-
-The end result from the console:
-
-~~~ console
-$ a.out
-Error: No command given.
-$ a.out --help
-usage: a.out [OPTIONS] command [args...]
-
-Commands:
-  apple     Show apple.
-  orange    Show orange.
-
-Options:
-  --yell    Say it loud.
-
-  --help    Show this message and exit.
-
-$ a.out apple
-It's a red apple.
-$ a.out apple --color=yellow
-It's a yellow apple.
-$ a.out orange
-It's an orange.
-$ a.out --yell orange
-It's an orange!!!
-~~~
-
-In the commands list, the cli.desc() is only used up to the first period, but 
-in command specific pages you see the whole thing:
-
-~~~ console
-$ a.out apple --help
-usage: a.out apple [OPTIONS]
-Show apple. No other fruit.
-
-Options:
-  --color=STRING  Change color of the apple. (default: red)
-
-  --help          Show this message and exit.
-~~~
 
 
 ## Response Files
@@ -1348,9 +1389,9 @@ sections.
 | Header | cli.header() | Generally a one line synopsis of the purpose of the command. |
 | Usage | cli.opt() | Generated text list the defined positional arguments. |
 | Description | cli.desc() | Text descirbing how to use the command and what it does. Sometimes used instead of the positionals list. |
+| Commands | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
 | Positionals | cli.opt(), opt.desc() | List of positional arguments and their descriptions, omitted if none have descriptions. |
 | Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
-| Commands | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
 | Footer | cli.footer() | Shown at the end, often contains references to further information. |
 
 Within text, consecutive spaces are collapsed and words are wrapped at 80 
@@ -1379,8 +1420,8 @@ doesn't have a description.
 ~~~ console
 $ a.out --help
 Heading before usage
-
 usage: a.out [OPTIONS] positional
+
 Description of what the command does, including any general discussion of the
 various aspects of its use.
 
@@ -1467,31 +1508,6 @@ Internally Generated:
 ~~~
 
 
-## Going Your Own Way
-If generated help doesn't work for you, you can override the builtin help 
-option with your own.
-
-~~~ cpp
-auto & help = cli.opt<bool>("help"); // or maybe "help." to suppress --no-help
-if (!cli.parse(cerr, argv, argc))
-    return cli.exitCode();
-if (*help)
-    return printMyHelp();
-~~~
-
-This works because the last definition for named options overrides any 
-previous ones.
-
-Within your help printer you can use the existing functions to do some of the 
-work:
-
-- cli.printHelp
-- cli.printUsage / cli.printUsageEx
-- cli.printPositionals
-- cli.printOptions
-- cli.printCommands
-
-
 ## Help Subcommand
 There is no default help subcommand, but you can make a basic one without much
 trouble.
@@ -1527,9 +1543,35 @@ Commands:
 
 $ a.out help help
 usage: a.out help [OPTIONS] command
+
 This is how you get help. There could be more details.
   command   Command to explain.
 
 Options:
   --help    Show this message and exit.
 ~~~
+
+
+## Going Your Own Way
+If generated help doesn't work for you, you can override the builtin help 
+option with your own.
+
+~~~ cpp
+auto & help = cli.opt<bool>("help"); // or maybe "help." to suppress --no-help
+if (!cli.parse(cerr, argv, argc))
+    return cli.exitCode();
+if (*help)
+    return printMyHelp();
+~~~
+
+This works because the last definition for named options overrides any 
+previous ones.
+
+Within your help printer you can use the existing functions to do some of the 
+work:
+
+- cli.printHelp
+- cli.printUsage / cli.printUsageEx
+- cli.printPositionals
+- cli.printOptions
+- cli.printCommands

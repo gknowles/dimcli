@@ -287,6 +287,7 @@ Other:
     }
 
     // implicit value
+    // helpOpt override
     {
         cli = {};
         int count;
@@ -317,12 +318,25 @@ Other:
         c1.desc("First sentence of description. Rest of one's description.");
         Dim::Cli c2;
         auto & a2 = c2.command("two").opt<int>("a", 2);
+
+        // create option and hide it underneath an undefined command
+        c2.opt<int>("b", 99).command("three");
+
         EXPECT_HELP(c1, "one", 1 + R"(
 usage: test one [OPTIONS]
+
 First sentence of description. Rest of one's description.
 
 Options:
   -a NUM    (default: 1)
+
+  --help    Show this message and exit.
+)");
+        EXPECT_HELP(c1, "three", 1 + R"(
+usage: test three [OPTIONS]
+
+Options:
+  -b NUM    (default: 99)
 
   --help    Show this message and exit.
 )");
@@ -331,6 +345,7 @@ usage: test [OPTIONS] command [args...]
 
 Commands:
   one       First sentence of description.
+  three
   two
 
 Options:

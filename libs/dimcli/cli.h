@@ -146,8 +146,6 @@ enum {
 class DIMCLI_LIB_DECL Cli {
 public:
     struct Config;
-    struct CommandConfig;
-    struct GroupConfig;
 
     class OptBase;
     template <typename A, typename T> class OptShim;
@@ -211,7 +209,8 @@ public:
     Opt<bool> & confirmOpt(const std::string & prompt = {});
 
     // Get reference to internal help option, can be used to change the
-    // desciption, option group, etc.
+    // desciption, option group, etc. To completely replace it, add another
+    // option that responds to --help.
     Opt<bool> & helpOpt();
 
     // Add --password option and prompts for a password if it's not given
@@ -232,7 +231,7 @@ public:
     // selected command), or an explicitly created one.
 
     // Changes config context to point at the selected option group of the
-    // current command, that you can then start stuffing args into.
+    // current command, that you can then start stuffing things into.
     Cli & group(const std::string & name);
 
     // Heading title to display, defaults to group name. If empty there will
@@ -247,8 +246,8 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Changes config context to point at the default option group of the
-    // selected command.
+    // Changes config context to reference the options of the selected 
+    // command. Use "" to specify the top level context.
     Cli & command(const std::string & name, const std::string & group = {});
 
     // Action that should be taken when the currently selected command is run.
@@ -264,6 +263,9 @@ public:
     // the arguments / options (desc), or after the options (footer). Use
     // line breaks for semantics, let the automatic line wrapping take care
     // of the rest.
+    //
+    // Unless individually overridden commands default to using the header and 
+    // footer (but not the desc) specified at the top level.
     Cli & header(const std::string & val);
     Cli & desc(const std::string & val);
     Cli & footer(const std::string & val);
@@ -300,26 +302,26 @@ public:
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}
-    ) const;
+    );
     int printUsage(
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}
-    ) const;
+    );
     // Same as printUsage(), except individually lists all non-default options 
     // instead of the [OPTIONS] catchall.
     int printUsageEx(
         std::ostream & os,
         const std::string & progName = {},
         const std::string & cmd = {}
-    ) const;
+    );
 
     void printPositionals(
         std::ostream & os, 
         const std::string & cmd = {}
-    ) const;
-    void printOptions(std::ostream & os, const std::string & cmd = {}) const;
-    void printCommands(std::ostream & os) const;
+    );
+    void printOptions(std::ostream & os, const std::string & cmd = {});
+    void printCommands(std::ostream & os);
 
     //-----------------------------------------------------------------------
     // Parsing
@@ -438,8 +440,8 @@ protected:
 private:
     static void consoleEnableEcho(bool enable = true);
 
-    bool defaultParse(OptBase & opt, const std::string & val);
-    bool require(OptBase & opt);
+    bool defParseAction(OptBase & opt, const std::string & val);
+    bool requireAction(OptBase & opt);
 
     void addOpt(std::unique_ptr<OptBase> opt);
     template <typename A> A & addOpt(std::unique_ptr<A> ptr);
@@ -450,18 +452,13 @@ private:
     // find an option (from any subcommand) that updates the value
     OptBase * findOpt(const void * value);
 
-    CommandConfig & cmdCfg();
-    const CommandConfig & cmdCfg() const;
-    GroupConfig & grpCfg();
-    const GroupConfig & grpCfg() const;
-
     std::string descStr(const Cli::OptBase & opt) const;
     int writeUsageImpl(
         std::ostream & os,
         const std::string & arg0,
         const std::string & cmd,
         bool expandedOptions
-    ) const;
+    );
 
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int) const
@@ -557,7 +554,7 @@ inline Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 template <typename A> 
 inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
-    opt.parse(&Cli::defaultParse).command(command()).group(group());
+    opt.parse(&Cli::defParseAction).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
@@ -1154,7 +1151,7 @@ inline A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
 template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::require() {
     return after([](auto & cli, auto & opt, auto & /* val */) {
-        return cli.require(opt);
+        return cli.requireAction(opt);
     });
 }
 

@@ -51,6 +51,23 @@ const size_t kMaxDescCol = 28;
 const char kInternalOptionGroup[] = "~";
 
 namespace {
+
+struct GroupConfig {
+    string name;
+    string title;
+    string sortKey;
+};
+
+struct CommandConfig {
+    string name;
+    string header;
+    string desc;
+    string footer;
+    function<Cli::ActionFn> action;
+    Cli::Opt<bool> * helpOpt{nullptr};
+    unordered_map<string, GroupConfig> groups;
+};
+
 struct OptName {
     Cli::OptBase * opt;
     bool invert;   // set to false instead of true (only for bools)
@@ -76,6 +93,7 @@ struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
     // public destructor required for use with wstring_convert
     ~CodecvtWchar() {}
 };
+
 } // namespace
 
 struct Cli::OptIndex {
@@ -114,22 +132,6 @@ struct Cli::OptIndex {
     );
 };
 
-struct Cli::GroupConfig {
-    string name;
-    string title;
-    string sortKey;
-};
-
-struct Cli::CommandConfig {
-    string name;
-    string header;
-    string desc;
-    string footer;
-    function<Cli::ActionFn> action;
-    Opt<bool> * helpOpt{nullptr};
-    unordered_map<string, GroupConfig> groups;
-};
-
 struct Cli::Config {
     bool constructed{false};
 
@@ -145,6 +147,17 @@ struct Cli::Config {
     string errDetail;
     string progName;
     string command;
+
+    static CommandConfig & findCmdAlways(Cli & cli);
+    static CommandConfig & findCmdAlways(Cli & cli, const string & name);
+    static const CommandConfig & findCmdOrDie(const Cli & cli);
+
+    static GroupConfig & findGrpAlways(Cli & cli);
+    static GroupConfig & findGrpAlways(
+        CommandConfig & cmd, 
+        const string & name
+    );
+    static const GroupConfig & findGrpOrDie(const Cli & cli);
 };
 
 
@@ -155,39 +168,8 @@ struct Cli::Config {
 ***/
 
 // forward declarations
-static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static bool cmdAction(Cli & cli);
-
-//===========================================================================
-static Cli::GroupConfig & findGrpAlways(
-    Cli::CommandConfig & cmd, 
-    const string & name
-) {
-    auto i = cmd.groups.find(name);
-    if (i != cmd.groups.end())
-        return i->second;
-    auto & grp = cmd.groups[name];
-    grp.name = grp.sortKey = grp.title = name;
-    return grp;
-}
-
-//===========================================================================
-static Cli::CommandConfig & findCmdAlways(
-    Cli::Config & cfg, 
-    const string & name
-) {
-    auto i = cfg.cmds.find(name);
-    if (i != cfg.cmds.end())
-        return i->second;
-    auto & cmd = cfg.cmds[name];
-    cmd.name = name;
-    cmd.action = cmdAction;
-    auto & defGrp = findGrpAlways(cmd, "");
-    defGrp.title = "Options";
-    auto & intGrp = findGrpAlways(cmd, kInternalOptionGroup);
-    intGrp.title.clear();
-    return cmd;
-}
+static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
+static bool defCmdAction(Cli & cli);
 
 //===========================================================================
 static string displayName(const fs::path & file) {
@@ -230,6 +212,78 @@ static void replace(
 CliLocal::CliLocal()
     : Cli(make_shared<Config>()) 
 {}
+
+
+/****************************************************************************
+*
+*   Cli::Config
+*
+***/
+
+//===========================================================================
+CommandConfig & Cli::Config::findCmdAlways(Cli & cli) {
+    return findCmdAlways(cli, cli.command());
+}
+
+//===========================================================================
+CommandConfig & Cli::Config::findCmdAlways(
+    Cli & cli, 
+    const string & name
+) {
+    auto & cmds = cli.m_cfg->cmds;
+    auto i = cmds.find(name);
+    if (i != cmds.end())
+        return i->second;
+
+    auto & cmd = cmds[name];
+    cmd.name = name;
+    cmd.action = defCmdAction;
+    auto & defGrp = findGrpAlways(cmd, "");
+    defGrp.title = "Options";
+    auto & intGrp = findGrpAlways(cmd, kInternalOptionGroup);
+    intGrp.title.clear();
+    auto & hlp = cli.opt<bool>("help.")
+        .desc("Show this message and exit.")
+        .parse(helpOptAction)
+        .command(name)
+        .group(kInternalOptionGroup);
+    cmd.helpOpt = &hlp;
+    return cmd;
+}
+
+//===========================================================================
+const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
+    auto & cmds = cli.m_cfg->cmds;
+    auto i = cmds.find(cli.command());
+    assert(i != cmds.end());
+    return i->second;
+}
+
+//===========================================================================
+GroupConfig & Cli::Config::findGrpAlways(Cli & cli) {
+    return findGrpAlways(findCmdAlways(cli), cli.group());
+}
+
+//===========================================================================
+GroupConfig & Cli::Config::findGrpAlways(
+    CommandConfig & cmd, 
+    const string & name
+) {
+    auto i = cmd.groups.find(name);
+    if (i != cmd.groups.end())
+        return i->second;
+    auto & grp = cmd.groups[name];
+    grp.name = grp.sortKey = grp.title = name;
+    return grp;
+}
+
+//===========================================================================
+const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
+    auto & grps = Config::findCmdOrDie(cli).groups;
+    auto i = grps.find(cli.group());
+    assert(i != grps.end());
+    return i->second;
+}
 
 
 /****************************************************************************
@@ -318,7 +372,7 @@ bool Cli::OptIndex::findNamedArgs(
 
             // sort by group sort key followed by name list with leading
             // dashes removed
-            key.sort = findGrpAlways(cmd, opt->m_group).sortKey;
+            key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
             if (flatten && key.sort != kInternalOptionGroup)
                 key.sort.clear();
             key.sort += '\0';
@@ -539,17 +593,7 @@ void Cli::OptIndex::indexLongName(
 ***/
 
 //===========================================================================
-static bool helpAction(Cli & cli, Cli::Opt<bool> & opt, const string & val) {
-    cli.fromString(*opt, val);
-    if (*opt) {
-        cli.printHelp(cli.conout(), {}, cli.runCommand());
-        return false;
-    }
-    return true;
-}
-
-//===========================================================================
-bool Cli::defaultParse(OptBase & opt, const string & val) {
+bool Cli::defParseAction(OptBase & opt, const string & val) {
     if (opt.fromString(*this, val)) 
         return true;
 
@@ -576,7 +620,7 @@ bool Cli::defaultParse(OptBase & opt, const string & val) {
 }
 
 //===========================================================================
-bool Cli::require(OptBase & opt) {
+bool Cli::requireAction(OptBase & opt) {
     if (opt)
         return true;
     const string & name = !opt.defaultFrom().empty()
@@ -586,14 +630,29 @@ bool Cli::require(OptBase & opt) {
 }
 
 //===========================================================================
-static bool cmdAction(Cli & cli) {
+static bool helpOptAction(
+    Cli & cli, 
+    Cli::Opt<bool> & opt, 
+    const string & val
+) {
+    cli.fromString(*opt, val);
+    if (*opt) {
+        cli.printHelp(cli.conout(), {}, cli.runCommand());
+        return false;
+    }
+    return true;
+}
+
+//===========================================================================
+static bool defCmdAction(Cli & cli) {
     ostringstream os;
     if (cli.runCommand().empty()) {
         os << "No command given.";
+        return cli.fail(kExitUsage, os.str());
     } else {
         os << "Command '" << cli.runCommand() << "' has not been implemented.";
+        return cli.fail(kExitSoftware, os.str());
     }
-    return cli.fail(kExitSoftware, os.str());
 }
 
 
@@ -650,16 +709,7 @@ Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
 
 //===========================================================================
 Cli::Opt<bool> & Cli::helpOpt() {
-    auto & cmd = cmdCfg();
-    if (cmd.helpOpt)
-        return *cmd.helpOpt;
-
-    auto & hlp = opt<bool>("help.")
-        .desc("Show this message and exit.")
-        .parse(helpAction)
-        .group(kInternalOptionGroup);
-    cmd.helpOpt = &hlp;
-    return hlp;
+    return *Config::findCmdAlways(*this).helpOpt;
 }
 
 //===========================================================================
@@ -691,76 +741,83 @@ Cli::Opt<bool> & Cli::versionOpt(
 //===========================================================================
 Cli & Cli::group(const string & name) {
     m_group = name;
+    Config::findGrpAlways(*this);
     return *this;
 }
 
 //===========================================================================
 Cli & Cli::title(const string & val) {
-    grpCfg().title = val;
+    Config::findGrpAlways(*this).title = val;
     return *this;
 }
 
 //===========================================================================
 Cli & Cli::sortKey(const string & val) {
-    grpCfg().sortKey = val;
+    Config::findGrpAlways(*this).sortKey = val;
     return *this;
 }
 
 //===========================================================================
 const string & Cli::title() const {
-    return grpCfg().title;
+    return Config::findGrpOrDie(*this).title;
 }
 
 //===========================================================================
 const string & Cli::sortKey() const {
-    return grpCfg().sortKey;
+    return Config::findGrpOrDie(*this).sortKey;
 }
 
 //===========================================================================
 Cli & Cli::command(const string & name, const string & grpName) {
     m_command = name;
     m_group = grpName;
-    helpOpt();
+    Config::findCmdAlways(*this);
     return *this;
 }
 
 //===========================================================================
 Cli & Cli::action(function<ActionFn> fn) {
-    cmdCfg().action = fn;
+    Config::findCmdAlways(*this).action = fn;
     return *this;
 }
 
 //===========================================================================
 Cli & Cli::header(const string & val) {
-    cmdCfg().header = val;
+    auto & hdr = Config::findCmdAlways(*this).header;
+    hdr = val;
+    if (hdr.empty())
+        hdr.push_back('\0');
     return *this;
 }
 
 //===========================================================================
 Cli & Cli::desc(const string & val) {
-    cmdCfg().desc = val;
+    Config::findCmdAlways(*this).desc = val;
     return *this;
 }
 
 //===========================================================================
 Cli & Cli::footer(const string & val) {
-    cmdCfg().footer = val;
+    auto & ftr = Config::findCmdAlways(*this).footer;
+    ftr = val;
+    if (ftr.empty())
+        ftr.push_back('\0');
     return *this;
 }
 
 //===========================================================================
 const string & Cli::header() const {
-    return cmdCfg().header;
+    return Config::findCmdOrDie(*this).header;
 }
 
 //===========================================================================
 const string & Cli::desc() const {
-    return cmdCfg().desc;
+    return Config::findCmdOrDie(*this).desc;
 }
 
 //===========================================================================
 const string & Cli::footer() const {
-    return cmdCfg().footer;
+    return Config::findCmdOrDie(*this).footer;
 }
 
 //===========================================================================
@@ -789,26 +846,6 @@ istream & Cli::conin() {
 //===========================================================================
 ostream & Cli::conout() {
     return *m_cfg->conout;
-}
-
-//===========================================================================
-Cli::GroupConfig & Cli::grpCfg() {
-    return findGrpAlways(cmdCfg(), m_group);
-}
-
-//===========================================================================
-const Cli::GroupConfig & Cli::grpCfg() const {
-    return const_cast<Cli *>(this)->grpCfg();
-}
-
-//===========================================================================
-Cli::CommandConfig & Cli::cmdCfg() {
-    return findCmdAlways(*m_cfg, m_command);
-}
-
-//===========================================================================
-const Cli::CommandConfig & Cli::cmdCfg() const {
-    return const_cast<Cli *>(this)->cmdCfg();
 }
 
 //===========================================================================
@@ -1639,11 +1676,13 @@ bool Cli::exec() {
 ***/
 
 namespace {
+
 struct WrapPos {
     size_t pos{0};
     size_t maxWidth{79};
     string prefix;
 };
+
 } // namespace
 
 //===========================================================================
@@ -1696,8 +1735,12 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
 //===========================================================================
 // Like text, except advance to descCol first, and indent any additional
 // required lines to descCol.
-static void
-writeDescCol(ostream & os, WrapPos & wp, const string & text, size_t descCol) {
+static void writeDescCol(
+    ostream & os, 
+    WrapPos & wp, 
+    const string & text, 
+    size_t descCol
+) {
     if (text.empty())
         return;
     if (wp.pos < descCol) {
@@ -1788,16 +1831,19 @@ int Cli::printHelp(
     ostream & os,
     const string & progName,
     const string & cmdName
-) const {
-    auto & cmd = findCmdAlways(*m_cfg, cmdName);
-    if (!cmd.header.empty()) {
+) {
+    auto & cmd = Config::findCmdAlways(*this, cmdName);
+    auto & top = Config::findCmdAlways(*this, "");
+    auto & hdr = cmd.header.empty() ? top.header : cmd.header;
+    if (*hdr.data()) {
         WrapPos wp;
-        writeText(os, wp, cmd.header);
+        writeText(os, wp, hdr);
         writeNewline(os, wp);
     }
     printUsage(os, progName, cmdName);
     if (!cmd.desc.empty()) {
         WrapPos wp;
+        writeNewline(os, wp);
         writeText(os, wp, cmd.desc);
         writeNewline(os, wp);
     }
@@ -1805,10 +1851,11 @@ int Cli::printHelp(
         printCommands(os);
     printPositionals(os, cmdName);
     printOptions(os, cmdName);
-    if (!cmd.footer.empty()) {
+    auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
+    if (*ftr.data()) {
         WrapPos wp;
         writeNewline(os, wp);
-        writeText(os, wp, cmd.footer);
+        writeText(os, wp, ftr);
     }
     return exitCode();
 }
@@ -1819,10 +1866,10 @@ int Cli::writeUsageImpl(
     const string & arg0,
     const string & cmdName,
     bool expandedOptions
-) const {
+) {
     OptIndex ndx;
     ndx.index(*this, cmdName, true);
-    auto & cmd = findCmdAlways(*m_cfg, cmdName);
+    auto & cmd = Config::findCmdAlways(*this, cmdName);
     string prog = displayName(arg0.empty() ? progName() : arg0);
     const string usageStr{"usage: "};
     os << usageStr << prog;
@@ -1876,7 +1923,7 @@ int Cli::printUsage(
     ostream & os, 
     const string & arg0, 
     const string & cmd
-) const {
+) {
     return writeUsageImpl(os, arg0, cmd, false);
 }
 
@@ -1885,12 +1932,12 @@ int Cli::printUsageEx(
     ostream & os, 
     const string & arg0, 
     const string & cmd
-) const {
+) {
     return writeUsageImpl(os, arg0, cmd, true);
 }
 
 //===========================================================================
-void Cli::printPositionals(ostream & os, const string & cmd) const {
+void Cli::printPositionals(ostream & os, const string & cmd) {
     OptIndex ndx;
     ndx.index(*this, cmd, true);
     size_t colWidth = 0;
@@ -1916,10 +1963,10 @@ void Cli::printPositionals(ostream & os, const string & cmd) const {
 }
 
 //===========================================================================
-void Cli::printOptions(ostream & os, const string & cmdName) const {
+void Cli::printOptions(ostream & os, const string & cmdName) {
     OptIndex ndx;
     ndx.index(*this, cmdName, true);
-    auto & cmd = findCmdAlways(*m_cfg, cmdName);
+    auto & cmd = Config::findCmdAlways(*this, cmdName);
 
     // find named args and the longest name list
     size_t colWidth = 0;
@@ -1934,7 +1981,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) const {
         if (!gname || key.opt->m_group != gname) {
             gname = key.opt->m_group.c_str();
             writeNewline(os, wp);
-            auto & grp = findGrpAlways(cmd, key.opt->m_group);
+            auto & grp = Config::findGrpAlways(cmd, key.opt->m_group);
             string title = grp.title;
             if (title.empty() && strcmp(gname, kInternalOptionGroup) == 0
                 && &key == namedArgs.data()) {
@@ -1976,7 +2023,7 @@ static string trim(const string & val) {
 }
 
 //===========================================================================
-void Cli::printCommands(ostream & os) const {
+void Cli::printCommands(ostream & os) {
     size_t colWidth = 0;
     struct CmdKey {
         const char * name;
