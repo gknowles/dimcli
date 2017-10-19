@@ -18,6 +18,10 @@
 *
 ***/
 
+// The dimcli_userconfig.h include is defined by the application and may be 
+// used to configure the standard library before the headers get included. 
+// This includes macros such as _ITERATOR_DEBUG_LEVEL (Microsoft), 
+// _LIBCPP_DEBUG (libc++), etc.
 #ifdef __has_include
 #if __has_include("dimcli_userconfig.h")
 #include "dimcli_userconfig.h"
@@ -238,7 +242,7 @@ public:
     // be a single blank line separating this group from the previous one.
     Cli & title(const std::string & val);
 
-    // Option groups are sorted by key, defaults to group name
+    // Option groups are sorted by key, defaults to group name.
     Cli & sortKey(const std::string & key);
 
     const std::string & group() const { return m_group; }
@@ -250,12 +254,14 @@ public:
     // command. Use "" to specify the top level context.
     Cli & command(const std::string & name, const std::string & group = {});
 
+    // Function signature of actions that are tied to commands.
+    using ActionFn = bool(Cli & cli);
+
     // Action that should be taken when the currently selected command is run.
     // Actions are executed when cli.run() is called by the application. The
     // parse function should:
     //  - do something useful
     //  - return false on errors (and use fail() to set exitCode, et al)
-    using ActionFn = bool(Cli & cli);
     Cli & action(std::function<ActionFn> fn);
 
     // Arbitrary text can be added to the generated help for each command,
@@ -334,7 +340,7 @@ public:
     bool parse(size_t argc, char * argv[]);
     bool parse(std::ostream & os, size_t argc, char * argv[]);
 
-    // "args" is non-const so response files can be expanded in place
+    // "args" is non-const so response files can be expanded in place.
     bool parse(std::vector<std::string> & args);
     bool parse(std::ostream & os, std::vector<std::string> & args);
 
@@ -345,9 +351,9 @@ public:
     // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.
     static std::vector<std::string> toArgv(const std::string & cmdline);
-    // Copy array of pointers into vector of args
+    // Copy array of pointers into vector of args.
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
-    // Copy array of wchar_t pointers into vector of utf-8 encoded args
+    // Copy array of wchar_t pointers into vector of utf-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
     // Create vector of pointers suitable for use with argc/argv APIs,
     // includes trailing null, so use "size() - 1" for argc. The return
@@ -357,7 +363,7 @@ public:
         const std::vector<std::string> & args
     );
 
-    // Parse according to glib conventions, based on the UNIX98 shell spec
+    // Parse according to glib conventions, based on the UNIX98 shell spec.
     static std::vector<std::string> toGlibArgv(const std::string & cmdline);
     // Parse using GNU conventions, same rules as buildargv()
     static std::vector<std::string> toGnuArgv(const std::string & cmdline);
@@ -401,9 +407,9 @@ public:
     // (unless cli.iostreams() changed the streams to use), the response is
     // then passed to cli.parseValue() to set the value and run any actions.
     enum {
-        kPromptHide = 1,      // hide user input as they type
-        kPromptConfirm = 2,   // make the user enter it twice
-        kPromptNoDefault = 4, // don't include default value in prompt
+        kPromptHide = 1,      // Hide user input as they type
+        kPromptConfirm = 2,   // Make the user enter it twice
+        kPromptNoDefault = 4, // Don't include default value in prompt
     };
     bool prompt(OptBase & opt, const std::string & msg, int flags);
 
@@ -459,7 +465,7 @@ private:
     template <typename Opt, typename Value, typename T>
     std::shared_ptr<Value> getProxy(T * ptr);
 
-    // find an option (from any subcommand) that updates the value
+    // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
 
     std::string descStr(const Cli::OptBase & opt) const;
@@ -725,7 +731,7 @@ public:
     // (which should set the position to 0) instead of the command args.
     virtual int pos() const = 0;
 
-    // number of values, non-vecs are always 1
+    // Number of values, non-vectors are always 1.
     virtual size_t size() const = 0;
 
     // Defaults to use when populating the option from an action that's not
@@ -736,13 +742,13 @@ public:
     //-----------------------------------------------------------------------
     // Update value
 
-    // set to passed in default value
+    // Set option to its default value.
     virtual void reset() = 0;
 
-    // parses the string into the value, returns false on error
+    // Parse the string into the value, return false on error.
     virtual bool parseValue(const std::string & value);
 
-    // set to (or add to vec) value for missing optional
+    // Set option (or add to option vector) to value for missing optionals.
     virtual void unspecifiedValue() = 0;
 
 protected:
@@ -781,12 +787,12 @@ protected:
     
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
-    // Are multiple values are allowed, and how many there can be (-1 for
+    // Whether multiple values are allowed, and how many there can be (-1 for
     // unlimited).
     bool m_multiple{false};
     int m_nargs{1};
 
-    // the value is a bool on the command line (no separate value)?
+    // Whether the value is a bool on the command line (no separate value).
     bool m_bool{false};
 
     bool m_flagValue{false};
@@ -902,6 +908,9 @@ public:
         int flags = 0            // Cli::kPrompt* flags
     );
 
+    // Function signature of actions that are tied to options.
+    using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
+
     // Change the action to take when parsing this argument. The function
     // should:
     //  - Parse the src string and use the result to set the value (or
@@ -919,7 +928,6 @@ public:
     // If you just need support for a new type you can provide a std::istream
     // extraction (>>) or assignment from std::string operator and the
     // default parse action will pick it up.
-    using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
     A & parse(std::function<ActionFn> fn);
 
     // Action to take immediately after each value is parsed, unlike parsing 
@@ -1217,11 +1225,11 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
 ***/
 
 struct Cli::ArgMatch {
-    // name of the argument that populated the value, or an empty
+    // Name of the argument that populated the value, or an empty
     // string if it wasn't populated.
     std::string name;
 
-    // member of argv[] that populated the value or 0 if it wasn't.
+    // Member of argv[] that populated the value or 0 if it wasn't.
     int pos{0};
 };
 
@@ -1233,13 +1241,13 @@ struct Cli::ArgMatch {
 ***/
 
 template <typename T> struct Cli::Value {
-    // where the value came from
+    // Where the value came from.
     ArgMatch m_match;
 
-    // the value was explicitly set
+    // Whether the value was explicitly set.
     bool m_explicit{false};
 
-    // points to the opt with the default flag value
+    // Points to the opt with the default flag value.
     Opt<T> * m_defFlagOpt{nullptr};
 
     T * m_value{nullptr};
@@ -1358,10 +1366,10 @@ template <typename T> inline size_t Cli::Opt<T>::size() const {
 ***/
 
 template <typename T> struct Cli::ValueVec {
-    // where the values came from
+    // Where the values came from.
     std::vector<ArgMatch> m_matches;
 
-    // points to the opt with the default flag value
+    // Points to the opt with the default flag value.
     OptVec<T> * m_defFlagOpt{nullptr};
 
     std::vector<T> * m_values{nullptr};
@@ -1516,8 +1524,8 @@ inline size_t Cli::OptVec<T>::size() const {
 *
 ***/
 
-// Restore as many compiler settings as we can so they don't leak into
-// the applications
+// Restore as many compiler settings as possible so they don't leak into the
+// application.
 #ifndef DIMCLI_LIB_KEEP_MACROS
 
 // clear all dim header macros so they don't leak into the application
