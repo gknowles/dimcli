@@ -1646,11 +1646,7 @@ bool Cli::parse(vector<string> & args) {
 bool Cli::parse(ostream & os, vector<string> & args) {
     if (parse(args))
         return true;
-    if (exitCode()) {
-        os << "Error: " << errMsg() << endl;
-        if (m_cfg->errDetail.size())
-            os << "Error: " << m_cfg->errDetail << endl;
-    }
+    printError(os);
     return false;
 }
 
@@ -1711,7 +1707,35 @@ bool Cli::exec() {
 }
 
 //===========================================================================
-bool Cli::commandExists(const std::string & name) const {
+bool Cli::exec(ostream & os) {
+    if (exec()) 
+        return true;
+    printError(os);
+    return false;
+}
+
+//===========================================================================
+bool Cli::exec(size_t argc, char * argv[]) {
+    return parse(argc, argv) && exec();
+}
+
+//===========================================================================
+bool Cli::exec(ostream & os, size_t argc, char * argv[]) {
+    return parse(os, argc, argv) && exec(os);
+}
+
+//===========================================================================
+bool Cli::exec(vector<string> & args) {
+    return parse(args) && exec();
+}
+
+//===========================================================================
+bool Cli::exec(ostream & os, vector<string> & args) {
+    return parse(os, args) && exec(os);
+}
+
+//===========================================================================
+bool Cli::commandExists(const string & name) const {
     auto & cmds = m_cfg->cmds;
     return cmds.find(name) != cmds.end();
 }
@@ -2108,6 +2132,18 @@ void Cli::printCommands(ostream & os) {
         os << '\n';
         wp.pos = 0;
     }
+}
+
+//===========================================================================
+int Cli::printError(ostream & os) {
+    auto code = exitCode();
+    if (code) {
+        os << "Error: " << errMsg() << endl;
+        auto & detail = errDetail();
+        if (detail.size())
+            os << "Error: " << detail << endl;
+    }
+    return code;
 }
 
 

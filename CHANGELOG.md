@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+- Added - cli.exec() overloads that both parse() and exec()
 
 ## dimcli 3.0.0 (2017-10-17)
 - Added - Support for clang >= 3.6

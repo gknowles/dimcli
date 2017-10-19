@@ -693,8 +693,7 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.").action(apple);
     cli.command("orange").desc("Show orange.").action(orange);
-    if (cli.parse(cerr, argc, argv))
-        cli.exec();
+    cli.exec(cerr, argc, argv);
     return cli.exitCode();
 }
 ~~~
@@ -713,7 +712,17 @@ int main(int argc, char * argv[]) {
     ...
 ~~~
 
-The end result from the console:
+Or if there's some additional argument checks or setup you need to do, the 
+exec() call can be separate from parse():
+~~~ cpp
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    // any additional validation...
+    cli.exec(cerr);
+    return cli.exitCode();
+~~~
+
+The end result at the console:
 ~~~ console
 $ a.out
 Error: No command given.
@@ -1518,8 +1527,7 @@ How to add it:
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.helpCmd();
-    if (cli.parse(argc, argv))
-        cli.exec();
+    cli.exec(cerr, argc, argv);
     return cli.exitCode();
 }
 ~~~
