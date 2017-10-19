@@ -258,8 +258,8 @@ public:
     using ActionFn = bool(Cli & cli);
 
     // Action that should be taken when the currently selected command is run.
-    // Actions are executed when cli.run() is called by the application. The
-    // parse function should:
+    // Actions are executed when cli.exec() is called by the application. The
+    // command's action function should:
     //  - do something useful
     //  - return false on errors (and use fail() to set exitCode, et al)
     Cli & action(std::function<ActionFn> fn);

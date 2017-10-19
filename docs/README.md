@@ -693,9 +693,9 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.").action(apple);
     cli.command("orange").desc("Show orange.").action(orange);
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    return cli.run();
+    if (cli.parse(cerr, argc, argv))
+        cli.exec();
+    return cli.exitCode();
 }
 ~~~
 
@@ -1518,9 +1518,9 @@ How to add it:
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.helpCmd();
-    if (!cli.parse(argc, argv))
-        return cli.exitCode();
-    return cli.run();
+    if (cli.parse(argc, argv))
+        cli.exec();
+    return cli.exitCode();
 }
 ~~~
 
