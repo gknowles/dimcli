@@ -383,7 +383,7 @@ Options:
     // clamp and range
     {
         cli = {};
-        auto & count = cli.opt<int>("<count>", 1).clamp(1, 10);
+        auto & count = cli.opt<int>("<count>", 2).clamp(1, 10);
         auto & letter = cli.opt<char>("<letter>").range('a', 'z');
         EXPECT_PARSE(cli, {"20", "a"});
         EXPECT(*count == 10);
@@ -391,6 +391,9 @@ Options:
         EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"5", "0"});
         EXPECT(*count == 5);
         EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--", "-5"});
+        EXPECT(*count == 1);
+        EXPECT(cli.errMsg() == "Missing argument: letter");
     }
 
     // filesystem
@@ -454,10 +457,26 @@ usage: test [--help] command [args...]
         EXPECT_USAGE(cli, "help", 1 + R"(
 usage: test help [-u, --usage] [--help] [command]
 )");
-        EXPECT_PARSE2(cli, true, Dim::kExitOk, {"help", "badfood"});
+        EXPECT_PARSE(cli, {"help", "badfood"});
         EXPECT(!cli.exec());
         EXPECT(cli.errMsg() == 1 + R"(
 Command 'help': Help requested for unknown command: badfood)");
+    }
+
+    // helpNoArgs (aka before action)
+    {
+        cli = {};
+        cli.helpNoArgs();
+        out.str("");
+        cli.iostreams(nullptr, &out);
+        EXPECT_PARSE2(cli, false, Dim::kExitOk, {});
+        cli.iostreams(nullptr, nullptr);
+        EXPECT(out.str() == 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+)");
     }
 }
 

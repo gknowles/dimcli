@@ -286,6 +286,9 @@ public:
     // annoying "prog command --help".
     Cli & helpCmd();
 
+    // Adds before action that replaces empty command lines with --help.
+    Cli & helpNoArgs();
+
     //-----------------------------------------------------------------------
     // Enabled by default, reponse file expansion replaces arguments of the
     // form "@file" with the contents of the file.
@@ -298,10 +301,20 @@ public:
     void envOpts(const std::string & envVar);
 #endif
 
+    // Function signature of actions that run before options are populated.
+    using BeforeFn = bool(Cli & cli, std::vector<std::string> & args);
+
+    // Actions taken after environment variable and response file expansion
+    // but before any individual arguments are parsed. The before action
+    // function should:
+    //  - inspect and possibly modify the raw arguments coming in
+    //  - return false if parsing should stop, via badUsage() for errors
+    Cli & before(std::function<BeforeFn> fn);
+
     // Changes the streams used for prompting, outputing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults
     // which are cin and cout respectively.
-    void iostreams(std::istream * in, std::ostream * out);
+    Cli & iostreams(std::istream * in, std::ostream * out);
     std::istream & conin();
     std::ostream & conout();
 

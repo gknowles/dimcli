@@ -15,6 +15,7 @@ Basics
 Advanced
 - [Special Arguments](Special%20Arguments)  
 - [Optional Values](Optional%20Values)  
+- [Before Actions](Before%20Actions)
 - [Parse Actions](Parse%20Actions)  
 - [Check Actions](Check%20Actions)
 - [After Actions](After%20Actions)

@@ -133,8 +133,7 @@ struct Cli::OptIndex {
 };
 
 struct Cli::Config {
-    bool constructed{false};
-
+    vector<function<BeforeFn>> befores;
     unordered_map<string, CommandConfig> cmds;
     list<unique_ptr<OptBase>> opts;
     bool responseFiles{true};
@@ -638,6 +637,13 @@ bool Cli::requireAction(OptBase & opt) {
 }
 
 //===========================================================================
+static bool helpBeforeAction(Cli &, vector<string> & args) {
+    if (args.size() == 1)
+        args.push_back("--help");
+    return true;
+}
+
+//===========================================================================
 static bool helpOptAction(
     Cli & cli, 
     Cli::Opt<bool> & opt, 
@@ -863,6 +869,11 @@ Cli & Cli::helpCmd() {
 }
 
 //===========================================================================
+Cli & Cli::helpNoArgs() {
+    return before(helpBeforeAction);
+}
+
+//===========================================================================
 void Cli::responseFiles(bool enable) {
     m_cfg->responseFiles = enable;
 }
@@ -875,9 +886,16 @@ void Cli::envOpts(const string & var) {
 #endif
 
 //===========================================================================
-void Cli::iostreams(istream * in, ostream * out) {
+Cli & Cli::before(std::function<BeforeFn> fn) {
+    m_cfg->befores.push_back(fn);
+    return *this;
+}
+
+//===========================================================================
+Cli & Cli::iostreams(istream * in, ostream * out) {
     m_cfg->conin = in ? in : &cin;
     m_cfg->conout = out ? out : &cout;
+    return *this;
 }
 
 //===========================================================================
@@ -1485,7 +1503,7 @@ bool Cli::fail(int code, const string & msg, const string & detail) {
 
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
-    // the 0th (name of this program) opt should always be present
+    // the 0th (name of this program) opt must always be present
     assert(!args.empty());
 
     Config::touchAllCmds(*this);
@@ -1513,6 +1531,13 @@ bool Cli::parse(vector<string> & args) {
     if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
 
+    // before actions
+    for (auto && fn : m_cfg->befores) {
+        if (!fn(*this, args))
+            return false;
+    }
+
+    // populate options
     auto arg = args.data();
     auto argc = args.size();
 
@@ -1632,6 +1657,7 @@ bool Cli::parse(vector<string> & args) {
         return badUsage("Missing argument", ndx.m_argNames[pos].name);
     }
 
+    // after actions
     for (auto && opt : m_cfg->opts) {
         if (!opt->m_command.empty() && opt->m_command != runCommand())
             continue;
