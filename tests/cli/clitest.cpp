@@ -457,10 +457,10 @@ usage: test [--help] command [args...]
         EXPECT_USAGE(cli, "help", 1 + R"(
 usage: test help [-u, --usage] [--help] [command]
 )");
-        EXPECT_PARSE(cli, {"help", "badfood"});
+        EXPECT_PARSE(cli, {"help", "notACmd"});
         EXPECT(!cli.exec());
         EXPECT(cli.errMsg() == 1 + R"(
-Command 'help': Help requested for unknown command: badfood)");
+Command 'help': Help requested for unknown command: notACmd)");
     }
 
     // helpNoArgs (aka before action)
@@ -517,7 +517,7 @@ Options:
         }
     }
 
-    // comfirmation prompt
+    // confirmation prompt
     {
         cli = {};
         auto & ask = cli.confirmOpt();

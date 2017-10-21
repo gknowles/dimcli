@@ -8,7 +8,7 @@ C++ command line parser toolkit for kids of all ages.
 
 - can parse directly to any supplied (or implicitly created) variables 
   that are:
-  - default constructable
+  - default constructible
   - copyable
   - assignable from std::string or have an istream extraction operator
 - help generation
@@ -95,9 +95,9 @@ Does the apple have a worm? No!
 ~~~
 
 The EX_* constants (along with standard values) are in sysexits.h on most 
-unixes, althrough it may not be in any standard. Equivalent enum values
-Dim::kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful on 
-Windows where \<sysexits.h> doesn't exist.
+unixes, although it may not be in any standard. Equivalent enum values
+Dim\::kExitOk (0) and Dim\::kExitUsage (64) are defined, which can be useful 
+on Windows where \<sysexits.h> doesn't exist.
 
 
 ## Options
@@ -552,7 +552,7 @@ to do the same thing.
 ## Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For 
 instance, to provide more detailed errors about badly formatted arguments. Or 
-to make "--version" print some crazy ascii artwork and exit the program (for 
+to make "--version" print some crazy ASCII artwork and exit the program (for 
 a non-crazy --version use [opt.versionOpt()](Version%20Option)).
 
 Parsing actions are attached to options and get invoked when a value becomes 
@@ -728,7 +728,7 @@ Range is from 2 to 5
 Git style subcommands are created by either cli.command("cmd"), which changes
 the cli objects context to the command, or with opt.command("cmd"), which 
 changes the command the option is for. Once the cli object context has been 
-changed it can than be used to add (desciption, footer, options, etc) to the 
+changed it can than be used to add (description, footer, options, etc) to the 
 command. Exactly the same as when working with a simple command line. If you 
 pass an empty string to cli.command() or opt.command() it represents the top 
 level processing that takes place before a command has been found.
@@ -834,9 +834,9 @@ Options don't have to be defined all in one source file, separate source
 files can each define options of interest to that file and get them populated
 when the command line is processed.
 
-When you instanticate Dim::Cli you're creating a handle to the globally 
-shared configuration. So multiple translation units can each create one and
-use it to update the shared configuration.
+When you instantiate Dim::Cli you're creating a handle to the globally shared 
+configuration. So multiple translation units can each create one and use it to 
+update the shared configuration.
 
 The following example has a logMsg function in log.cpp with its own "-1" 
 option while main.cpp registers "--version":
@@ -878,7 +878,7 @@ Options:
 
 When you want to put a bundle of stuff in a separate source file, such as a 
 [command](Subcommands) and its options, it can be convenient to group them 
-into a single static struc.
+into a single static struct.
 ~~~ cpp
 // somefile.cpp
 static int myCmd(Dim::Cli & cli);
@@ -1080,7 +1080,7 @@ Hello world!
 ## Help Option
 You can modify the implicitly create --help option. Use cli.helpOpt() to get
 a reference and then go to town. The most likely thing would be to change the 
-desciption or option group, but since you get back an Opt\<T> you can use any 
+description or option group, but since you get back an Opt\<T> you can use any 
 of the standard functions.
 
 ~~~ cpp
@@ -1383,7 +1383,7 @@ a prompt also has some behaviors that are controlled by flags.
 
 | Flag           | Description                        |
 |----------------|------------------------------------|
-| kPromptHide    | hides the input fron the console   |
+| kPromptHide    | hides the input from the console   |
 | kPromptConfirm | require the value be entered twice |
 
 ~~~ cpp
@@ -1483,7 +1483,7 @@ sections.
 |---------|------------|-------------|
 | Header | cli.header() | Generally a one line synopsis of the purpose of the command. |
 | Usage | cli.opt() | Generated text list the defined positional arguments. |
-| Description | cli.desc() | Text descirbing how to use the command and what it does. Sometimes used instead of the positionals list. |
+| Description | cli.desc() | Text describing how to use the command and what it does. Sometimes used instead of the positionals list. |
 | Commands | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
 | Positionals | cli.opt(), opt.desc() | List of positional arguments and their descriptions, omitted if none have descriptions. |
 | Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
@@ -1542,7 +1542,7 @@ with the title and sort key equal to the name.
 
 Additionally there are two predefined option groups:
 
-| Name | Sort | Title     | Desciption                                 |
+| Name | Sort | Title     | Description                                 |
 |------|------|-----------|--------------------------------------------|
 | ""   | ""   | "Options" | Default group options are created          |
 | "~"  | "~"  | ""        | Footer group, default location for "--help" and "--version" |
@@ -1651,7 +1651,7 @@ usage: a.out help [-u, --usage] [--help] [command]
 
 
 ## Going Your Own Way
-If generated help doesn't work for you, you can override the builtin help 
+If generated help doesn't work for you, you can override the built-in help 
 with your own.
 
 ~~~ cpp

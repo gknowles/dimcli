@@ -213,7 +213,7 @@ public:
     Opt<bool> & confirmOpt(const std::string & prompt = {});
 
     // Get reference to internal help option, can be used to change the
-    // desciption, option group, etc. To completely replace it, add another
+    // description, option group, etc. To completely replace it, add another
     // option that responds to --help.
     Opt<bool> & helpOpt();
 
@@ -290,7 +290,7 @@ public:
     Cli & helpNoArgs();
 
     //-----------------------------------------------------------------------
-    // Enabled by default, reponse file expansion replaces arguments of the
+    // Enabled by default, response file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
 
@@ -311,7 +311,7 @@ public:
     //  - return false if parsing should stop, via badUsage() for errors
     Cli & before(std::function<BeforeFn> fn);
 
-    // Changes the streams used for prompting, outputing help messages, etc.
+    // Changes the streams used for prompting, printing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults
     // which are cin and cout respectively.
     Cli & iostreams(std::istream * in, std::ostream * out);
@@ -377,7 +377,7 @@ public:
     static std::vector<std::string> toArgv(const std::string & cmdline);
     // Copy array of pointers into vector of args.
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
-    // Copy array of wchar_t pointers into vector of utf-8 encoded args.
+    // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
     // Create vector of pointers suitable for use with argc/argv APIs,
     // includes trailing null, so use "size() - 1" for argc. The return
@@ -614,7 +614,7 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
         return dopt->m_proxy;
     }
 
-    // Since there was no pre-existing proxy to raw value, create new proxy.
+    // Since there was no existing proxy to the raw value, create one.
     return std::make_shared<V>(ptr);
 }
 
@@ -623,7 +623,7 @@ inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
 //===========================================================================
 template <typename T> 
 bool Cli::fromString(T & out, const std::string & src) const {
-    // versions of fromString_impl taking ints as extra parameters are
+    // Versions of fromString_impl taking ints as extra parameters are
     // preferred (better conversion from 0), if they don't exist for T 
     // (because no out=src assignment operator exists) then the versions 
     // taking longs are considered.
@@ -880,7 +880,7 @@ public:
     // Controls whether or not the option appears in help pages.
     A & show(bool visible = true);
 
-    // Set desciption to associate with the argument in help text.
+    // Set description to associate with the argument in help text.
     A & desc(const std::string & val);
 
     // Set name of meta-variable in help text. For example, in "--count NUM"
@@ -906,7 +906,7 @@ public:
     // Turns the argument into a feature switch, there are normally multiple
     // switches pointed at a single external value, one of which should be
     // flagged as the default. If none (or many) are set marked as the default
-    // one will be choosen for you.
+    // one will be chosen for you.
     A & flagValue(bool isDefault = false);
 
     // Adds a choice, when choices have been added only values that match one

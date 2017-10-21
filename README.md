@@ -15,7 +15,7 @@ C++ command line parser toolkit for kids of all ages.
 
 - can parse directly to any supplied (or implicitly created) variables 
   that are:
-  - default constructable
+  - default constructible
   - copyable
   - assignable from std::string or have an istream extraction operator
 - help generation
@@ -85,7 +85,7 @@ Sources of inspiration:
 Things that were harder than expected:
 
 - parsing command lines with bash style quoting
-- response files - because of the need to transcode utf-16 on windows
+- response files - because of the need to transcode UTF-16 on windows
 - password prompting - there's no standard way to disable console echo :(
 - build system - you can do a lot with cmake, but it's not always easy
 
