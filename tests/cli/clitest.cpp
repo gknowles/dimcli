@@ -545,14 +545,17 @@ void envTests() {
 #if !defined(DIMCLI_LIB_NO_CONSOLE)
     int line = 0;
     Dim::CliLocal cli;
+    int result;
 
     cli = {};
     auto & args = cli.optVec<string>("[args]");
     cli.envOpts("TEST_OPTS");
-    putenv((char *) "");
+    result = putenv((char *) "TEST_OPTS=");
+    EXPECT(!result);
     EXPECT_PARSE(cli, {"c", "d"});
     EXPECT(args->size() == 2);
-    putenv((char *) "TEST_OPTS=a b");
+    result = putenv((char *) "TEST_OPTS=a b");
+    EXPECT(!result);
     EXPECT_PARSE(cli, {"c", "d"});
     EXPECT(args->size() == 4);
 #endif
