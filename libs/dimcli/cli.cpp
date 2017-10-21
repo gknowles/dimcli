@@ -696,10 +696,16 @@ static bool helpCmdAction(Cli & cli) {
 ***/
 
 //===========================================================================
+static shared_ptr<Cli::Config> globalConfig() {
+    static auto s_cfg = make_shared<Cli::Config>();
+    return s_cfg;
+}
+
+//===========================================================================
 // Creates a handle to the shared configuration
-Cli::Cli() {
-    static auto s_cfg = make_shared<Config>();
-    m_cfg = s_cfg;
+Cli::Cli() 
+    : m_cfg(globalConfig())
+{
     helpOpt();
 }
 
@@ -1489,7 +1495,6 @@ bool Cli::badUsage(const string & prefix, const string & value) {
 //===========================================================================
 bool Cli::badUsage(const OptBase & opt, const string & value) {
     string prefix = "Invalid '" + opt.from() + "' value";
-    string msg = prefix + ": " + value;
     return badUsage(prefix, value);
 }
 
@@ -1791,7 +1796,7 @@ static void writeNewline(ostream & os, WrapPos & wp) {
 
 //===========================================================================
 // Write token, potentially adding a line break first.
-static void writeToken(ostream & os, WrapPos & wp, const string token) {
+static void writeToken(ostream & os, WrapPos & wp, const string & token) {
     if (wp.pos + token.size() + 1 > wp.maxWidth) {
         if (wp.pos > wp.prefix.size()) {
             writeNewline(os, wp);
