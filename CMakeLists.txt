@@ -198,7 +198,7 @@ function(add_exec_project tgt srcdir)
         # required for #include <experimental/filesystem>
 		target_link_libraries(${tgt} "stdc++fs")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-		target_link_libraries(${tgt} "stdc++fs")
+		target_link_libraries(${tgt} "c++experimental")
     endif()
     write_user_file(${tgt})
 endfunction()
