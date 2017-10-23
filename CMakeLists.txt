@@ -327,25 +327,24 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin)
 
 if(MSVC)
+    # "/EHsc" - exceptions from c++ only (not from structured or "C")
+    # "/GF" - string pooling
+    # "/GR-" (UNUSED) - disable RTTI
+    # "/guard:cf" (UNUSED) - control flow guard
+    # "/nologo" - suppress startup banner and informational messages
+    # "/std:c++latest" - allow constructs still pending standardization
     # "/utf-8" - sets source code character set to utf-8
     # "/W4" - warning level 4
     # "/WX" - treat warnings as errors
-    # "/Zi" - debug info format - defaults to no info
-    # "/std:c++latest" - allow constructs still pending standardization
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
     # "/Zc:strictStrings" - disable string literal type conversion to non-const
-    # "/nologo" - suppress startup banner and informational messages
-    # "/GR-" (UNUSED) - disable RTTI
-    # "/EHsc" - exceptions from c++ only (not from structure or "C")
-    # "/GF" - string pooling
-    # "/guard:cf" (UNUSED) - control flow guard
+    # "/Zi" - debug info format (not present would be no info)
     set(CMAKE_CXX_FLAGS "\
-        /utf-8 /W4 /WX /Zi \
-        /std:c++latest /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /nologo /EHsc /GF")
+        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX /Zi \
+        /Zc:inline /Zc:rvalueCast /Zc:strictStrings")
     if(NOT MSVC_VERSION LESS 1910)
-        # /permissive-  // reject non-conforming backward compatibilitisms
+        # /permissive-  // reject non-conforming backward compatibility-isms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
     endif()
 
