@@ -45,7 +45,7 @@ matrix:
       addons:
         apt:
           packages: ['g++-6']
-          sources: *sources
+          sources: ubuntu-toolchain-r-test
     - env: CXX_NAME=g++-7 CC_NAME=gcc-7
       addons:
         apt:
@@ -71,7 +71,7 @@ matrix:
       addons:
         apt:
           packages: ['clang-5.0']
-          sources: *sources
+          sources: llvm-toolchain-trusty-5.0
 
 script:
   - export CXX=${CXX_NAME} CC=${CC_NAME}
