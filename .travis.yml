@@ -42,22 +42,12 @@ matrix:
       addons:
         apt:
           packages: ['clang-3.6', 'g++-6'] 
-          sources: llvm-toolchain-precise-3.6
-    - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
-      addons:
-        apt:
-          packages: ['clang-3.9', 'g++-6']
-          sources: llvm-toolchain-precise-3.9
-    - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
-      addons:
-        apt:
-          packages: ['clang-4.0', 'g++-6']
-          sources: llvm-toolchain-trusty-4.0
+          sources: [llvm-toolchain-precise-3.6, ubuntu-toolchain-r-test]
     - env: CXX_NAME=clang++-5.0 CC_NAME=clang-5.0
       addons:
         apt:
           packages: ['clang-5.0', 'g++-6']
-          sources: llvm-toolchain-trusty-5.0
+          sources: [llvm-toolchain-trusty-5.0, ubuntu-toolchain-r-test]
 
 script:
   - export CXX=${CXX_NAME} CC=${CC_NAME}
