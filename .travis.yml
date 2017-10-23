@@ -4,20 +4,6 @@ language: cpp
 sudo: false
 dist: trusty
 
-addons:
-  apt:
-    packages: &packages
-      - g++-6
-      - g++-7
-      - clang-3.6
-      - clang-3.9
-      - clang-4.0
-    sources: &sources
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.6
-      - llvm-toolchain-precise-3.9
-      - llvm-toolchain-trusty-4.0
-
 cache:
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/cmake
@@ -50,27 +36,27 @@ matrix:
       addons:
         apt:
           packages: ['g++-7']
-          sources: *sources
+          sources: ubuntu-toolchain-r-test
     # uses experimental/filesystem from g++-6 package... :/
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
       addons:
         apt:
           packages: ['clang-3.6', 'g++-6'] 
-          sources: *sources
+          sources: llvm-toolchain-precise-3.6
     - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
         apt:
           packages: ['clang-3.9', 'g++-6']
-          sources: *sources
+          sources: llvm-toolchain-precise-3.9
     - env: CXX_NAME=clang++-4.0 CC_NAME=clang-4.0
       addons:
         apt:
           packages: ['clang-4.0', 'g++-6']
-          sources: *sources
+          sources: llvm-toolchain-trusty-4.0
     - env: CXX_NAME=clang++-5.0 CC_NAME=clang-5.0
       addons:
         apt:
-          packages: ['clang-5.0']
+          packages: ['clang-5.0', 'g++-6']
           sources: llvm-toolchain-trusty-5.0
 
 script:
