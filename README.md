@@ -3,12 +3,13 @@ Copyright Glen Knowles 2016 - 2017.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
-[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)
-  ](https://ci.appveyor.com/project/gknowles/dimcli/branch/master "msvc 2015, msvc 2017")
-[![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)
-  ](https://travis-ci.org/gknowles/dimcli "gcc 6, gcc 7, clang 3.6, clang 5.0")
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/52d1c5fc67124d67a1718a0d8a2cd4c1)
-  ](https://www.codacy.com/app/gknowles/dimcli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gknowles/dimcli&amp;utm_campaign=Badge_Grade)
+| Source    | Compiler | Status |
+|-----------|----------|--------|
+| AppVeyor  | msvc 2015, msvc 2017 | [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) |
+| Travis-CI | gcc 6, gcc 7, clang 3.6, clang 5.0 | [![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli) |
+| Codacy | cppcheck | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/52d1c5fc67124d67a1718a0d8a2cd4c1)](https://www.codacy.com/app/gknowles/dimcli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gknowles/dimcli&amp;utm_campaign=Badge_Grade) |
+
+
 # dimcli
 
 C++ command line parser toolkit for kids of all ages.
