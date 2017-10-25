@@ -1154,8 +1154,8 @@ the option that should be the default.
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     string fruit;
-    // "~" is default option group for --help, --version, etc. It defaults to 
-    // an empty title, give it one so it doesn't look like more fruit.
+    // "~" is the default option group for --help, --version, etc. Give
+    // it a title so it doesn't look like more fruit.
     cli.group("~").title("Other options");
     cli.group("Type of fruit");
     cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
