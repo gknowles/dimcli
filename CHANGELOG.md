@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - cli.exec() overloads that both parse() and exec()
 - Added - Actions to adjust expanded args list before option assignment
 - Added - cli.helpNoArgs() to print help when command line is empty
+- Added - opt.command() and opt.group() access methods
 
 ## dimcli 3.0.0 (2017-10-17)
 - Added - Support for clang >= 3.6

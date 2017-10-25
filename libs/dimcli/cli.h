@@ -770,6 +770,10 @@ public:
     const std::string & defaultFrom() const { return m_fromName; }
     std::string defaultPrompt() const;
 
+    // Command and group this option belongs to.
+    const std::string & command() const { return m_command; }
+    const std::string & group() const { return m_group; }
+
     //-----------------------------------------------------------------------
     // Update value
 
