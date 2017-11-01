@@ -960,9 +960,9 @@ public:
     // For bool arguments the source value string will always be either "0"
     // or "1".
     //
-    // If you just need support for a new type you can provide a std::istream
-    // extraction (>>) or assignment from std::string operator and the
-    // default parse action will pick it up.
+    // If you just need support for a new type you can provide a istream
+    // extraction (>>) or assignment from string operator and the default
+    // parse action will pick it up.
     A & parse(std::function<ActionFn> fn);
 
     // Action to take immediately after each value is parsed, unlike parsing 
@@ -1255,7 +1255,7 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
 *
 *   Cli::ArgMatch
 *
-*   Reference to the commandline argument that was used to populate a value
+*   Reference to the command line argument that was used to populate a value
 *
 ***/
 

@@ -1184,6 +1184,20 @@ Does the apple have a worm? No!
 $ a.out -o
 Does the orange have a worm? No!
 ~~~
+You can use an inaccessible option (empty string for the keys) that doesn't 
+show up in the interface (or the help text) to set an explicit default.
+
+~~~ cpp
+cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
+cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue();
+cli.opt(&fruit, "", "fruit").flagValue(true);
+~~~
+Now instead of an apple there's a generic fruit default.
+
+~~~ console
+$ a.out
+Does the fruit have a worm? No!
+~~~
 
 
 ## Choice Options
