@@ -4,13 +4,15 @@ Distributed under the Boost Software License, Version 1.0.
 -->
 
 # Overview
-C++ command line parser toolkit for kids of all ages.
+C++ command line parser toolkit for kids of all ages. 
 
+- GNU style command lines (-o, --output=FILE, etc.)
 - can parse directly to any supplied (or implicitly created) variables 
   that are:
   - default constructible
   - copyable
-  - assignable from std::string or have an istream extraction operator
+  - assignable from std::string, have an istream extraction operator, or have
+    a specialization of Cli\::fromString\<T>() for their type.
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands

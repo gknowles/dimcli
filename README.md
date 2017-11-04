@@ -9,13 +9,15 @@ Distributed under the Boost Software License, Version 1.0.
 |:--------------------:|:----------------------------------:|:--------:|
 | [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/52d1c5fc67124d67a1718a0d8a2cd4c1)](https://www.codacy.com/app/gknowles/dimcli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gknowles/dimcli&amp;utm_campaign=Badge_Grade) |
 
-C++ command line parser toolkit for kids of all ages.
+C++ command line parser toolkit for kids of all ages. 
 
+- GNU style command lines (-o, --output=FILE, etc.)
 - can parse directly to any supplied (or implicitly created) variables 
   that are:
   - default constructible
   - copyable
-  - assignable from std::string or have an istream extraction operator
+  - assignable from std::string, have an istream extraction operator, or have
+    a specialization of Cli\::fromString\<T>() for their type.
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
