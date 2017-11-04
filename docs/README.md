@@ -12,7 +12,7 @@ C++ command line parser toolkit for kids of all ages.
   - default constructible
   - copyable
   - assignable from std::string, have an istream extraction operator, or have
-    a specialization of Cli\::fromString\<T>() for their type.
+    a specialization of Cli\::fromString\<T>() for their type
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
