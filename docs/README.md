@@ -11,8 +11,8 @@ C++ command line parser toolkit for kids of all ages.
   that are:
   - default constructible
   - copyable
-  - assignable from std::string, have an istream extraction operator, or have
-    a specialization of Cli\::fromString\<T>() for their type
+  - assignable from string, have an istream extraction operator, or have a
+    specialization of Cli\::fromString\<T>() for their type
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
@@ -33,15 +33,18 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     if (!name)
-        cout << "Using the unknown name." << endl;
+        cout << "Greeting the unknown." << endl;
     for (unsigned i = 0; i < *count; ++i)
         cout << "Hello " << *name << "!" << endl;
     return 0;
 }
 ~~~
-What that does when run: 
+What it does when run: 
 
 ~~~ console
+$ a.out -x
+Error: Unknown option: -x
+
 $ a.out --help
 Usage: a.out [OPTIONS]
 
@@ -52,7 +55,7 @@ Options:
   --help                   Show this message and exit.
 
 $ a.out --count=3
-Using the unknown name.
+Greeting the unknown.
 Hello Unknown!
 Hello Unknown!
 Hello Unknown!
