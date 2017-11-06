@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Added - cli.exec() overloads that both parse() and exec()
-- Added - Actions to adjust expanded args list before option assignment
+- Added - Before actions to adjust expanded args list before option assignment
 - Added - cli.helpNoArgs() to print help when command line is empty
 - Added - opt.command() and opt.group() access methods
+- Added - Relax clamp and range to allow the low and high to be equal
 
 ## dimcli 3.0.0 (2017-10-17)
 - Added - Support for clang >= 3.6
@@ -28,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - opt.defaultDesc() to modify "(default: )" clause
 - Fixed - "No command given." should return kExitUsage
 - Changed - Command header and footer default to the top level values
-- Changed - opt.print*() functions now non-const
+- Changed - cli.print*() functions now non-const
 - Added - cli.helpCmd()
 
 ## dimcli 2.0.0 (2017-02-25)
