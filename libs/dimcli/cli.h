@@ -669,7 +669,7 @@ bool Cli::fromString_impl(
     //          Foo & out, const std::string & src) const { ... }
     //  - parse action attached to the Opt<T> instance that doesn't call
     //    opt.parseValue(), such as opt.choice().
-    assert(false && "no assignment from string or stream extraction operator");
+    assert(!"no assignment from string or stream extraction operator");
     return false;
 }
 
@@ -1031,7 +1031,7 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 //===========================================================================
 template <> 
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
-    assert(this->m_bool);
+    assert(this->m_bool && "bool option that isn't marked as bool");
     if (this->m_flagValue)
         return this->m_flagDefault;
     return this->defaultValue();
@@ -1135,7 +1135,7 @@ template <typename A, typename T>
 inline A & Cli::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // bools don't have separate values, just their presence/absence
-        assert(!m_bool && "bool argument values are never implicit");
+        assert(!m_bool && "bool argument values can't be implicit");
     } else {
         m_implicitValue = val;
     }
@@ -1169,7 +1169,9 @@ inline A & Cli::OptShim<A, T>::choice(
     const std::string & desc,
     const std::string & sortKey
 ) {
-    assert(!key.empty());
+    // The empty string isn't a valid choice because it can't be specified on
+    // the command line, where unspecified picks the default instead.
+    assert(!key.empty() && "an empty string can't be a choice");
     ChoiceDesc & cd = m_choiceDescs[key];
     cd.pos = m_choices.size();
     cd.desc = desc;

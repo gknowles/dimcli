@@ -262,7 +262,7 @@ CommandConfig & Cli::Config::findCmdAlways(
 const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
-    assert(i != cmds.end());
+    assert(i != cmds.end() && "uninitialized command context");
     return i->second;
 }
 
@@ -288,7 +288,7 @@ GroupConfig & Cli::Config::findGrpAlways(
 const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
-    assert(i != grps.end());
+    assert(i != grps.end() && "uninitialized group context");
     return i->second;
 }
 
@@ -410,7 +410,7 @@ static bool includeName(
         case kNameAll: return true;
         case kNameNonDefault: return inverted == name.invert;
         }
-        assert(0 && "unknown NameListType");
+        assert(!"unknown NameListType");
     }
     return true;
 }
@@ -954,7 +954,7 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     out.reserve(argc);
     for (; *argv; ++argv)
         out.push_back(*argv);
-    assert(argc == out.size());
+    assert(argc == out.size() && "bad arguments, argv[argc] not null");
     return out;
 }
 
@@ -969,7 +969,7 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
         string tmp = wcvt.to_bytes(*argv);
         out.push_back(move(tmp));
     }
-    assert(argc == out.size());
+    assert(argc == out.size() && "bad arguments, argv[argc] not null");
     return out;
 }
 
@@ -1509,7 +1509,7 @@ bool Cli::fail(int code, const string & msg, const string & detail) {
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
     // the 0th (name of this program) opt must always be present
-    assert(!args.empty());
+    assert(!args.empty() && "at least one (program name) argument required");
 
     Config::touchAllCmds(*this);
     OptIndex ndx;
@@ -1519,7 +1519,8 @@ bool Cli::parse(vector<string> & args) {
     // Commands can't be added when the top level command has a positional
     // argument, command processing requires that the first positional is
     // available to identify the command.
-    assert(ndx.m_allowCommands || !needCmd);
+    assert((ndx.m_allowCommands || !needCmd)
+        && "mixing top level positionals with commands");
 
     resetValues();
 
@@ -1728,10 +1729,13 @@ const string & Cli::runCommand() const {
 //===========================================================================
 bool Cli::exec() {
     auto & name = runCommand();
-    assert(commandExists(name));
+    assert(commandExists(name) && "command found by parse no longer exists");
     auto & cmd = m_cfg->cmds[name];
     if (!cmd.action(*this)) {
-        assert(exitCode());
+        // If the command should exit but there is still asynchronous work 
+        // going on, consider a custom "exit pending" exit code with special 
+        // handling in your main function. 
+        assert(exitCode() && "command failed without setting exit code");
         return false;
     }
     return true;
@@ -2188,7 +2192,7 @@ int Cli::printError(ostream & os) {
 
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {
-    assert(enable && "disabling console echo not supported");
+    assert(enable && "disabling console echo is not supported");
 }
 
 #elif defined(_WIN32)
