@@ -712,8 +712,8 @@ Cli::Cli()
 //===========================================================================
 Cli::Cli(const Cli & from) 
     : m_cfg(from.m_cfg)
-    , m_command(from.m_command)
     , m_group(from.m_group)
+    , m_command(from.m_command)
 {}
 
 //===========================================================================
