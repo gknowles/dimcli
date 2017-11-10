@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 3.1.0 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()
 - Added - Before actions to adjust expanded args list before option assignment
 - Added - cli.helpNoArgs() to print help when command line is empty
