@@ -356,17 +356,20 @@ public:
     // Parsing
 
     // Parse the command line, populate the options, and set the error and 
-    // other miscellaneous state.
+    // other miscellaneous state. Returns true if processing should continue.
     //
     // The ostream& argument is only used to print the error message, if any,
     // via printError(). Error information can also be extracted after parse()
     // completes, see errMsg() and friends.
-    bool parse(size_t argc, char * argv[]);
-    bool parse(std::ostream & oerr, size_t argc, char * argv[]);
+    [[nodiscard]] bool parse(size_t argc, char * argv[]);
+    [[nodiscard]] bool parse(std::ostream & oerr, size_t argc, char * argv[]);
 
     // "args" is non-const so response files can be expanded in place.
-    bool parse(std::vector<std::string> & args);
-    bool parse(std::ostream & oerr, std::vector<std::string> & args);
+    [[nodiscard]] bool parse(std::vector<std::string> & args);
+    [[nodiscard]] bool parse(
+        std::ostream & oerr, 
+        std::vector<std::string> & args
+    );
 
     // Sets all options to their defaults, called internally when parsing
     // starts.
@@ -395,9 +398,9 @@ public:
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
     template <typename T>
-    bool fromString(T & out, const std::string & src) const;
+    [[nodiscard]] bool fromString(T & out, const std::string & src) const;
     template <typename T>
-    bool toString(std::string & out, const T & src) const;
+    [[nodiscard]] bool toString(std::string & out, const T & src) const;
 
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
@@ -420,7 +423,7 @@ public:
     // standard parsing logic. Since it causes the parse and check actions to
     // be called care must be taken to avoid infinite recursion if used from
     // those actions.
-    bool parseValue(
+    [[nodiscard]] bool parseValue(
         OptBase & out,
         const std::string & name,
         size_t pos,
@@ -435,7 +438,11 @@ public:
         kPromptConfirm = 2,   // Make the user enter it twice
         kPromptNoDefault = 4, // Don't include default value in prompt
     };
-    bool prompt(OptBase & opt, const std::string & msg, int flags);
+    [[nodiscard]] bool prompt(
+        OptBase & opt, 
+        const std::string & msg, 
+        int flags
+    );
 
     //-----------------------------------------------------------------------
     // After parsing
@@ -457,16 +464,20 @@ public:
     // Executes the action of the selected command; returns true if it 
     // worked. On failure it's expected to have set exitCode(), errMsg(), and
     // maybe errDetail() via fail(). If no command was selected it runs the 
-    // action of the empty "" command, which can be set via cli.action() just 
-    // like any other command.
-    bool exec();
-    bool exec(std::ostream & oerr);
+    // action of the empty "" command, which defaults to failing with "No 
+    // command given." but can be set via cli.action() just like any other 
+    // command.
+    [[nodiscard]] bool exec();
+    [[nodiscard]] bool exec(std::ostream & oerr);
 
     // Helpers to parse and, if successful, execute.
-    bool exec(size_t argc, char * argv[]);
-    bool exec(std::ostream & oerr, size_t argc, char * argv[]);
-    bool exec(std::vector<std::string> & args);
-    bool exec(std::ostream & oerr, std::vector<std::string> & args);
+    [[nodiscard]] bool exec(size_t argc, char * argv[]);
+    [[nodiscard]] bool exec(std::ostream & oerr, size_t argc, char * argv[]);
+    [[nodiscard]] bool exec(std::vector<std::string> & args);
+    [[nodiscard]] bool exec(
+        std::ostream & oerr, 
+        std::vector<std::string> & args
+    );
 
     // Sets exitCode(), errMsg(), and errDetail(), intended to be called from
     // command actions, parsing related failures should use badUsage().
@@ -781,7 +792,7 @@ public:
     virtual void reset() = 0;
 
     // Parse the string into the value, return false on error.
-    virtual bool parseValue(const std::string & value);
+    [[nodiscard]] virtual bool parseValue(const std::string & value);
 
     // Set option (or add to option vector) to value for missing optionals.
     virtual void unspecifiedValue() = 0;
