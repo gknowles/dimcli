@@ -339,9 +339,9 @@ if(MSVC)
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
     # "/Zc:strictStrings" - disable string literal type conversion to non-const
-    # "/Zi" - debug info format (not present would be no info)
+    # "/ZI" - debug info format (not present would be no info)
     set(CMAKE_CXX_FLAGS "\
-        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX /Zi \
+        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX /ZI \
         /Zc:inline /Zc:rvalueCast /Zc:strictStrings")
     if(NOT MSVC_VERSION LESS 1910)
         # /permissive-  // reject non-conforming backward compatibility-isms
