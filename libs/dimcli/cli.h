@@ -77,6 +77,8 @@
 #ifndef DIMCLI_LIB_KEEP_MACROS
 #pragma warning(push)
 #endif
+// attribute 'identifier' is not recognized
+#pragma warning(disable : 5030)
 #endif
 
 #ifdef DIMCLI_LIB_DYN_LINK
