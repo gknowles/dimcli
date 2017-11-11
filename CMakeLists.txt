@@ -181,8 +181,7 @@ function(set_pch tgt srcdir)
 endfunction()
 
 function(add_exec_project tgt srcdir)
-    file(GLOB_RECURSE sources 
-        LIST_DIRECTORIES false ${srcdir}/*)
+    file(GLOB_RECURSE sources LIST_DIRECTORIES false ${srcdir}/*)
     list(APPEND deps ${sources})
     set(deps ${deps} PARENT_SCOPE)
     add_executable(${tgt} ${sources})
@@ -261,8 +260,10 @@ endfunction()
 #
 ####
 
-# get name of project from containing directory
+# Get name of project from containing directory. Strip version suffixes like
+# "-1.2.3" from the that vcpkg likes to add when building things.
 get_filename_component(prjname "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+string(REGEX REPLACE "(-[\.0-9\-]*)$" "" prjname ${prjname})
 project(${prjname})
 string(TOUPPER "${prjname}" DEFINE_PREFIX)
 
