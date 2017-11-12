@@ -543,7 +543,7 @@ private:
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline Cli::Opt<T> & Cli::opt(
+Cli::Opt<T> & Cli::opt(
     T * value, 
     const std::string & keys, 
     const U & def
@@ -556,13 +556,13 @@ inline Cli::Opt<T> & Cli::opt(
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T> & Cli::opt(T * value, const std::string & keys) {
+Cli::Opt<T> & Cli::opt(T * value, const std::string & keys) {
     return opt(value, keys, T{});
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> & Cli::optVec(
+Cli::OptVec<T> & Cli::optVec(
     std::vector<T> * values, 
     const std::string & keys, 
     int nargs
@@ -574,7 +574,7 @@ inline Cli::OptVec<T> & Cli::optVec(
 
 //===========================================================================
 template <typename T, typename U, typename>
-inline Cli::Opt<T> & Cli::opt(
+Cli::Opt<T> & Cli::opt(
     Opt<T> & alias, 
     const std::string & keys, 
     const U & def
@@ -584,13 +584,13 @@ inline Cli::Opt<T> & Cli::opt(
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & keys) {
+Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & keys) {
     return opt(&*alias, keys, T{});
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> & Cli::optVec(
+Cli::OptVec<T> & Cli::optVec(
     OptVec<T> & alias, 
     const std::string & keys, 
     int nargs
@@ -600,19 +600,19 @@ inline Cli::OptVec<T> & Cli::optVec(
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T> & Cli::opt(const std::string & keys, const T & def) {
+Cli::Opt<T> & Cli::opt(const std::string & keys, const T & def) {
     return opt<T>(nullptr, keys, def);
 }
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
+Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
     return optVec<T>(nullptr, keys, nargs);
 }
 
 //===========================================================================
 template <typename A> 
-inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
+A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
     opt.parse(&Cli::defParseAction).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
@@ -621,7 +621,7 @@ inline A & Cli::addOpt(std::unique_ptr<A> ptr) {
 
 //===========================================================================
 template <typename A, typename V, typename T>
-inline std::shared_ptr<V> Cli::getProxy(T * ptr) {
+std::shared_ptr<V> Cli::getProxy(T * ptr) {
     if (OptBase * opt = findOpt(ptr)) {
         A * dopt = static_cast<A *>(opt);
         return dopt->m_proxy;
@@ -809,8 +809,8 @@ protected:
     virtual bool parseAction(Cli & cli, const std::string & value) = 0;
     virtual bool checkAction(Cli & cli, const std::string & value) = 0;
     virtual bool afterActions(Cli & cli) = 0;
-    virtual bool assigned() const = 0;
     virtual void assign(const std::string & name, size_t pos) = 0;
+    virtual bool assigned() const = 0;
 
     // True for flags (bool on command line) that default to true.
     virtual bool inverted() const = 0;
@@ -853,7 +853,8 @@ private:
 };
 
 //===========================================================================
-template <typename T> inline void Cli::OptBase::setValueDesc() {
+template <typename T>
+void Cli::OptBase::setValueDesc() {
     if (std::is_integral<T>::value) {
         m_valueDesc = "NUM";
     } else if (std::is_convertible<T, std::string>::value) {
@@ -879,7 +880,8 @@ inline void Cli::OptBase::setValueDesc<std::experimental::filesystem::path>() {
 *
 ***/
 
-template <typename A, typename T> class Cli::OptShim : public OptBase {
+template <typename A, typename T>
+class Cli::OptShim : public OptBase {
 public:
     OptShim(const std::string & keys, bool boolean);
     OptShim(const OptShim &) = delete;
@@ -1008,10 +1010,10 @@ public:
     const T & defaultValue() const { return m_defValue; }
 
 protected:
-    bool inverted() const final;
     bool parseAction(Cli & cli, const std::string & value) final;
     bool checkAction(Cli & cli, const std::string & value) final;
     bool afterActions(Cli & cli) final;
+    bool inverted() const final;
     bool exec(
         Cli & cli,
         const std::string & value,
@@ -1029,25 +1031,10 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-inline Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
+Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
     : OptBase(keys, boolean) 
 {
     setValueDesc<T>();
-}
-
-//===========================================================================
-template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::inverted() const {
-    return this->m_bool && this->m_flagValue && this->m_flagDefault;
-}
-
-//===========================================================================
-template <> 
-inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
-    assert(this->m_bool && "bool option that isn't marked as bool");
-    if (this->m_flagValue)
-        return this->m_flagDefault;
-    return this->defaultValue();
 }
 
 //===========================================================================
@@ -1077,7 +1064,22 @@ inline bool Cli::OptShim<A, T>::afterActions(Cli & cli) {
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::exec(
+inline bool Cli::OptShim<A, T>::inverted() const {
+    return this->m_bool && this->m_flagValue && this->m_flagDefault;
+}
+
+//===========================================================================
+template <> 
+inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
+    assert(this->m_bool && "bool option that isn't marked as bool");
+    if (this->m_flagValue)
+        return this->m_flagDefault;
+    return this->defaultValue();
+}
+
+//===========================================================================
+template <typename A, typename T>
+bool Cli::OptShim<A, T>::exec(
     Cli & cli,
     const std::string & val,
     std::vector<std::function<ActionFn>> actions
@@ -1092,42 +1094,42 @@ inline bool Cli::OptShim<A, T>::exec(
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::command(const std::string & val) {
+A & Cli::OptShim<A, T>::command(const std::string & val) {
     m_command = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::group(const std::string & val) {
+A & Cli::OptShim<A, T>::group(const std::string & val) {
     m_group = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::show(bool visible) {
+A & Cli::OptShim<A, T>::show(bool visible) {
     m_visible = visible;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::desc(const std::string & val) {
+A & Cli::OptShim<A, T>::desc(const std::string & val) {
     m_desc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
+A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
     m_valueDesc = val;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
+A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
     m_defaultDesc = val;
     if (val.empty()) 
         m_defaultDesc.push_back('\0');
@@ -1136,7 +1138,7 @@ inline A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::defaultValue(const T & val) {
+A & Cli::OptShim<A, T>::defaultValue(const T & val) {
     m_defValue = val;
     for (auto && cd : m_choiceDescs)
         cd.second.def = (val == m_choices[cd.second.pos]);
@@ -1145,7 +1147,7 @@ inline A & Cli::OptShim<A, T>::defaultValue(const T & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::implicitValue(const T & val) {
+A & Cli::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // bools don't have separate values, just their presence/absence
         assert(!m_bool && "bool argument values can't be implicit");
@@ -1157,7 +1159,7 @@ inline A & Cli::OptShim<A, T>::implicitValue(const T & val) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
+A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
     auto self = static_cast<A *>(this);
     m_flagValue = true;
     if (!self->m_proxy->m_defFlagOpt) {
@@ -1176,7 +1178,7 @@ inline A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::choice(
+A & Cli::OptShim<A, T>::choice(
     const T & val,
     const std::string & key,
     const std::string & desc,
@@ -1196,28 +1198,28 @@ inline A & Cli::OptShim<A, T>::choice(
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
+A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
     this->m_parse = fn;
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
+A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
     this->m_checks.push_back(fn);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
+A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
     this->m_afters.push_back(fn);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::require() {
+A & Cli::OptShim<A, T>::require() {
     return after([](auto & cli, auto & opt, auto & /* val */) {
         return cli.requireAction(opt);
     });
@@ -1225,7 +1227,7 @@ inline A & Cli::OptShim<A, T>::require() {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
+A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
     assert(!(high < low) && "bad range, low greater than high");
     return check([low, high](auto & cli, auto & opt, auto & val) {
         if (*opt < low || high < *opt) {
@@ -1240,7 +1242,7 @@ inline A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
 
 //===========================================================================
 template <typename A, typename T>
-inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
+A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
     assert(!(high < low) && "bad clamp, low greater than high");
     return check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
         if (*opt < low) {
@@ -1253,7 +1255,8 @@ inline A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 }
 
 //===========================================================================
-template <typename A, typename T> A & Cli::OptShim<A, T>::prompt(int flags) {
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::prompt(int flags) {
     return prompt(this->defaultPrompt() + ":", flags);
 }
 
@@ -1290,7 +1293,8 @@ struct Cli::ArgMatch {
 *
 ***/
 
-template <typename T> struct Cli::Value {
+template <typename T> 
+struct Cli::Value {
     // Where the value came from.
     ArgMatch m_match;
 
@@ -1314,7 +1318,8 @@ template <typename T> struct Cli::Value {
 *
 ***/
 
-template <typename T> class Cli::Opt : public OptShim<Opt<T>, T> {
+template <typename T>
+class Cli::Opt : public OptShim<Opt<T>, T> {
 public:
     Opt(std::shared_ptr<Value<T>> value, const std::string & keys);
 
@@ -1324,9 +1329,9 @@ public:
     // OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
     int pos() const final { return m_proxy->m_match.pos; }
+    size_t size() const final { return 1; }
     void reset() final;
     void unspecifiedValue() final;
-    size_t size() const final;
 
 private:
     friend class Cli;
@@ -1343,30 +1348,13 @@ private:
 
 //===========================================================================
 template <typename T>
-inline Cli::Opt<T>::Opt(
+Cli::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
     const std::string & keys
 )
     : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
     , m_proxy{value} 
 {}
-
-//===========================================================================
-template <typename T>
-inline void Cli::Opt<T>::assign(const std::string & name, size_t pos) {
-    m_proxy->m_match.name = name;
-    m_proxy->m_match.pos = (int)pos;
-    m_proxy->m_explicit = true;
-}
-
-//===========================================================================
-template <typename T> inline void Cli::Opt<T>::reset() {
-    if (!this->m_flagValue || this->m_flagDefault)
-        *m_proxy->m_value = this->defaultValue();
-    m_proxy->m_match.name.clear();
-    m_proxy->m_match.pos = 0;
-    m_proxy->m_explicit = false;
-}
 
 //===========================================================================
 template <typename T>
@@ -1399,13 +1387,27 @@ inline bool Cli::Opt<T>::defaultValueToString(
 }
 
 //===========================================================================
-template <typename T> inline void Cli::Opt<T>::unspecifiedValue() {
-    *m_proxy->m_value = this->implicitValue();
+template <typename T>
+inline void Cli::Opt<T>::assign(const std::string & name, size_t pos) {
+    m_proxy->m_match.name = name;
+    m_proxy->m_match.pos = (int)pos;
+    m_proxy->m_explicit = true;
 }
 
 //===========================================================================
-template <typename T> inline size_t Cli::Opt<T>::size() const {
-    return 1;
+template <typename T>
+inline void Cli::Opt<T>::reset() {
+    if (!this->m_flagValue || this->m_flagDefault)
+        *m_proxy->m_value = this->defaultValue();
+    m_proxy->m_match.name.clear();
+    m_proxy->m_match.pos = 0;
+    m_proxy->m_explicit = false;
+}
+
+//===========================================================================
+template <typename T>
+inline void Cli::Opt<T>::unspecifiedValue() {
+    *m_proxy->m_value = this->implicitValue();
 }
 
 
@@ -1415,7 +1417,8 @@ template <typename T> inline size_t Cli::Opt<T>::size() const {
 *
 ***/
 
-template <typename T> struct Cli::ValueVec {
+template <typename T>
+struct Cli::ValueVec {
     // Where the values came from.
     std::vector<ArgMatch> m_matches;
 
@@ -1437,7 +1440,8 @@ template <typename T> struct Cli::ValueVec {
 *
 ***/
 
-template <typename T> class Cli::OptVec : public OptShim<OptVec<T>, T> {
+template <typename T>
+class Cli::OptVec : public OptShim<OptVec<T>, T> {
 public:
     OptVec(
         std::shared_ptr<ValueVec<T>> values,
@@ -1453,9 +1457,9 @@ public:
     // OptBase
     const std::string & from() const final { return from(size() - 1); }
     int pos() const final { return pos(size() - 1); }
+    size_t size() const final { return m_proxy->m_values->size(); }
     void reset() final;
     void unspecifiedValue() final;
-    size_t size() const final;
 
     // Information about a specific member of the vector of values at the
     // time it was parsed. If the value vector has been changed (sort, erase,
@@ -1479,42 +1483,16 @@ private:
 
 //===========================================================================
 template <typename T>
-inline Cli::OptVec<T>::OptVec(
+Cli::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
     const std::string & keys,
-    int nargs)
+    int nargs
+)
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
-    , m_proxy(values) {
+    , m_proxy(values) 
+{
     this->m_multiple = true;
     this->m_nargs = nargs;
-}
-
-//===========================================================================
-template <typename T>
-inline void Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
-    ArgMatch match;
-    match.name = name;
-    match.pos = (int)pos;
-    m_proxy->m_matches.push_back(match);
-}
-
-//===========================================================================
-template <typename T>
-inline const std::string & Cli::OptVec<T>::from(size_t index) const {
-    return index >= size() ? m_empty : m_proxy->m_matches[index].name;
-}
-
-//===========================================================================
-template <typename T> 
-inline int Cli::OptVec<T>::pos(size_t index) const {
-    return index >= size() ? 0 : m_proxy->m_matches[index].pos;
-}
-
-//===========================================================================
-template <typename T> 
-inline void Cli::OptVec<T>::reset() {
-    m_proxy->m_values->clear();
-    m_proxy->m_matches.clear();
 }
 
 //===========================================================================
@@ -1554,15 +1532,37 @@ inline bool Cli::OptVec<T>::defaultValueToString(
 }
 
 //===========================================================================
+template <typename T>
+inline void Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
+    ArgMatch match;
+    match.name = name;
+    match.pos = (int)pos;
+    m_proxy->m_matches.push_back(match);
+}
+
+//===========================================================================
+template <typename T> 
+inline void Cli::OptVec<T>::reset() {
+    m_proxy->m_values->clear();
+    m_proxy->m_matches.clear();
+}
+
+//===========================================================================
 template <typename T> 
 inline void Cli::OptVec<T>::unspecifiedValue() {
     m_proxy->m_values->push_back(this->implicitValue());
 }
 
 //===========================================================================
+template <typename T>
+const std::string & Cli::OptVec<T>::from(size_t index) const {
+    return index >= size() ? m_empty : m_proxy->m_matches[index].name;
+}
+
+//===========================================================================
 template <typename T> 
-inline size_t Cli::OptVec<T>::size() const {
-    return m_proxy->m_values->size();
+int Cli::OptVec<T>::pos(size_t index) const {
+    return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
 } // namespace
