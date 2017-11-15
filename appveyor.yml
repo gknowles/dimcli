@@ -1,7 +1,7 @@
 # Copyright Glen Knowles 2016 - 2017.
 # Distributed under the Boost Software License, Version 1.0.
 version: 0.1.{build}
-image: 
+image:
   - Visual Studio 2015
   - Visual Studio 2017
 
@@ -17,7 +17,7 @@ build_script:
   # during cmake configuration
   - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
-  - md build 
+  - md build
   - cd build
   - ps: |
       if ($env:platform -eq "x64") {
@@ -33,8 +33,8 @@ build_script:
           Invoke-Expression 'cmake -G "Visual Studio 15 2017" ..'
         }
       }
-  - cmake . -DCMAKE_BUILD_TYPE=%configuration% 
-        -DCMAKE_INSTALL_PREFIX=publish 
+  - cmake . -DCMAKE_BUILD_TYPE=%configuration%
+        -DCMAKE_INSTALL_PREFIX=publish
         -DINSTALL_LIBS:BOOL=ON
   - cmake --build . --target install --config %configuration%
   - cd publish

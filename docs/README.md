@@ -4,10 +4,10 @@ Distributed under the Boost Software License, Version 1.0.
 -->
 
 # Overview
-C++ command line parser toolkit for kids of all ages. 
+C++ command line parser toolkit for kids of all ages.
 
 - GNU style command lines (-o, --output=FILE, etc.)
-- can parse directly to any supplied (or implicitly created) variables 
+- can parse directly to any supplied (or implicitly created) variables
   that are:
   - default constructible
   - copyable
@@ -39,7 +39,7 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 ~~~
-What it does when run: 
+What it does when run:
 
 ~~~ console
 $ a.out -x
@@ -65,10 +65,10 @@ Hello Unknown!
 # Basics
 
 ## Basic Usage
-After inspecting args cli.parse() returns false if it thinks the program 
-should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64) 
-for early exit (like --help) or bad arguments respectively. Otherwise the 
-command line was valid, arguments have been parsed, and cli.exitCode() is 
+After inspecting args cli.parse() returns false if it thinks the program
+should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64)
+for early exit (like --help) or bad arguments respectively. Otherwise the
+command line was valid, arguments have been parsed, and cli.exitCode() is
 EX_OK.
 
 ~~~ cpp
@@ -89,29 +89,29 @@ int main(int argc, char * argv[]) {
 And what it looks like:
 
 ~~~ console
-$ a.out --help  
-Usage: a.out [OPTIONS]  
+$ a.out --help
+Usage: a.out [OPTIONS]
 
-Options:  
+Options:
   --help    Show this message and exit.
 
 $ a.out
 Does the apple have a worm? No!
 ~~~
 
-The EX_* constants (along with standard values) are in sysexits.h on most 
+The EX_* constants (along with standard values) are in sysexits.h on most
 unixes, although it may not be in any standard. Equivalent enum values
-Dim\::kExitOk (0) and Dim\::kExitUsage (64) are defined, which can be useful 
+Dim\::kExitOk (0) and Dim\::kExitUsage (64) are defined, which can be useful
 on Windows where \<sysexits.h> doesn't exist.
 
 
 ## Options
-Dim::Cli is used by declaring options to receive arguments. Either via 
-pointer to a predefined external variable or by implicitly creating the 
-variable when the option is declared. 
+Dim::Cli is used by declaring options to receive arguments. Either via
+pointer to a predefined external variable or by implicitly creating the
+variable when the option is declared.
 
-Use cli.opt\<T>(names, defaultValue) to link positional or named arguments to 
-an option. It returns a proxy object that can be used like a pointer (* and ->) 
+Use cli.opt\<T>(names, defaultValue) to link positional or named arguments to
+an option. It returns a proxy object that can be used like a pointer (* and ->)
 to access the value.
 
 ~~~ cpp
@@ -128,13 +128,13 @@ int main(int argc, char * argv[]) {
 And what you get:
 
 ~~~ console
-$ a.out --help  
-Usage: a.out [OPTIONS]  
+$ a.out --help
+Usage: a.out [OPTIONS]
 
-Options:  
+Options:
   --fruit=STRING  (default: apple)
 
-  --help          Show this message and exit.  
+  --help          Show this message and exit.
 
 $ a.out --fruit=orange
 Does the orange have a worm? No!
@@ -158,12 +158,12 @@ Usage: a.out [OPTIONS]
 Options:
   --fruit=FRUIT  type of fruit (default: apple)
 
-  --help         Show this message and exit.  
+  --help         Show this message and exit.
 ~~~
 
 
 ## External Variables
-In addition to using the option proxies you can bind options directly to 
+In addition to using the option proxies you can bind options directly to
 predefined variables. This can be used to set a global flag, or populate a
 struct that you access later.
 
@@ -177,7 +177,7 @@ int main(int argc, char * argv[]) {
     auto & fruit = cli.opt<string>("fruit", "apple").desc("type of fruit");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
-    cout << "Does the " << *fruit << " have a worm? " 
+    cout << "Does the " << *fruit << " have a worm? "
         << worm ? "Yes :(" : "No!";
     return EX_OK;
 }
@@ -185,14 +185,14 @@ int main(int argc, char * argv[]) {
 And what it looks like:
 
 ~~~ console
-$ a.out --help  
-Usage: a.out [OPTIONS]  
+$ a.out --help
+Usage: a.out [OPTIONS]
 
 Options:
   --fruit=STRING  type of fruit (default: apple)
   -w, --worm      make it icky
 
-  --help          Show this message and exit.  
+  --help          Show this message and exit.
 
 $ a.out --fruit=orange
 Does the orange have a worm? No!
@@ -205,7 +205,7 @@ You can also point multiple "options" at the same variable, as is common with
 
 
 ## Option Names
-Names are passed in as a space separated list where the individual names look 
+Names are passed in as a space separated list where the individual names look
 like these:
 
 | Type of name                        | Example      |
@@ -215,7 +215,7 @@ like these:
 | optional positional                 | \[file name] |
 | required positional                 | \<file\>     |
 
-Names for positionals (inside angled or square brackets) may contain spaces, 
+Names for positionals (inside angled or square brackets) may contain spaces,
 and all names may have modifier flags:
 
 | Flag | Type   | Description                                                     |
@@ -239,24 +239,24 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ~~~
-Ends up looking like this (note: required positionals are **always** placed 
+Ends up looking like this (note: required positionals are **always** placed
 before any optional ones):
 
 ~~~ console
-$ a.out --help  
-Usage: a.out [OPTIONS] pear [apple]  
+$ a.out --help
+Usage: a.out [OPTIONS] pear [apple]
   pear      pears are yellow
   apple     apples are red
 
-Options:  
+Options:
   -a, --apple=STRING          apples are red
-  --apricot, --orange / -o, --no-orange  
+  --apricot, --orange / -o, --no-orange
                               oranges are orange
 
-  --help                      Show this message and exit.  
+  --help                      Show this message and exit.
 ~~~
 
-When named options are added they replace any previous rule with the same 
+When named options are added they replace any previous rule with the same
 name, therefore this option declares '-n' an inverted bool:
 
 ~~~ cpp
@@ -273,25 +273,25 @@ cli.opt<string>("n");
 ## Positional Arguments
 A few things to keep in mind about positional arguments:
 
-- Positional arguments are mapped by the order they are added, except that 
-  required ones appear before optional ones. 
-- If there are multiple vector positionals with unlimited (nargs = -1) arity 
-  all but the first will be treated as if they had nargs = 1. 
-- If the unlimited one is required it will prevent any optional positionals 
-  from getting populated, since it eats up all the arguments before they get 
+- Positional arguments are mapped by the order they are added, except that
+  required ones appear before optional ones.
+- If there are multiple vector positionals with unlimited (nargs = -1) arity
+  all but the first will be treated as if they had nargs = 1.
+- If the unlimited one is required it will prevent any optional positionals
+  from getting populated, since it eats up all the arguments before they get
   a turn.
 
 
 ## Flag Arguments
-Many arguments are flags with no associated value, they just set an option 
-to a predefined value. This is the default when you create a option of type 
-bool. Normally flags set the option to true, but this can be changed in two 
+Many arguments are flags with no associated value, they just set an option
+to a predefined value. This is the default when you create a option of type
+bool. Normally flags set the option to true, but this can be changed in two
 ways:
 
 - make it an inverted bool, which will set it to false
   - explicitly using the "!" modifier
   - define a long name and use the implicitly created "no-" prefix version
-- use opt.flagValue() to set the value, see 
+- use opt.flagValue() to set the value, see
   [feature switches](Feature%20Switches).
 
 ~~~ cpp
@@ -320,7 +320,7 @@ Options:
   --shout, --no-whisper / --no-shout, --whisper
             I can't hear you!
 
-  --help    Show this message and exit. 
+  --help    Show this message and exit.
 
 $ a.out
 I am a.out
@@ -332,15 +332,15 @@ I am A.OUT!!!!111
 
 
 ## Vector Options
-Allows for an unlimited (or specific) number of values to be returned in a 
-vector. Vector options are declared using cli.optVec() which binds to a 
+Allows for an unlimited (or specific) number of values to be returned in a
+vector. Vector options are declared using cli.optVec() which binds to a
 std::vector\<T>.
 
-Example: 
+Example:
 
 ~~~ cpp
 // printing a comma separated list is annoying...
-template<typename T> 
+template<typename T>
 ostream & operator<< (ostream & os, const vector<T> & v) {
     auto i = v.begin(), e = v.end();
     if (i != e) {
@@ -379,8 +379,8 @@ $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
 ~~~
 
-While the * and -> operators get you full access to the underlying vector, 
-size() and [] are also available directly on the OptVec<T>. Which may 
+While the * and -> operators get you full access to the underlying vector,
+size() and [] are also available directly on the OptVec<T>. Which may
 occasionally save a little bit of typing.
 
 ~~~ cpp
@@ -393,12 +393,12 @@ if (apples)
 
 
 ## Life After Parsing
-If you are using external variables you just access them directly after using 
+If you are using external variables you just access them directly after using
 cli.parse() to populate them.
 
-If you use the proxy object returned from cli.opt\<T>() you can dereference it 
-like a smart pointer to get at the value. In addition, you can test whether 
-it was explicitly set, find the argument name that populated it, and get the 
+If you use the proxy object returned from cli.opt\<T>() you can dereference it
+like a smart pointer to get at the value. In addition, you can test whether
+it was explicitly set, find the argument name that populated it, and get the
 position in argv\[] it came from.
 
 ~~~ cpp
@@ -417,12 +417,12 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ~~~
-What it does: 
+What it does:
 
 ~~~ console
-$ a.out  
-Using the unknown name.  
-Hello Unknown!  
+$ a.out
+Using the unknown name.
+Hello Unknown!
 $ a.out -n John
 Name selected using -n
 Hello John!
@@ -445,17 +445,17 @@ Hello Mary!
 
 ## Optional Values
 You use the '?' [flag](Option%20Names) on an argument name to indicate that
-its value is optional. Only non-booleans can have optional values, booleans 
-are evaluated just on their presence or absence and don't otherwise have 
+its value is optional. Only non-booleans can have optional values, booleans
+are evaluated just on their presence or absence and don't otherwise have
 values.
 
-For a user to set a value on the command line when it is optional the value 
-must be connected (no space) to the argument name, otherwise it is interpreted 
-as not present and the arguments implicit value is used instead. If the name 
-is not present at all the variable is set to the default given in the 
-cli.opt\<T>() call. 
+For a user to set a value on the command line when it is optional the value
+must be connected (no space) to the argument name, otherwise it is interpreted
+as not present and the arguments implicit value is used instead. If the name
+is not present at all the variable is set to the default given in the
+cli.opt\<T>() call.
 
-By default the implicit value is T{}, but can be changed using 
+By default the implicit value is T{}, but can be changed using
 opt.implicitValue().
 
 For example:
@@ -473,7 +473,7 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ~~~
-What happens: 
+What happens:
 
 ~~~ console
 $ a.out
@@ -490,17 +490,17 @@ v1 =, v2 = two, p = one
 
 
 ## Before Actions
-It's unusual to want a before action. They operate on the entire argument 
-list, after environment variable and response file expansion, but before any 
+It's unusual to want a before action. They operate on the entire argument
+list, after environment variable and response file expansion, but before any
 individual arguments are parsed. The before action should:
 
 - Inspect and possibly modify the raw arguments. The args are guaranteed to
-  start out valid, but be careful that it still starts with a program name 
+  start out valid, but be careful that it still starts with a program name
   in arg0 when you're done.
 - Call cli.badUsage() with an error message for problems.
 - Return false if the program should stop, otherwise true.
 
-There can be any number of before actions, they are executed in the order 
+There can be any number of before actions, they are executed in the order
 they were added.
 
 Let's test for empty command lines and add "--help" to them. But first, our
@@ -536,7 +536,7 @@ auto & val = cli.opt<string>("<value>").desc("It's required!");
 cli.before([](Cli &, vector<string> & args) {
     if (args.size() == 1) // it's just the program name?
         args.push_back("--help");
-    return true; 
+    return true;
 }
 ~~~
 
@@ -555,25 +555,25 @@ to do the same thing.
 
 
 ## Parse Actions
-Sometimes, you want an argument to completely change the execution flow. For 
-instance, to provide more detailed errors about badly formatted arguments. Or 
-to make "--version" print some crazy ASCII artwork and exit the program (for 
+Sometimes, you want an argument to completely change the execution flow. For
+instance, to provide more detailed errors about badly formatted arguments. Or
+to make "--version" print some crazy ASCII artwork and exit the program (for
 a non-crazy --version use [opt.versionOpt()](Version%20Option)).
 
-Parsing actions are attached to options and get invoked when a value becomes 
-available for it. Any std::function compatible object that accepts references 
+Parsing actions are attached to options and get invoked when a value becomes
+available for it. Any std::function compatible object that accepts references
 to cli, opt, and string as parameters can be used. The function should:
 
-- Parse the source string and use the result to set the option value (or 
+- Parse the source string and use the result to set the option value (or
   push back the additional value for vector arguments).
 - Call cli.badUsage() with an error message if there's a problem.
-- Return false if the program should stop, otherwise true. You may want to 
+- Return false if the program should stop, otherwise true. You may want to
   stop due to error or just to early out like "--version" and "--help".
 
 Other things to keep in mind:
 
 - Options only have one parse action, changing it *replaces* the default.
-- You can use opt.from() and opt.pos() to get the argument name that the value 
+- You can use opt.from() and opt.pos() to get the argument name that the value
   was attached to on the command line and its position in argv\[].
 - For bool options the source value string will always be either "0" or "1".
 
@@ -617,18 +617,18 @@ Error: Invalid '-n' value: x
 
 
 ## Check Actions
-Check actions run for each value that is successfully parsed and are a good 
-place for additional work. For example, opt.range() and opt.clamp() are 
+Check actions run for each value that is successfully parsed and are a good
+place for additional work. For example, opt.range() and opt.clamp() are
 implemented as check actions. Just like parse actions the callback is any
 std::function compatible object that accepts references to cli, opt, and
-string as parameters and returns bool. 
+string as parameters and returns bool.
 
 An option can have any number of check actions and they are called in the
 order they were added.
 
 The function should:
 - Check the options new value. Beware that options are process in the order
-  they appear on the command line, so comparing with another option is 
+  they appear on the command line, so comparing with another option is
   usually better done in an [after action](After%20Actions).
 - Call cli.badUsage() with an error message if there's a problem.
 - Return false if the program should stop, otherwise true to let processing
@@ -673,17 +673,17 @@ $ a.out --socks 3
 
 
 ## After Actions
-After actions run after all arguments have been parsed. For example, 
-opt.prompt() and opt.require() are both implemented as after actions. Any 
-number of after actions can be added and will, for every (not just the 
-selected ones!) registered option, be called in the order they're added. They 
-are called with the three parameters, like other option actions, that are 
-references to cli, opt, and the value string respectively. However the const 
-string& value is always empty(), so any information about the value must come 
+After actions run after all arguments have been parsed. For example,
+opt.prompt() and opt.require() are both implemented as after actions. Any
+number of after actions can be added and will, for every (not just the
+selected ones!) registered option, be called in the order they're added. They
+are called with the three parameters, like other option actions, that are
+references to cli, opt, and the value string respectively. However the const
+string& value is always empty(), so any information about the value must come
 from the opt reference.
 
 When using subcommands, only the after actions bound to the top level or the
-selected command are executed. After actions on the options of all other 
+selected command are executed. After actions on the options of all other
 commands are, like the options themselves, ignored.
 
 The function should:
@@ -699,7 +699,7 @@ int main(int argc, char * argv[]) {
     auto & high = cli.opt<int>("h")
         .desc("High value, must be greater than the low.")
         .after([&](auto & cli, auto & opt, auto &) {
-            return (*opt >= *low) 
+            return (*opt >= *low)
                 || cli.badUsage("High must not be less than the low.");
         });
     if (!cli.parse(cerr, argc, argv))
@@ -731,17 +731,17 @@ Range is from 2 to 5
 
 ## Subcommands
 Git style subcommands are created by either cli.command("cmd"), which changes
-the cli objects context to the command, or with opt.command("cmd"), which 
-changes the command the option is for. Once the cli object context has been 
-changed it can than be used to add (description, footer, options, etc) to the 
-command. Exactly the same as when working with a simple command line. If you 
-pass an empty string to cli.command() or opt.command() it represents the top 
+the cli objects context to the command, or with opt.command("cmd"), which
+changes the command the option is for. Once the cli object context has been
+changed it can than be used to add (description, footer, options, etc) to the
+command. Exactly the same as when working with a simple command line. If you
+pass an empty string to cli.command() or opt.command() it represents the top
 level processing that takes place before a command has been found.
 
-Options are processed on the top level up to the first positional. The first 
-positional is the command, and the rest of the arguments are processed in the 
-context of that command. Since the top level doesn't process positionals when 
-commands are present, it will assert in debug builds and ignore them in 
+Options are processed on the top level up to the first positional. The first
+positional is the command, and the rest of the arguments are processed in the
+context of that command. Since the top level doesn't process positionals when
+commands are present, it will assert in debug builds and ignore them in
 release if positionals are defined.
 ~~~ cpp
 static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
@@ -782,7 +782,7 @@ int main(int argc, char * argv[]) {
     ...
 ~~~
 
-Or if there's some additional argument checks or setup you need to do, the 
+Or if there's some additional argument checks or setup you need to do, the
 exec() call can be separate from parse():
 ~~~ cpp
     if (!cli.parse(cerr, argc, argv))
@@ -818,7 +818,7 @@ $ a.out --yell orange
 It's an orange!!!
 ~~~
 
-In the commands list, the cli.desc() is only used up to the first period, but 
+In the commands list, the cli.desc() is only used up to the first period, but
 in command specific pages you see the whole thing:
 
 ~~~ console
@@ -835,15 +835,15 @@ Options:
 
 
 ## Multiple Source Files
-Options don't have to be defined all in one source file, separate source 
+Options don't have to be defined all in one source file, separate source
 files can each define options of interest to that file and get them populated
 when the command line is processed.
 
-When you instantiate Dim::Cli you're creating a handle to the globally shared 
-configuration. So multiple translation units can each create one and use it to 
+When you instantiate Dim::Cli you're creating a handle to the globally shared
+configuration. So multiple translation units can each create one and use it to
 update the shared configuration.
 
-The following example has a logMsg function in log.cpp with its own "-1" 
+The following example has a logMsg function in log.cpp with its own "-1"
 option while main.cpp registers "--version":
 
 ~~~ cpp
@@ -881,8 +881,8 @@ Options:
   --version  Show version and exit.
 ~~~
 
-When you want to put a bundle of stuff in a separate source file, such as a 
-[command](Subcommands) and its options, it can be convenient to group them 
+When you want to put a bundle of stuff in a separate source file, such as a
+[command](Subcommands) and its options, it can be convenient to group them
 into a single static struct.
 ~~~ cpp
 // somefile.cpp
@@ -903,7 +903,7 @@ static struct CmdOpts {
 } s_opts;
 ~~~
 
-Then in myCmd() and throughout the rest of somefile.cpp you can reference the 
+Then in myCmd() and throughout the rest of somefile.cpp you can reference the
 options as **s_opts.option1**, **s_opts.option2**, and **s_opts.option3**.
 
 And the help text will be:
@@ -922,14 +922,14 @@ Options:
 ~~~
 
 #### Dim::CliLocal
-Although it was created for testing you can also use Dim::CliLocal, a 
-completely self-contained parser, if you need to redefine options, have 
-results from multiple parses at once, or otherwise avoid the shared 
+Although it was created for testing you can also use Dim::CliLocal, a
+completely self-contained parser, if you need to redefine options, have
+results from multiple parses at once, or otherwise avoid the shared
 configuration.
 
 
 ## Response Files
-A response file is a collection of frequently used or generated arguments 
+A response file is a collection of frequently used or generated arguments
 saved as text, often with a ".rsp" extension, that is substituted into the
 command line when referenced.
 
@@ -963,7 +963,7 @@ $ echo c >one.rsp
 $ a.out a b @one.rsp d
 Words: a b c d
 ~~~
-Response files can be used multiple times and the arguments in them can be 
+Response files can be used multiple times and the arguments in them can be
 broken into multiple lines:
 
 ~~~ console
@@ -972,8 +972,8 @@ $ echo e >>one.rsp
 $ a.out x @one.rsp y @one.rsp
 Words: x d e y d e
 ~~~
-Response files also can be nested, when a response file contains a reference 
-to another response file the path is relative to the parent response file, 
+Response files also can be nested, when a response file contains a reference
+to another response file the path is relative to the parent response file,
 not to the working directory.
 
 ~~~ console
@@ -992,13 +992,13 @@ $ a.out @one.rsp
 Error: Recursive response file: one.rsp
 ~~~
 
-While generally useful response file processing can be disabled via 
+While generally useful response file processing can be disabled via
 cli.responseFiles(false).
 
 
 ## Environment Variable
-You can specify an environment variable that will have its contents 
-prepended to the command line. 
+You can specify an environment variable that will have its contents
+prepended to the command line.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -1013,7 +1013,7 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ~~~
-The same can also be done manually, as shown below. This is a good starting 
+The same can also be done manually, as shown below. This is a good starting
 point if you need something slightly different:
 
 ~~~ cpp
@@ -1040,11 +1040,11 @@ Words: 'a' 'b' 'c' 'd'
 
 
 ## Keep It Quiet
-For some applications, such as Windows services, it's important not to 
+For some applications, such as Windows services, it's important not to
 interact with the console. Simple steps to avoid cli.parse() doing console IO:
 
 1. Don't use things (such as opt.prompt()) that explicitly ask for IO.
-2. Add your own "help" argument to override the default, you can still turn 
+2. Add your own "help" argument to override the default, you can still turn
 around and call cli.printHelp(ostream&) if desired.
 3. Use the two argument version of cli.parse() and get the error message from
 cli.errMsg() and cli.errDetail() if it fails.
@@ -1073,7 +1073,7 @@ usage: a.out [OPTIONS]
 
 Options:
   --help     Show this message and exit.
-  --version  Show version and exit.  
+  --version  Show version and exit.
 
 $ a.out --version
 a.out version 1.0
@@ -1084,8 +1084,8 @@ Hello world!
 
 ## Help Option
 You can modify the implicitly create --help option. Use cli.helpOpt() to get
-a reference and then go to town. The most likely thing would be to change the 
-description or option group, but since you get back an Opt\<T> you can use any 
+a reference and then go to town. The most likely thing would be to change the
+description or option group, but since you get back an Opt\<T> you can use any
 of the standard functions.
 
 ~~~ cpp
@@ -1125,7 +1125,7 @@ Options:
   --help    What you see is what you get.
 ~~~
 
-Another related command is cli.helpNoArgs(), which internally adds "--help" to 
+Another related command is cli.helpNoArgs(), which internally adds "--help" to
 otherwise empty command lines.
 ~~~ cpp
 cli.helpNoArgs();
@@ -1149,10 +1149,10 @@ Options:
 
 ## Feature Switches
 Using flag arguments, feature switches are implemented by creating multiple
-options that reference the same external variable and marking them flag 
+options that reference the same external variable and marking them flag
 values.
 
-To set the default, pass in a value of true to the flagValue() function of 
+To set the default, pass in a value of true to the flagValue() function of
 the option that should be the default.
 
 ~~~ cpp
@@ -1164,7 +1164,7 @@ int main(int argc, char * argv[]) {
     cli.group("~").title("Other options");
     cli.group("Type of fruit");
     cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
-    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true); 
+    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true);
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Does the " << fruit << " have a worm? No!";
@@ -1189,7 +1189,7 @@ Does the apple have a worm? No!
 $ a.out -o
 Does the orange have a worm? No!
 ~~~
-You can use an inaccessible option (empty string for the keys) that doesn't 
+You can use an inaccessible option (empty string for the keys) that doesn't
 show up in the interface (or the help text) to set an explicit default.
 
 ~~~ cpp
@@ -1211,7 +1211,7 @@ for an enum. You use opt.choice() to add legal choices, one at a time, to an
 option.
 
 Choices are similar to [feature switches](Feature%20Switches) but instead of
-multiple boolean options populating a single variable it is a single 
+multiple boolean options populating a single variable it is a single
 non-boolean option setting its variable to one of multiple values.
 
 ~~~ cpp
@@ -1224,7 +1224,7 @@ int main(int argc, char * argv[]) {
         .choice(State::go, "green", "Means go!")
         .choice(State::wait, "yellow", "Means wait, even if you're late.")
         .choice(State::stop, "red", "Means stop.");
-    if (!cli.parse(cerr, argc, argv)) 
+    if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     switch (*state) {
         case State::stop: cout << "STOP!"; break;
@@ -1322,9 +1322,9 @@ Error: Out of range 'letter' value [a - z]: 1
 
 
 ## Counting
-In very rare circumstances, it might be useful to use repetition to increase 
-an integer. There is no special handling for it, but counting can be done 
-easily enough with a vector. This can be used for verbosity flags, for 
+In very rare circumstances, it might be useful to use repetition to increase
+an integer. There is no special handling for it, but counting can be done
+easily enough with a vector. This can be used for verbosity flags, for
 instance:
 
 ~~~ cpp
@@ -1349,7 +1349,7 @@ like more work.
 
 
 ## Prompting
-You can have an option prompt the user for the value when it's left off of 
+You can have an option prompt the user for the value when it's left off of
 the command line.
 
 ~~~ cpp
@@ -1362,7 +1362,7 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ~~~
-By default the prompt is a capitalized version of the first option name. 
+By default the prompt is a capitalized version of the first option name.
 Which is why this example uses "cookies c" instead of "c cookies".
 
 ~~~ console
@@ -1372,8 +1372,8 @@ $ a.out
 Cookies: 3
 There are 3 cookies.
 ~~~
-The first option name is also used in errors where no name is available from 
-the command line, such as when the value is from a prompt. The following 
+The first option name is also used in errors where no name is available from
+the command line, such as when the value is from a prompt. The following
 fails because "nine" isn't an int.
 
 ~~~ console
@@ -1397,7 +1397,7 @@ There are 9 cookies.
 
 
 ## Password Prompting
-In addition to simple prompting, when an option is left off the command line 
+In addition to simple prompting, when an option is left off the command line
 a prompt also has some behaviors that are controlled by flags.
 
 | Flag           | Description                        |
@@ -1420,8 +1420,8 @@ Results in:
 
 ~~~ console
 $ a.out
-Password: 
-Enter again to confirm: 
+Password:
+Enter again to confirm:
 Password was: secret
 ~~~
 For passwords you can use opt.passwordOpt() instead of spelling it out.
@@ -1443,9 +1443,9 @@ Options:
 
 
 ## Confirm Option
-There is a short cut for a "-y, --yes" option, called cli.confirmOpt(), that 
-only lets the program run if the option is set or the user responds with 'y' 
-or 'Y' when asked if they are sure. Otherwise it sets cli.exitCode() to EX_OK 
+There is a short cut for a "-y, --yes" option, called cli.confirmOpt(), that
+only lets the program run if the option is set or the user responds with 'y'
+or 'Y' when asked if they are sure. Otherwise it sets cli.exitCode() to EX_OK
 and causes cli.parse() to return false.
 
 ~~~ cpp
@@ -1508,7 +1508,7 @@ sections.
 | Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
 | Footer | cli.footer() | Shown at the end, often contains references to further information. |
 
-Within text, consecutive spaces are collapsed and words are wrapped at 80 
+Within text, consecutive spaces are collapsed and words are wrapped at 80
 columns. Newlines should be reserved for paragraph breaks.
 
 ~~~ cpp
@@ -1528,7 +1528,7 @@ cli.footer(
 );
 ~~~
 
-In this example the positionals section is omitted because the positional 
+In this example the positionals section is omitted because the positional
 doesn't have a description.
 
 ~~~ console
@@ -1556,7 +1556,7 @@ Footer at end, usually with where to find more info.
 ## Option Groups
 Option groups are used to collect related options together in the help text.
 In addition to name, groups have a title and sort key that determine section
-heading and the order groups are rendered. Groups are created on reference, 
+heading and the order groups are rendered. Groups are created on reference,
 with the title and sort key equal to the name.
 
 Additionally there are two predefined option groups:
@@ -1566,12 +1566,12 @@ Additionally there are two predefined option groups:
 | ""   | ""   | "Options" | Default group options are created          |
 | "~"  | "~"  | ""        | Footer group, default location for "--help" and "--version" |
 
-In order to generate the help text the visible options are collected into 
+In order to generate the help text the visible options are collected into
 groups, the groups are sorted by sort key and the options within each group
 are sorted by name.
 
 The group title followed by the options is then output for each group that
-has options. A group without a title is still separate from the previous group 
+has options. A group without a title is still separate from the previous group
 by a single blank line.
 
 To group options you either use opt.group() to set the group name or create
@@ -1605,7 +1605,7 @@ Let's see the groupings...
 $ a.out --help
 usage: a.out [OPTIONS]
 
-First has a really long title that wraps around to more than a single line, 
+First has a really long title that wraps around to more than a single line,
 quite a lot of text for so few options:
   --1a
   --1b       boolean 1b
@@ -1618,7 +1618,7 @@ Third:
 
 Internally Generated:
   --help     Show this message and exit.
-  --version  Show version and exit.  
+  --version  Show version and exit.
 ~~~
 
 
@@ -1637,8 +1637,8 @@ int main(int argc, char * argv[]) {
 }
 ~~~
 
-Programs that only have a simple help command aren't very helpful, but it 
-should give you an idea. If you have more commands they will show up as you'd 
+Programs that only have a simple help command aren't very helpful, but it
+should give you an idea. If you have more commands they will show up as you'd
 expect.
 ~~~ console
 $ a.out help
@@ -1670,7 +1670,7 @@ usage: a.out help [-u, --usage] [--help] [command]
 
 
 ## Going Your Own Way
-If generated help doesn't work for you, you can override the built-in help 
+If generated help doesn't work for you, you can override the built-in help
 with your own.
 
 ~~~ cpp
@@ -1681,10 +1681,10 @@ if (*help)
     return printMyHelp();
 ~~~
 
-This works because the last definition for named options overrides any 
+This works because the last definition for named options overrides any
 previous ones.
 
-Within your help printer you can use the existing functions to do some of the 
+Within your help printer you can use the existing functions to do some of the
 work:
 
 - cli.printHelp

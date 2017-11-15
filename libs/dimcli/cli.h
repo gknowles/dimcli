@@ -5,7 +5,7 @@
 //
 // Command line parser toolkit
 //
-// Instead of trying to figure it all out from just this header please take 
+// Instead of trying to figure it all out from just this header please take
 // a moment and look at the documentation and examples:
 // https://github.com/gknowles/dimcli
 
@@ -18,9 +18,9 @@
 *
 ***/
 
-// The dimcli_userconfig.h include is defined by the application and may be 
-// used to configure the standard library before the headers get included. 
-// This includes macros such as _ITERATOR_DEBUG_LEVEL (Microsoft), 
+// The dimcli_userconfig.h include is defined by the application and may be
+// used to configure the standard library before the headers get included.
+// This includes macros such as _ITERATOR_DEBUG_LEVEL (Microsoft),
 // _LIBCPP_DEBUG (libc++), etc.
 #ifdef __has_include
 #if __has_include("dimcli_userconfig.h")
@@ -53,10 +53,10 @@
 // Configuration of the application. These options, if desired, are set by the
 // application before including the library headers.
 
-// DIMCLI_LIB_KEEP_MACROS: By default the DIMCLI_LIB_* macros defined 
-// internally (including in this file) are undef'd so they don't leak out to 
-// application code. Setting this macro leaves them available for the 
-// application to use. Also included are other platform specific adjustments, 
+// DIMCLI_LIB_KEEP_MACROS: By default the DIMCLI_LIB_* macros defined
+// internally (including in this file) are undef'd so they don't leak out to
+// application code. Setting this macro leaves them available for the
+// application to use. Also included are other platform specific adjustments,
 // such as suppression of specific compiler warnings.
 
 
@@ -184,8 +184,8 @@ public:
 
     template <typename T>
     OptVec<T> & optVec(
-        std::vector<T> * values, 
-        const std::string & keys, 
+        std::vector<T> * values,
+        const std::string & keys,
         int nargs = -1
     );
 
@@ -205,8 +205,8 @@ public:
 
     template <typename T>
     OptVec<T> & optVec(
-        OptVec<T> & values, 
-        const std::string & keys, 
+        OptVec<T> & values,
+        const std::string & keys,
         int nargs = -1
     );
 
@@ -227,7 +227,7 @@ public:
     // Add --version option that shows "${progName.filename()} version ${ver}"
     // and exits. An empty progName defaults to argv[0].
     Opt<bool> & versionOpt(
-        const std::string & ver, 
+        const std::string & ver,
         const std::string & progName = {}
     );
 
@@ -252,7 +252,7 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Changes config context to reference the options of the selected 
+    // Changes config context to reference the options of the selected
     // command. Use "" to specify the top level context.
     Cli & command(const std::string & name, const std::string & group = {});
 
@@ -272,7 +272,7 @@ public:
     // line breaks for semantics, let the automatic line wrapping take care
     // of the rest.
     //
-    // Unless individually overridden commands default to using the header and 
+    // Unless individually overridden commands default to using the header and
     // footer (but not the desc) specified at the top level.
     Cli & header(const std::string & val);
     Cli & desc(const std::string & val);
@@ -334,7 +334,7 @@ public:
         const std::string & progName = {},
         const std::string & cmd = {}
     );
-    // Same as printUsage(), except individually lists all non-default options 
+    // Same as printUsage(), except individually lists all non-default options
     // instead of the [OPTIONS] catchall.
     int printUsageEx(
         std::ostream & os,
@@ -343,21 +343,21 @@ public:
     );
 
     void printPositionals(
-        std::ostream & os, 
+        std::ostream & os,
         const std::string & cmd = {}
     );
     void printOptions(std::ostream & os, const std::string & cmd = {});
     void printCommands(std::ostream & os);
 
     // If !exitCode() prints the errMsg and errDetail (if present), but does
-    // nothing if exitCode() is EX_OK. Returns exitCode(). Only makes sense 
+    // nothing if exitCode() is EX_OK. Returns exitCode(). Only makes sense
     // after parsing has completed.
     int printError(std::ostream & oerr);
 
     //-----------------------------------------------------------------------
     // Parsing
 
-    // Parse the command line, populate the options, and set the error and 
+    // Parse the command line, populate the options, and set the error and
     // other miscellaneous state. Returns true if processing should continue.
     //
     // The ostream& argument is only used to print the error message, if any,
@@ -369,7 +369,7 @@ public:
     // "args" is non-const so response files can be expanded in place.
     [[nodiscard]] bool parse(std::vector<std::string> & args);
     [[nodiscard]] bool parse(
-        std::ostream & oerr, 
+        std::ostream & oerr,
         std::vector<std::string> & args
     );
 
@@ -441,8 +441,8 @@ public:
         kPromptNoDefault = 4, // Don't include default value in prompt
     };
     [[nodiscard]] bool prompt(
-        OptBase & opt, 
-        const std::string & msg, 
+        OptBase & opt,
+        const std::string & msg,
         int flags
     );
 
@@ -463,11 +463,11 @@ public:
     // commands defined or none were selected.
     const std::string & runCommand() const;
 
-    // Executes the action of the selected command; returns true if it 
+    // Executes the action of the selected command; returns true if it
     // worked. On failure it's expected to have set exitCode(), errMsg(), and
-    // maybe errDetail() via fail(). If no command was selected it runs the 
-    // action of the empty "" command, which defaults to failing with "No 
-    // command given." but can be set via cli.action() just like any other 
+    // maybe errDetail() via fail(). If no command was selected it runs the
+    // action of the empty "" command, which defaults to failing with "No
+    // command given." but can be set via cli.action() just like any other
     // command.
     [[nodiscard]] bool exec();
     [[nodiscard]] bool exec(std::ostream & oerr);
@@ -477,15 +477,15 @@ public:
     [[nodiscard]] bool exec(std::ostream & oerr, size_t argc, char * argv[]);
     [[nodiscard]] bool exec(std::vector<std::string> & args);
     [[nodiscard]] bool exec(
-        std::ostream & oerr, 
+        std::ostream & oerr,
         std::vector<std::string> & args
     );
 
     // Sets exitCode(), errMsg(), and errDetail(), intended to be called from
     // command actions, parsing related failures should use badUsage().
     bool fail(
-        int code, 
-        const std::string & msg, 
+        int code,
+        const std::string & msg,
         const std::string & detail = {}
     );
 
@@ -544,8 +544,8 @@ private:
 //===========================================================================
 template <typename T, typename U, typename>
 Cli::Opt<T> & Cli::opt(
-    T * value, 
-    const std::string & keys, 
+    T * value,
+    const std::string & keys,
     const U & def
 ) {
     auto proxy = getProxy<Opt<T>, Value<T>>(value);
@@ -563,8 +563,8 @@ Cli::Opt<T> & Cli::opt(T * value, const std::string & keys) {
 //===========================================================================
 template <typename T>
 Cli::OptVec<T> & Cli::optVec(
-    std::vector<T> * values, 
-    const std::string & keys, 
+    std::vector<T> * values,
+    const std::string & keys,
     int nargs
 ) {
     auto proxy = getProxy<OptVec<T>, ValueVec<T>>(values);
@@ -575,8 +575,8 @@ Cli::OptVec<T> & Cli::optVec(
 //===========================================================================
 template <typename T, typename U, typename>
 Cli::Opt<T> & Cli::opt(
-    Opt<T> & alias, 
-    const std::string & keys, 
+    Opt<T> & alias,
+    const std::string & keys,
     const U & def
 ) {
     return opt(&*alias, keys, def);
@@ -591,8 +591,8 @@ Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & keys) {
 //===========================================================================
 template <typename T>
 Cli::OptVec<T> & Cli::optVec(
-    OptVec<T> & alias, 
-    const std::string & keys, 
+    OptVec<T> & alias,
+    const std::string & keys,
     int nargs
 ) {
     return optVec(&*alias, keys, nargs);
@@ -611,7 +611,7 @@ Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 }
 
 //===========================================================================
-template <typename A> 
+template <typename A>
 A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
     opt.parse(&Cli::defParseAction).command(command()).group(group());
@@ -634,11 +634,11 @@ std::shared_ptr<V> Cli::getProxy(T * ptr) {
 //===========================================================================
 // fromString - converts from string to T
 //===========================================================================
-template <typename T> 
+template <typename T>
 bool Cli::fromString(T & out, const std::string & src) const {
     // Versions of fromString_impl taking ints as extra parameters are
-    // preferred (better conversion from 0), if they don't exist for T 
-    // (because no out=src assignment operator exists) then the versions 
+    // preferred (better conversion from 0), if they don't exist for T
+    // (because no out=src assignment operator exists) then the versions
     // taking longs are considered.
     return fromString_impl(out, src, 0, 0);
 }
@@ -646,7 +646,7 @@ bool Cli::fromString(T & out, const std::string & src) const {
 //===========================================================================
 template <typename T>
 auto Cli::fromString_impl(T & out, const std::string & src, int, int) const
-    -> decltype(out = src, bool()) 
+    -> decltype(out = src, bool())
 {
     out = src;
     return true;
@@ -655,7 +655,7 @@ auto Cli::fromString_impl(T & out, const std::string & src, int, int) const
 //===========================================================================
 template <typename T>
 auto Cli::fromString_impl(T & out, const std::string & src, int, long) const
-    -> decltype(std::declval<std::istream &>() >> out, bool()) 
+    -> decltype(std::declval<std::istream &>() >> out, bool())
 {
     m_interpreter.clear();
     m_interpreter.str(src);
@@ -669,9 +669,9 @@ auto Cli::fromString_impl(T & out, const std::string & src, int, long) const
 //===========================================================================
 template <typename T>
 bool Cli::fromString_impl(
-    T &, // out 
+    T &, // out
     const std::string &, // src
-    long, 
+    long,
     long
 ) const {
     // In order to parse an argument there must be one of:
@@ -697,7 +697,7 @@ bool Cli::toString(std::string & out, const T & src) const {
 
 //===========================================================================
 template <typename T>
-auto Cli::toString_impl(std::string & out, const T & src, int) const 
+auto Cli::toString_impl(std::string & out, const T & src, int) const
     -> decltype(std::declval<std::ostream &>() << src, bool())
 {
     m_interpreter.clear();
@@ -758,7 +758,7 @@ public:
     //-----------------------------------------------------------------------
     // Queries
 
-    // True if the value was populated from the command line, whether the 
+    // True if the value was populated from the command line, whether the
     // resulting value is the same as the default is immaterial.
     explicit operator bool() const { return assigned(); }
 
@@ -802,7 +802,7 @@ public:
 protected:
     virtual bool fromString(Cli & cli, const std::string & value) = 0;
     virtual bool defaultValueToString(
-        std::string & out, 
+        std::string & out,
         const Cli & cli
     ) const = 0;
 
@@ -831,8 +831,8 @@ protected:
     std::string m_valueDesc;
 
     // empty() to use default, size 1 and *data == '\0' to suppress
-    std::string m_defaultDesc; 
-    
+    std::string m_defaultDesc;
+
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
     // Whether multiple values are allowed, and how many there can be (-1 for
@@ -906,7 +906,7 @@ public:
     // this is used to change "NUM" to something else.
     A & valueDesc(const std::string & val);
 
-    // Set text to appear in the default clause of this options the help text. 
+    // Set text to appear in the default clause of this options the help text.
     // Can change the "0" in "(default: 0)" to something else, or use an empty
     // string to suppress the entire clause.
     A & defaultDesc(const std::string & val);
@@ -918,7 +918,7 @@ public:
     // the argument was specified in the command line without a value.
     A & implicitValue(const T & val);
 
-    // Causes a check whether the option value was set during parsing, and 
+    // Causes a check whether the option value was set during parsing, and
     // reports badUsage() if it wasn't.
     A & require();
 
@@ -980,10 +980,10 @@ public:
     // parse action will pick it up.
     A & parse(std::function<ActionFn> fn);
 
-    // Action to take immediately after each value is parsed, unlike parsing 
-    // itself where there can only be one action, any number of check actions 
-    // can be added. They will be called in the order they were added and if 
-    // any of them return false it stops processing. As an example, 
+    // Action to take immediately after each value is parsed, unlike parsing
+    // itself where there can only be one action, any number of check actions
+    // can be added. They will be called in the order they were added and if
+    // any of them return false it stops processing. As an example,
     // opt.clamp() and opt.range() both do their job by adding check actions.
     //
     // The function should:
@@ -997,7 +997,7 @@ public:
 
     // Action to run after all arguments have been parsed, any number of
     // after actions can be added and will, for each option, be called in the
-    // order they're added. When using subcommands, the after actions bound 
+    // order they're added. When using subcommands, the after actions bound
     // to unselected subcommands are not executed. The function should:
     //  - Do something interesting.
     //  - Call cli.badUsage() and return false on error.
@@ -1032,7 +1032,7 @@ protected:
 //===========================================================================
 template <typename A, typename T>
 Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
-    : OptBase(keys, boolean) 
+    : OptBase(keys, boolean)
 {
     setValueDesc<T>();
 }
@@ -1040,7 +1040,7 @@ Cli::OptShim<A, T>::OptShim(const std::string & keys, bool boolean)
 //===========================================================================
 template <typename A, typename T>
 inline bool Cli::OptShim<A, T>::parseAction(
-    Cli & cli, 
+    Cli & cli,
     const std::string & val
 ) {
     auto self = static_cast<A *>(this);
@@ -1050,7 +1050,7 @@ inline bool Cli::OptShim<A, T>::parseAction(
 //===========================================================================
 template <typename A, typename T>
 inline bool Cli::OptShim<A, T>::checkAction(
-    Cli & cli, 
+    Cli & cli,
     const std::string & val
 ) {
     return exec(cli, val, m_checks);
@@ -1069,7 +1069,7 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 }
 
 //===========================================================================
-template <> 
+template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     assert(this->m_bool && "bool option that isn't marked as bool");
     if (this->m_flagValue)
@@ -1131,7 +1131,7 @@ A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
     m_defaultDesc = val;
-    if (val.empty()) 
+    if (val.empty())
         m_defaultDesc.push_back('\0');
     return static_cast<A &>(*this);
 }
@@ -1293,7 +1293,7 @@ struct Cli::ArgMatch {
 *
 ***/
 
-template <typename T> 
+template <typename T>
 struct Cli::Value {
     // Where the value came from.
     ArgMatch m_match;
@@ -1353,7 +1353,7 @@ Cli::Opt<T>::Opt(
     const std::string & keys
 )
     : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
-    , m_proxy{value} 
+    , m_proxy{value}
 {}
 
 //===========================================================================
@@ -1378,9 +1378,9 @@ inline bool Cli::Opt<T>::fromString(Cli & cli, const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 inline bool Cli::Opt<T>::defaultValueToString(
-    std::string & out, 
+    std::string & out,
     const Cli & cli
 ) const {
     return cli.toString(out, this->defaultValue());
@@ -1429,7 +1429,7 @@ struct Cli::ValueVec {
     std::vector<T> m_internal;
 
     ValueVec(std::vector<T> * value)
-        : m_values(value ? value : &m_internal) 
+        : m_values(value ? value : &m_internal)
     {}
 };
 
@@ -1489,7 +1489,7 @@ Cli::OptVec<T>::OptVec(
     int nargs
 )
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
-    , m_proxy(values) 
+    , m_proxy(values)
 {
     this->m_multiple = true;
     this->m_nargs = nargs;
@@ -1522,9 +1522,9 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, const std::string & value) {
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 inline bool Cli::OptVec<T>::defaultValueToString(
-    std::string & out, 
+    std::string & out,
     const Cli &
 ) const {
     out.clear();
@@ -1541,14 +1541,14 @@ inline void Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 inline void Cli::OptVec<T>::reset() {
     m_proxy->m_values->clear();
     m_proxy->m_matches.clear();
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 inline void Cli::OptVec<T>::unspecifiedValue() {
     m_proxy->m_values->push_back(this->implicitValue());
 }
@@ -1560,7 +1560,7 @@ const std::string & Cli::OptVec<T>::from(size_t index) const {
 }
 
 //===========================================================================
-template <typename T> 
+template <typename T>
 int Cli::OptVec<T>::pos(size_t index) const {
     return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }

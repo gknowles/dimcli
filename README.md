@@ -9,10 +9,10 @@ Distributed under the Boost Software License, Version 1.0.
 |:--------------------:|:----------------------------------:|:--------:|
 | [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/52d1c5fc67124d67a1718a0d8a2cd4c1)](https://www.codacy.com/app/gknowles/dimcli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gknowles/dimcli&amp;utm_campaign=Badge_Grade) |
 
-C++ command line parser toolkit for kids of all ages. 
+C++ command line parser toolkit for kids of all ages.
 
 - GNU style command lines (-o, --output=FILE, etc.)
-- can parse directly to any supplied (or implicitly created) variables 
+- can parse directly to any supplied (or implicitly created) variables
   that are:
   - default constructible
   - copyable
@@ -25,9 +25,9 @@ C++ command line parser toolkit for kids of all ages.
 - works with exceptions and/or RTTI enabled or disabled
 
 ## Documentation
-Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad 
-you did! Contains thorough documentation with many examples. Or click 
-[here](https://github.com/gknowles/dimcli/blob/master/docs/README.md) if you 
+Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad
+you did! Contains thorough documentation with many examples. Or click
+[here](https://github.com/gknowles/dimcli/blob/master/docs/README.md) if you
 prefer it all on a single page.
 
 ## Include in Your Project
@@ -40,10 +40,10 @@ All you need is:
 - vcpkg install dimcli
 
 ### Using cmake
-Get the latest snapshot: 
+Get the latest snapshot:
 [dimcli 3.1.1](https://github.com/gknowles/dimcli/archive/v3.1.1.zip)
 
-Build it (this example uses Visual C++ 2015 to install a 64-bit build to 
+Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):
 - cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 14 2015 Win64"
 - cmake --build .
@@ -71,7 +71,7 @@ c:\dimcli on a windows machine):
 # Random Thoughts
 Why not a single header file?
 
-- On large projects with many binaries (tests, utilities, etc) it's good for 
+- On large projects with many binaries (tests, utilities, etc) it's good for
   compile times to move as much stuff out of the headers as you easily can.
 - Inflicting <Windows.h> (and to a much lesser extent <termios.h> & <unistd.h>)
   on all clients seems a bridge too far.

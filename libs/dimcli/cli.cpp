@@ -104,7 +104,7 @@ struct Cli::OptIndex {
 
     void index(
         const Cli & cli,
-        const std::string & cmd, 
+        const std::string & cmd,
         bool requireVisible
     );
     bool findNamedArgs(
@@ -154,7 +154,7 @@ struct Cli::Config {
 
     static GroupConfig & findGrpAlways(Cli & cli);
     static GroupConfig & findGrpAlways(
-        CommandConfig & cmd, 
+        CommandConfig & cmd,
         const string & name
     );
     static const GroupConfig & findGrpOrDie(const Cli & cli);
@@ -185,9 +185,9 @@ static string displayName(const fs::path & file) {
 // of another, growing or shrinking it as needed.
 template <typename T>
 static void replace(
-    vector<T> & out, 
-    size_t pos, 
-    size_t count, 
+    vector<T> & out,
+    size_t pos,
+    size_t count,
     vector<T> && src
 ) {
     size_t srcLen = src.size();
@@ -210,7 +210,7 @@ static void replace(
 
 //===========================================================================
 CliLocal::CliLocal()
-    : Cli(make_shared<Config>()) 
+    : Cli(make_shared<Config>())
 {}
 
 
@@ -234,7 +234,7 @@ CommandConfig & Cli::Config::findCmdAlways(Cli & cli) {
 
 //===========================================================================
 CommandConfig & Cli::Config::findCmdAlways(
-    Cli & cli, 
+    Cli & cli,
     const string & name
 ) {
     auto & cmds = cli.m_cfg->cmds;
@@ -273,7 +273,7 @@ GroupConfig & Cli::Config::findGrpAlways(Cli & cli) {
 
 //===========================================================================
 GroupConfig & Cli::Config::findGrpAlways(
-    CommandConfig & cmd, 
+    CommandConfig & cmd,
     const string & name
 ) {
     auto i = cmd.groups.find(name);
@@ -302,7 +302,7 @@ const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
 //===========================================================================
 Cli::OptBase::OptBase(const string & names, bool boolean)
     : m_bool{boolean}
-    , m_names{names} 
+    , m_names{names}
 {
     // set m_fromName and assert if names is malformed
     OptIndex ndx;
@@ -340,8 +340,8 @@ string Cli::OptBase::defaultPrompt() const {
 
 //===========================================================================
 void Cli::OptIndex::index(
-    const Cli & cli, 
-    const string & cmd, 
+    const Cli & cli,
+    const string & cmd,
     bool requireVisible
 ) {
     m_argNames.clear();
@@ -601,7 +601,7 @@ void Cli::OptIndex::indexLongName(
 
 //===========================================================================
 bool Cli::defParseAction(OptBase & opt, const string & val) {
-    if (opt.fromString(*this, val)) 
+    if (opt.fromString(*this, val))
         return true;
 
     badUsage(opt, val);
@@ -645,8 +645,8 @@ static bool helpBeforeAction(Cli &, vector<string> & args) {
 
 //===========================================================================
 static bool helpOptAction(
-    Cli & cli, 
-    Cli::Opt<bool> & opt, 
+    Cli & cli,
+    Cli::Opt<bool> & opt,
     const string & val
 ) {
     cli.fromString(*opt, val);
@@ -676,7 +676,7 @@ static bool helpCmdAction(Cli & cli) {
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
     if (!cli.commandExists(cmd)) {
         return cli.fail(
-            kExitUsage, 
+            kExitUsage,
             "Command 'help': Help requested for unknown command: " + cmd
         );
     }
@@ -703,14 +703,14 @@ static shared_ptr<Cli::Config> globalConfig() {
 
 //===========================================================================
 // Creates a handle to the shared configuration
-Cli::Cli() 
+Cli::Cli()
     : m_cfg(globalConfig())
 {
     helpOpt();
 }
 
 //===========================================================================
-Cli::Cli(const Cli & from) 
+Cli::Cli(const Cli & from)
     : m_cfg(from.m_cfg)
     , m_group(from.m_group)
     , m_command(from.m_command)
@@ -719,7 +719,7 @@ Cli::Cli(const Cli & from)
 //===========================================================================
 // protected
 Cli::Cli(shared_ptr<Config> cfg)
-    : m_cfg(cfg) 
+    : m_cfg(cfg)
 {
     helpOpt();
 }
@@ -760,7 +760,7 @@ Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
 
 //===========================================================================
 Cli::Opt<bool> & Cli::versionOpt(
-    const string & version, 
+    const string & version,
     const string & progName
 ) {
     auto act = [version, progName](auto & cli, auto &/*opt*/, auto &/*val*/) {
@@ -995,7 +995,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
 // is escaped, quoted, or in a comment.
 // - unquoted: any char following a backslash is replaced by that char,
 //   except newline, which is removed. An unquoted '#' starts a comment.
-// - comment: everything up to, but not including, the next newline is ignored 
+// - comment: everything up to, but not including, the next newline is ignored
 // - single quotes: preserve the string exactly, no escape sequences, not
 //   even \'
 // - double quotes: some chars ($ ' " \ and newline) are escaped when
@@ -1656,8 +1656,8 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    if (!needCmd 
-        && pos < ndx.m_argNames.size() 
+    if (!needCmd
+        && pos < ndx.m_argNames.size()
         && !ndx.m_argNames[pos].optional
     ) {
         return badUsage("Missing argument", ndx.m_argNames[pos].name);
@@ -1732,9 +1732,9 @@ bool Cli::exec() {
     assert(commandExists(name) && "command found by parse no longer exists");
     auto & cmd = m_cfg->cmds[name];
     if (!cmd.action(*this)) {
-        // If the command should exit but there is still asynchronous work 
-        // going on, consider a custom "exit pending" exit code with special 
-        // handling in your main function. 
+        // If the command should exit but there is still asynchronous work
+        // going on, consider a custom "exit pending" exit code with special
+        // handling in your main function.
         assert(exitCode() && "command failed without setting exit code");
         return false;
     }
@@ -1743,7 +1743,7 @@ bool Cli::exec() {
 
 //===========================================================================
 bool Cli::exec(ostream & os) {
-    if (exec()) 
+    if (exec())
         return true;
     printError(os);
     return false;
@@ -1843,9 +1843,9 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
 // Like text, except advance to descCol first, and indent any additional
 // required lines to descCol.
 static void writeDescCol(
-    ostream & os, 
-    WrapPos & wp, 
-    const string & text, 
+    ostream & os,
+    WrapPos & wp,
+    const string & text,
     size_t descCol
 ) {
     if (text.empty())
@@ -1879,7 +1879,7 @@ string Cli::descStr(const Cli::OptBase & opt) const {
             if (!tmp[0])
                 tmp.clear();
         }
-        if (!tmp.empty()) 
+        if (!tmp.empty())
             desc += " (default: " + tmp + ")";
     }
     return desc;
@@ -1993,11 +1993,11 @@ int Cli::writeUsageImpl(
             size_t colWidth = 0;
             vector<ArgKey> namedArgs;
             ndx.findNamedArgs(
-                namedArgs, 
-                colWidth, 
-                *this, 
-                cmd, 
-                kNameNonDefault, 
+                namedArgs,
+                colWidth,
+                *this,
+                cmd,
+                kNameNonDefault,
                 true
             );
             for (auto && key : namedArgs)
@@ -2027,8 +2027,8 @@ int Cli::writeUsageImpl(
 
 //===========================================================================
 int Cli::printUsage(
-    ostream & os, 
-    const string & arg0, 
+    ostream & os,
+    const string & arg0,
     const string & cmd
 ) {
     return writeUsageImpl(os, arg0, cmd, false);
@@ -2036,8 +2036,8 @@ int Cli::printUsage(
 
 //===========================================================================
 int Cli::printUsageEx(
-    ostream & os, 
-    const string & arg0, 
+    ostream & os,
+    const string & arg0,
     const string & cmd
 ) {
     return writeUsageImpl(os, arg0, cmd, true);
