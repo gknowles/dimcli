@@ -104,18 +104,18 @@ struct Cli::OptIndex {
 
     void index(
         const Cli & cli,
-        const std::string & cmd,
+        const string & cmd,
         bool requireVisible
     );
     bool findNamedArgs(
-        std::vector<ArgKey> & namedArgs,
+        vector<ArgKey> & namedArgs,
         size_t & colWidth,
         const Cli & cli,
         CommandConfig & cmd,
         NameListType type,
         bool flatten
     ) const;
-    std::string nameList(
+    string nameList(
         const Cli & cli,
         const OptBase & opt,
         NameListType type
@@ -816,7 +816,7 @@ Cli & Cli::command(const string & name, const string & grpName) {
 
 //===========================================================================
 Cli & Cli::action(function<ActionFn> fn) {
-    Config::findCmdAlways(*this).action = fn;
+    Config::findCmdAlways(*this).action = move(fn);
     return *this;
 }
 
@@ -892,8 +892,8 @@ void Cli::envOpts(const string & var) {
 #endif
 
 //===========================================================================
-Cli & Cli::before(std::function<BeforeFn> fn) {
-    m_cfg->befores.push_back(fn);
+Cli & Cli::before(function<BeforeFn> fn) {
+    m_cfg->befores.push_back(move(fn));
     return *this;
 }
 

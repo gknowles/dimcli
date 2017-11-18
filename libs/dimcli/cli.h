@@ -1017,7 +1017,7 @@ protected:
     bool exec(
         Cli & cli,
         const std::string & value,
-        std::vector<std::function<ActionFn>> actions
+        const std::vector<std::function<ActionFn>> & actions
     );
 
     std::function<ActionFn> m_parse;
@@ -1082,7 +1082,7 @@ template <typename A, typename T>
 bool Cli::OptShim<A, T>::exec(
     Cli & cli,
     const std::string & val,
-    std::vector<std::function<ActionFn>> actions
+    const std::vector<std::function<ActionFn>> & actions
 ) {
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
@@ -1199,21 +1199,21 @@ A & Cli::OptShim<A, T>::choice(
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
-    this->m_parse = fn;
+    this->m_parse = move(fn);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
-    this->m_checks.push_back(fn);
+    this->m_checks.push_back(move(fn));
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
-    this->m_afters.push_back(fn);
+    this->m_afters.push_back(move(fn));
     return static_cast<A &>(*this);
 }
 
