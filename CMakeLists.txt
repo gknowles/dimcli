@@ -340,9 +340,8 @@ if(MSVC)
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
     # "/Zc:strictStrings" - disable string literal type conversion to non-const
-    # "/ZI" - debug info format (not present would be no info)
     set(CMAKE_CXX_FLAGS "\
-        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX /ZI \
+        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX \
         /Zc:inline /Zc:rvalueCast /Zc:strictStrings")
     if(NOT MSVC_VERSION LESS 1910)
         # /permissive-  // reject non-conforming backward compatibility-isms
@@ -351,7 +350,8 @@ if(MSVC)
 
     # "/Od" - disables optimization
     # "/RTC1" - runtime checks (stack frame over/under run and uninit var use)
-    set(CMAKE_CXX_FLAGS_DEBUG "/Od /RTC1")
+    # "/ZI" - debug with edit and continue (disables some optimizations)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /RTC1 /ZI")
     if(LINK_STATIC_RUNTIME)
         # "/MTd" - multithread debug static runtime
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
@@ -361,7 +361,8 @@ if(MSVC)
     endif()
 
     # "/O2" - maximize speed
-    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2")
+    # "/Zi" - debug info format (not present would be no info)
+    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2 /Zi")
     if(LINK_STATIC_RUNTIME)
         # "/MT" - multithread release static runtime
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
