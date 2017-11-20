@@ -102,6 +102,8 @@ void basicTests() {
     istringstream in;
     ostringstream out;
 
+    cli.imbue(locale());
+
     // assignment operator
     {
         Dim::Cli tmp{cli};

@@ -303,6 +303,10 @@ public:
     void envOpts(const std::string & envVar);
 #endif
 
+    // Change the locale used when parsing values via iostream. Defaults to
+    // the user's preferred locale (aka locale("")).
+    std::locale imbue(const std::locale & loc);
+
     // Function signature of actions that run before options are populated.
     using BeforeFn = bool(Cli & cli, std::vector<std::string> & args);
 

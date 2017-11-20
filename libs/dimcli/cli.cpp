@@ -140,6 +140,7 @@ struct Cli::Config {
     string envOpts;
     istream * conin{&cin};
     ostream * conout{&cout};
+    locale parserLocale{""};
 
     int exitCode{kExitOk};
     string errMsg;
@@ -706,6 +707,7 @@ static shared_ptr<Cli::Config> globalConfig() {
 Cli::Cli()
     : m_cfg(globalConfig())
 {
+    m_interpreter.imbue(m_cfg->parserLocale);
     helpOpt();
 }
 
@@ -714,13 +716,16 @@ Cli::Cli(const Cli & from)
     : m_cfg(from.m_cfg)
     , m_group(from.m_group)
     , m_command(from.m_command)
-{}
+{
+    m_interpreter.imbue(m_cfg->parserLocale);
+}
 
 //===========================================================================
 // protected
 Cli::Cli(shared_ptr<Config> cfg)
     : m_cfg(cfg)
 {
+    m_interpreter.imbue(m_cfg->parserLocale);
     helpOpt();
 }
 
@@ -890,6 +895,14 @@ void Cli::envOpts(const string & var) {
     m_cfg->envOpts = var;
 }
 #endif
+
+//===========================================================================
+std::locale Cli::imbue(const std::locale & loc) {
+    auto prev = m_cfg->parserLocale;
+    m_cfg->parserLocale = loc;
+    m_interpreter.imbue(loc);
+    return prev;
+}
 
 //===========================================================================
 Cli & Cli::before(function<BeforeFn> fn) {
