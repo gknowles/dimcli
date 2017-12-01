@@ -1352,6 +1352,14 @@ like more work.
 You can have an option prompt the user for the value when it's left off of
 the command line.
 
+In addition to simple prompting, there are some flags that modify the behavior.
+
+| Flag             | Description                        |
+|------------------|------------------------------------|
+| fPromptHide      | Hide the input from the console    |
+| fPromptConfirm   | Require the value be entered twice |
+| fPromptNoDefault | Don't show the default             |
+
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
@@ -1369,7 +1377,7 @@ Which is why this example uses "cookies c" instead of "c cookies".
 $ a.out -c5
 There are 5 cookies.
 $ a.out
-Cookies: 3
+Cookies [0]: 3
 There are 3 cookies.
 ~~~
 The first option name is also used in errors where no name is available from
@@ -1381,11 +1389,11 @@ $ a.out
 Cookies: nine
 Error: Invalid '--cookies' value: nine
 ~~~
-You can change the prompt to something more appropriate:
+You can change the prompt to something more appropriate and hide the default:
 
 ~~~ cpp
 auto & cookies = cli.opt<int>("cookies c")
-    .prompt("How many cookies did you buy?");
+    .prompt("How many cookies did you buy?", cli.fPromptNoDefault);
 ~~~
 Which gives you:
 
@@ -1397,19 +1405,14 @@ There are 9 cookies.
 
 
 ## Password Prompting
-In addition to simple prompting, when an option is left off the command line
-a prompt also has some behaviors that are controlled by flags.
-
-| Flag           | Description                        |
-|----------------|------------------------------------|
-| kPromptHide    | hides the input from the console   |
-| kPromptConfirm | require the value be entered twice |
+The fPromptHide and fPromptConfirm options are especially handy when asking
+for passwords.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & pass = cli.opt<string>("password")
-        .prompt(cli.kPromptHide | cli.kPromptConfirm);
+        .prompt(cli.fPromptHide | cli.fPromptConfirm);
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
     cout << "Password was: " << *pass;

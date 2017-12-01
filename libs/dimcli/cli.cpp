@@ -760,7 +760,7 @@ Cli::Opt<bool> & Cli::helpOpt() {
 Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
     return opt<string>("password.")
         .desc("Password required for access.")
-        .prompt(kPromptHide | (confirm * kPromptConfirm));
+        .prompt(fPromptHide | fPromptNoDefault | (confirm * fPromptConfirm));
 }
 
 //===========================================================================
@@ -1436,26 +1436,47 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
         return true;
     auto & is = conin();
     auto & os = conout();
-    os << msg << ' ';
-    if (~flags & kPromptNoDefault) {
-        if (opt.m_bool)
-            os << "[y/N]: ";
+    if (msg.empty()) {
+        os << opt.defaultPrompt();
+    } else {
+        os << msg;
     }
-    if (flags & kPromptHide)
+    bool defAdded = false;
+    if (~flags & fPromptNoDefault) {
+        if (opt.m_bool) {
+            defAdded = true;
+            bool def = false;
+            if (!opt.m_flagValue) {
+                auto & bopt = static_cast<Opt<bool>&>(opt);
+                def = bopt.defaultValue();
+            }
+            os << (def ? " [Y/n]:" : " [y/N]:");
+        } else {
+            string tmp;
+            if (opt.defaultValueToString(tmp, *this) && !tmp.empty()) {
+                defAdded = true;
+                os << " [" << tmp << "]:";
+            }
+        }
+    }
+    if (!defAdded && msg.empty())
+        os << ':';
+    os << ' ';
+    if (flags & fPromptHide)
         consoleEnableEcho(false); // disable if hide, must be re-enabled
     string val;
     os.flush();
     getline(is, val);
-    if (flags & kPromptHide) {
+    if (flags & fPromptHide) {
         os << endl;
-        if (~flags & kPromptConfirm)
+        if (~flags & fPromptConfirm)
             consoleEnableEcho(true); // re-enable when hide and !confirm
     }
-    if (flags & kPromptConfirm) {
+    if (flags & fPromptConfirm) {
         string again;
         os << "Enter again to confirm: " << flush;
         getline(is, again);
-        if (flags & kPromptHide) {
+        if (flags & fPromptHide) {
             os << endl;
             consoleEnableEcho(true); // re-enable when hide and confirm
         }

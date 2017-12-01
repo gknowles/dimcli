@@ -440,9 +440,9 @@ public:
     // (unless cli.iostreams() changed the streams to use), the response is
     // then passed to cli.parseValue() to set the value and run any actions.
     enum {
-        kPromptHide = 1,      // Hide user input as they type
-        kPromptConfirm = 2,   // Make the user enter it twice
-        kPromptNoDefault = 4, // Don't include default value in prompt
+        fPromptHide = 1,      // Hide user input as they type
+        fPromptConfirm = 2,   // Make the user enter it twice
+        fPromptNoDefault = 4, // Don't include default value in prompt
     };
     [[nodiscard]] bool prompt(
         OptBase & opt,
@@ -954,12 +954,12 @@ public:
     A & clamp(const T & low, const T & high);
 
     // Enables prompting. When the option hasn't been provided on the command
-    // line the user will be prompted for it. Use Cli::kPrompt* flags to
+    // line the user will be prompted for it. Use Cli::fPrompt* flags to
     // adjust behavior.
     A & prompt(int flags = 0);
     A & prompt(
         const std::string & msg, // custom prompt message
-        int flags = 0            // Cli::kPrompt* flags
+        int flags = 0            // Cli::fPrompt* flags
     );
 
     // Function signature of actions that are tied to options.
@@ -1261,7 +1261,7 @@ A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(int flags) {
-    return prompt(this->defaultPrompt() + ":", flags);
+    return prompt({}, flags);
 }
 
 //===========================================================================

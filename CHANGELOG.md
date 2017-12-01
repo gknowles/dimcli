@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Changed - Default to user's preferred (instead of global) locale for parsing
+- Changed - Rename kPrompt* flags to fPrompt*
+- Added - Allow showing non-bool defaults in prompts
 
 ## dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()
