@@ -46,7 +46,7 @@ matrix:
     - env: CXX_NAME=clang++-5.0 CC_NAME=clang-5.0
       addons:
         apt:
-          packages: ['clang-5.0']
+          packages: ['clang-5.0', 'g++-6']
           sources: [llvm-toolchain-trusty-5.0, ubuntu-toolchain-r-test]
 
 script:
