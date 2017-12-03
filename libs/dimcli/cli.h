@@ -134,7 +134,7 @@
 #endif
 #endif
 #if !defined(DIMCLI_LIB_FILESYSTEM)
-#error Couldn't find <filesystem> or <experimental/filesystem>
+#error Could not find <filesystem> or <experimental/filesystem>
 #endif
 
 
