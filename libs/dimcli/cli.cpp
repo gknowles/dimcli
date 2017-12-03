@@ -650,7 +650,7 @@ static bool helpOptAction(
     Cli::Opt<bool> & opt,
     const string & val
 ) {
-    cli.fromString(*opt, val);
+    (void) cli.fromString(*opt, val);
     if (*opt) {
         cli.printHelp(cli.conout(), {}, cli.runCommand());
         return false;

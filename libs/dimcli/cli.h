@@ -124,13 +124,16 @@
 #if defined(_MSC_VER)
 #include <experimental/filesystem>
 #define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
+#define DIMCLI_LIB_FILESYSTEM_PATH std::experimental::filesystem::path
 #elif defined(__has_include)
 #if __has_include(<filesystem>)
 #include <filesystem>
 #define DIMCLI_LIB_FILESYSTEM std::filesystem
+#define DIMCLI_LIB_FILESYSTEM_PATH std::filesystem::path
 #elif __has_include(<experimental/filesystem>)
 #include <experimental/filesystem>
 #define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
+#define DIMCLI_LIB_FILESYSTEM_PATH std::experimental::filesystem::path
 #endif
 #endif
 #if !defined(DIMCLI_LIB_FILESYSTEM)
@@ -884,12 +887,10 @@ void Cli::OptBase::setValueDesc() {
 }
 
 //===========================================================================
-#define DIMCLI_LIB_FILESYSTEM_PATH DIMCLI_LIB_FILESYSTEM ## ::path
 template <>
 inline void Cli::OptBase::setValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
     m_valueDesc = "FILE";
 }
-#undef DIMCLI_LIB_FILESYSTEM_PATH
 
 
 /****************************************************************************
@@ -1615,5 +1616,6 @@ int Cli::OptVec<T>::pos(size_t index) const {
 #endif
 
 #undef DIMCLI_LIB_FILESYSTEM
+#undef DIMCLI_LIB_FILESYSTEM_PATH
 
 #endif
