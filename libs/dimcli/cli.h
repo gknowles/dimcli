@@ -112,7 +112,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <experimental/filesystem>
 #include <functional>
 #include <list>
 #include <memory>
@@ -121,6 +120,22 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#if defined(_MSC_VER)
+#include <experimental/filesystem>
+#define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
+#elif defined(__has_include)
+#if __has_include(<filesystem>)
+#include <filesystem>
+#define DIMCLI_LIB_FILESYSTEM std::filesystem
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+#define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
+#endif
+#endif
+#if !defined(DIMCLI_LIB_FILESYSTEM)
+#error Couldn't find <filesystem> or <experimental/filesystem>
+#endif
 
 
 namespace Dim {
@@ -869,10 +884,12 @@ void Cli::OptBase::setValueDesc() {
 }
 
 //===========================================================================
+#define DIMCLI_LIB_FILESYSTEM_PATH DIMCLI_LIB_FILESYSTEM ## ::path
 template <>
-inline void Cli::OptBase::setValueDesc<std::experimental::filesystem::path>() {
+inline void Cli::OptBase::setValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
     m_valueDesc = "FILE";
 }
+#undef DIMCLI_LIB_FILESYSTEM_PATH
 
 
 /****************************************************************************
@@ -1596,5 +1613,7 @@ int Cli::OptVec<T>::pos(size_t index) const {
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
+
+#undef DIMCLI_LIB_FILESYSTEM
 
 #endif

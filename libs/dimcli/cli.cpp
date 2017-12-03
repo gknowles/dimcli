@@ -22,7 +22,7 @@
 
 using namespace std;
 using namespace Dim;
-namespace fs = experimental::filesystem;
+namespace fs = DIMCLI_LIB_FILESYSTEM;
 
 // getenv triggers the visual c++ security warning
 #if (_MSC_VER >= 1400)

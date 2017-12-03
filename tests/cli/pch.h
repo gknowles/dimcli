@@ -7,8 +7,20 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <experimental/filesystem>
 #include <iostream>
+
+#if defined(_MSC_VER)
+#include <experimental/filesystem>
+#define FILESYSTEM std::experimental::filesystem
+#elif defined(__has_include)
+#if __has_include(<filesystem>)
+#include <filesystem>
+#define FILESYSTEM std::filesystem
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+#define FILESYSTEM std::experimental::filesystem
+#endif
+#endif
 
 // getenv/putenv trigger the visual c++ security warning
 #if (_MSC_VER >= 1400)

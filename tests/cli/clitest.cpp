@@ -400,20 +400,20 @@ Options:
 
     // filesystem
     {
-        namespace fs = experimental::filesystem;
+        namespace fs = FILESYSTEM;
         cli = {};
         fs::path path = "path";
         ostringstream os;
         os << path;
         cli.opt(&path, "path", path)
-            .desc("std::experimental::filesystem::path");
+            .desc("std::filesystem::path");
         EXPECT_PARSE(cli, {"--path", "one"});
         EXPECT(path == "one");
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
-  --path=FILE  std::experimental::filesystem::path (default: )"
+  --path=FILE  std::filesystem::path (default: )"
         + os.str()
         + R"()
 
