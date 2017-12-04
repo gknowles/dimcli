@@ -184,7 +184,7 @@ static string displayName(const string & file) {
 #else
 #include <libgen.h>
 static string displayName(string file) {
-    return basename(file.data());
+    return basename((char *) file.data());
 }
 #endif
 
