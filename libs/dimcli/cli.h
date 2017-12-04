@@ -136,9 +136,6 @@
 #define DIMCLI_LIB_FILESYSTEM_PATH std::experimental::filesystem::path
 #endif
 #endif
-#if !defined(DIMCLI_LIB_FILESYSTEM)
-#error Could not find <filesystem> or <experimental/filesystem>
-#endif
 
 
 namespace Dim {
@@ -886,11 +883,13 @@ void Cli::OptBase::setValueDesc() {
     }
 }
 
+#ifdef DIMCLI_LIB_FILESYSTEM
 //===========================================================================
 template <>
 inline void Cli::OptBase::setValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
     m_valueDesc = "FILE";
 }
+#endif
 
 
 /****************************************************************************

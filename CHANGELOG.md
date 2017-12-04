@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed - Rename kPrompt* flags to fPrompt*
 - Added - Allow showing non-bool defaults in prompts
 - Added - Conditionally use \<filesystem> instead of \<experimental/filesystem>
+- Added - Allow limited operation when \<filesystem> not available
 
 ## dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()

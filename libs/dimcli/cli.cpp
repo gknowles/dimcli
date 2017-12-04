@@ -22,7 +22,9 @@
 
 using namespace std;
 using namespace Dim;
+#ifdef DIMCLI_LIB_FILESYSTEM
 namespace fs = DIMCLI_LIB_FILESYSTEM;
+#endif
 
 // getenv triggers the visual c++ security warning
 #if (_MSC_VER >= 1400)
@@ -173,13 +175,18 @@ static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static bool defCmdAction(Cli & cli);
 
 //===========================================================================
-static string displayName(const fs::path & file) {
 #if defined(_WIN32)
-    return file.stem().string();
-#else
-    return file.filename().string();
-#endif
+static string displayName(const string & file) {
+    char fname[_MAX_FNAME];
+    _splitpath(file.c_str(), nullptr, nullptr, fname, nullptr);
+    return fname;
 }
+#else
+#include <libgen.h>
+static string displayName(string file) {
+    return basename(file.data());
+}
+#endif
 
 //===========================================================================
 // Replaces a set of contiguous values in one vector with the entire contents
@@ -1319,6 +1326,8 @@ IN_QUOTED:
 *
 ***/
 
+#ifdef DIMCLI_LIB_FILESYSTEM
+
 // forward declarations
 static bool expandResponseFiles(
     Cli & cli,
@@ -1410,6 +1419,8 @@ static bool expandResponseFiles(
     }
     return true;
 }
+
+#endif
 
 
 /****************************************************************************
@@ -1567,9 +1578,11 @@ bool Cli::parse(vector<string> & args) {
 #endif
 
     // expand response files
+#ifdef DIMCLI_LIB_FILESYSTEM
     unordered_set<string> ancestors;
     if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
+#endif
 
     // before actions
     for (auto && fn : m_cfg->befores) {

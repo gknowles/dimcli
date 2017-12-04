@@ -399,6 +399,7 @@ Options:
     }
 
     // filesystem
+#ifdef FILESYSTEM
     {
         namespace fs = FILESYSTEM;
         cli = {};
@@ -420,6 +421,7 @@ Options:
   --help       Show this message and exit.
 )");
     }
+#endif
 
     // helpCmd
     {
