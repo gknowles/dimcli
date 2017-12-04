@@ -5,12 +5,9 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| msvc 2015, msvc 2017 | gcc 6, gcc 7, clang 3.6<sup>1</sup>, clang 5.0<sup>1</sup> | cppcheck |
+| msvc 2015, msvc 2017 | gcc 6, gcc 7, clang 3.6, clang 5.0 | cppcheck |
 |:--------------------:|:----------------------------------:|:--------:|
 | [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/52d1c5fc67124d67a1718a0d8a2cd4c1)](https://www.codacy.com/app/gknowles/dimcli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gknowles/dimcli&amp;utm_campaign=Badge_Grade) |
-
-1. <small>Response files not supported (requires `<filesystem>`)</small>
-<hr/>
 
 C++ command line parser toolkit for kids of all ages.
 
@@ -24,7 +21,7 @@ C++ command line parser toolkit for kids of all ages.
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
-- response files
+- response files (requires `<filesystem>` support)
 - works with exceptions and RTTI either enabled or disabled
 
 

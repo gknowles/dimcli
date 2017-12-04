@@ -16,7 +16,7 @@ C++ command line parser toolkit for kids of all ages.
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
-- response files
+- response files (requires `<filesystem>` support)
 - works with exceptions and/or RTTI enabled or disabled
 
 How does it feel?
