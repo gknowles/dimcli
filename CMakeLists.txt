@@ -146,6 +146,14 @@ function(write_user_file prjname)
     </PropertyGroup>
 ]=])
     endforeach()
+    file(GLOB props LIST_DIRECTORIES false
+        RELATIVE "${CMAKE_SOURCE_DIR}"
+        "${CMAKE_SOURCE_DIR}/*.props")
+    foreach(propfile ${props})
+        file(APPEND ${user_file} [=[
+    <Import Project="$(SolutionDir)/]=] "${propfile}" [=["/>
+]=])
+    endforeach()
     file(APPEND ${user_file} [=[
 </Project>
 ]=])
@@ -446,6 +454,7 @@ add_file_project(about
     .travis.yml
     appveyor.yml
     *.md
+    *.props
     configure.bat
     docs/*)
 add_file_project(conf
