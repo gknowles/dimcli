@@ -39,11 +39,11 @@ matrix:
           packages: ['g++-7']
           sources: ubuntu-toolchain-r-test
 
-    - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
+    - env: CXX_NAME=clang++-3.9 CC_NAME=clang-3.9
       addons:
         apt:
-          packages: ['clang-3.6', 'libstdc++-5-dev']
-          sources: [llvm-toolchain-precise-3.6, ubuntu-toolchain-r-test]
+          packages: ['clang-3.9', 'libstdc++-5-dev']
+          sources: [llvm-toolchain-precise-3.9, ubuntu-toolchain-r-test]
 
     - env: CXX_NAME=clang++-5.0 CC_NAME=clang-5.0
       addons:
