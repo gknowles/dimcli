@@ -138,6 +138,10 @@ usage: test [--streetlight=COLOR] [--help]
 )");
         EXPECT_PARSE(cli, {"--streetlight", "red"});
         EXPECT(*state == State::stop);
+
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--streetlight", "white"});
+        EXPECT(cli.errMsg() == "Invalid '--streetlight' value: white");
+        EXPECT(cli.errDetail() == "Must be \"red\", \"green\", or \"yellow\"");
     }
 
     // parse action
@@ -224,6 +228,10 @@ usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
 
         EXPECT_PARSE(cli, {"--name=three"});
         EXPECT(name.size() == 1 && (*name)[0] == "three");
+
+        EXPECT_PARSE(cli, {"--name=", "key"});
+        EXPECT(*name == vector<string>({""s}));
+        EXPECT(*keys == vector<string>({"key"s}));
 
         EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
         EXPECT(*special);

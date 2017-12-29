@@ -148,7 +148,7 @@ function(write_user_file prjname)
     endforeach()
     file(GLOB props LIST_DIRECTORIES false
         RELATIVE "${CMAKE_SOURCE_DIR}"
-        "${CMAKE_SOURCE_DIR}/*.props")
+        "${CMAKE_SOURCE_DIR}/*.user.props")
     foreach(propfile ${props})
         file(APPEND ${user_file} [=[
     <Import Project="$(SolutionDir)/]=] "${propfile}" [=["/>

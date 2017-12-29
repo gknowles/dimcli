@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - Allow showing non-bool defaults in prompts
 - Added - Conditionally use \<filesystem> instead of \<experimental/filesystem>
 - Added - Allow limited operation when \<filesystem> not available
+- Fixed - "--opt=" should use "" as value instead of the next arg.
 
 ## dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()

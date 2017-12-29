@@ -1603,6 +1603,7 @@ bool Cli::parse(vector<string> & args) {
 
     for (; argPos < argc; ++argPos, ++arg) {
         OptName argName;
+        const char * equal = nullptr;
         const char * ptr = arg->c_str();
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
@@ -1635,7 +1636,7 @@ bool Cli::parse(vector<string> & args) {
                 continue;
             }
             string key;
-            const char * equal = strchr(ptr, '=');
+            equal = strchr(ptr, '=');
             if (equal) {
                 key.assign(ptr, equal);
                 ptr = equal + 1;
@@ -1685,7 +1686,7 @@ bool Cli::parse(vector<string> & args) {
         continue;
 
     OPTION_VALUE:
-        if (*ptr) {
+        if (*ptr || equal) {
             if (!parseValue(*argName.opt, name, argPos, ptr))
                 return false;
             continue;

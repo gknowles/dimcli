@@ -32,17 +32,19 @@ matrix:
         apt:
           packages: ['g++-6']
           sources: ubuntu-toolchain-r-test
+
     - env: CXX_NAME=g++-7 CC_NAME=gcc-7
       addons:
         apt:
           packages: ['g++-7']
           sources: ubuntu-toolchain-r-test
-    # uses experimental/filesystem from g++-6 package... :/
+
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
       addons:
         apt:
           packages: ['clang-3.6', 'libstdc++-5-dev']
           sources: [llvm-toolchain-precise-3.6, ubuntu-toolchain-r-test]
+
     - env: CXX_NAME=clang++-5.0 CC_NAME=clang-5.0
       addons:
         apt:
