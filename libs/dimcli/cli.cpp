@@ -904,7 +904,7 @@ void Cli::envOpts(const string & var) {
 #endif
 
 //===========================================================================
-std::locale Cli::imbue(const std::locale & loc) {
+locale Cli::imbue(const locale & loc) {
     auto prev = m_cfg->parserLocale;
     m_cfg->parserLocale = loc;
     m_interpreter.imbue(loc);
