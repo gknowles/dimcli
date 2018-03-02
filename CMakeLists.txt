@@ -121,6 +121,28 @@ function(update_deps_file)
     include(${deps_file})
 endfunction()
 
+function(write_predefined_target_user_file prjname)
+    if(NOT MSVC)
+        return()
+    endif()
+    set(user_file "${CMAKE_CURRENT_BINARY_DIR}/${prjname}.vcxproj.user")
+    file(WRITE ${user_file} [=[
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0"
+        xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+]=])
+    file(GLOB props LIST_DIRECTORIES false
+        "${CMAKE_SOURCE_DIR}/*.user.props")
+    foreach(propfile ${props})
+        file(APPEND ${user_file} [=[
+    <Import Project="]=] "${propfile}" [=["/>
+]=])
+    endforeach()
+    file(APPEND ${user_file} [=[
+</Project>
+]=])
+endfunction()
+
 function(write_user_file prjname)
     if(NOT MSVC)
         return()
@@ -147,11 +169,10 @@ function(write_user_file prjname)
 ]=])
     endforeach()
     file(GLOB props LIST_DIRECTORIES false
-        RELATIVE "${CMAKE_SOURCE_DIR}"
         "${CMAKE_SOURCE_DIR}/*.user.props")
     foreach(propfile ${props})
         file(APPEND ${user_file} [=[
-    <Import Project="$(SolutionDir)/]=] "${propfile}" [=["/>
+    <Import Project="]=] "${propfile}" [=["/>
 ]=])
     endforeach()
     file(APPEND ${user_file} [=[
@@ -348,9 +369,12 @@ if(MSVC)
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
     # "/Zc:strictStrings" - disable string literal type conversion to non-const
+    # "/Fa[dir]" - assembly listing location, the CMake default puts it right
+    #    under the solution tree, and we want it in under /build
     set(CMAKE_CXX_FLAGS "\
         /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX \
-        /Zc:inline /Zc:rvalueCast /Zc:strictStrings")
+        /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
+        /Fa$(IntDir)")
     if(NOT MSVC_VERSION LESS 1910)
         # /permissive-  // reject non-conforming backward compatibility-isms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
@@ -509,5 +533,10 @@ if(EXISTS "${path}")
             DESTINATION include/${PROJECT_NAME})
     endif()
 endif()
+
+# Add settings for predefined cmake targets
+foreach(tgt ALL_BUILD PACKAGE ZERO_CHECK INSTALL RUN_TESTS)
+    write_predefined_target_user_file("${tgt}")
+endforeach()
 
 include(CPack)
