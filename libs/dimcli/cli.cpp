@@ -2098,11 +2098,11 @@ void Cli::printPositionals(ostream & os, const string & cmd) {
     size_t colWidth = 0;
     bool hasDesc = false;
     for (auto && pa : ndx.m_argNames) {
-        // find widest positional argument name, with space for <>'s
-        colWidth = max(colWidth, pa.name.size() + 2);
+        // find widest positional argument name
+        colWidth = max(colWidth, pa.name.size());
         hasDesc = hasDesc || pa.opt->m_desc.size();
     }
-    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
+    colWidth = clamp(colWidth + 3, kMinDescCol, kMaxDescCol);
     if (!hasDesc)
         return;
 
@@ -2128,7 +2128,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
     vector<ArgKey> namedArgs;
     if (!ndx.findNamedArgs(namedArgs, colWidth, *this, cmd, kNameAll, false))
         return;
-    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
+    colWidth = clamp(colWidth + 3, kMinDescCol, kMaxDescCol);
 
     WrapPos wp;
     const char * gname{nullptr};
