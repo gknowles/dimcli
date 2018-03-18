@@ -449,7 +449,7 @@ usage: test help [OPTIONS] [command]
 
 Show help for individual commands and exit. If no command is given the list of
 commands and general options are shown.
-  command    Command to show help information about.
+  command   Command to show help information about.
 
 Options:
   -u, --usage / --no-usage  Only show condensed usage.
