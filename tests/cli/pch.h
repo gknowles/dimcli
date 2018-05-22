@@ -9,7 +9,7 @@
 #include <cstring>
 #include <iostream>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER < 1914
 #include <experimental/filesystem>
 #define FILESYSTEM std::experimental::filesystem
 #elif defined(__has_include)
