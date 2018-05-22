@@ -642,7 +642,7 @@ A & Cli::addOpt(std::unique_ptr<A> ptr) {
 template <typename A, typename V, typename T>
 std::shared_ptr<V> Cli::getProxy(T * ptr) {
     if (OptBase * opt = findOpt(ptr)) {
-        A * dopt = static_cast<A *>(opt);
+        auto dopt = static_cast<A *>(opt);
         return dopt->m_proxy;
     }
 
@@ -1208,7 +1208,7 @@ A & Cli::OptShim<A, T>::choice(
     // The empty string isn't a valid choice because it can't be specified on
     // the command line, where unspecified picks the default instead.
     assert(!key.empty() && "an empty string can't be a choice");
-    ChoiceDesc & cd = m_choiceDescs[key];
+    auto & cd = m_choiceDescs[key];
     cd.pos = m_choices.size();
     cd.desc = desc;
     cd.sortKey = sortKey;

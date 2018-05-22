@@ -198,7 +198,7 @@ static void replace(
     size_t count,
     vector<T> && src
 ) {
-    size_t srcLen = src.size();
+    auto srcLen = src.size();
     if (count > srcLen) {
         out.erase(out.begin() + pos + srcLen, out.begin() + pos + count);
     } else if (count < srcLen) {
@@ -331,7 +331,7 @@ bool Cli::OptBase::parseValue(const string & value) {
 
 //===========================================================================
 string Cli::OptBase::defaultPrompt() const {
-    string name = m_fromName;
+    auto name = (string) m_fromName;
     while (name.size() && name[0] == '-')
         name.erase(0, 1);
     if (name.size())
@@ -378,8 +378,8 @@ bool Cli::OptIndex::findNamedArgs(
 ) const {
     namedArgs.clear();
     for (auto && opt : cli.m_cfg->opts) {
-        string list = nameList(cli, *opt, type);
-        if (size_t width = list.size()) {
+        auto list = nameList(cli, *opt, type);
+        if (auto width = list.size()) {
             colWidth = max(colWidth, width);
             ArgKey key;
             key.opt = opt.get();
@@ -434,7 +434,7 @@ string Cli::OptIndex::nameList(
     if (type == kNameAll) {
         list = nameList(cli, opt, kNameEnable);
         if (opt.m_bool) {
-            string invert = nameList(cli, opt, kNameDisable);
+            auto invert = nameList(cli, opt, kNameDisable);
             if (!invert.empty()) {
                 list += list.empty() ? "/ " : " / ";
                 list += invert;
@@ -482,7 +482,7 @@ string Cli::OptIndex::nameList(
 
 //===========================================================================
 void Cli::OptIndex::index(OptBase & opt) {
-    const char * ptr = opt.m_names.data();
+    auto ptr = opt.m_names.c_str();
     string name;
     char close;
     bool hasPos = false;
@@ -494,7 +494,7 @@ void Cli::OptIndex::index(OptBase & opt) {
         case '<': close = '>'; break;
         default: close = ' '; break;
         }
-        const char * b = ptr;
+        auto b = ptr;
         bool hasEqual = false;
         while (*ptr && *ptr != close) {
             if (*ptr == '=')
@@ -529,12 +529,15 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name) {
         where = m_argNames.end() - 1;
         goto INDEX_POS_NAME;
     case '<':
-        where =
-            find_if(m_argNames.begin(), m_argNames.end(), [](auto && key) {
-                return key.optional;
-            });
+        where = find_if(
+            m_argNames.begin(),
+            m_argNames.end(),
+            [](auto && key) { return key.optional; }
+        );
         where = m_argNames.insert(
-            where, {&opt, !invert, !optional, name.data() + 1});
+            where,
+            {&opt, !invert, !optional, name.data() + 1}
+        );
     INDEX_POS_NAME:
         opt.setNameIfEmpty(where->name);
         if (opt.m_command.empty())
@@ -585,7 +588,7 @@ void Cli::OptIndex::indexLongName(
     bool optional
 ) {
     bool allowNo = true;
-    string key{name};
+    auto key = string{name};
     if (key.back() == '.') {
         allowNo = false;
         if (key.size() == 2) {
@@ -776,10 +779,9 @@ Cli::Opt<bool> & Cli::versionOpt(
     const string & progName
 ) {
     auto act = [version, progName](auto & cli, auto &/*opt*/, auto &/*val*/) {
-        string prog = progName;
-        if (prog.empty()) {
+        auto prog = string{progName};
+        if (prog.empty())
             prog = displayName(cli.progName());
-        }
         cli.conout() << prog << " version " << version << endl;
         return false;
     };
@@ -983,10 +985,9 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
 vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
-    wstring_convert<CodecvtWchar> wcvt(
-        "BAD_ENCODING");
+    wstring_convert<CodecvtWchar> wcvt("BAD_ENCODING");
     for (; *argv; ++argv) {
-        string tmp = wcvt.to_bytes(*argv);
+        auto tmp = (string) wcvt.to_bytes(*argv);
         out.push_back(move(tmp));
     }
     assert(argc == out.size() && "bad arguments, argv[argc] not null");
@@ -1342,7 +1343,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     content.clear();
 
     error_code err;
-    auto bytes = (size_t)fs::file_size(fn, err);
+    auto bytes = (size_t) fs::file_size(fn, err);
     if (err)
         return false;
 
@@ -1359,15 +1360,16 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<CodecvtWchar> wcvt("");
-        const wchar_t * base =
-            reinterpret_cast<const wchar_t *>(content.data());
-        string tmp = wcvt.to_bytes(base + 1, base + content.size() / 2);
+        auto base = reinterpret_cast<const wchar_t *>(content.data());
+        auto tmp = (string) wcvt.to_bytes(base + 1, base + content.size() / 2);
         if (tmp.empty())
             return false;
         content = tmp;
-    } else if (
-        content.size() >= 3 && content[0] == '\xef' && content[1] == '\xbb'
-        && content[2] == '\xbf') {
+    } else if (content.size() >= 3
+        && content[0] == '\xef'
+        && content[1] == '\xbb'
+        && content[2] == '\xbf'
+    ) {
         content.erase(0, 3);
     }
     return true;
@@ -1382,8 +1384,8 @@ static bool expandResponseFile(
 ) {
     string content;
     error_code err;
-    fs::path fn = args[pos].substr(1);
-    fs::path cfn = fs::canonical(fn, err);
+    auto fn = (fs::path) args[pos].substr(1);
+    auto cfn = fs::canonical(fn, err);
     if (err)
         return cli.badUsage("Invalid response file", fn.string());
     auto ib = ancestors.insert(cfn.string());
@@ -1396,7 +1398,7 @@ static bool expandResponseFile(
     auto rargs = cli.toArgv(content);
     if (!expandResponseFiles(cli, rargs, ancestors))
         return false;
-    size_t rargLen = rargs.size();
+    auto rargLen = rargs.size();
     replace(args, pos, 1, move(rargs));
     pos += rargLen;
     ancestors.erase(ib.first);
@@ -1604,7 +1606,7 @@ bool Cli::parse(vector<string> & args) {
     for (; argPos < argc; ++argPos, ++arg) {
         OptName argName;
         const char * equal = nullptr;
-        const char * ptr = arg->c_str();
+        auto ptr = arg->c_str();
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
             for (; *ptr && *ptr != '-'; ++ptr) {
@@ -1666,7 +1668,7 @@ bool Cli::parse(vector<string> & args) {
 
         // positional value
         if (needCmd) {
-            string cmd = ptr;
+            auto cmd = (string) ptr;
             if (!commandExists(cmd))
                 return badUsage("Unknown command", cmd);
             needCmd = false;
@@ -1871,11 +1873,10 @@ static void writeText(ostream & os, WrapPos & wp, const string & text) {
             base += 1;
         if (!*base)
             return;
-        const char * nl = strchr(base, '\n');
-        const char * ptr = strchr(base, ' ');
-        if (!ptr) {
+        auto nl = strchr(base, '\n');
+        auto ptr = strchr(base, ' ');
+        if (!ptr)
             ptr = text.c_str() + text.size();
-        }
         if (nl && nl < ptr) {
             writeToken(os, wp, string(base, nl));
             writeNewline(os, wp);
@@ -2025,7 +2026,7 @@ int Cli::writeUsageImpl(
     OptIndex ndx;
     ndx.index(*this, cmdName, true);
     auto & cmd = Config::findCmdAlways(*this, cmdName);
-    string prog = displayName(arg0.empty() ? progName() : arg0);
+    auto prog = displayName(arg0.empty() ? progName() : arg0);
     const string usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
@@ -2137,9 +2138,11 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
             gname = key.opt->m_group.c_str();
             writeNewline(os, wp);
             auto & grp = Config::findGrpAlways(cmd, key.opt->m_group);
-            string title = grp.title;
-            if (title.empty() && strcmp(gname, kInternalOptionGroup) == 0
-                && &key == namedArgs.data()) {
+            auto title = grp.title;
+            if (title.empty()
+                && strcmp(gname, kInternalOptionGroup) == 0
+                && &key == namedArgs.data()
+            ) {
                 // First group and it's the internal group, give it a title
                 // so it's not just left hanging.
                 title = "Options";
@@ -2164,8 +2167,8 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
 
 //===========================================================================
 static string trim(const string & val) {
-    const char * first = val.data();
-    const char * last = first + val.size();
+    auto first = val.c_str();
+    auto last = first + val.size();
     while (isspace(*first))
         ++first;
     if (!*first)
@@ -2206,8 +2209,8 @@ void Cli::printCommands(ostream & os) {
     for (auto && key : keys) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  "s + key.name);
-        string desc = key.cmd->desc;
-        size_t pos = desc.find_first_of('.');
+        auto desc = key.cmd->desc;
+        auto pos = desc.find_first_of('.');
         if (pos != string::npos)
             desc.resize(pos + 1);
         desc = trim(desc);
@@ -2251,7 +2254,7 @@ void Cli::consoleEnableEcho(bool enable) {
 
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {
-    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    auto hInput = GetStdHandle(STD_INPUT_HANDLE);
     DWORD mode = 0;
     GetConsoleMode(hInput, &mode);
     if (enable) {
