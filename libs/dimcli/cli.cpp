@@ -173,6 +173,10 @@ struct Cli::Config {
 // forward declarations
 static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static bool defCmdAction(Cli & cli);
+static void printChoices(
+    ostream & os,
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+);
 
 //===========================================================================
 #if defined(_WIN32)
@@ -618,20 +622,7 @@ bool Cli::defParseAction(OptBase & opt, const string & val) {
     badUsage(opt, val);
     if (!opt.m_choiceDescs.empty()) {
         ostringstream os;
-        os << "Must be ";
-        size_t pos = 0;
-        for (auto && cd : opt.m_choiceDescs) {
-            pos += 1;
-            os << '"' << cd.first << '"';
-            auto num = opt.m_choiceDescs.size();
-            if (pos == num)
-                break;
-            if (pos + 1 == num) {
-                os << ((pos == 1) ? " or " : ", or ");
-            } else {
-                os << ", ";
-            }
-        }
+        printChoices(os, opt.m_choiceDescs);
         m_cfg->errDetail = os.str();
     }
     return false;
@@ -1840,6 +1831,14 @@ struct WrapPos {
     string prefix;
 };
 
+struct ChoiceKey {
+    size_t pos;
+    const char * key;
+    const char * desc;
+    const char * sortKey;
+    bool def;
+};
+
 } // namespace
 
 //===========================================================================
@@ -1935,24 +1934,15 @@ string Cli::descStr(const Cli::OptBase & opt) const {
 }
 
 //===========================================================================
-static void writeChoices(
-    ostream & os,
-    WrapPos & wp,
+static void getChoiceKeys(
+    vector<ChoiceKey> & keys,
+    size_t & maxWidth,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
-    if (choices.empty())
-        return;
-    size_t colWidth = 0;
-    struct ChoiceKey {
-        size_t pos;
-        const char * key;
-        const char * desc;
-        const char * sortKey;
-        bool def;
-    };
-    vector<ChoiceKey> keys;
+    keys.clear();
+    maxWidth = 0;
     for (auto && cd : choices) {
-        colWidth = max(colWidth, cd.first.size());
+        maxWidth = max(maxWidth, cd.first.size());
         ChoiceKey key;
         key.pos = cd.second.pos;
         key.key = cd.first.c_str();
@@ -1961,13 +1951,26 @@ static void writeChoices(
         key.def = cd.second.def;
         keys.push_back(key);
     }
-    const size_t indent = 6;
-    colWidth = max(min(colWidth + indent + 1, kMaxDescCol), kMinDescCol);
     sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
         if (int rc = strcmp(a.sortKey, b.sortKey))
             return rc < 0;
         return a.pos < b.pos;
     });
+}
+
+//===========================================================================
+static void writeChoices(
+    ostream & os,
+    WrapPos & wp,
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+) {
+    if (choices.empty())
+        return;
+    size_t colWidth = 0;
+    vector<ChoiceKey> keys;
+    getChoiceKeys(keys, colWidth, choices);
+    const size_t indent = 6;
+    colWidth = max(min(colWidth + indent + 1, kMaxDescCol), kMinDescCol);
 
     string desc;
     for (auto && k : keys) {
@@ -1979,6 +1982,42 @@ static void writeChoices(
         writeDescCol(os, wp, desc, colWidth);
         os << '\n';
         wp.pos = 0;
+    }
+}
+
+//===========================================================================
+static void printChoices(
+    ostream & os,
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+) {
+    if (choices.empty())
+        return;
+    WrapPos wp;
+    writeText(os, wp, "Must be ");
+    size_t colWidth = 0;
+    vector<ChoiceKey> keys;
+    getChoiceKeys(keys, colWidth, choices);
+
+    string val;
+    size_t pos = 0;
+    auto num = keys.size();
+    for (auto && k : keys) {
+        pos += 1;
+        val = '"';
+        val += k.key;
+        val += '"';
+        if (pos == 1 && num == 2) {
+            writeToken(os, wp, val);
+        } else if (pos == num) {
+            val += '.';
+            writeToken(os, wp, val);
+            break;
+        } else {
+            val += ',';
+            writeToken(os, wp, val);
+            if (pos + 1 == num)
+                writeToken(os, wp, "or");
+        }
     }
 }
 

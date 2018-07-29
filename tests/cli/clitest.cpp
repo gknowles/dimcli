@@ -114,14 +114,12 @@ void basicTests() {
     {
         enum class State { go, wait, stop };
         cli = {};
-        auto & state =
-            cli.opt("streetlight", State::wait)
-                .desc("Color of street light.")
-                .valueDesc("COLOR")
-                .choice(State::go, "green", "Means go!")
-                .choice(
-                    State::wait, "yellow", "Means wait, even if you're late.")
-                .choice(State::stop, "red", "Means stop.");
+        auto & state = cli.opt("streetlight", State::wait)
+            .desc("Color of street light.")
+            .valueDesc("COLOR")
+            .choice(State::go, "green", "Means go!")
+            .choice(State::wait, "yellow", "Means wait, even if you're late.")
+            .choice(State::stop, "red", "Means stop.");
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
@@ -141,23 +139,35 @@ usage: test [--streetlight=COLOR] [--help]
 
         EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--streetlight", "white"});
         EXPECT(cli.errMsg() == "Invalid '--streetlight' value: white");
-        EXPECT(cli.errDetail() == "Must be \"red\", \"green\", or \"yellow\"");
+        EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
+
+        cli = {};
+        cli.optVec<unsigned>("n")
+            .desc("List of numbers")
+            .valueDesc("NUMBER")
+            .choice(1, "one").choice(2, "two").choice(3, "three")
+            .choice(4, "four").choice(5, "five").choice(6, "six")
+            .choice(7, "seven").choice(8, "eight").choice(9, "nine")
+            .choice(10, "ten").choice(11, "eleven").choice(12, "twelve");
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"-n", "white"});
+        EXPECT(cli.errDetail() == 1 + R"(
+Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+"ten", "eleven", or "twelve".)");
     }
 
     // parse action
     {
         cli = {};
-        auto & sum =
-            cli.opt<int>("n number", 1)
-                .desc("numbers to multiply")
-                .parse([](auto & cli, auto & arg, const string & val) {
-                    int tmp = *arg;
-                    if (!arg.parseValue(val))
-                        return cli.badUsage(
-                            "Bad '" + arg.from() + "' value: " + val);
-                    *arg *= tmp;
-                    return true;
-                });
+        auto & sum = cli.opt<int>("n number", 1)
+            .desc("numbers to multiply")
+            .parse([](auto & cli, auto & arg, const string & val) {
+                int tmp = *arg;
+                if (!arg.parseValue(val))
+                    return cli.badUsage(
+                        "Bad '" + arg.from() + "' value: " + val);
+                *arg *= tmp;
+                return true;
+            });
         EXPECT_PARSE(cli, {"-n2", "-n3"});
         EXPECT(*sum == 6);
     }
