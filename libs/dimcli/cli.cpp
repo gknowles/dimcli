@@ -2132,6 +2132,15 @@ int Cli::printUsageEx(
 }
 
 //===========================================================================
+static size_t clampDescWidth(int colWidth) {
+    if (colWidth < kMinDescCol)
+        return kMinDescCol;
+    if (colWidth > kMaxDescCol)
+        return kMaxDescCol;
+    return colWidth;
+}
+
+//===========================================================================
 void Cli::printPositionals(ostream & os, const string & cmd) {
     OptIndex ndx;
     ndx.index(*this, cmd, true);
@@ -2142,7 +2151,7 @@ void Cli::printPositionals(ostream & os, const string & cmd) {
         colWidth = max(colWidth, pa.name.size());
         hasDesc = hasDesc || pa.opt->m_desc.size();
     }
-    colWidth = clamp(colWidth + 3, kMinDescCol, kMaxDescCol);
+    colWidth = clampDescWidth(colWidth + 3);
     if (!hasDesc)
         return;
 
@@ -2168,7 +2177,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
     vector<ArgKey> namedArgs;
     if (!ndx.findNamedArgs(namedArgs, colWidth, *this, cmd, kNameAll, false))
         return;
-    colWidth = clamp(colWidth + 3, kMinDescCol, kMaxDescCol);
+    colWidth = clampDescWidth(colWidth + 3);
 
     WrapPos wp;
     const char * gname{nullptr};
