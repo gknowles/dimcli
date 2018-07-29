@@ -1,7 +1,7 @@
 // Copyright Glen Knowles 2016 - 2017.
 // Distributed under the Boost Software License, Version 1.0.
 //
-// cli.h - dim cli
+// cli.h - dimcli
 //
 // Command line parser toolkit
 //

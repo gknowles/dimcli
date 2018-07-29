@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - Allow limited operation when \<filesystem> not available
 - Fixed - "--opt=" should use "" as value instead of the next arg.
 - Added - Word wrap list of choices in error detail.
+- Fixed - Parse errors for optVec report an empty string for the opt name.
 
 ## dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()

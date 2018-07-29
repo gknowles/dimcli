@@ -1,7 +1,7 @@
 // Copyright Glen Knowles 2016 - 2018.
 // Distributed under the Boost Software License, Version 1.0.
 //
-// cli.cpp - dim cli
+// cli.cpp - dimcli
 //
 // For documentation and examples:
 // https://github.com/gknowles/dimcli
