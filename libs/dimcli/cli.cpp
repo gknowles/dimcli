@@ -1674,7 +1674,7 @@ bool Cli::parse(vector<string> & args) {
         name = argName.name;
         if (!parseValue(*argName.opt, name, argPos, ptr))
             return false;
-        if (!argName.opt->m_multiple)
+        if (!argName.opt->m_vector)
             pos += 1;
         continue;
 
@@ -1918,7 +1918,7 @@ string Cli::descStr(const Cli::OptBase & opt) const {
         // "default" tag is added to individual choices later
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         desc += " (default)";
-    } else if (!opt.m_multiple && !opt.m_bool) {
+    } else if (!opt.m_vector && !opt.m_bool) {
         if (opt.m_defaultDesc.empty()) {
             if (!opt.defaultValueToString(tmp, *this))
                 tmp.clear();
@@ -2100,7 +2100,7 @@ int Cli::writeUsageImpl(
             string token = pa.name.find(' ') == string::npos
                 ? pa.name
                 : "<" + pa.name + ">";
-            if (pa.opt->m_multiple)
+            if (pa.opt->m_vector)
                 token += "...";
             if (pa.optional) {
                 writeToken(os, wp, "[" + token + "]");

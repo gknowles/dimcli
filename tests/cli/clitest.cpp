@@ -142,6 +142,29 @@ usage: test [--streetlight=COLOR] [--help]
         EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
 
         cli = {};
+        auto & state2 = cli.optVec<State>("[streetlights]")
+            .desc("Color of street lights.")
+            .valueDesc("COLOR")
+            .choice(State::go, "green", "Means go!")
+            .choice(State::wait, "yellow", "Means wait, even if you're late.")
+            .choice(State::stop, "red", "Means stop.");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [streetlights...]
+  streetlights  Color of street lights.
+      green   Means go!
+      yellow  Means wait, even if you're late.
+      red     Means stop.
+
+Options:
+  --help    Show this message and exit.
+)");
+        EXPECT_PARSE(cli, {"red"});
+        EXPECT(state2.size() == 1 && state2[0] == State::stop);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"white"});
+        EXPECT(cli.errMsg() == "Invalid 'streetlights' value: white");
+        EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
+
+        cli = {};
         cli.optVec<unsigned>("n")
             .desc("List of numbers")
             .valueDesc("NUMBER")
@@ -150,6 +173,7 @@ usage: test [--streetlight=COLOR] [--help]
             .choice(7, "seven").choice(8, "eight").choice(9, "nine")
             .choice(10, "ten").choice(11, "eleven").choice(12, "twelve");
         EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"-n", "white"});
+        EXPECT(cli.errMsg() == "Invalid '-n' value: white");
         EXPECT(cli.errDetail() == 1 + R"(
 Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
 "ten", "eleven", or "twelve".)");

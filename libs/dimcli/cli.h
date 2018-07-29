@@ -854,9 +854,10 @@ protected:
 
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
-    // Whether multiple values are allowed, and how many there can be (-1 for
+    // Whether this option has one value or a vector of values.
+    bool m_vector{false};
+    // IGNORED. Maximum allowed values, only when a vector is used (-1 for
     // unlimited).
-    bool m_multiple{false};
     int m_nargs{1};
 
     // Whether the value is a bool on the command line (no separate value).
@@ -1162,7 +1163,7 @@ template <typename A, typename T>
 A & Cli::OptShim<A, T>::defaultValue(const T & val) {
     m_defValue = val;
     for (auto && cd : m_choiceDescs)
-        cd.second.def = (val == m_choices[cd.second.pos]);
+        cd.second.def = !this->m_vector && val == m_choices[cd.second.pos];
     return static_cast<A &>(*this);
 }
 
@@ -1212,7 +1213,7 @@ A & Cli::OptShim<A, T>::choice(
     cd.pos = m_choices.size();
     cd.desc = desc;
     cd.sortKey = sortKey;
-    cd.def = (val == this->defaultValue());
+    cd.def = (!this->m_vector && val == this->defaultValue());
     m_choices.push_back(val);
     return static_cast<A &>(*this);
 }
@@ -1380,22 +1381,23 @@ Cli::Opt<T>::Opt(
 //===========================================================================
 template <typename T>
 inline bool Cli::Opt<T>::fromString(Cli & cli, const std::string & value) {
+    auto & tmp = *m_proxy->m_value;
     if (this->m_flagValue) {
         bool flagged;
         if (!cli.fromString(flagged, value))
             return false;
         if (flagged)
-            *m_proxy->m_value = this->defaultValue();
+            tmp = this->defaultValue();
         return true;
     }
     if (!this->m_choices.empty()) {
         auto i = this->m_choiceDescs.find(value);
         if (i == this->m_choiceDescs.end())
             return false;
-        *m_proxy->m_value = this->m_choices[i->second.pos];
+        tmp = this->m_choices[i->second.pos];
         return true;
     }
-    return cli.fromString(*m_proxy->m_value, value);
+    return cli.fromString(tmp, value);
 }
 
 //===========================================================================
@@ -1512,34 +1514,35 @@ Cli::OptVec<T>::OptVec(
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values)
 {
-    this->m_multiple = true;
+    this->m_vector = true;
     this->m_nargs = nargs;
 }
 
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::fromString(Cli & cli, const std::string & value) {
+    m_proxy->m_values->resize(m_proxy->m_values->size() + 1);
+    auto & tmp = m_proxy->m_values->back();
     if (this->m_flagValue) {
         bool flagged;
         if (!cli.fromString(flagged, value))
             return false;
-        if (flagged)
-            m_proxy->m_values->push_back(this->defaultValue());
+        if (flagged) {
+            tmp = this->defaultValue();
+        } else {
+            m_proxy->m_matches.pop_back();
+        }
         return true;
     }
     if (!this->m_choices.empty()) {
         auto i = this->m_choiceDescs.find(value);
         if (i == this->m_choiceDescs.end())
             return false;
-        m_proxy->m_values->push_back(this->m_choices[i->second.pos]);
+        tmp = this->m_choices[i->second.pos];
         return true;
     }
 
-    T tmp;
-    if (!cli.fromString(tmp, value))
-        return false;
-    m_proxy->m_values->push_back(std::move(tmp));
-    return true;
+    return cli.fromString(tmp, value);
 }
 
 //===========================================================================
