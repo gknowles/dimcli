@@ -2132,7 +2132,7 @@ int Cli::printUsageEx(
 }
 
 //===========================================================================
-static size_t clampDescWidth(int colWidth) {
+static size_t clampDescWidth(size_t colWidth) {
     if (colWidth < kMinDescCol)
         return kMinDescCol;
     if (colWidth > kMaxDescCol)
