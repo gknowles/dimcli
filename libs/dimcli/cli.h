@@ -316,8 +316,8 @@ public:
     // to create all the commands of one group before moving to the next.
     //
     // Setting the command group at the top level (the "" command) only serves
-    // to set the initial command group for new commands created from the top
-    // level context.
+    // to set the initial command group for new commands created while in the
+    // top level context.
     Cli & cmdGroup(const std::string & name);
 
     // Heading title to display, defaults to group name. If empty there will be

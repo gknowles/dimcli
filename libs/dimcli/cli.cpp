@@ -158,6 +158,7 @@ struct Cli::Config {
     static const CommandConfig & findCmdOrDie(const Cli & cli);
 
     static GroupConfig & findCmdGrpAlways(Cli & cli);
+    static GroupConfig & findCmdGrpAlways(Cli & cli, const string & name);
     static GroupConfig & findCmdGrpOrDie(const Cli & cli);
 
     static GroupConfig & findGrpAlways(Cli & cli);
@@ -243,6 +244,9 @@ void Cli::Config::touchAllCmds(Cli & cli) {
     // Make sure all opts have a backing command config
     for (auto && opt : cli.m_cfg->opts)
         Config::findCmdAlways(cli, opt->m_command);
+    // Make sure all commands have a backing command group
+    for (auto && cmd : cli.m_cfg->cmds)
+        Config::findCmdGrpAlways(cli, cmd.second.cmdGroup);
 }
 
 //===========================================================================
@@ -265,7 +269,7 @@ CommandConfig & Cli::Config::findCmdAlways(
     auto & cmd = cmds[name];
     cmd.name = name;
     cmd.action = defCmdAction;
-    findCmdGrpAlways(cli);
+    cmd.cmdGroup = cli.cmdGroup();
     auto & defGrp = findGrpAlways(cmd, "");
     defGrp.title = "Options";
     auto & intGrp = findGrpAlways(cmd, kInternalOptionGroup);
@@ -291,11 +295,17 @@ const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
 //===========================================================================
 // static
 GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli) {
-    auto & name = cli.cmdGroup();
+    return findCmdGrpAlways(cli, cli.cmdGroup());
+}
+
+//===========================================================================
+// static
+GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli, const string & name) {
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
     if (i != grps.end())
         return i->second;
+
     auto & grp = grps[name];
     grp.name = grp.sortKey = name;
     if (name.empty()) {
@@ -856,9 +866,9 @@ const string & Cli::sortKey() const {
 
 //===========================================================================
 Cli & Cli::command(const string & name, const string & grpName) {
+    Config::findCmdAlways(*this, name);
     m_command = name;
     m_group = grpName;
-    Config::findCmdAlways(*this);
     return *this;
 }
 

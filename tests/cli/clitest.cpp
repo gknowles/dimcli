@@ -358,10 +358,10 @@ Other:
     // subcommands
     {
         Dim::Cli c1;
-        auto & a1 = c1.command("one").opt<int>("a", 1);
+        auto & a1 = c1.command("one").cmdTitle("Primary").opt<int>("a", 1);
         c1.desc("First sentence of description. Rest of one's description.");
         Dim::Cli c2;
-        auto & a2 = c2.command("two").opt<int>("a", 2);
+        auto & a2 = c2.command("two").cmdGroup("Additional").opt<int>("a", 2);
 
         // create option and hide it underneath an undefined command
         c2.opt<int>("b", 99).command("three");
@@ -387,9 +387,11 @@ Options:
         EXPECT_HELP(c1, "", 1 + R"(
 usage: test [OPTIONS] command [args...]
 
-Commands:
+Primary:
   one       First sentence of description.
   three
+
+Additional:
   two
 
 Options:
@@ -403,6 +405,31 @@ Options:
         EXPECT(c2.errMsg() == "Unknown option: -a");
         EXPECT_PARSE2(c1, false, Dim::kExitUsage, {"two", "-a"});
         EXPECT(c2.errMsg() == "Command 'two': Option requires value: -a");
+    }
+
+    // subcommand groups
+    {
+        cli = {};
+        cli.command("1a").cmdGroup("First").cmdSortKey("1");
+        cli.command("1b");
+        cli.command("2a").cmdGroup("Second").cmdSortKey("2");
+        cli.command("3a").cmdGroup("Third").cmdSortKey("3");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] command [args...]
+
+First:
+  1a
+  1b
+
+Second:
+  2a
+
+Third:
+  3a
+
+Options:
+  --help    Show this message and exit.
+)");
     }
 
     // require
