@@ -268,7 +268,8 @@ public:
 
     //-----------------------------------------------------------------------
     // Changes config context to reference the options of the selected
-    // command. Use "" to specify the top level context.
+    // command. Use "" to specify the top level context. If a new command is
+    // selected it will be created in the command group of the current context.
     Cli & command(const std::string & name, const std::string & group = {});
 
     // Function signature of actions that are tied to commands.
@@ -307,6 +308,30 @@ public:
     Cli & helpNoArgs();
 
     //-----------------------------------------------------------------------
+    // A command group collects commands into sections in the help text, in the
+    // same way that option groups do with options.
+
+    // Changes the command group of the current command. Because new commands
+    // start out in the same group as the current command, it can be convenient
+    // to create all the commands of one group before moving to the next.
+    //
+    // Setting the command group at the top level (the "" command) only serves
+    // to set the initial command group for new commands created from the top
+    // level context.
+    Cli & cmdGroup(const std::string & name);
+
+    // Heading title to display, defaults to group name. If empty there will be
+    // a single blank line separating this group from the previous one.
+    Cli & cmdTitle(const std::string & val);
+
+    // Command groups are sorted by key, defaults to group name.
+    Cli & cmdSortKey(const std::string & key);
+
+    const std::string & cmdGroup() const;
+    const std::string & cmdTitle() const;
+    const std::string & cmdSortKey() const;
+
+    //-----------------------------------------------------------------------
     // Enabled by default, response file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
@@ -340,7 +365,7 @@ public:
     std::ostream & conout();
 
     //-----------------------------------------------------------------------
-    // Help
+    // Rendering help text
 
     // printHelp & printUsage return the current exitCode()
     int printHelp(

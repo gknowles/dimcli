@@ -66,6 +66,7 @@ struct CommandConfig {
     string desc;
     string footer;
     function<Cli::ActionFn> action;
+    string cmdGroup;
     Cli::Opt<bool> * helpOpt{nullptr};
     unordered_map<string, GroupConfig> groups;
 };
@@ -137,6 +138,7 @@ struct Cli::OptIndex {
 struct Cli::Config {
     vector<function<BeforeFn>> befores;
     unordered_map<string, CommandConfig> cmds;
+    unordered_map<string, GroupConfig> cmdGroups;
     list<unique_ptr<OptBase>> opts;
     bool responseFiles{true};
     string envOpts;
@@ -154,6 +156,9 @@ struct Cli::Config {
     static CommandConfig & findCmdAlways(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli, const string & name);
     static const CommandConfig & findCmdOrDie(const Cli & cli);
+
+    static GroupConfig & findCmdGrpAlways(Cli & cli);
+    static GroupConfig & findCmdGrpOrDie(const Cli & cli);
 
     static GroupConfig & findGrpAlways(Cli & cli);
     static GroupConfig & findGrpAlways(
@@ -233,6 +238,7 @@ CliLocal::CliLocal()
 ***/
 
 //===========================================================================
+// static
 void Cli::Config::touchAllCmds(Cli & cli) {
     // Make sure all opts have a backing command config
     for (auto && opt : cli.m_cfg->opts)
@@ -240,11 +246,13 @@ void Cli::Config::touchAllCmds(Cli & cli) {
 }
 
 //===========================================================================
+// static
 CommandConfig & Cli::Config::findCmdAlways(Cli & cli) {
     return findCmdAlways(cli, cli.command());
 }
 
 //===========================================================================
+// static
 CommandConfig & Cli::Config::findCmdAlways(
     Cli & cli,
     const string & name
@@ -257,6 +265,7 @@ CommandConfig & Cli::Config::findCmdAlways(
     auto & cmd = cmds[name];
     cmd.name = name;
     cmd.action = defCmdAction;
+    findCmdGrpAlways(cli);
     auto & defGrp = findGrpAlways(cmd, "");
     defGrp.title = "Options";
     auto & intGrp = findGrpAlways(cmd, kInternalOptionGroup);
@@ -271,6 +280,7 @@ CommandConfig & Cli::Config::findCmdAlways(
 }
 
 //===========================================================================
+// static
 const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
@@ -279,11 +289,43 @@ const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
 }
 
 //===========================================================================
+// static
+GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli) {
+    auto & name = cli.cmdGroup();
+    auto & grps = cli.m_cfg->cmdGroups;
+    auto i = grps.find(name);
+    if (i != grps.end())
+        return i->second;
+    auto & grp = grps[name];
+    grp.name = grp.sortKey = name;
+    if (name.empty()) {
+        grp.title = "Commands";
+    } else if (name == kInternalOptionGroup) {
+        grp.title = "";
+    } else {
+        grp.title = name;
+    }
+    return grp;
+}
+
+//===========================================================================
+// static
+GroupConfig & Cli::Config::findCmdGrpOrDie(const Cli & cli) {
+    auto & name = cli.cmdGroup();
+    auto & grps = cli.m_cfg->cmdGroups;
+    auto i = grps.find(name);
+    assert(i != grps.end() && "uninitialized command group context");
+    return i->second;
+}
+
+//===========================================================================
+// static
 GroupConfig & Cli::Config::findGrpAlways(Cli & cli) {
     return findGrpAlways(findCmdAlways(cli), cli.group());
 }
 
 //===========================================================================
+// static
 GroupConfig & Cli::Config::findGrpAlways(
     CommandConfig & cmd,
     const string & name
@@ -297,6 +339,7 @@ GroupConfig & Cli::Config::findGrpAlways(
 }
 
 //===========================================================================
+// static
 const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
@@ -869,6 +912,7 @@ Cli & Cli::helpCmd() {
     // Use new instance so the current context command is preserved.
     Cli cli{*this};
     cli.command("help")
+        .cmdGroup(kInternalOptionGroup)
         .desc("Show help for individual commands and exit. If no command is "
             "given the list of commands and general options are shown.")
         .action(helpCmdAction);
@@ -882,6 +926,40 @@ Cli & Cli::helpCmd() {
 //===========================================================================
 Cli & Cli::helpNoArgs() {
     return before(helpBeforeAction);
+}
+
+//===========================================================================
+Cli & Cli::cmdGroup(const string & name) {
+    Config::findCmdAlways(*this).cmdGroup = name;
+    Config::findCmdGrpAlways(*this);
+    return *this;
+}
+
+//===========================================================================
+Cli & Cli::cmdTitle(const string & val) {
+    Config::findCmdGrpAlways(*this).title = val;
+    return *this;
+}
+
+//===========================================================================
+Cli & Cli::cmdSortKey(const string & key) {
+    Config::findCmdGrpAlways(*this).sortKey = key;
+    return *this;
+}
+
+//===========================================================================
+const string & Cli::cmdGroup() const {
+    return Config::findCmdOrDie(*this).cmdGroup;
+}
+
+//===========================================================================
+const string & Cli::cmdTitle() const {
+    return Config::findCmdGrpOrDie(*this).title;
+}
+
+//===========================================================================
+const string & Cli::cmdSortKey() const {
+    return Config::findCmdGrpOrDie(*this).sortKey;
 }
 
 //===========================================================================
@@ -1001,7 +1079,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
 // These rules where gleaned by inspecting glib's g_shell_parse_argv which
 // takes its rules from the "Shell Command Language" section of the UNIX98
 // spec -- ignoring parameter expansion ("$()" and "${}"), command
-// substitution (backquote `), operators as separators, etc.
+// substitution (back quote `), operators as separators, etc.
 //
 // Arguments are split on whitespace (" \t\r\n\f\v") unless the whitespace
 // is escaped, quoted, or in a comment.
@@ -2196,7 +2274,6 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
                 title = "Options";
             }
             if (!title.empty()) {
-                wp.prefix.clear();
                 writeText(os, wp, title + ":");
                 writeNewline(os, wp);
             }
@@ -2236,12 +2313,17 @@ void Cli::printCommands(ostream & os) {
     struct CmdKey {
         const char * name;
         const CommandConfig * cmd;
+        const GroupConfig * grp;
     };
     vector<CmdKey> keys;
     for (auto && cmd : m_cfg->cmds) {
         if (auto width = cmd.first.size()) {
             colWidth = max(colWidth, width);
-            CmdKey key = {cmd.first.c_str(), &cmd.second};
+            CmdKey key = {
+                cmd.first.c_str(),
+                &cmd.second,
+                &m_cfg->cmdGroups[cmd.second.cmdGroup]
+            };
             keys.push_back(key);
         }
     }
@@ -2249,12 +2331,31 @@ void Cli::printCommands(ostream & os) {
         return;
     colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
     sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
+        if (int rc = a.grp->sortKey.compare(b.grp->sortKey))
+            return rc < 0;
         return strcmp(a.name, b.name) < 0;
     });
 
-    os << "\nCommands:\n";
     WrapPos wp;
+    const char * gname{nullptr};
     for (auto && key : keys) {
+        if (!gname || key.grp->name != gname) {
+            gname = key.grp->name.c_str();
+            writeNewline(os, wp);
+            auto title = key.grp->title;
+            if (title.empty()
+                && strcmp(gname, kInternalOptionGroup) == 0
+                && &key == keys.data()
+            ) {
+                // First group and it's the internal group, give it a title.
+                title = "Commands";
+            }
+            if (!title.empty()) {
+                writeText(os, wp, title + ":");
+                writeNewline(os, wp);
+            }
+        }
+
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  "s + key.name);
         auto desc = key.cmd->desc;
@@ -2263,8 +2364,8 @@ void Cli::printCommands(ostream & os) {
             desc.resize(pos + 1);
         desc = trim(desc);
         writeDescCol(os, wp, desc, colWidth);
-        os << '\n';
-        wp.pos = 0;
+        wp.prefix.clear();
+        writeNewline(os, wp);
     }
 }
 
