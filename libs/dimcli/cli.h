@@ -791,8 +791,8 @@ public:
     struct ChoiceDesc {
         std::string desc;
         std::string sortKey;
-        size_t pos{0};
-        bool def{false};
+        size_t pos{};
+        bool def{};
     };
 
 public:
@@ -880,16 +880,16 @@ protected:
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
     // Whether this option has one value or a vector of values.
-    bool m_vector{false};
+    bool m_vector{};
     // IGNORED. Maximum allowed values, only when a vector is used (-1 for
     // unlimited).
     int m_nargs{1};
 
     // Whether the value is a bool on the command line (no separate value).
-    bool m_bool{false};
+    bool m_bool{};
 
-    bool m_flagValue{false};
-    bool m_flagDefault{false};
+    bool m_flagValue{};
+    bool m_flagDefault{};
 
 private:
     friend class Cli;

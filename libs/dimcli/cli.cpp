@@ -72,16 +72,16 @@ struct CommandConfig {
 };
 
 struct OptName {
-    Cli::OptBase * opt;
-    bool invert;   // set to false instead of true (only for bools)
-    bool optional; // value doesn't have to be present? (non-bools only)
-    string name;   // name of argument (only for positionals)
+    Cli::OptBase * opt{};
+    bool invert{};   // set to false instead of true (only for bools)
+    bool optional{}; // value doesn't have to be present? (non-bools only)
+    string name;     // name of argument (only for positionals)
 };
 
 struct ArgKey {
     string sort; // sort key
     string list;
-    Cli::OptBase * opt;
+    Cli::OptBase * opt{};
 };
 
 // Option name filters for opts that are externally bool
@@ -103,7 +103,7 @@ struct Cli::OptIndex {
     unordered_map<char, OptName> m_shortNames;
     unordered_map<string, OptName> m_longNames;
     vector<OptName> m_argNames;
-    bool m_allowCommands{false};
+    bool m_allowCommands{};
 
     void index(
         const Cli & cli,

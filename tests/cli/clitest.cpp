@@ -615,7 +615,7 @@ Options:
 
 //===========================================================================
 void envTests() {
-#if !defined(DIMCLI_LIB_NO_CONSOLE)
+#if !defined(DIMCLI_LIB_NO_ENV)
     int line = 0;
     Dim::CliLocal cli;
     int result;
