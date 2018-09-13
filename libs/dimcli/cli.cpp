@@ -67,7 +67,7 @@ struct CommandConfig {
     string footer;
     function<Cli::ActionFn> action;
     string cmdGroup;
-    Cli::Opt<bool> * helpOpt{nullptr};
+    Cli::Opt<bool> * helpOpt{};
     unordered_map<string, GroupConfig> groups;
 };
 
@@ -2268,7 +2268,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
     colWidth = clampDescWidth(colWidth + 3);
 
     WrapPos wp;
-    const char * gname{nullptr};
+    const char * gname = nullptr;
     for (auto && key : namedArgs) {
         if (!gname || key.opt->m_group != gname) {
             gname = key.opt->m_group.c_str();
@@ -2347,7 +2347,7 @@ void Cli::printCommands(ostream & os) {
     });
 
     WrapPos wp;
-    const char * gname{nullptr};
+    const char * gname = nullptr;
     for (auto && key : keys) {
         if (!gname || key.grp->name != gname) {
             gname = key.grp->name.c_str();

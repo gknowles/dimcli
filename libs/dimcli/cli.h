@@ -1330,7 +1330,7 @@ struct Cli::ArgMatch {
     std::string name;
 
     // Member of argv[] that populated the value or 0 if it wasn't.
-    int pos{0};
+    int pos{};
 };
 
 
@@ -1346,16 +1346,15 @@ struct Cli::Value {
     ArgMatch m_match;
 
     // Whether the value was explicitly set.
-    bool m_explicit{false};
+    bool m_explicit{};
 
     // Points to the opt with the default flag value.
-    Opt<T> * m_defFlagOpt{nullptr};
+    Opt<T> * m_defFlagOpt{};
 
-    T * m_value{nullptr};
+    T * m_value{};
     T m_internal;
 
-    Value(T * value)
-        : m_value(value ? value : &m_internal) {}
+    Value(T * value) : m_value(value ? value : &m_internal) {}
 };
 
 
@@ -1471,9 +1470,9 @@ struct Cli::ValueVec {
     std::vector<ArgMatch> m_matches;
 
     // Points to the opt with the default flag value.
-    OptVec<T> * m_defFlagOpt{nullptr};
+    OptVec<T> * m_defFlagOpt{};
 
-    std::vector<T> * m_values{nullptr};
+    std::vector<T> * m_values{};
     std::vector<T> m_internal;
 
     ValueVec(std::vector<T> * value)
