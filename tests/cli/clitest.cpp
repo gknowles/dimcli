@@ -635,6 +635,20 @@ void envTests() {
 }
 
 //===========================================================================
+static int runTests(bool prompt) {
+    basicTests();
+    envTests();
+    promptTests(prompt);
+
+    if (s_errors) {
+        cerr << "*** TESTS FAILED ***" << endl;
+        return Dim::kExitSoftware;
+    }
+    cout << "All tests passed" << endl;
+    return 0;
+}
+
+//===========================================================================
 int main(int argc, char * argv[]) {
 #if defined(_MSC_VER)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF
@@ -644,17 +658,19 @@ int main(int argc, char * argv[]) {
 #endif
 
     Dim::CliLocal cli;
-    auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    basicTests();
-    envTests();
-    promptTests(*prompt);
+    cli.helpNoArgs();
+    cli.opt<bool>("test").desc("Run tests.");
+    auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting.");
+    if (cli.parse(argc, argv))
+        return runTests(*prompt);
 
-    if (s_errors) {
-        cerr << "*** TESTS FAILED ***" << endl;
-        return Dim::kExitSoftware;
-    }
-    cout << "All tests passed" << endl;
+    // Exiting without error (i.e. help or version)?
+    if (!cli.exitCode())
+        return 0;
+
+    cout << "Number of args: " << argc << "\n";
+    for (auto i = 0; i < argc; ++i)
+        cout << i << ": {" << argv[i] << "}\n";
+    cout << "Line: " << cli.toCmdline(argc, argv) << '\n';
     return 0;
 }

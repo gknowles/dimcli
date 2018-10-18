@@ -428,10 +428,10 @@ public:
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
-    // Create vector of pointers suitable for use with argc/argv APIs,
-    // includes trailing null, so use "size() - 1" for argc. The return
-    // values point into the source string vector and are only valid until
-    // that vector is resized or destroyed.
+    // Create vector of pointers suitable for use with argc/argv APIs, has a
+    // trailing null that is not included in size(). The return values point
+    // into the source string vector and are only valid until that vector is
+    // resized or destroyed.
     static std::vector<const char *> toPtrArgv(
         const std::vector<std::string> & args
     );
@@ -442,6 +442,21 @@ public:
     static std::vector<std::string> toGnuArgv(const std::string & cmdline);
     // Parse using Windows rules
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
+
+    // Join args into a single command line, escaping as needed, that parses
+    // back into those same args. Uses the default conventions (Gnu or Windows)
+    // of the platform.
+    static std::string toCmdline(const std::vector<std::string> & args);
+    // Join array of pointers into command line, escaping as needed.
+    static std::string toCmdline(size_t argc, char * argv[]);
+    static std::string toCmdline(size_t argc, const char * argv[]);
+
+    // Join according to glib conventions, based on the UNIX98 shell spec.
+    static std::string toGlibCmdline(size_t argc, char * argv[]);
+    // Join using GNU conventions, same rules as buildargv()
+    static std::string toGnuCmdline(size_t argc, char * argv[]);
+    // Join using Windows rules
+    static std::string toWindowsCmdline(size_t argc, char * argv[]);
 
     template <typename T>
     [[nodiscard]] bool fromString(T & out, const std::string & src) const;

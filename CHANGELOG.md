@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - Word wrap list of choices in error detail.
 - Fixed - Parse errors for optVec report an empty string for the opt name.
 - Added - Command groups for grouping subcommands in help text.
+- Added - cli.toCmdline() static method
 
 ## dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()

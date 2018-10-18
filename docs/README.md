@@ -7,17 +7,16 @@ Distributed under the Boost Software License, Version 1.0.
 C++ command line parser toolkit for kids of all ages.
 
 - GNU style command lines (-o, --output=FILE, etc.)
-- can parse directly to any supplied (or implicitly created) variables
-  that are:
+- parses directly to any supplied (or implicitly created) variable that is:
   - default constructible
   - copyable
-  - assignable from string, have an istream extraction operator, or have a
-    specialization of Cli\::fromString\<T>() for their type
+  - assignable from string, has an istream extraction operator, or has a
+    specialization of Cli\::fromString\<T>()
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
 - response files (requires `<filesystem>` support)
-- works with exceptions and/or RTTI enabled or disabled
+- works with or without exceptions and RTTI enabled
 
 How does it feel?
 
@@ -501,7 +500,7 @@ individual arguments are parsed. The before action should:
 - Return false if the program should stop, otherwise true.
 
 There can be any number of before actions, they are executed in the order
-they were added.
+they are added.
 
 Let's test for empty command lines and add "--help" to them. But first, our
 "before" program:
@@ -532,7 +531,6 @@ Error: Missing argument: value
 
 Now add the before action:
 ~~~ cpp
-auto & val = cli.opt<string>("<value>").desc("It's required!");
 cli.before([](Cli &, vector<string> & args) {
     if (args.size() == 1) // it's just the program name?
         args.push_back("--help");
