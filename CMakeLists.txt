@@ -65,6 +65,7 @@
 cmake_minimum_required (VERSION 3.6)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
+option(BUILD_TESTING "Enable test generation for ctest" ON)
 option(BUILD_UNICODE "Build with Unicode charset" OFF)
 option(INSTALL_LIBS "Install includes libs" OFF)
 option(INSTALL_TOOLS "Install includes tool binaries" OFF)
@@ -500,6 +501,9 @@ foreach(var ${allnames})
 endforeach()
 
 # test targets
+if(BUILD_TESTING)
+    enable_testing()
+endif()
 file(GLOB allnames tests/*)
 foreach(var ${allnames})
     if(IS_DIRECTORY "${var}")
