@@ -296,6 +296,8 @@ endfunction()
 get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
 if("${parent}" STREQUAL "")
     set(ROOT_PROJECT true)
+else()
+    set(ROOT_PROJECT false)
 endif()
 
 if(BUILD_PROJECT_NAME AND ROOT_PROJECT)
