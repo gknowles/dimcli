@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 4.0.0 (2018-10-22)
 - Changed - Default to user's preferred (instead of global) locale for parsing
 - Changed - Rename kPrompt* flags to fPrompt*
 - Added - Allow showing non-bool defaults in prompts
