@@ -8,6 +8,8 @@
 # configure.bat
 # docs/README.md
 # docs/Sidebar.md
+# docs/_config.yml
+# docs/assets/css/style.scss
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
 # tests/cli/clitest.cpp

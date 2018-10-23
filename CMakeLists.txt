@@ -274,7 +274,7 @@ function(add_lib_project tgt srcdir)
 endfunction()
 
 function(add_file_project tgt)
-    file(GLOB sources LIST_DIRECTORIES false ${ARGN})
+    set(sources ${ARGN})
     list(LENGTH sources num)
     if(num)
         list(APPEND deps ${sources})
@@ -486,17 +486,20 @@ if(NOT ROOT_PROJECT)
 endif()
 
 # file targets
-add_file_project(about
+file(GLOB sources
     LICENSE
     .clang-format
     .travis.yml
     appveyor.yml
     *.md
     *.props
-    configure.bat
-    docs/*)
-add_file_project(conf
-    bin/conf/*)
+    configure.bat)
+file(GLOB_RECURSE allnames docs/*)
+list(APPEND sources ${allnames})
+add_file_project(about ${sources})
+
+file(GLOB_RECURSE sources bin/conf/*)
+add_file_project(conf ${sources})
 
 # tool targets
 file(GLOB allnames tools/*)
