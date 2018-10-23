@@ -1,9 +1,9 @@
+---
 # Copyright Glen Knowles 2018.
 # Distributed under the Boost Software License, Version 1.0.
 ---
----
 
-@import "{{ site.theme }}";
 .wrapper section {
-  width: 645px;
+    width: 645px;
 }
+@import "{{ site.theme }}";
