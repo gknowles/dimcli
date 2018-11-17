@@ -7,10 +7,10 @@
 
 using namespace std::chrono;
 
-inline bool doubleequals(const double a, const double b)
+inline bool doubleequals(double const a, double const b)
 {
-    static const double delta = 0.0001;
-    const double diff = a - b;
+    static double const delta = 0.0001;
+    double const diff = a - b;
     return diff < delta && diff > -delta;
 }
 int main()
@@ -33,9 +33,9 @@ int main()
         for (int x = 0; x < 10'000; ++x)
         {
             parser.ParseArgs(arguments);
-            const int i = args::get(integer);
-            const std::vector<char> c(args::get(characters));
-            const std::vector<double> n(args::get(numbers));
+            int const i = args::get(integer);
+            std::vector<char> const c(args::get(characters));
+            std::vector<double> const n(args::get(numbers));
             assert(i == 7);
             assert(c[0] == 'a');
             assert(c[1] == 'b');

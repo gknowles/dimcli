@@ -340,7 +340,7 @@ Example:
 ~~~ cpp
 // printing a comma separated list is annoying...
 template<typename T>
-ostream & operator<< (ostream & os, const vector<T> & v) {
+ostream & operator<< (ostream & os, vector<T> const & v) {
     auto i = v.begin(), e = v.end();
     if (i != e) {
         os << *i++;
@@ -535,7 +535,7 @@ cli.before([](Cli &, vector<string> & args) {
     if (args.size() == 1) // it's just the program name?
         args.push_back("--help");
     return true;
-}
+});
 ~~~
 
 And missing arguments are a thing of the past...
@@ -581,7 +581,7 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & sum = cli.opt<int>("n number", 1)
         .desc("numbers to multiply")
-        .parse([](auto & cli, auto & opt, const string & val) {
+        .parse([](auto & cli, auto & opt, string const & val) {
             int tmp = *opt; // save the old value
             if (!opt.parseValue(val)) // parse the new value into opt
                 return cli.badUsage(opt, val);
@@ -674,11 +674,11 @@ $ a.out --socks 3
 After actions run after all arguments have been parsed. For example,
 opt.prompt() and opt.require() are both implemented as after actions. Any
 number of after actions can be added and will, for every (not just the
-selected ones!) registered option, be called in the order they're added. They
-are called with the three parameters, like other option actions, that are
-references to cli, opt, and the value string respectively. However the const
-string& value is always empty(), so any information about the value must come
-from the opt reference.
+ones referenced by the command line!) registered option, be called in the
+order they're added. They are called with the three parameters, like other
+option actions, that are references to cli, opt, and the value string
+respectively. However the value string is always empty(), so any information
+about the value must come from the opt reference.
 
 When using subcommands, only the after actions bound to the top level or the
 selected command are executed. After actions on the options of all other
@@ -996,7 +996,8 @@ cli.responseFiles(false).
 
 ## Environment Variable
 You can specify an environment variable that will have its contents
-prepended to the command line.
+prepended to the command line. This happens before response file expansion
+and any before actions.
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -1016,7 +1017,7 @@ point if you need something slightly different:
 
 ~~~ cpp
 vector<string> args = cli.toArgv(argc, argv);
-if (const char * eopts = getenv("AOUT_OPTS")) {
+if (char const * eopts = getenv("AOUT_OPTS")) {
     vector<string> eargs = cli.toArgv(eopts);
     // Insert the environment args after arg0 (program name) but before
     // the rest of the command line.
@@ -1025,6 +1026,19 @@ if (const char * eopts = getenv("AOUT_OPTS")) {
 if (!cli.parse(cerr, args))
     return cli.exitCode();
 ~~~
+
+Or as a before action (after response file expansion):
+~~~ cpp
+cli.before([](Cli &, vector<string> & args) {
+    if (char const * eopts = getenv("AOUT_OPTS")) {
+        vector<string> eargs = cli.toArgv(eopts);
+        args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+    }
+});
+if (!cli.parse(cerr, args))
+    return cli.exitCode();
+~~~
+
 How this works:
 
 ~~~ console

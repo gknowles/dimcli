@@ -21,16 +21,16 @@ using namespace std;
 
 
 #if defined(_WIN32)
-const char kCommand[] = "test.exe";
+char const kCommand[] = "test.exe";
 #else
-const char kCommand[] = "test";
+char const kCommand[] = "test";
 #endif
 
 static int s_errors;
 
 
 //===========================================================================
-void failed(int line, const char msg[]) {
+void failed(int line, char const msg[]) {
     cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
     s_errors += 1;
 }
@@ -39,8 +39,8 @@ void failed(int line, const char msg[]) {
 void helpTest(
     int line,
     Dim::Cli & cli,
-    const string & cmd,
-    const string & helpText
+    string const & cmd,
+    string const & helpText
 ) {
     ostringstream os;
     cli.printHelp(os, kCommand, cmd);
@@ -54,8 +54,8 @@ void helpTest(
 void usageTest(
     int line,
     Dim::Cli & cli,
-    const string & cmd,
-    const string & usageText
+    string const & cmd,
+    string const & usageText
 ) {
     ostringstream os;
     cli.printUsageEx(os, kCommand, cmd);
@@ -71,7 +71,7 @@ void parseTest(
     Dim::Cli & cli,
     bool continueFlag,
     int exitCode,
-    vector<const char *> args
+    vector<char const *> args
 ) {
     args.insert(args.begin(), kCommand);
     args.push_back(nullptr);
@@ -87,9 +87,9 @@ void parseTest(
 //===========================================================================
 void toArgvTest(
     int line,
-    function<vector<string>(const string &)> fn,
-    const string & cmdline,
-    const vector<string> & argv
+    function<vector<string>(string const &)> fn,
+    string const & cmdline,
+    vector<string> const & argv
 ) {
     auto args = fn(cmdline);
     EXPECT(args == argv);
@@ -184,7 +184,7 @@ Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
         cli = {};
         auto & sum = cli.opt<int>("n number", 1)
             .desc("numbers to multiply")
-            .parse([](auto & cli, auto & arg, const string & val) {
+            .parse([](auto & cli, auto & arg, string const & val) {
                 int tmp = *arg;
                 if (!arg.parseValue(val))
                     return cli.badUsage(
