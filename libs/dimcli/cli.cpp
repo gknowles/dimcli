@@ -120,7 +120,7 @@ struct Cli::OptIndex {
     ) const;
     string nameList(
         Cli const & cli,
-        const OptBase & opt,
+        OptBase const & opt,
         NameListType type
     ) const;
 
