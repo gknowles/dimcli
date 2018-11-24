@@ -38,6 +38,8 @@ matrix:
         apt:
           packages: ['g++-7']
           sources: ubuntu-toolchain-r-test
+      after_success:
+        - cd ${TRAVIS_BUILD_DIR}
 
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
       addons:
@@ -56,7 +58,7 @@ script:
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build .
-  - ../bin/cli
+  - ../bin/cli --test
 
 notifications:
   email:
