@@ -1,7 +1,7 @@
 # Copyright Glen Knowles 2016 - 2017.
 # Distributed under the Boost Software License, Version 1.0.
 language: cpp
-sudo: true
+sudo: false
 dist: trusty
 
 matrix:
@@ -18,7 +18,7 @@ matrix:
           packages: ['g++-7', 'kcov']
           sources: ubuntu-toolchain-r-test
       after_success:
-        - kcov . ../bin/cli --test
+        - sudo kcov . ../bin/cli --test
         - bash <(curl -s https://codecov.io/bash)
         - cd ${TRAVIS_BUILD_DIR}
 
