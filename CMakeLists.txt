@@ -66,8 +66,9 @@ cmake_minimum_required(VERSION 3.6)
 option(BUILD_PROJECT_NAME "Override name of project to build" OFF)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
-option(BUILD_TESTING "Enable test generation for ctest" ON)
 option(BUILD_UNICODE "Build with Unicode charset" OFF)
+option(BUILD_TESTING "Enable test generation for ctest" ON)
+option(BUILD_COVERAGE "Enable coverage profiling (only with GCC)" OFF)
 option(INSTALL_LIBS "Install includes libs" OFF)
 option(INSTALL_TOOLS "Install includes tool binaries" OFF)
 option(INSTALL_TESTS "Install includes test binaries" OFF)
@@ -331,6 +332,8 @@ if(MSVC AND ROOT_PROJECT AND NOT RECURSIVE_GENERATE AND NOT OUT_OF_TREE)
             -DLINK_STATIC_RUNTIME:BOOL=${LINK_STATIC_RUNTIME}
             -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
             -DBUILD_UNICODE:BOOL=${BUILD_UNICODE}
+            -DBUILD_TESTING:BOOL=${DBUILD_TESTING}
+            -DBUILD_COVERAGE:BOOL=${DBUILD_COVERAGE}
             ${CMAKE_SOURCE_DIR}
     )
     message(STATUS "Recursive generate done")
@@ -418,6 +421,11 @@ if(MSVC)
     endif()
 
     set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+    if(BUILD_COVERAGE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+    endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
