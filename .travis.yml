@@ -15,7 +15,7 @@ matrix:
     - env: CXX_NAME=g++-7 CC_NAME=gcc-7
       addons:
         apt:
-          packages: ['g++-7']
+          packages: ['g++-7', 'lcov']
           sources: ubuntu-toolchain-r-test
       after_success:
         - lcov --directory . --capture --output-file coverage.info
