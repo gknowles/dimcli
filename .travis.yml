@@ -36,11 +36,11 @@ matrix:
     - env: CXX_NAME=g++-7 CC_NAME=gcc-7
       addons:
         apt:
-          packages: ['g++-7']
+          packages: ['g++-7', 'kcov']
           sources: ubuntu-toolchain-r-test
       after_success:
         - kcov . ../bin/cli --test
-        - bash <(curl -s https://codecov.io/bash) || echo "Coverage collect failed"
+        - bash <(curl -s https://codecov.io/bash)
         - cd ${TRAVIS_BUILD_DIR}
 
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
