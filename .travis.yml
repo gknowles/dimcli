@@ -39,6 +39,8 @@ matrix:
           packages: ['g++-7']
           sources: ubuntu-toolchain-r-test
       after_success:
+        - kcov . ../bin/cli --test
+        - bash <(curl -s https://codecov.io/bash) -s .
         - cd ${TRAVIS_BUILD_DIR}
 
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
