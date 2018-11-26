@@ -102,7 +102,7 @@ void basicTests() {
     istringstream in;
     ostringstream out;
 
-    cli.imbue(locale());
+    (void) cli.imbue(locale{});
 
     // assignment operator
     {

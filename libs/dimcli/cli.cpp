@@ -785,8 +785,20 @@ Cli::Cli(shared_ptr<Config> cfg)
 
 //===========================================================================
 Cli & Cli::operator=(Cli const & from) {
-    // forward to move assignment
-    return *this = Cli{from};
+    m_cfg = from.m_cfg;
+    m_group = from.m_group;
+    m_command = from.m_command;
+    m_interpreter.imbue(m_cfg->parserLocale);
+    return *this;
+}
+
+//===========================================================================
+Cli & Cli::operator=(Cli && from) {
+    m_cfg = move(from.m_cfg);
+    m_group = move(from.m_group);
+    m_command = move(from.m_command);
+    m_interpreter.imbue(m_cfg->parserLocale);
+    return *this;
 }
 
 

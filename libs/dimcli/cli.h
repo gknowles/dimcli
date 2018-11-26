@@ -185,7 +185,7 @@ public:
     Cli();
     Cli(Cli const & from);
     Cli & operator=(Cli const & from);
-    Cli & operator=(Cli && from) = default;
+    Cli & operator=(Cli && from);
 
     //-----------------------------------------------------------------------
     // Configuration
@@ -1367,7 +1367,7 @@ struct Cli::Value {
     Opt<T> * m_defFlagOpt{};
 
     T * m_value{};
-    T m_internal;
+    T m_internal{};
 
     Value(T * value) : m_value(value ? value : &m_internal) {}
 };
