@@ -12,7 +12,7 @@ matrix:
           packages: ['g++-6']
           sources: ubuntu-toolchain-r-test
 
-    - env: CXX_NAME=g++-7 CC_NAME=gcc-7
+    - env: CXX_NAME=g++-7 CC_NAME=gcc-7 BUILD_COVERAGE=ON
       addons:
         apt:
           packages: ['g++-7', 'lcov']
@@ -38,7 +38,7 @@ matrix:
 script:
   - export CXX=${CXX_NAME} CC=${CC_NAME}
   - mkdir -p build && cd build
-  - cmake ..
+  - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
   - cmake --build .
   - ../bin/cli --test
 
