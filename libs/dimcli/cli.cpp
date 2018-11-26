@@ -1834,11 +1834,13 @@ bool Cli::parse(vector<string> & args) {
                 argName = it->second;
                 if (argName.opt->m_bool) {
                     if (!parseValue(
-                            *argName.opt,
-                            name,
-                            argPos,
-                            argName.invert ? "0" : "1"))
+                        *argName.opt,
+                        name,
+                        argPos,
+                        argName.invert ? "0" : "1"
+                    )) {
                         return false;
+                    }
                     continue;
                 }
                 ptr += 1;
@@ -1872,11 +1874,13 @@ bool Cli::parse(vector<string> & args) {
                 if (equal)
                     return badUsage("Unknown option", name + "=");
                 if (!parseValue(
-                        *argName.opt,
-                        name,
-                        argPos,
-                        argName.invert ? "0" : "1"))
+                    *argName.opt,
+                    name,
+                    argPos,
+                    argName.invert ? "0" : "1"
+                )) {
                     return false;
+                }
                 continue;
             }
             goto OPTION_VALUE;

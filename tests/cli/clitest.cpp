@@ -353,6 +353,7 @@ Other:
         EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
         EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
         EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+        EXPECT_ARGV(fn, R"(\ "\"" )", {"\\", "\""});
     }
 
     // subcommands
