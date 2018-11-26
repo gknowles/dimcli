@@ -15,13 +15,9 @@ matrix:
     - env: CXX_NAME=g++-7 CC_NAME=gcc-7 BUILD_COVERAGE=ON
       addons:
         apt:
-          packages: ['g++-7', 'lcov']
+          packages: ['g++-7']
           sources: ubuntu-toolchain-r-test
       after_success:
-#        - lcov --directory . --capture --output-file coverage.info
-#        - lcov --remove coverage.info '/usr/*' --output-file coverage.info
-#        - lcov --remove coverage.info '**/tests/*' --output-file coverage.info
-#        - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash)
 
     - env: CXX_NAME=clang++-3.6 CC_NAME=clang-3.6
