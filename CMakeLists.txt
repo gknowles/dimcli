@@ -77,6 +77,7 @@ option(INSTALL_TESTS "Install includes test binaries" OFF)
 option(RECURSIVE_GENERATE "Recursive call to cmake" OFF)
 
 # Reference to suppress "not used" warning when manually specified
+set(tmp "${BUILD_COVERAGE}")        # only used by gcc builds
 set(tmp "${CMAKE_BUILD_TYPE}")      # not used (vcpkg sets it)
 set(tmp "${LINK_STATIC_RUNTIME}")   # not used by gcc or clang builds
 
