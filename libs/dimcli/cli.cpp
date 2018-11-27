@@ -76,6 +76,7 @@ struct OptName {
     bool invert;    // set to false instead of true (only for bools)
     bool optional;  // value doesn't have to be present? (non-bools only)
     string name;    // name of argument (only for positionals)
+    int pos;
 };
 
 struct ArgKey {
@@ -125,13 +126,20 @@ struct Cli::OptIndex {
     ) const;
 
     void index(OptBase & opt);
-    void indexName(OptBase & opt, string const & name);
-    void indexShortName(OptBase & opt, char name, bool invert, bool optional);
+    void indexName(OptBase & opt, string const & name, int pos);
+    void indexShortName(
+        OptBase & opt,
+        char name,
+        bool invert,
+        bool optional,
+        int pos
+    );
     void indexLongName(
         OptBase & opt,
         string const & name,
         bool invert,
-        bool optional
+        bool optional,
+        int pos
     );
 };
 
@@ -504,24 +512,36 @@ string Cli::OptIndex::nameList(
     bool optional = false;
 
     // names
-    for (auto && sn : m_shortNames) {
-        if (!includeName(sn.second, type, opt, opt.m_bool, opt.inverted()))
+    vector<const decltype(m_shortNames)::value_type *> snames;
+    for (auto & sn : m_shortNames)
+        snames.push_back(&sn);
+    sort(snames.begin(), snames.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && sn : snames) {
+        if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
             continue;
-        optional = sn.second.optional;
+        optional = sn->second.optional;
         if (!list.empty())
             list += ", ";
         list += '-';
-        list += sn.first;
+        list += sn->first;
     }
-    for (auto && ln : m_longNames) {
-        if (!includeName(ln.second, type, opt, opt.m_bool, opt.inverted()))
+    vector<const decltype(m_longNames)::value_type *> lnames;
+    for (auto & ln : m_longNames)
+        lnames.push_back(&ln);
+    sort(lnames.begin(), lnames.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && ln : lnames) {
+        if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
             continue;
-        optional = ln.second.optional;
+        optional = ln->second.optional;
         if (!list.empty())
             list += ", ";
         foundLong = true;
         list += "--";
-        list += ln.first;
+        list += ln->first;
     }
     if (opt.m_bool || list.empty())
         return list;
@@ -543,6 +563,7 @@ void Cli::OptIndex::index(OptBase & opt) {
     string name;
     char close;
     bool hasPos = false;
+    int pos = 0;
     for (;; ++ptr) {
         switch (*ptr) {
         case 0: return;
@@ -566,7 +587,8 @@ void Cli::OptIndex::index(OptBase & opt) {
             if (close != ' ')
                 hasPos = true;
             name = string(b, ptr - b);
-            indexName(opt, name);
+            indexName(opt, name, pos);
+            pos += 2;
         }
         if (!*ptr)
             return;
@@ -574,7 +596,7 @@ void Cli::OptIndex::index(OptBase & opt) {
 }
 
 //===========================================================================
-void Cli::OptIndex::indexName(OptBase & opt, string const & name) {
+void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
     bool const invert = true;
     bool const optional = true;
 
@@ -602,7 +624,7 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name) {
         return;
     }
     if (name.size() == 1)
-        return indexShortName(opt, name[0], !invert, !optional);
+        return indexShortName(opt, name[0], !invert, !optional, pos);
     switch (name[0]) {
     case '!':
         if (!opt.m_bool) {
@@ -610,8 +632,8 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name) {
             return;
         }
         if (name.size() == 2)
-            return indexShortName(opt, name[1], invert, !optional);
-        indexLongName(opt, name.substr(1), invert, !optional);
+            return indexShortName(opt, name[1], invert, !optional, pos);
+        indexLongName(opt, name.substr(1), invert, !optional, pos);
         return;
     case '?':
         if (opt.m_bool) {
@@ -619,11 +641,11 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name) {
             return;
         }
         if (name.size() == 2)
-            return indexShortName(opt, name[1], !invert, optional);
-        indexLongName(opt, name.substr(1), !invert, optional);
+            return indexShortName(opt, name[1], !invert, optional, pos);
+        indexLongName(opt, name.substr(1), !invert, optional, pos);
         return;
     }
-    indexLongName(opt, name, !invert, !optional);
+    indexLongName(opt, name, !invert, !optional, pos);
 }
 
 //===========================================================================
@@ -631,9 +653,10 @@ void Cli::OptIndex::indexShortName(
     OptBase & opt,
     char name,
     bool invert,
-    bool optional
+    bool optional,
+    int pos
 ) {
-    m_shortNames[name] = {&opt, invert, optional};
+    m_shortNames[name] = {&opt, invert, optional, {}, pos};
     opt.setNameIfEmpty("-"s += name);
 }
 
@@ -642,7 +665,8 @@ void Cli::OptIndex::indexLongName(
     OptBase & opt,
     string const & name,
     bool invert,
-    bool optional
+    bool optional,
+    int pos
 ) {
     bool allowNo = true;
     auto key = string{name};
@@ -655,9 +679,9 @@ void Cli::OptIndex::indexLongName(
         key.pop_back();
     }
     opt.setNameIfEmpty("--"s += key);
-    m_longNames[key] = {&opt, invert, optional};
+    m_longNames[key] = {&opt, invert, optional, {}, pos};
     if (opt.m_bool && allowNo)
-        m_longNames["no-"s += key] = {&opt, !invert, optional};
+        m_longNames["no-"s += key] = {&opt, !invert, optional, {}, pos + 1};
 }
 
 
