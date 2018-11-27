@@ -8,6 +8,27 @@
 using namespace std;
 
 
+/****************************************************************************
+*
+*   Globals
+*
+***/
+
+#if defined(_WIN32)
+char const kCommand[] = "test.exe";
+#else
+char const kCommand[] = "test";
+#endif
+
+static int s_errors;
+
+
+/****************************************************************************
+*
+*   Helpers
+*
+***/
+
 #define EXPECT(...) \
     if (!bool(__VA_ARGS__)) \
     failed(line ? line : __LINE__, #__VA_ARGS__)
@@ -18,16 +39,6 @@ using namespace std;
     parseTest(__LINE__, cli, cont, ec, __VA_ARGS__)
 #define EXPECT_ARGV(fn, cmdline, ...) \
     toArgvTest(__LINE__, fn, cmdline, __VA_ARGS__)
-
-
-#if defined(_WIN32)
-char const kCommand[] = "test.exe";
-#else
-char const kCommand[] = "test";
-#endif
-
-static int s_errors;
-
 
 //===========================================================================
 void failed(int line, char const msg[]) {
@@ -95,89 +106,63 @@ void toArgvTest(
     EXPECT(args == argv);
 }
 
+
+/****************************************************************************
+*
+*   Value parsing
+*
+***/
+
+enum class ExtractNoInsert {
+    kInvalid,
+    kGood,
+    kBad,
+};
+istream & operator>>(istream & is, ExtractNoInsert & out) {
+    auto ch = is.get();
+    switch (ch) {
+    case 'g': out = ExtractNoInsert::kGood; break;
+    case 'b': out = ExtractNoInsert::kBad; break;
+    default: out = ExtractNoInsert::kInvalid; break;
+    }
+    if (out != ExtractNoInsert::kGood)
+        is.setstate(ios::failbit);
+    return is;
+}
+
+enum class ExtractWithInsert {
+    kInvalid,
+    kGood,
+    kInOnly,
+    kBad,
+};
+istream & operator>>(istream & is, ExtractWithInsert & out) {
+    auto ch = is.get();
+    switch (ch) {
+    case 'g': out = ExtractWithInsert::kGood; break;
+    case 'i': out = ExtractWithInsert::kInOnly; break;
+    case 'b': out = ExtractWithInsert::kBad; break;
+    default: out = ExtractWithInsert::kInvalid; break;
+    }
+    if (out == ExtractWithInsert::kBad || out == ExtractWithInsert::kInvalid)
+        is.setstate(ios::failbit);
+    return is;
+}
+ostream & operator<<(ostream & os, const ExtractWithInsert & in) {
+    switch (in) {
+    case ExtractWithInsert::kGood: os << 'g'; break;
+    case ExtractWithInsert::kInOnly: os << 'i'; break;
+    case ExtractWithInsert::kBad: os << 'b'; break;
+    }
+    if (in != ExtractWithInsert::kGood)
+        os.setstate(ios::failbit);
+    return os;
+}
+
 //===========================================================================
-void basicTests() {
+void parseTests() {
     int line = 0;
     Dim::CliLocal cli;
-    istringstream in;
-    ostringstream out;
-
-    (void) cli.imbue(locale{});
-
-    // assignment operator
-    {
-        Dim::Cli tmp{cli};
-        tmp = cli;
-    }
-
-    // choice
-    {
-        enum class State { go, wait, stop };
-        cli = {};
-        auto & state = cli.opt("streetlight", State::wait)
-            .desc("Color of street light.")
-            .valueDesc("COLOR")
-            .choice(State::go, "green", "Means go!")
-            .choice(State::wait, "yellow", "Means wait, even if you're late.")
-            .choice(State::stop, "red", "Means stop.");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
-
-Options:
-  --streetlight=COLOR  Color of street light.
-      green   Means go!
-      yellow  Means wait, even if you're late. (default)
-      red     Means stop.
-
-  --help               Show this message and exit.
-)");
-        EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [--streetlight=COLOR] [--help]
-)");
-        EXPECT_PARSE(cli, {"--streetlight", "red"});
-        EXPECT(*state == State::stop);
-
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--streetlight", "white"});
-        EXPECT(cli.errMsg() == "Invalid '--streetlight' value: white");
-        EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
-
-        cli = {};
-        auto & state2 = cli.optVec<State>("[streetlights]")
-            .desc("Color of street lights.")
-            .valueDesc("COLOR")
-            .choice(State::go, "green", "Means go!")
-            .choice(State::wait, "yellow", "Means wait, even if you're late.")
-            .choice(State::stop, "red", "Means stop.");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [streetlights...]
-  streetlights  Color of street lights.
-      green   Means go!
-      yellow  Means wait, even if you're late.
-      red     Means stop.
-
-Options:
-  --help    Show this message and exit.
-)");
-        EXPECT_PARSE(cli, {"red"});
-        EXPECT(state2.size() == 1 && state2[0] == State::stop);
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"white"});
-        EXPECT(cli.errMsg() == "Invalid 'streetlights' value: white");
-        EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
-
-        cli = {};
-        cli.optVec<unsigned>("n")
-            .desc("List of numbers")
-            .valueDesc("NUMBER")
-            .choice(1, "one").choice(2, "two").choice(3, "three")
-            .choice(4, "four").choice(5, "five").choice(6, "six")
-            .choice(7, "seven").choice(8, "eight").choice(9, "nine")
-            .choice(10, "ten").choice(11, "eleven").choice(12, "twelve");
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"-n", "white"});
-        EXPECT(cli.errMsg() == "Invalid '-n' value: white");
-        EXPECT(cli.errDetail() == 1 + R"(
-Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-"ten", "eleven", or "twelve".)");
-    }
 
     // parse action
     {
@@ -196,6 +181,167 @@ Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
         EXPECT(*sum == 6);
     }
 
+    // parsing failure
+    {
+        cli = {};
+        auto & opt = cli.opt("[value]", ExtractNoInsert::kBad)
+            .desc("Value to attempt to parse.");
+        EXPECT_PARSE(cli, {"g"});
+        EXPECT(*opt == ExtractNoInsert::kGood);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"b"});
+        EXPECT(*opt == ExtractNoInsert::kInvalid);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [value]
+  value     Value to attempt to parse.
+
+Options:
+  --help    Show this message and exit.
+)");
+    }
+
+    // default render failure
+    {
+        cli = {};
+        auto & opt = cli.opt("[value]", ExtractWithInsert::kGood)
+            .desc("Value to attempt to parse.");
+        EXPECT_PARSE(cli, {});
+        EXPECT(*opt == ExtractWithInsert::kGood);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"b"});
+        EXPECT(*opt == ExtractWithInsert::kInvalid);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [value]
+  value     Value to attempt to parse. (default: g)
+
+Options:
+  --help    Show this message and exit.
+)");
+
+        opt.defaultValue(ExtractWithInsert::kInOnly);
+        EXPECT_PARSE(cli, {});
+        EXPECT(*opt == ExtractWithInsert::kInOnly);
+        EXPECT_PARSE(cli, {"g"});
+        EXPECT(*opt == ExtractWithInsert::kGood);
+        EXPECT_PARSE(cli, {"i"});
+        EXPECT(*opt == ExtractWithInsert::kInOnly);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [value]
+  value     Value to attempt to parse.
+
+Options:
+  --help    Show this message and exit.
+)");
+    }
+}
+
+
+/****************************************************************************
+*
+*   Choice
+*
+***/
+
+//===========================================================================
+void choiceTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+    enum class State { go, wait, stop };
+
+    cli = {};
+    auto & state = cli.opt("streetlight", State::wait)
+        .desc("Color of street light.")
+        .valueDesc("COLOR")
+        .choice(State::go, "green", "Means go!")
+        .choice(State::wait, "yellow", "Means wait, even if you're late.")
+        .choice(State::stop, "red", "Means stop.");
+    EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --streetlight=COLOR  Color of street light.
+      green   Means go!
+      yellow  Means wait, even if you're late. (default)
+      red     Means stop.
+
+  --help               Show this message and exit.
+)");
+    EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [--streetlight=COLOR] [--help]
+)");
+    EXPECT_PARSE(cli, {"--streetlight", "red"});
+    EXPECT(*state == State::stop);
+
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--streetlight", "white"});
+    EXPECT(cli.errMsg() == "Invalid '--streetlight' value: white");
+    EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
+
+    state.defaultValue(State::go);
+    EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --streetlight=COLOR  Color of street light.
+      green   Means go! (default)
+      yellow  Means wait, even if you're late.
+      red     Means stop.
+
+  --help               Show this message and exit.
+)");
+    cli = {};
+    auto & state2 = cli.optVec<State>("[streetlights]")
+        .desc("Color of street lights.")
+        .valueDesc("COLOR")
+        .choice(State::go, "green", "Means go!")
+        .choice(State::wait, "yellow", "Means wait, even if you're late.")
+        .choice(State::stop, "red", "Means stop.");
+    EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [streetlights...]
+  streetlights  Color of street lights.
+      green   Means go!
+      yellow  Means wait, even if you're late.
+      red     Means stop.
+
+Options:
+  --help    Show this message and exit.
+)");
+    EXPECT_PARSE(cli, {"red"});
+    EXPECT(state2.size() == 1 && state2[0] == State::stop);
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"white"});
+    EXPECT(cli.errMsg() == "Invalid 'streetlights' value: white");
+    EXPECT(cli.errDetail() == R"(Must be "green", "yellow", or "red".)");
+
+    EXPECT(state2.defaultValue() == State::go);
+    state2.defaultValue(State::wait);
+    EXPECT(state2.defaultValue() == State::wait);
+
+    cli = {};
+    cli.optVec<unsigned>("n")
+        .desc("List of numbers")
+        .valueDesc("NUMBER")
+        .choice(1, "one").choice(2, "two").choice(3, "three")
+        .choice(4, "four").choice(5, "five").choice(6, "six")
+        .choice(7, "seven").choice(8, "eight").choice(9, "nine")
+        .choice(10, "ten").choice(11, "eleven").choice(12, "twelve");
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"-n", "white"});
+    EXPECT(cli.errMsg() == "Invalid '-n' value: white");
+    EXPECT(cli.errDetail() == 1 + R"(
+Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+"ten", "eleven", or "twelve".)");
+}
+
+
+/****************************************************************************
+*
+*   Help and version
+*
+***/
+
+//===========================================================================
+void helpTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+    istringstream in;
+    ostringstream out;
+
     // version option
     {
         cli = {};
@@ -211,76 +357,34 @@ Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
             cout << tmp;
     }
 
+    // helpNoArgs (aka before action)
     {
         cli = {};
-        auto & num = cli.opt<int>("n number", 1).desc("number is an int");
-        cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
-        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc("");
-        cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
-        auto & special =
-            cli.opt<bool>("s special !S", false).desc("snowflake");
-        auto & name =
-            cli.group("name").title("Name options").optVec<string>("name");
-        auto & keys = cli.group("").optVec<string>("[key]").desc(
-            "it's the key arguments with a very long description that wraps "
-            "the line at least once, maybe more.");
-        cli.title(
-            "Long explanation of this very short set of options, it's so "
-            "long that it even wraps around to the next line");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [key...]
-  key       it's the key arguments with a very long description that wraps the
-            line at least once, maybe more.
+        cli.helpNoArgs();
+        out.str("");
+        cli.iostreams(nullptr, &out);
+        EXPECT_PARSE2(cli, false, Dim::kExitOk, {});
+        cli.iostreams(nullptr, nullptr);
+        EXPECT(out.str() == 1 + R"(
+usage: test [OPTIONS]
 
-Long explanation of this very short set of options, it's so long that it even
-wraps around to the next line:
-  -c COUNT                   alias for number (default: 0)
-  -n, --number=NUM           number is an int (default: 1)
-  --n2=NUM                   no defaultDesc
-  --n3=NUM                   custom defaultDesc (default: three)
-  -s, --special / -S, --no-special
-                             snowflake
-
-Name options:
-  --name=STRING
-
-  --help                     Show this message and exit.
+Options:
+  --help    Show this message and exit.
 )");
-        EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
-            [-s, --special] [--help] [key...]
-)");
-        EXPECT_PARSE(cli, {"-n3"});
-        EXPECT(*num == 3);
-        EXPECT(!*special);
-        EXPECT(!name);
-        EXPECT(!keys);
+    }
 
-        EXPECT_PARSE(cli, {"--name", "two"});
-        EXPECT(*num == 0);
-        EXPECT(name.size() == 1 && (*name)[0] == "two");
-
-        EXPECT_PARSE(cli, {"--name=three"});
-        EXPECT(name.size() == 1 && (*name)[0] == "three");
-
-        EXPECT_PARSE(cli, {"--name=", "key"});
-        EXPECT(*name == vector<string>({""s}));
-        EXPECT(*keys == vector<string>({"key"s}));
-
-        EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
-        EXPECT(*special);
-        EXPECT(*name == vector<string>({"four"s, "four"s}));
-        EXPECT(*keys == vector<string>({"key"s}));
-
-        EXPECT_PARSE(cli, {"key", "extra"});
-        EXPECT(*keys == vector<string>({"key"s, "extra"s}));
-
-        EXPECT_PARSE(cli, {"-", "--", "-s"});
-        EXPECT(!special && !*special);
-        *num += 2;
-        EXPECT(*num == 2);
-        *special = name->empty();
-        EXPECT(*special);
+    // implicit value
+    // helpOpt override
+    {
+        cli = {};
+        int count;
+        bool help;
+        cli.opt(&count, "c ?count").implicitValue(3);
+        cli.opt(&help, "? h help");
+        EXPECT_PARSE(cli, {"-hc2", "-?"});
+        EXPECT(count == 2);
+        EXPECT_PARSE(cli, {"--count"});
+        EXPECT(count == 3);
     }
 
     // multiline footer
@@ -300,61 +404,21 @@ Multiline footer:
 - second reference
 )");
     }
+}
 
-    // flagValue
-    {
-        cli = {};
-        string fruit;
-        cli.group("fruit").title("Type of fruit");
-        auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
-        cli.opt(&fruit, "a", "apple").flagValue(true);
-        cli.opt(orange, "p", "pear").flagValue();
-        cli.group("~").title("Other");
-        EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [-o] [-p] [--help]
-)");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
 
-Type of fruit:
-  -a        (default)
-  -o
-  -p
+/****************************************************************************
+*
+*   Subcommands
+*
+***/
 
-Other:
-  --help    Show this message and exit.
-)");
-        EXPECT_PARSE(cli, {"-o"});
-        EXPECT(*orange == "orange");
-        EXPECT(orange.from() == "-o");
-        EXPECT(orange.pos() == 1);
-    }
-
-    // implicit value
-    // helpOpt override
-    {
-        cli = {};
-        int count;
-        bool help;
-        cli.opt(&count, "c ?count").implicitValue(3);
-        cli.opt(&help, "? h help");
-        EXPECT_PARSE(cli, {"-hc2", "-?"});
-        EXPECT(count == 2);
-        EXPECT_PARSE(cli, {"--count"});
-        EXPECT(count == 3);
-    }
-
-    // windows style argument parsing
-    {
-        auto fn = cli.toWindowsArgv;
-        EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
-        EXPECT_ARGV(fn, R"(a"" b ")", {"a", "b", ""});
-        EXPECT_ARGV(fn, R"("abc" d e)", {"abc", "d", "e"});
-        EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
-        EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
-        EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
-        EXPECT_ARGV(fn, R"(\ "\"" )", {"\\", "\""});
-    }
+//===========================================================================
+void cmdTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+    istringstream in;
+    ostringstream out;
 
     // subcommands
     {
@@ -433,66 +497,6 @@ Options:
 )");
     }
 
-    // require
-    {
-        cli = {};
-        auto & count = cli.opt<int>("c", 1).require();
-        EXPECT_PARSE(cli, {"-c10"});
-        EXPECT(*count == 10);
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {});
-        EXPECT(*count == 1);
-        EXPECT(cli.errMsg() == "No value given for -c");
-        cli = {};
-        auto & imp = cli.opt<int>("?index i").require().implicitValue(5);
-        EXPECT_PARSE(cli, {"--index=10"});
-        EXPECT(*imp == 10);
-        EXPECT_PARSE(cli, {"--index"});
-        EXPECT(*imp == 5);
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {});
-        EXPECT(cli.errMsg() == "No value given for --index");
-    }
-
-    // clamp and range
-    {
-        cli = {};
-        auto & count = cli.opt<int>("<count>", 2).clamp(1, 10);
-        auto & letter = cli.opt<char>("<letter>").range('a', 'z');
-        EXPECT_PARSE(cli, {"20", "a"});
-        EXPECT(*count == 10);
-        EXPECT(*letter == 'a');
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"5", "0"});
-        EXPECT(*count == 5);
-        EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
-        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--", "-5"});
-        EXPECT(*count == 1);
-        EXPECT(cli.errMsg() == "Missing argument: letter");
-    }
-
-    // filesystem
-#ifdef FILESYSTEM
-    {
-        namespace fs = FILESYSTEM;
-        cli = {};
-        fs::path path = "path";
-        ostringstream os;
-        os << path;
-        cli.opt(&path, "path", path)
-            .desc("std::filesystem::path");
-        EXPECT_PARSE(cli, {"--path", "one"});
-        EXPECT(path == "one");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
-
-Options:
-  --path=FILE  std::filesystem::path (default: )"
-        + os.str()
-        + R"()
-
-  --help       Show this message and exit.
-)");
-    }
-#endif
-
     // helpCmd
     {
         cli = {};
@@ -536,22 +540,258 @@ usage: test help [-u, --usage] [--help] [command]
         EXPECT(cli.errMsg() == 1 + R"(
 Command 'help': Help requested for unknown command: notACmd)");
     }
+}
 
-    // helpNoArgs (aka before action)
+
+/****************************************************************************
+*
+*   Argv to/from command line
+*
+***/
+
+//===========================================================================
+void argvTests() {
+    Dim::CliLocal cli;
+
+    // windows style argument parsing
+    {
+        auto fn = cli.toWindowsArgv;
+        EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
+        EXPECT_ARGV(fn, R"(a"" b ")", {"a", "b", ""});
+        EXPECT_ARGV(fn, R"("abc" d e)", {"abc", "d", "e"});
+        EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+        EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
+        EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+        EXPECT_ARGV(fn, R"(\ "\"" )", {"\\", "\""});
+    }
+}
+
+
+/****************************************************************************
+*
+*   Option validation helpers
+*
+***/
+
+//===========================================================================
+void optCheckTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+    istringstream in;
+    ostringstream out;
+
+    // require
     {
         cli = {};
-        cli.helpNoArgs();
-        out.str("");
-        cli.iostreams(nullptr, &out);
-        EXPECT_PARSE2(cli, false, Dim::kExitOk, {});
-        cli.iostreams(nullptr, nullptr);
-        EXPECT(out.str() == 1 + R"(
+        auto & count = cli.opt<int>("c", 1).require();
+        EXPECT_PARSE(cli, {"-c10"});
+        EXPECT(*count == 10);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {});
+        EXPECT(*count == 1);
+        EXPECT(cli.errMsg() == "No value given for -c");
+        cli = {};
+        auto & imp = cli.opt<int>("?index i").require().implicitValue(5);
+        EXPECT_PARSE(cli, {"--index=10"});
+        EXPECT(*imp == 10);
+        EXPECT_PARSE(cli, {"--index"});
+        EXPECT(*imp == 5);
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {});
+        EXPECT(cli.errMsg() == "No value given for --index");
+    }
+
+    // clamp and range
+    {
+        cli = {};
+        auto & count = cli.opt<int>("<count>", 2).clamp(1, 10);
+        auto & letter = cli.opt<char>("<letter>").range('a', 'z');
+        EXPECT_PARSE(cli, {"20", "a"});
+        EXPECT(*count == 10);
+        EXPECT(*letter == 'a');
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"5", "0"});
+        EXPECT(*count == 5);
+        EXPECT(cli.errMsg() == "Out of range 'letter' value [a - z]: 0");
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"--", "-5"});
+        EXPECT(*count == 1);
+        EXPECT(cli.errMsg() == "Missing argument: letter");
+    }
+}
+
+
+/****************************************************************************
+*
+*   Basic
+*
+***/
+
+//===========================================================================
+void basicTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+    istringstream in;
+    ostringstream out;
+
+    (void) cli.imbue(locale{});
+
+    // assignment operator
+    {
+        Dim::Cli tmp{cli};
+        tmp = cli;
+    }
+
+    {
+        cli = {};
+        auto & num = cli.opt<int>("n number", 1).desc("number is an int");
+        cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
+        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc("");
+        cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
+        auto & special =
+            cli.opt<bool>("s special !S", false).desc("snowflake");
+        auto & name =
+            cli.group("name").title("Name options").optVec<string>("name");
+        auto & keys = cli.group("").optVec<string>("[key]").desc(
+            "it's the key arguments with a very long description that wraps "
+            "the line at least once, maybe more.");
+        cli.title(
+            "Long explanation of this very short set of options, it's so "
+            "long that it even wraps around to the next line");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [key...]
+  key       it's the key arguments with a very long description that wraps the
+            line at least once, maybe more.
+
+Long explanation of this very short set of options, it's so long that it even
+wraps around to the next line:
+  -c COUNT                   alias for number (default: 0)
+  -n, --number=NUM           number is an int (default: 1)
+  --n2=NUM                   no defaultDesc
+  --n3=NUM                   custom defaultDesc (default: three)
+  -s, --special / -S, --no-special
+                             snowflake
+
+Name options:
+  --name=STRING
+
+  --help                     Show this message and exit.
+)");
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
+            [-s, --special] [--help] [key...]
+)");
+        EXPECT_PARSE(cli, {"-n3"});
+        EXPECT(*num == 3);
+        EXPECT(!*special);
+        EXPECT(!name);
+        EXPECT(!keys);
+
+        EXPECT_PARSE(cli, {"--name", "two"});
+        EXPECT(*num == 0);
+        EXPECT(name.size() == 1 && (*name)[0] == "two");
+
+        EXPECT_PARSE(cli, {"--name=three"});
+        EXPECT(name.size() == 1 && (*name)[0] == "three");
+
+        EXPECT_PARSE(cli, {"--name=", "key"});
+        EXPECT(*name == vector<string>({""s}));
+        EXPECT(*keys == vector<string>({"key"s}));
+
+        EXPECT_PARSE(cli, {"-s-name=four", "key", "--name", "four"});
+        EXPECT(*special);
+        EXPECT(*name == vector<string>({"four"s, "four"s}));
+        EXPECT(*keys == vector<string>({"key"s}));
+
+        EXPECT_PARSE(cli, {"key", "extra"});
+        EXPECT(*keys == vector<string>({"key"s, "extra"s}));
+
+        EXPECT_PARSE(cli, {"-", "--", "-s"});
+        EXPECT(!special && !*special);
+        *num += 2;
+        EXPECT(*num == 2);
+        *special = name->empty();
+        EXPECT(*special);
+    }
+
+    // optVec
+    {
+        cli = {};
+        auto & strs = cli.optVec<string>("r ?s").implicitValue("a")
+            .desc("String array.");
+        EXPECT_PARSE(cli, {"-s1", "-s", "-r", "2", "-s3"});
+        EXPECT(strs.size() == 4);
+        EXPECT(strs.pos(2) == 4);
+        EXPECT(strs.pos() == 5);
+        EXPECT(*strs == vector<string>({"1"s, "a"s, "2"s, "3"s}));
+        EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
-  --help    Show this message and exit.
+  -r, -s [STRING]  String array.
+
+  --help           Show this message and exit.
 )");
     }
+
+    // flagValue
+    {
+        cli = {};
+        string fruit;
+        cli.group("fruit").title("Type of fruit");
+        auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
+        cli.opt(&fruit, "a", "apple").flagValue(true);
+        cli.opt(orange, "p", "pear").flagValue();
+        cli.group("~").title("Other");
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [-o] [-p] [--help]
+)");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Type of fruit:
+  -a        (default)
+  -o
+  -p
+
+Other:
+  --help    Show this message and exit.
+)");
+        EXPECT_PARSE(cli, {"-o"});
+        EXPECT(*orange == "orange");
+        EXPECT(orange.from() == "-o");
+        EXPECT(orange.pos() == 1 && orange.size() == 1);
+
+        cli = {};
+        auto & on = cli.opt<bool>("on.", true).flagValue();
+        auto & notOn = cli.opt(on, "!notOn.").flagValue(true);
+        EXPECT_PARSE(cli, {"--on"});
+        EXPECT(*notOn);
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [--notOn] [--on] [--help]
+)");
+    }
+
+    // filesystem
+#ifdef FILESYSTEM
+    {
+        namespace fs = FILESYSTEM;
+        cli = {};
+        fs::path path = "path";
+        ostringstream os;
+        os << path;
+        cli.opt(&path, "path", path)
+            .desc("std::filesystem::path");
+        EXPECT_PARSE(cli, {"--path", "one"});
+        EXPECT(path == "one");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --path=FILE  std::filesystem::path (default: )"
+        + os.str()
+        + R"()
+
+  --help       Show this message and exit.
+)");
+    }
+#endif
 }
 
 //===========================================================================
@@ -575,6 +815,7 @@ Options:
 )");
         EXPECT_PARSE(cli, {"--password=hi"});
         EXPECT(*pass == "hi");
+        in.clear();
         in.str("secret\nsecret\n");
         out.str("");
         cli.iostreams(&in, &out);
@@ -597,6 +838,7 @@ Options:
         auto & ask = cli.confirmOpt();
         EXPECT_PARSE(cli, {"-y"});
         EXPECT(*ask);
+        in.clear();
         in.str("n\n");
         out.str("");
         cli.iostreams(&in, &out);
@@ -611,6 +853,32 @@ Options:
             EXPECT_PARSE2(cli, false, Dim::kExitOk, {});
             EXPECT(!*ask);
         }
+    }
+
+    // prompt for array
+    {
+        cli = {};
+        auto & ask = cli.optVec<string>("name").prompt();
+        in.clear();
+        in.str("jack\n");
+        out.str("");
+        cli.iostreams(&in, &out);
+        EXPECT_PARSE(cli, {});
+        EXPECT(out.str() == "Name: ");
+        EXPECT(ask.size() && ask[0] == "jack");
+    }
+
+    // prompt with default
+    {
+        cli = {};
+        auto & ask = cli.opt<string>("name", "jill").prompt();
+        in.clear();
+        in.str("jack\n");
+        out.str("");
+        cli.iostreams(&in, &out);
+        EXPECT_PARSE(cli, {});
+        EXPECT(out.str() == "Name [jill]: ");
+        EXPECT(*ask == "jack");
     }
 }
 
@@ -635,10 +903,23 @@ void envTests() {
 #endif
 }
 
+
+/****************************************************************************
+*
+*   Main
+*
+***/
+
 //===========================================================================
 static int runTests(bool prompt) {
     basicTests();
+    parseTests();
+    choiceTests();
+    helpTests();
+    cmdTests();
     envTests();
+    argvTests();
+    optCheckTests();
     promptTests(prompt);
 
     if (s_errors) {

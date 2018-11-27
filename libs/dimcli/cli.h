@@ -746,7 +746,7 @@ bool Cli::fromString_impl(
 }
 
 //===========================================================================
-// toString - converts to string from T, returns empty string and returns
+// toString - converts to string from T, sets to empty string and returns
 // false if conversion fails or no conversion available.
 //===========================================================================
 template <typename T>
@@ -980,10 +980,6 @@ public:
     // the argument was specified in the command line without a value.
     A & implicitValue(T const & val);
 
-    // Causes a check whether the option value was set during parsing, and
-    // reports badUsage() if it wasn't.
-    A & require();
-
     // Turns the argument into a feature switch, there are normally multiple
     // switches pointed at a single external value, one of which should be
     // flagged as the default. If none (or many) are set marked as the default
@@ -1003,13 +999,17 @@ public:
         std::string const & sortKey = {}
     );
 
+    // Forces the value to be within the range, if it's less than the low
+    // it's set to the low, if higher than high it's made merely high.
+    A & clamp(T const & low, T const & high);
+
     // Fail if the value given for this option is not in within the range
     // (inclusive) of low to high.
     A & range(T const & low, T const & high);
 
-    // Forces the value to be within the range, if it's less than the low
-    // it's set to the low, if higher than high it's made merely high.
-    A & clamp(T const & low, T const & high);
+    // Causes a check whether the option value was set during parsing, and
+    // reports badUsage() if it wasn't.
+    A & require();
 
     // Enables prompting. When the option hasn't been provided on the command
     // line the user will be prompted for it. Use Cli::fPrompt* flags to
@@ -1210,12 +1210,9 @@ A & Cli::OptShim<A, T>::defaultValue(T const & val) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::implicitValue(T const & val) {
-    if (m_bool) {
-        // bools don't have separate values, just their presence/absence
-        assert(!m_bool && "bool argument values can't be implicit");
-    } else {
-        m_implicitValue = val;
-    }
+    // bools don't have separate values, just their presence/absence
+    assert(!m_bool && "bool argument values can't be implicit");
+    m_implicitValue = val;
     return static_cast<A &>(*this);
 }
 
