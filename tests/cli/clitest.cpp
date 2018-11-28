@@ -708,6 +708,106 @@ Options:
 
 /****************************************************************************
 *
+*   Response files
+*
+***/
+
+namespace {
+
+class LockFile {
+public:
+    LockFile(char const name[]);
+    ~LockFile();
+private:
+    int m_fd{};
+};
+
+} // namespace
+
+#ifdef _MSC_VER
+
+#include <fcntl.h>
+#include <io.h>
+
+//===========================================================================
+LockFile::LockFile(char const name[]) {
+    m_fd = _sopen(name, _O_RDONLY, _SH_DENYRW);
+}
+
+//===========================================================================
+LockFile::~LockFile() {
+    _close(m_fd);
+}
+
+#else
+
+#include <sys/file.h>
+
+//===========================================================================
+LockFile::LockFile(char const name[]) {
+    m_fd = open(name, O_RDONLY);
+    flock(m_fd, LOCK_EX);
+}
+
+//===========================================================================
+LockFile::~LockFile() {
+    close(m_fd);
+}
+#endif
+
+//===========================================================================
+template<typename T, int N>
+void writeRsp(char const path[], T const (&data)[N]) {
+    fstream f(path, ios::out | ios::trunc | ios::binary);
+    f.write((char *) data, sizeof(*data) * (N - 1));
+}
+
+//===========================================================================
+void responseTests() {
+#ifdef FILESYSTEM
+    namespace fs = FILESYSTEM;
+    int line = 0;
+    Dim::CliLocal cli;
+
+    if (!fs::is_directory("test"))
+        fs::create_directories("test");
+    writeRsp("test/a.rsp", "1 @b.rsp 2\n");
+    writeRsp("test/b.rsp", u8"\ufeffx\ny\n");
+    writeRsp("test/cL.rsp", L"\ufeffc1 c2");
+    writeRsp("test/du.rsp", u"\ufeffd1 d2");
+    writeRsp("test/eBad.rsp", "\xff\xfe\x00\xd8\x20\x20");
+    writeRsp("test/f.rsp", "f");
+    writeRsp("test/gBad.rsp", "@eBad.rsp");
+    writeRsp("test/reA.rsp", "@reB.rsp");
+    writeRsp("test/reB.rsp", "@reA.rsp");
+
+    cli = {};
+    auto & args = cli.optVec<string>("[args]");
+    EXPECT_PARSE(cli, {"@test/a.rsp"});
+    EXPECT(*args == vector<string>{"1", "x", "y", "2"});
+
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/does_not_exist.rsp"});
+    EXPECT(cli.errMsg() == "Invalid response file: test/does_not_exist.rsp");
+    EXPECT_PARSE(cli, {"@test/cL.rsp", "@test/du.rsp", "@test/f.rsp"});
+    EXPECT(*args == vector<string>{"c1", "c2", "d1", "d2", "f"});
+
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/gBad.rsp"});
+    EXPECT(cli.errMsg() == "Invalid encoding: eBad.rsp");
+
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/reA.rsp"});
+    EXPECT(cli.errMsg() == "Recursive response file: reA.rsp");
+
+    {
+        LockFile lk("test/f.rsp");
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/f.rsp"});
+        EXPECT(cli.errMsg() == "Read error: test/f.rsp");
+    }
+#endif
+}
+
+
+/****************************************************************************
+*
 *   Basic
 *
 ***/
@@ -999,6 +1099,7 @@ static int runTests(bool prompt) {
     envTests();
     argvTests();
     optCheckTests();
+    responseTests();
     promptTests(prompt);
 
     if (s_errors) {

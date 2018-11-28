@@ -18,7 +18,6 @@
 #include <iostream>
 #include <locale>
 #include <sstream>
-#include <unordered_set>
 
 using namespace std;
 using namespace Dim;
@@ -1573,7 +1572,7 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
 static bool expandResponseFiles(
     Cli & cli,
     vector<string> & args,
-    unordered_set<string> & ancestors
+    vector<string> & ancestors
 );
 
 //===========================================================================
@@ -1582,9 +1581,9 @@ static bool expandResponseFiles(
 static bool loadFileUtf8(string & content, fs::path const & fn) {
     content.clear();
 
-    error_code err;
-    auto bytes = (size_t) fs::file_size(fn, err);
-    if (err)
+    error_code ec;
+    auto bytes = (size_t) fs::file_size(fn, ec);
+    if (ec)
         return false;
 
     content.resize(bytes);
@@ -1620,18 +1619,23 @@ static bool expandResponseFile(
     Cli & cli,
     vector<string> & args,
     size_t & pos,
-    unordered_set<string> & ancestors
+    vector<string> & ancestors
 ) {
     string content;
-    error_code err;
+    error_code ec;
     auto fn = (fs::path) args[pos].substr(1);
-    auto cfn = fs::canonical(fn, err);
-    if (err)
+    auto cfn = ancestors.empty()
+        ? fn
+        : fs::path(ancestors.back()).parent_path() / fn;
+    cfn = fs::canonical(cfn, ec);
+    if (ec)
         return cli.badUsage("Invalid response file", fn.string());
-    auto ib = ancestors.insert(cfn.string());
-    if (!ib.second)
-        return cli.badUsage("Recursive response file", fn.string());
-    if (!loadFileUtf8(content, fn)) {
+    for (auto && a : ancestors) {
+        if (a == cfn.string())
+            return cli.badUsage("Recursive response file", fn.string());
+    }
+    ancestors.push_back(cfn.string());
+    if (!loadFileUtf8(content, cfn)) {
         string desc = content.empty() ? "Read error" : "Invalid encoding";
         return cli.badUsage(desc, fn.string());
     }
@@ -1640,8 +1644,8 @@ static bool expandResponseFile(
         return false;
     auto rargLen = rargs.size();
     replace(args, pos, 1, move(rargs));
-    pos += rargLen;
-    ancestors.erase(ib.first);
+    pos += rargLen - 1;
+    ancestors.pop_back();
     return true;
 }
 
@@ -1651,7 +1655,7 @@ static bool expandResponseFile(
 static bool expandResponseFiles(
     Cli & cli,
     vector<string> & args,
-    unordered_set<string> & ancestors
+    vector<string> & ancestors
 ) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
         if (!args[pos].empty() && args[pos][0] == '@') {
@@ -1821,7 +1825,7 @@ bool Cli::parse(vector<string> & args) {
 
     // expand response files
 #ifdef DIMCLI_LIB_FILESYSTEM
-    unordered_set<string> ancestors;
+    vector<string> ancestors;
     if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
 #endif
