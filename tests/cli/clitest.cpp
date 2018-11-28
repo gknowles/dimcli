@@ -713,51 +713,6 @@ Options:
 *
 ***/
 
-namespace {
-
-class LockFile {
-public:
-    LockFile(char const name[]);
-    ~LockFile();
-private:
-    int m_fd{};
-};
-
-} // namespace
-
-#ifdef _MSC_VER
-
-#include <fcntl.h>
-#include <io.h>
-
-//===========================================================================
-LockFile::LockFile(char const name[]) {
-    m_fd = _sopen(name, _O_RDONLY, _SH_DENYRW);
-}
-
-//===========================================================================
-LockFile::~LockFile() {
-    _close(m_fd);
-}
-
-#else
-
-#include <fcntl.h>
-#include <sys/file.h>
-#include <unistd.h>
-
-//===========================================================================
-LockFile::LockFile(char const name[]) {
-    m_fd = open(name, O_RDONLY);
-    flock(m_fd, LOCK_EX);
-}
-
-//===========================================================================
-LockFile::~LockFile() {
-    close(m_fd);
-}
-#endif
-
 //===========================================================================
 template<typename T, int N>
 void writeRsp(char const path[], T const (&data)[N]) {
@@ -800,11 +755,14 @@ void responseTests() {
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/reA.rsp"});
     EXPECT(cli.errMsg() == "Recursive response file: reA.rsp");
 
+#ifdef _MSC_VER
     {
-        LockFile lk("test/f.rsp");
+        fstream f("test/f.rsp", ios::in, _SH_DENYRW);
         EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/f.rsp"});
         EXPECT(cli.errMsg() == "Read error: test/f.rsp");
     }
+#endif
+
 #endif
 }
 
