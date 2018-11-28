@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Fixed - Order of keys in help text of multi-keyed options non-deterministic
+- Fixed - optVec flag values with inverted keys aren't ignored
 
 ## dimcli 4.0.1 (2018-10-22)
 - Changed - Default to user's preferred (instead of global) locale for parsing

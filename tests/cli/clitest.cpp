@@ -577,8 +577,6 @@ void argvTests() {
 void optCheckTests() {
     int line = 0;
     Dim::CliLocal cli;
-    istringstream in;
-    ostringstream out;
 
     // require
     {
@@ -619,6 +617,97 @@ void optCheckTests() {
 
 /****************************************************************************
 *
+*   Flag values
+*
+***/
+
+//===========================================================================
+void flagTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+
+    // flagValue
+    {
+        cli = {};
+        string fruit;
+        cli.group("fruit").title("Type of fruit");
+        auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
+        cli.opt(&fruit, "a", "apple").flagValue(true);
+        cli.opt(orange, "p", "pear").flagValue();
+        cli.group("~").title("Other");
+        EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [-o] [-p] [--help]
+)");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Type of fruit:
+  -a        (default)
+  -o
+  -p
+
+Other:
+  --help    Show this message and exit.
+)");
+        EXPECT_PARSE(cli, {"-o"});
+        EXPECT(*orange == "orange");
+        EXPECT(orange.from() == "-o");
+        EXPECT(orange.pos() == 1 && orange.size() == 1);
+    }
+
+    {
+        cli = {};
+        auto & on = cli.opt<bool>("on.", true).flagValue();
+        auto & notOn = cli.opt(on, "!notOn.").flagValue(true);
+        EXPECT_PARSE(cli, {"--on"});
+        EXPECT(*notOn);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  / --notOn  (default)
+  --on
+
+  --help     Show this message and exit.
+)");
+    }
+
+    {
+        cli = {};
+        auto & opt = cli.opt<int>("x", 1).flagValue(true);
+        cli.opt(opt, "y", 2).flagValue();
+        cli.opt(opt, "!z", 3).flagValue()
+            .desc("Inverted flag value that doesn't make much sense since "
+                "inverted flag values are always ignored.");
+        EXPECT_PARSE(cli, {"-y", "-z"});
+        EXPECT(*opt == 2);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  / -z      Inverted flag value that doesn't make much sense since inverted
+            flag values are always ignored.
+  -x        (default)
+  -y
+
+  --help    Show this message and exit.
+)");
+        EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"-w"});
+    }
+
+    {
+        cli = {};
+        vector<int> vals;
+        cli.optVec(&vals, "x").defaultValue(1).flagValue();
+        cli.optVec(&vals, "!z").defaultValue(3).flagValue(true);
+        EXPECT_PARSE(cli, {"-x", "-z"});
+        EXPECT(vals == vector<int>{1});
+    }
+}
+
+
+/****************************************************************************
+*
 *   Basic
 *
 ***/
@@ -627,8 +716,6 @@ void optCheckTests() {
 void basicTests() {
     int line = 0;
     Dim::CliLocal cli;
-    istringstream in;
-    ostringstream out;
 
     (void) cli.imbue(locale{});
 
@@ -710,6 +797,22 @@ usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
         EXPECT(*special);
     }
 
+    {
+        cli = {};
+        cli.opt<bool>("option with excessively long list of key names")
+            .desc("Why so many?");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --option, --with, --excessively, --long, --list, --of, --key, --names /
+     --no-option, --no-with, --no-excessively, --no-long, --no-list, --no-of,
+     --no-key, --no-names    Why so many?
+
+  --help                     Show this message and exit.
+)");
+    }
+
     // optVec
     {
         cli = {};
@@ -728,44 +831,19 @@ Options:
 
   --help           Show this message and exit.
 )");
-    }
 
-    // flagValue
-    {
-        cli = {};
-        string fruit;
-        cli.group("fruit").title("Type of fruit");
-        auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
-        cli.opt(&fruit, "a", "apple").flagValue(true);
-        cli.opt(orange, "p", "pear").flagValue();
-        cli.group("~").title("Other");
-        EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [-o] [-p] [--help]
-)");
+        cli.optVec(strs, "string").desc("Alternate for string array.");
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
-Type of fruit:
-  -a        (default)
-  -o
-  -p
+Options:
+  -r, -s [STRING]  String array.
+  --string=STRING  Alternate for string array.
 
-Other:
-  --help    Show this message and exit.
+  --help           Show this message and exit.
 )");
-        EXPECT_PARSE(cli, {"-o"});
-        EXPECT(*orange == "orange");
-        EXPECT(orange.from() == "-o");
-        EXPECT(orange.pos() == 1 && orange.size() == 1);
-
-        cli = {};
-        auto & on = cli.opt<bool>("on.", true).flagValue();
-        auto & notOn = cli.opt(on, "!notOn.").flagValue(true);
-        EXPECT_PARSE(cli, {"--on"});
-        EXPECT(*notOn);
-        EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [--notOn] [--on] [--help]
-)");
+        EXPECT_PARSE(cli, {"--string=a", "-sb"});
+        EXPECT(*strs == vector<string>({"a"s, "b"s}));
     }
 
     // filesystem
@@ -913,6 +991,7 @@ void envTests() {
 //===========================================================================
 static int runTests(bool prompt) {
     basicTests();
+    flagTests();
     parseTests();
     choiceTests();
     helpTests();

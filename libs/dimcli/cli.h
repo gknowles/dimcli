@@ -733,12 +733,12 @@ bool Cli::fromString_impl(
     long,
     long
 ) const {
-    // In order to parse an argument there must be one of:
+    // In order to parse an argument one of the following must exist:
     //  - assignment operator for std::string to T
-    //  - istream extraction operator for T
+    //  - std::istream extraction operator for T
     //  - specialization of Cli::fromString template for T, something like:
-    //      template<> bool Cli::fromString<Foo>::(
-    //          Foo & out, std::string const & src) const { ... }
+    //      template<> bool Cli::fromString<MyType>::(
+    //          MyType & out, std::string const & src) const { ... }
     //  - parse action attached to the Opt<T> instance that doesn't call
     //    opt.parseValue(), such as opt.choice().
     assert(!"no assignment from string or stream extraction operator");
@@ -1419,11 +1419,13 @@ template <typename T>
 inline bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
     auto & tmp = *m_proxy->m_value;
     if (this->m_flagValue) {
-        bool flagged;
-        if (!cli.fromString(flagged, value))
-            return false;
-        if (flagged)
+        // Value passed for flagValue (just like bools) is generated
+        // internally and will be 0 or 1.
+        if (value == "1") {
             tmp = this->defaultValue();
+        } else {
+            assert(value == "0");
+        }
         return true;
     }
     if (!this->m_choices.empty()) {
@@ -1560,12 +1562,13 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
     m_proxy->m_values->resize(m_proxy->m_values->size() + 1);
     auto & tmp = m_proxy->m_values->back();
     if (this->m_flagValue) {
-        bool flagged;
-        if (!cli.fromString(flagged, value))
-            return false;
-        if (flagged) {
+        // Value passed for flagValue (just like bools) is generated
+        // internally and will be 0 or 1.
+        if (value == "1") {
             tmp = this->defaultValue();
         } else {
+            assert(value == "0");
+            m_proxy->m_values->pop_back();
             m_proxy->m_matches.pop_back();
         }
         return true;
