@@ -153,6 +153,7 @@ ostream & operator<<(ostream & os, const ExtractWithInsert & in) {
     case ExtractWithInsert::kGood: os << 'g'; break;
     case ExtractWithInsert::kInOnly: os << 'i'; break;
     case ExtractWithInsert::kBad: os << 'b'; break;
+    default: break;
     }
     if (in != ExtractWithInsert::kGood)
         os.setstate(ios::failbit);
@@ -741,7 +742,9 @@ LockFile::~LockFile() {
 
 #else
 
+#include <fcntl.h>
 #include <sys/file.h>
+#include <unistd.h>
 
 //===========================================================================
 LockFile::LockFile(char const name[]) {
