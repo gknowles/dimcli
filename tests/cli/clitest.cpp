@@ -729,15 +729,17 @@ void responseTests() {
 
     if (!fs::is_directory("test"))
         fs::create_directories("test");
-    writeRsp("test/a.rsp", "1 @b.rsp 2\n");
-    writeRsp("test/b.rsp", u8"\ufeffx\ny\n");
+    writeRsp("test/a.rsp", "1 @bu8.rsp 2\n");
+    writeRsp("test/bu8.rsp", u8"\ufeffx\ny\n");
     writeRsp("test/cL.rsp", L"\ufeffc1 c2");
     writeRsp("test/du.rsp", u"\ufeffd1 d2");
     writeRsp("test/eBad.rsp", "\xff\xfe\x00\xd8\x20\x20");
     writeRsp("test/f.rsp", "f");
     writeRsp("test/gBad.rsp", "@eBad.rsp");
+    writeRsp("test/hU.rsp", U"\ufeffh1 h2");
     writeRsp("test/reA.rsp", "@reB.rsp");
     writeRsp("test/reB.rsp", "@reA.rsp");
+    writeRsp("test/reX.rsp", "@reX.rsp");
 
     cli = {};
     auto & args = cli.optVec<string>("[args]");
@@ -746,14 +748,18 @@ void responseTests() {
 
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/does_not_exist.rsp"});
     EXPECT(cli.errMsg() == "Invalid response file: test/does_not_exist.rsp");
-    EXPECT_PARSE(cli, {"@test/cL.rsp", "@test/du.rsp", "@test/f.rsp"});
-    EXPECT(*args == vector<string>{"c1", "c2", "d1", "d2", "f"});
+
+    EXPECT_PARSE(cli, {"@test/du.rsp", "@test/f.rsp"});
+    EXPECT(*args == vector<string>{"d1", "d2", "f"});
 
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/gBad.rsp"});
     EXPECT(cli.errMsg() == "Invalid encoding: eBad.rsp");
 
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/reA.rsp"});
     EXPECT(cli.errMsg() == "Recursive response file: reA.rsp");
+
+    EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/reX.rsp"});
+    EXPECT(cli.errMsg() == "Recursive response file: reX.rsp");
 
 #ifdef _MSC_VER
     {
