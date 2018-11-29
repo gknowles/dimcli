@@ -749,8 +749,13 @@ void responseTests() {
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/does_not_exist.rsp"});
     EXPECT(cli.errMsg() == "Invalid response file: test/does_not_exist.rsp");
 
-    EXPECT_PARSE(cli, {"@test/du.rsp", "@test/f.rsp"});
-    EXPECT(*args == vector<string>{"d1", "d2", "f"});
+#ifdef _MSC_VER
+    EXPECT_PARSE(cli, {"@test/cL.rsp", "@test/du.rsp"});
+    EXPECT(*args == vector<string>{"c1", "c2", "d1", "d2", "f"});
+#endif
+
+    EXPECT_PARSE(cli, {"@test/f.rsp"});
+    EXPECT(*args == vector<string>{"f"});
 
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/gBad.rsp"});
     EXPECT(cli.errMsg() == "Invalid encoding: eBad.rsp");
