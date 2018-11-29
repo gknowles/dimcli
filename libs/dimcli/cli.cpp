@@ -295,7 +295,8 @@ CommandConfig & Cli::Config::findCmdAlways(
 CommandConfig const & Cli::Config::findCmdOrDie(Cli const & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
-    assert(i != cmds.end() && "uninitialized command context");
+    assert(i != cmds.end()
+        && "internal dimcli error: uninitialized command context");
     return i->second;
 }
 
@@ -331,7 +332,8 @@ GroupConfig & Cli::Config::findCmdGrpOrDie(Cli const & cli) {
     auto & name = cli.cmdGroup();
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
-    assert(i != grps.end() && "uninitialized command group context");
+    assert(i != grps.end()
+        && "internal dimcli error: uninitialized command group context");
     return i->second;
 }
 
@@ -360,7 +362,8 @@ GroupConfig & Cli::Config::findGrpAlways(
 GroupConfig const & Cli::Config::findGrpOrDie(Cli const & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
-    assert(i != grps.end() && "uninitialized group context");
+    assert(i != grps.end()
+        && "internal dimcli error: uninitialized group context");
     return i->second;
 }
 
@@ -479,10 +482,11 @@ static bool includeName(
         switch (type) {
         case kNameEnable: return !name.invert;
         case kNameDisable: return name.invert;
-        case kNameAll: return true;
         case kNameNonDefault: return inverted == name.invert;
+        default: break;
         }
-        assert(!"unknown NameListType");
+        assert(type == kNameAll
+            && !"internal dimcli error: unknown NameListType");
     }
     return true;
 }
@@ -579,9 +583,9 @@ void Cli::OptIndex::index(OptBase & opt) {
             ptr += 1;
         }
         if (hasEqual && close == ' ') {
-            assert(!hasEqual && "bad argument name");
+            assert(!"bad argument name");
         } else if (hasPos && close != ' ') {
-            assert(!hasPos && "argument with multiple positional names");
+            assert(!"argument with multiple positional names");
         } else {
             if (close != ' ')
                 hasPos = true;
@@ -601,7 +605,9 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
 
     auto where = m_argNames.end();
     switch (name[0]) {
-    case '-': assert(name[0] != '-' && "bad argument name"); return;
+    case '-':
+        assert(!"bad argument name");
+        return;
     case '[':
         m_argNames.push_back({&opt, !invert, optional, name.data() + 1});
         where = m_argNames.end() - 1;
@@ -627,7 +633,7 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
     switch (name[0]) {
     case '!':
         if (!opt.m_bool) {
-            assert(!opt.m_bool && "bad modifier '!' for non-bool argument");
+            assert(!"bad modifier '!' for non-bool argument");
             return;
         }
         if (name.size() == 2)
@@ -636,7 +642,7 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
         return;
     case '?':
         if (opt.m_bool) {
-            assert(!opt.m_bool && "bad modifier '?' for bool argument");
+            assert(!"bad modifier '?' for bool argument");
             return;
         }
         if (name.size() == 2)
@@ -672,7 +678,7 @@ void Cli::OptIndex::indexLongName(
     if (key.back() == '.') {
         allowNo = false;
         if (key.size() == 2) {
-            assert(key.size() > 2 && "bad modifier '.' for short name");
+            assert(!"bad modifier '.' for short name");
             return;
         }
         key.pop_back();
@@ -1088,9 +1094,10 @@ vector<string> Cli::toArgv(string const & cmdline) {
 vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     vector<string> out;
     out.reserve(argc);
-    for (; *argv; ++argv)
-        out.push_back(*argv);
-    assert(argc == out.size() && "bad arguments, argv[argc] not null");
+    for (unsigned i = 0; i < argc && argv[i]; ++i)
+        out.push_back(argv[i]);
+    assert(argc == out.size() && !argv[argc]
+        && "bad arguments, argc and null terminator don't agree");
     return out;
 }
 
@@ -1100,11 +1107,12 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
     wstring_convert<CodecvtWchar> wcvt("BAD_ENCODING");
-    for (; *argv; ++argv) {
-        auto tmp = (string) wcvt.to_bytes(*argv);
+    for (unsigned i = 0; i < argc && argv[i]; ++i) {
+        auto tmp = (string) wcvt.to_bytes(argv[i]);
         out.push_back(move(tmp));
     }
-    assert(argc == out.size() && "bad arguments, argv[argc] not null");
+    assert(argc == out.size() && !argv[argc]
+        && "bad arguments, argc and null terminator don't agree");
     return out;
 }
 
@@ -2027,8 +2035,12 @@ string const & Cli::runCommand() const {
 //===========================================================================
 bool Cli::exec() {
     auto & name = runCommand();
-    assert(commandExists(name) && "command found by parse no longer exists");
     auto & cmd = m_cfg->cmds[name];
+    if (!cmd.action) {
+        // Most likely parse failed, was never run, or "this" was reset.
+        assert(!"command found by parse no longer exists");
+        return false;
+    }
     if (!cmd.action(*this)) {
         // If the command should exit but there is still asynchronous work
         // going on, consider a custom "exit pending" exit code with special
@@ -2571,7 +2583,7 @@ int Cli::printError(ostream & os) {
 
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {
-    assert(enable && "disabling console echo is not supported");
+    assert(enable && "disabling echo requires console support enabled");
 }
 
 #elif defined(_WIN32)

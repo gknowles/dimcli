@@ -1133,7 +1133,8 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 //===========================================================================
 template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
-    assert(this->m_bool && "bool option that isn't marked as bool");
+    // bool options are always marked as bool
+    assert(this->m_bool && "internal dimcli error");
     if (this->m_flagValue)
         return this->m_flagDefault;
     return this->defaultValue();
@@ -1210,9 +1211,12 @@ A & Cli::OptShim<A, T>::defaultValue(T const & val) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::implicitValue(T const & val) {
-    // bools don't have separate values, just their presence/absence
-    assert(!m_bool && "bool argument values can't be implicit");
-    m_implicitValue = val;
+    if (m_bool) {
+        // bools don't have separate values, just their presence/absence
+        assert(!"bool argument values can't be implicit");
+    } else {
+        m_implicitValue = val;
+    }
     return static_cast<A &>(*this);
 }
 
@@ -1424,7 +1428,7 @@ inline bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
         if (value == "1") {
             tmp = this->defaultValue();
         } else {
-            assert(value == "0");
+            assert(value == "0" && "internal dimcli error");
         }
         return true;
     }
@@ -1567,7 +1571,7 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
         if (value == "1") {
             tmp = this->defaultValue();
         } else {
-            assert(value == "0");
+            assert(value == "0" && "internal dimcli error");
             m_proxy->m_values->pop_back();
             m_proxy->m_matches.pop_back();
         }

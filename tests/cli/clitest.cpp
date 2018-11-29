@@ -677,17 +677,12 @@ Options:
         cli = {};
         auto & opt = cli.opt<int>("x", 1).flagValue(true);
         cli.opt(opt, "y", 2).flagValue();
-        cli.opt(opt, "!z", 3).flagValue()
-            .desc("Inverted flag value that doesn't make much sense since "
-                "inverted flag values are always ignored.");
-        EXPECT_PARSE(cli, {"-y", "-z"});
+        EXPECT_PARSE(cli, {"-y"});
         EXPECT(*opt == 2);
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
-  / -z      Inverted flag value that doesn't make much sense since inverted
-            flag values are always ignored.
   -x        (default)
   -y
 
@@ -700,8 +695,8 @@ Options:
         cli = {};
         vector<int> vals;
         cli.optVec(&vals, "x").defaultValue(1).flagValue();
-        cli.optVec(&vals, "!z").defaultValue(3).flagValue(true);
-        EXPECT_PARSE(cli, {"-x", "-z"});
+        cli.optVec(&vals, "y").defaultValue(2).flagValue(true);
+        EXPECT_PARSE(cli, {"-x"});
         EXPECT(vals == vector<int>{1});
     }
 }
@@ -750,12 +745,12 @@ void responseTests() {
     EXPECT(cli.errMsg() == "Invalid response file: test/does_not_exist.rsp");
 
 #ifdef _MSC_VER
-    EXPECT_PARSE(cli, {"@test/cL.rsp", "@test/du.rsp"});
+    EXPECT_PARSE(cli, {"@test/cL.rsp", "@test/du.rsp", "@test/f.rsp"});
     EXPECT(*args == vector<string>{"c1", "c2", "d1", "d2", "f"});
-#endif
-
+#else
     EXPECT_PARSE(cli, {"@test/f.rsp"});
     EXPECT(*args == vector<string>{"f"});
+#endif
 
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/gBad.rsp"});
     EXPECT(cli.errMsg() == "Invalid encoding: eBad.rsp");
