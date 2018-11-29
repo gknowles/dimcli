@@ -391,11 +391,25 @@ Options:
     // multiline footer
     {
         cli = {};
+        cli.opt<bool>(cli.helpOpt(), "no-help.", false).show(false);
+        cli.header("");
+        EXPECT(cli.header().size() == 1 && cli.header()[0] == '\0');
+        cli.header("Multiline header:\n"
+                   "- second line\n");
+        cli.footer("");
+        EXPECT(cli.footer().size() == 1 && cli.footer()[0] == '\0');
         cli.footer("Multiline footer:\n"
                    "- first reference\n"
                    "- second reference\n");
+        cli.desc("Description.");
+        EXPECT(cli.desc() == "Description.");
         EXPECT_HELP(cli, "", 1 + R"(
+Multiline header:
+- second line
+
 usage: test [OPTIONS]
+
+Description.
 
 Options:
   --help    Show this message and exit.
@@ -403,6 +417,30 @@ Options:
 Multiline footer:
 - first reference
 - second reference
+)");
+        EXPECT_PARSE(cli, {"--no-help"});
+    }
+
+    // group sortKey
+    {
+        cli = {};
+        cli.group("One").sortKey("1").opt("1", true).desc("First option.");
+        EXPECT(cli.sortKey() == "1");
+        cli.group("Two").sortKey("2").opt("2", true).desc("Second option.");
+        cli.group("Three").sortKey("3").opt("3", true).desc("Third option.");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+One:
+  -1        First option.
+
+Two:
+  -2        Second option.
+
+Three:
+  -3        Third option.
+
+  --help    Show this message and exit.
 )");
     }
 }
@@ -425,6 +463,7 @@ void cmdTests() {
     {
         Dim::Cli c1;
         auto & a1 = c1.command("one").cmdTitle("Primary").opt<int>("a", 1);
+        EXPECT(c1.cmdTitle() == "Primary");
         c1.desc("First sentence of description. Rest of one's description.");
         Dim::Cli c2;
         auto & a2 = c2.command("two").cmdGroup("Additional").opt<int>("a", 2);
@@ -477,6 +516,7 @@ Options:
     {
         cli = {};
         cli.command("1a").cmdGroup("First").cmdSortKey("1");
+        EXPECT(cli.cmdSortKey() == "1");
         cli.command("1b");
         cli.command("2a").cmdGroup("Second").cmdSortKey("2");
         cli.command("3a").cmdGroup("Third").cmdSortKey("3");
@@ -743,6 +783,10 @@ void responseTests() {
 
     EXPECT_PARSE2(cli, false, Dim::kExitUsage, {"@test/does_not_exist.rsp"});
     EXPECT(cli.errMsg() == "Invalid response file: test/does_not_exist.rsp");
+    cli.responseFiles(false);
+    EXPECT_PARSE(cli, {"@test/does_not_exist.rsp"});
+    EXPECT(args && args[0] == "@test/does_not_exist.rsp");
+    cli.responseFiles(true);
 
 #ifdef _MSC_VER
     EXPECT_PARSE(cli, {"@test/cL.rsp", "@test/du.rsp", "@test/f.rsp"});
@@ -794,17 +838,19 @@ void basicTests() {
 
     {
         cli = {};
-        auto & num = cli.opt<int>("n number", 1).desc("number is an int");
+        auto & num = cli.opt<int>(" n number ", 1).desc("number is an int");
         cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
         cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc("");
         cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
         auto & special =
             cli.opt<bool>("s special !S", false).desc("snowflake");
-        auto & name =
-            cli.group("name").title("Name options").optVec<string>("name");
-        auto & keys = cli.group("").optVec<string>("[key]").desc(
-            "it's the key arguments with a very long description that wraps "
-            "the line at least once, maybe more.");
+        auto & name = cli.group("name").title("Name options")
+            .optVec<string>("name");
+        EXPECT(cli.title() == "Name options");
+        auto & keys = cli.group("")
+            .optVec<string>("[key]").desc(
+                "it's the key arguments with a very long description that "
+                "wraps the line at least once, maybe more.");
         cli.title(
             "Long explanation of this very short set of options, it's so "
             "long that it even wraps around to the next line");
@@ -868,8 +914,11 @@ usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
         cli = {};
         cli.opt<bool>("option with excessively long list of key names")
             .desc("Why so many?");
+        cli.opt<string>("[equal '=' in name]")
+            .desc("Equals are sometimes reserved.");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+usage: test [OPTIONS] [<equal '=' in name>]
+  equal '=' in name  Equals are sometimes reserved.
 
 Options:
   --option, --with, --excessively, --long, --list, --of, --key, --names /
