@@ -1631,21 +1631,21 @@ static bool expandResponseFile(
 ) {
     string content;
     error_code ec;
-    auto fn = (fs::path) args[pos].substr(1);
+    auto fn = args[pos].substr(1);
     auto cfn = ancestors.empty()
-        ? fn
+        ? (fs::path) fn
         : fs::path(ancestors.back()).parent_path() / fn;
     cfn = fs::canonical(cfn, ec);
-    if (ec)
-        return cli.badUsage("Invalid response file", fn.string());
+    if (ec || !fs::exists(cfn))
+        return cli.badUsage("Invalid response file", fn);
     for (auto && a : ancestors) {
         if (a == cfn.string())
-            return cli.badUsage("Recursive response file", fn.string());
+            return cli.badUsage("Recursive response file", fn);
     }
     ancestors.push_back(cfn.string());
     if (!loadFileUtf8(content, cfn)) {
         string desc = content.empty() ? "Read error" : "Invalid encoding";
-        return cli.badUsage(desc, fn.string());
+        return cli.badUsage(desc, fn);
     }
     auto rargs = cli.toArgv(content);
     if (!expandResponseFiles(cli, rargs, ancestors))
