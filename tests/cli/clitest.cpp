@@ -32,7 +32,7 @@ static int s_errors;
 #define EXPECT(...) \
     if (!bool(__VA_ARGS__)) \
     failed(line ? line : __LINE__, #__VA_ARGS__)
-#define EXPECT_PARSE(cli, ...) parseTest(__LINE__, cli, __VA_ARGS__)
+#define EXPECT_PARSE(...) parseTest(__LINE__, __VA_ARGS__)
 #define EXPECT_ERR(cli, text) errTest(__LINE__, cli, text)
 #define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
 #define EXPECT_USAGE(cli, cmd, text) usageTest(__LINE__, cli, cmd, text)
