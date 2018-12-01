@@ -713,7 +713,7 @@ c\d)", {"ab$c\\d"});
     auto p1 = cli.toPtrArgv(a1);
     EXPECT(cli.toCmdline(p1.size(), p1.data()) == cmdline);
     wchar_t const * wargs[] = { L"a", L"b", L"c", NULL };
-    a1 = cli.toArgv(size(wargs) - 1, (wchar_t **) wargs);
+    a1 = cli.toArgv(sizeof(wargs) / sizeof(*wargs) - 1, (wchar_t **) wargs);
     EXPECT(cli.toCmdline(a1) == cmdline);
 }
 
