@@ -730,7 +730,7 @@ Range is from 2 to 5
 ## Subcommands
 Git style subcommands are created by either cli.command("cmd"), which changes
 the cli objects context to the command, or with opt.command("cmd"), which
-changes the command the option is for. Once the cli object context has been
+changes the command that option is for. Once the cli object context has been
 changed it can than be used to add (description, footer, options, etc) to the
 command. Exactly the same as when working with a simple command line. If you
 pass an empty string to cli.command() or opt.command() it represents the top
@@ -816,8 +816,9 @@ $ a.out --yell orange
 It's an orange!!!
 ~~~
 
-In the commands list, the cli.desc() is only used up to the first period, but
-in command specific pages you see the whole thing:
+In the commands list, only the first sentence of cli.desc() (up to the first
+'.', '!', or '?' that's followed by a space) is shown, but in command specific
+pages you see the whole thing:
 
 ~~~ console
 $ a.out apple --help

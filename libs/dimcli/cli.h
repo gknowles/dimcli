@@ -419,7 +419,7 @@ public:
 
     // Sets all options to their defaults, called internally when parsing
     // starts.
-    void resetValues();
+    Cli & resetValues();
 
     // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.

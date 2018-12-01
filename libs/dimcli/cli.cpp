@@ -226,6 +226,19 @@ static void replace(
         *i++ = move(val);
 }
 
+//===========================================================================
+static string trim(string const & val) {
+    auto first = val.c_str();
+    auto last = first + val.size();
+    while (isspace(*first))
+        ++first;
+    if (!*first)
+        return {};
+    while (isspace(*--last))
+        ;
+    return string(first, last - first + 1);
+}
+
 
 /****************************************************************************
 *
@@ -587,9 +600,13 @@ void Cli::OptIndex::index(OptBase & opt) {
         } else if (hasPos && close != ' ') {
             assert(!"argument with multiple positional names");
         } else {
-            if (close != ' ')
+            if (close == ' ') {
+                name = string(b, ptr - b);
+            } else {
                 hasPos = true;
-            name = string(b, ptr - b);
+                name = string(b, 1);
+                name += trim(string(b + 1, ptr - b - 1));
+            }
             indexName(opt, name, pos);
             pos += 2;
         }
@@ -1684,15 +1701,15 @@ static bool expandResponseFiles(
 ***/
 
 //===========================================================================
-void Cli::resetValues() {
-    for (auto && opt : m_cfg->opts) {
+Cli & Cli::resetValues() {
+    for (auto && opt : m_cfg->opts)
         opt->reset();
-    }
     m_cfg->exitCode = kExitOk;
     m_cfg->errMsg.clear();
     m_cfg->errDetail.clear();
     m_cfg->progName.clear();
     m_cfg->command.clear();
+    return *this;
 }
 
 //===========================================================================
@@ -2270,21 +2287,20 @@ static void printChoices(
     string val;
     size_t pos = 0;
     auto num = keys.size();
-    for (auto && k : keys) {
-        pos += 1;
+    for (auto i = keys.begin(); pos < num; ++pos, ++i) {
         val = '"';
-        val += k.key;
+        val += i->key;
         val += '"';
-        if (pos == 1 && num == 2) {
+        if (pos == 0 && num == 2) {
             writeToken(os, wp, val);
-        } else if (pos == num) {
+            writeToken(os, wp, "or");
+        } else if (pos + 1 == num) {
             val += '.';
             writeToken(os, wp, val);
-            break;
         } else {
             val += ',';
             writeToken(os, wp, val);
-            if (pos + 1 == num)
+            if (pos + 2 == num)
                 writeToken(os, wp, "or");
         }
     }
@@ -2482,21 +2498,6 @@ void Cli::printOptions(ostream & os, string const & cmdName) {
 }
 
 //===========================================================================
-static string trim(string const & val) {
-    auto first = val.c_str();
-    auto last = first + val.size();
-    while (isspace(*first))
-        ++first;
-    if (!*first)
-        return {};
-    while (isspace(*--last)) {
-        if (last == first)
-            break;
-    }
-    return string(first, last - first + 1);
-}
-
-//===========================================================================
 void Cli::printCommands(ostream & os) {
     Config::touchAllCmds(*this);
 
@@ -2550,9 +2551,17 @@ void Cli::printCommands(ostream & os) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  "s + key.name);
         auto desc = key.cmd->desc;
-        auto pos = desc.find_first_of('.');
-        if (pos != string::npos)
-            desc.resize(pos + 1);
+        size_t pos = 0;
+        for (;;) {
+            pos = desc.find_first_of(".!?", pos);
+            if (pos == string::npos)
+                break;
+            pos += 1;
+            if (desc[pos] == ' ') {
+                desc.resize(pos);
+                break;
+            }
+        }
         desc = trim(desc);
         writeDescCol(os, wp, desc, colWidth);
         wp.prefix.clear();
@@ -2567,7 +2576,7 @@ int Cli::printError(ostream & os) {
         os << "Error: " << errMsg() << endl;
         auto & detail = errDetail();
         if (detail.size())
-            os << "Error: " << detail << endl;
+            os << detail << endl;
     }
     return code;
 }

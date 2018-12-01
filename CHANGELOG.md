@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed - optVec flag values with inverted keys aren't ignored
 - Fixed - Nested response files not resolved relative to parent
 - Fixed - Not all response files expanded when multiple appear
+- Added - Trim spaces around positional argument names
+- Fixed - Error detail for options with two choices missing "or"
+- Fixed - Subcommand help summary only terminated by '.' instead of "[.!?] "
 
 ## dimcli 4.0.1 (2018-10-22)
 - Changed - Default to user's preferred (instead of global) locale for parsing
