@@ -296,7 +296,7 @@ CommandConfig & Cli::Config::findCmdAlways(
     intGrp.title.clear();
     auto & hlp = cli.opt<bool>("help.")
         .desc("Show this message and exit.")
-        .parse(helpOptAction)
+        .check(helpOptAction)
         .command(name)
         .group(kInternalOptionGroup);
     cmd.helpOpt = &hlp;
@@ -492,14 +492,15 @@ static bool includeName(
     if (name.opt != &opt)
         return false;
     if (boolean) {
-        switch (type) {
-        case kNameEnable: return !name.invert;
-        case kNameDisable: return name.invert;
-        case kNameNonDefault: return inverted == name.invert;
-        default: break;
-        }
-        assert(type == kNameAll
-            && !"internal dimcli error: unknown NameListType");
+        if (type == kNameEnable)
+            return !name.invert;
+        if (type == kNameDisable)
+            return name.invert;
+
+        // includeName is always called with a filter (i.e. not kNameAll)
+        assert(type == kNameNonDefault
+            && "internal dimcli error: unknown NameListType");
+        return inverted == name.invert;
     }
     return true;
 }
@@ -719,11 +720,9 @@ bool Cli::defParseAction(OptBase & opt, string const & val) {
         return true;
 
     badUsage(opt, val);
-    if (!opt.m_choiceDescs.empty()) {
-        ostringstream os;
-        printChoices(os, opt.m_choiceDescs);
-        m_cfg->errDetail = os.str();
-    }
+    ostringstream os;
+    printChoices(os, opt.m_choiceDescs);
+    m_cfg->errDetail = os.str();
     return false;
 }
 
@@ -748,9 +747,8 @@ static bool helpBeforeAction(Cli &, vector<string> & args) {
 static bool helpOptAction(
     Cli & cli,
     Cli::Opt<bool> & opt,
-    string const & val
+    string const & // val
 ) {
-    (void) cli.fromString(*opt, val);
     if (*opt) {
         cli.printHelp(cli.conout(), {}, cli.runCommand());
         return false;
@@ -889,7 +887,7 @@ Cli::Opt<bool> & Cli::versionOpt(
     };
     return opt<bool>("version.")
         .desc("Show version and exit.")
-        .parse(act)
+        .check(act)
         .group(kInternalOptionGroup);
 }
 

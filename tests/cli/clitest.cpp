@@ -38,6 +38,7 @@ static int s_errors;
 #define EXPECT_USAGE(cli, cmd, text) usageTest(__LINE__, cli, cmd, text)
 #define EXPECT_ARGV(fn, cmdline, ...) \
     toArgvTest(__LINE__, fn, cmdline, __VA_ARGS__)
+#define EXPECT_CMDLINE(fn, ...) toCmdlineTest(__LINE__, fn, __VA_ARGS__)
 
 //===========================================================================
 void failed(int line, char const msg[]) {
@@ -115,6 +116,23 @@ void toArgvTest(
 ) {
     auto args = fn(cmdline);
     EXPECT(args == argv);
+}
+
+//===========================================================================
+void toCmdlineTest(
+    int line,
+    function<string(size_t, char**)> fn,
+    function<vector<string>(string const &)> fnv,
+    vector<string> const & argv,
+    string const & cmdline
+) {
+    auto pargs = Dim::Cli::toPtrArgv(argv);
+    auto tmp = fn(pargs.size(), (char **) pargs.data());
+    EXPECT(tmp == cmdline);
+    EXPECT(argv == fnv(cmdline));
+    if (tmp != cmdline || argv != fnv(cmdline))
+        cerr << tmp << endl;
+
 }
 
 
@@ -443,6 +461,11 @@ Multiline footer:
 - second reference
 )");
         EXPECT_PARSE(cli, "--no-help");
+        cli.helpOpt().parse([](auto &, auto & opt, auto &) {
+            *opt = false;
+            return true;
+        });
+        EXPECT_PARSE(cli, "--help");
     }
 
     // group sortKey
@@ -631,19 +654,67 @@ usage: test help [-u, --usage] [--help] [command]
 
 //===========================================================================
 void argvTests() {
+    int line = 0;
     Dim::CliLocal cli;
 
     // windows style argument parsing
     {
-        auto fn = cli.toWindowsArgv;
-        EXPECT_ARGV(fn, R"( a "" "c )", {"a", "", "c "});
-        EXPECT_ARGV(fn, R"(a"" b ")", {"a", "b", ""});
-        EXPECT_ARGV(fn, R"("abc" d e)", {"abc", "d", "e"});
-        EXPECT_ARGV(fn, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
-        EXPECT_ARGV(fn, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
-        EXPECT_ARGV(fn, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
-        EXPECT_ARGV(fn, R"(\ "\"" )", {"\\", "\""});
+        auto fn = cli.toWindowsCmdline;
+        auto fnv = cli.toWindowsArgv;
+        EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
+        EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
+        EXPECT_ARGV(fnv, R"("abc" d e)", {"abc", "d", "e"});
+        EXPECT_ARGV(fnv, R"(a\\\b d"e f"g h)", {R"(a\\\b)", "de fg", "h"});
+        EXPECT_ARGV(fnv, R"(a\\\"b c d)", {R"(a\"b)", "c", "d"});
+        EXPECT_ARGV(fnv, R"(a\\\\"b c" d e)", {R"(a\\b c)", "d", "e"});
+        EXPECT_ARGV(fnv, R"(\ "\"" )", {"\\", "\""});
+
+        EXPECT_CMDLINE(fn, fnv, {}, "");
+        EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
+        EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a \"b c\" d");
+        EXPECT_CMDLINE(fn, fnv, {R"(\a)"}, R"(\a)");
+        EXPECT_CMDLINE(fn, fnv, {R"(" \ " \")"}, R"("\" \ \" \\\"")");
     }
+
+    // gnu style
+    {
+        auto fn = cli.toGnuCmdline;
+        auto fnv = cli.toGnuArgv;
+        EXPECT_ARGV(fnv, R"(\a'\b'  'c')", {"ab", "c"});
+        EXPECT_ARGV(fnv, "a 'b", {"a", "b"});
+
+        EXPECT_CMDLINE(fn, fnv, {}, "");
+        EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
+        EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a b\\ c d");
+    }
+
+    // glib style
+    {
+        auto fn = cli.toGlibCmdline;
+        auto fnv = cli.toGlibArgv;
+        EXPECT_ARGV(fnv, 1 + R"(
+\a\
+b # c)", {"ab"});
+        EXPECT_ARGV(fnv, "\\\n#\n", {});
+        EXPECT_ARGV(fnv, "'a''b", {"ab"});
+        EXPECT_ARGV(fnv, 1 + R"(
+"a"b"\$\
+c\d)", {"ab$c\\d"});
+
+        EXPECT_CMDLINE(fn, fnv, {}, "");
+        EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
+        EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a b\\ c d");
+    }
+
+    // argv to/from cmdline
+    char const cmdline[] = "a b c";
+    auto a1 = cli.toArgv(cmdline);
+    EXPECT(cli.toCmdline(a1) == cmdline);
+    auto p1 = cli.toPtrArgv(a1);
+    EXPECT(cli.toCmdline(p1.size(), p1.data()) == cmdline);
+    wchar_t const * wargs[] = { L"a", L"b", L"c", NULL };
+    a1 = cli.toArgv(size(wargs) - 1, (wchar_t **) wargs);
+    EXPECT(cli.toCmdline(a1) == cmdline);
 }
 
 
