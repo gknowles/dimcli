@@ -2059,7 +2059,7 @@ bool Cli::exec() {
     if (!cmd.action(*this)) {
         // If the command should exit but there is still asynchronous work
         // going on, consider a custom "exit pending" exit code with special
-        // handling in your main function.
+        // handling in your main function to wait for it to complete.
         assert(exitCode() && "command failed without setting exit code");
         return false;
     }

@@ -696,7 +696,7 @@ void argvTests() {
 \a\
 b # c)", {"ab"});
         EXPECT_ARGV(fnv, "\\\n#\n", {});
-        EXPECT_ARGV(fnv, "'a''b", {"ab"});
+        EXPECT_ARGV(fnv, " 'a''b", {"ab"});
         EXPECT_ARGV(fnv, 1 + R"(
 "a"b"\$\
 c\d)", {"ab$c\\d"});
@@ -882,6 +882,7 @@ void responseTests() {
     writeRsp("test/f.rsp", "f");
     writeRsp("test/gBad.rsp", "@eBad.rsp");
     writeRsp("test/hU.rsp", U"\ufeffh1 h2");
+    writeRsp("test/none.rsp", " ");
     writeRsp("test/reA.rsp", "@reB.rsp");
     writeRsp("test/reB.rsp", "@reA.rsp");
     writeRsp("test/reX.rsp", "@reX.rsp");
@@ -897,6 +898,9 @@ void responseTests() {
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp");
     EXPECT(args && args[0] == "@test/does_not_exist.rsp");
     cli.responseFiles(true);
+
+    EXPECT_PARSE(cli, "@test/none.rsp");
+    EXPECT(args.size() == 0);
 
 #ifdef _MSC_VER
     EXPECT_PARSE(cli, "@test/cL.rsp @test/du.rsp @test/f.rsp");
@@ -929,6 +933,58 @@ void responseTests() {
 
 /****************************************************************************
 *
+*   Parse and exec variations
+*
+***/
+
+//===========================================================================
+void execTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+    ostringstream out;
+
+    char const * argsNone[] = { "test", nullptr };
+    auto nargsNone = sizeof(argsNone) / sizeof(*argsNone) - 1;
+    char const * argsUnknown[] = { "test", "unknown", nullptr };
+    auto nargsUnknown = sizeof(argsUnknown) / sizeof(*argsUnknown) - 1;
+
+    auto vargsNone = vector<string>{argsNone, argsNone + nargsNone};
+    auto vargsUnknown = vector<string>{argsUnknown, argsUnknown + nargsUnknown};
+
+    {
+        cli = {};
+        auto rc = cli.parse(out, nargsUnknown, (char **) argsUnknown);
+        EXPECT(rc == false && cli.exitCode() == Dim::kExitUsage);
+        EXPECT(out.str() == "Error: Unexpected argument: unknown\n");
+        out.clear();
+        out.str({});
+        rc = cli.parse(out, nargsNone, (char **) argsNone);
+        EXPECT(rc && out.str() == "");
+    }
+
+    {
+        cli = {};
+        cli.action([](auto &) { return true; });
+        auto rc = cli.exec(nargsNone, (char **) argsNone);
+        EXPECT(rc);
+        out.clear();
+        out.str({});
+        rc = cli.exec(out, nargsNone, (char **) argsNone);
+        EXPECT(rc && out.str() == "");
+        rc = cli.exec(vargsNone);
+        EXPECT(rc);
+        out.clear();
+        out.str({});
+        cli = {};
+        rc = cli.exec(out, vargsNone);
+        EXPECT(!rc && cli.exitCode() == Dim::kExitUsage);
+        EXPECT(out.str() == "Error: No command given.\n");
+    }
+}
+
+
+/****************************************************************************
+*
 *   Basic
 *
 ***/
@@ -950,7 +1006,7 @@ void basicTests() {
         cli = {};
         cli.helpOpt().show(false);
         EXPECT_PARSE(cli);
-        EXPECT_HELP(cli, "", 1 + R"(
+        EXPECT_HELP(cli, {}, 1 + R"(
 usage: test
 )");
     }
@@ -959,21 +1015,22 @@ usage: test
         cli = {};
         auto & num = cli.opt<int>(" n number ", 1).desc("number is an int");
         cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
-        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc("");
+        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc({});
         cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
-        auto & special =
-            cli.opt<bool>("s special !S", false).desc("snowflake");
+        cli.opt<bool>("does-not-quite-fit-into-col.")
+            .desc("slightly too long option name");
+        auto & special = cli.opt<bool>("s special !S", false).desc("snowflake");
         auto & name = cli.group("name").title("Name options")
             .optVec<string>("name");
         EXPECT(cli.title() == "Name options");
-        auto & keys = cli.group("")
+        auto & keys = cli.group({})
             .optVec<string>("[key]").desc(
                 "it's the key arguments with a very long description that "
                 "wraps the line at least once, maybe more.");
         cli.title(
             "Long explanation of this very short set of options, it's so "
             "long that it even wraps around to the next line");
-        EXPECT_HELP(cli, "", 1 + R"(
+        EXPECT_HELP(cli, {}, 1 + R"(
 usage: test [OPTIONS] [key...]
   key       it's the key arguments with a very long description that wraps the
             line at least once, maybe more.
@@ -981,6 +1038,7 @@ usage: test [OPTIONS] [key...]
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
   -c COUNT                   alias for number (default: 0)
+  --does-not-quite-fit-into-col  slightly too long option name
   -n, --number=NUM           number is an int (default: 1)
   --n2=NUM                   no defaultDesc
   --n3=NUM                   custom defaultDesc (default: three)
@@ -992,9 +1050,10 @@ Name options:
 
   --help                     Show this message and exit.
 )");
-        EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
-            [-s, --special] [--help] [key...]
+        EXPECT_USAGE(cli, {}, 1 + R"(
+usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --number=NUM]
+            [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
+            [key...]
 )");
         EXPECT_PARSE(cli, "-n3");
         EXPECT(*num == 3);
@@ -1032,7 +1091,7 @@ usage: test [-c COUNT] [-n, --number=NUM] [--n2=NUM] [--n3=NUM] [--name=STRING]
     {
         cli = {};
         cli.opt<int>("[]", 1);
-        EXPECT_USAGE(cli, "", 1 + R"(
+        EXPECT_USAGE(cli, {}, 1 + R"(
 usage: test [--help] [arg1]
 )");
     }
@@ -1114,6 +1173,13 @@ Options:
     }
 #endif
 }
+
+
+/****************************************************************************
+*
+*   Prompting
+*
+***/
 
 //===========================================================================
 void promptTests(bool prompt) {
@@ -1209,6 +1275,32 @@ Options:
     }
 }
 
+
+/****************************************************************************
+*
+*   Before action
+*
+***/
+
+//===========================================================================
+void beforeTests() {
+    Dim::CliLocal cli;
+    cli.before([](auto & cli, auto & args) {
+        if (args.size() > 1)
+            return cli.fail(Dim::kExitUsage, "Too many args");
+        return true;
+    });
+    EXPECT_PARSE(cli, "one two", false);
+    EXPECT_ERR(cli, "Error: Too many args\n");
+}
+
+
+/****************************************************************************
+*
+*   Environment
+*
+***/
+
 //===========================================================================
 void envTests() {
 #if !defined(DIMCLI_LIB_NO_ENV)
@@ -1240,11 +1332,13 @@ void envTests() {
 //===========================================================================
 static int runTests(bool prompt) {
     basicTests();
+    execTests();
     flagTests();
     parseTests();
     choiceTests();
     helpTests();
     cmdTests();
+    beforeTests();
     envTests();
     argvTests();
     optCheckTests();

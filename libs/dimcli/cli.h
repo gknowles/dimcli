@@ -522,12 +522,11 @@ public:
     // commands defined or none were selected.
     std::string const & runCommand() const;
 
-    // Executes the action of the selected command; returns true if it
-    // worked. On failure it's expected to have set exitCode(), errMsg(), and
-    // maybe errDetail() via fail(). If no command was selected it runs the
-    // action of the empty "" command, which defaults to failing with "No
-    // command given." but can be set via cli.action() just like any other
-    // command.
+    // Executes the action of the selected command; returns true if it worked.
+    // On failure it's expected to have set exitCode, errMsg, and optionally
+    // errDetail via fail(). If no command was selected it runs the action of
+    // the empty "" command, which defaults to failing with "No command given."
+    // but can be set via cli.action() just like any other command.
     [[nodiscard]] bool exec();
     [[nodiscard]] bool exec(std::ostream & oerr);
 
