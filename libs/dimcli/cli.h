@@ -1133,7 +1133,7 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     // bool options are always marked as bool
-    assert(this->m_bool && "internal dimcli error"); // LCOV_EXCL_LINE
+    assert(this->m_bool && "internal dimcli error");
     if (this->m_flagValue)
         return this->m_flagDefault;
     return this->defaultValue();
@@ -1427,7 +1427,7 @@ inline bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
         if (value == "1") {
             tmp = this->defaultValue();
         } else {
-            assert(value == "0" && "internal dimcli error"); // LCOV_EXCL_LINE
+            assert(value == "0" && "internal dimcli error");
         }
         return true;
     }
@@ -1570,7 +1570,7 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
         if (value == "1") {
             tmp = this->defaultValue();
         } else {
-            assert(value == "0" && "internal dimcli error"); // LCOV_EXCL_LINE
+            assert(value == "0" && "internal dimcli error");
             m_proxy->m_values->pop_back();
             m_proxy->m_matches.pop_back();
         }

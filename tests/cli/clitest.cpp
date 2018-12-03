@@ -190,7 +190,7 @@ ostream & operator<<(ostream & os, const ExtractWithInsert & in) {
 }
 
 //===========================================================================
-void parseTests() {
+void valueTests() {
     int line = 0;
     Dim::CliLocal cli;
 
@@ -261,6 +261,52 @@ Options:
   --help    Show this message and exit.
 )");
     }
+}
+
+
+/****************************************************************************
+*
+*   Parsing failures
+*
+***/
+
+//===========================================================================
+void parseTests() {
+    //int line = 0;
+    Dim::CliLocal cli;
+
+    EXPECT_PARSE(cli, "-x", false);
+    EXPECT_ERR(cli, "Error: Unknown option: -x\n");
+    EXPECT_PARSE(cli, "--x", false);
+    EXPECT_ERR(cli, "Error: Unknown option: --x\n");
+    EXPECT_PARSE(cli, "--help=1", false);
+    EXPECT_ERR(cli, "Error: Unknown option: --help=\n");
+
+    cli.helpCmd();
+    EXPECT_PARSE(cli, "x", false);
+    EXPECT_ERR(cli, "Error: Unknown command: x\n");
+
+    cli = {};
+    EXPECT_PARSE(cli, "x", false);
+    EXPECT_ERR(cli, "Error: Unexpected argument: x\n");
+
+    cli.opt<int>("n", 1);
+    cli.opt<int>("?o", 2).check([](auto & cli, auto & opt, auto & val) {
+        return cli.badUsage("Malformed '"s + opt.from() + "' value: " + val);
+    });
+    EXPECT_PARSE(cli, "-na", false);
+    EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
+    EXPECT_PARSE(cli, "-o", false);
+    EXPECT_ERR(cli, "Error: Malformed '-o' value: \n");
+    EXPECT_PARSE(cli, "-n", false);
+    EXPECT_ERR(cli, "Error: Option requires value: -n\n");
+    EXPECT_PARSE(cli, "-n a", false);
+    EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
+
+    cli = {};
+    cli.opt<int>("<n>", 1);
+    EXPECT_PARSE(cli, "", false);
+    EXPECT_ERR(cli, "Error: Missing argument: n\n");
 }
 
 
@@ -404,6 +450,7 @@ void helpTests() {
     {
         cli = {};
         cli.helpNoArgs();
+        out.clear();
         out.str("");
         cli.iostreams(nullptr, &out);
         EXPECT_PARSE(cli, {}, false, Dim::kExitOk);
@@ -428,6 +475,26 @@ Options:
         EXPECT(count == 2);
         EXPECT_PARSE(cli, "--count");
         EXPECT(count == 3);
+
+        cli = {};
+        cli.opt<bool>("help. ?", false)
+            .check([](auto & cli, auto & opt, auto &) {
+                if (*opt) {
+                    cli.printHelp(cli.conout(), {}, cli.runCommand());
+                    return false;
+                }
+                return true;
+            });
+        out.clear();
+        out.str("");
+        cli.iostreams(nullptr, &out);
+        EXPECT_PARSE(cli, "-?", false, Dim::kExitOk);
+        EXPECT(out.str() == 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  -?, --help
+)");
     }
 
     // multiline footer
@@ -826,15 +893,17 @@ Options:
     {
         cli = {};
         auto & opt = cli.opt<int>("x", 1).flagValue(true);
-        cli.opt(opt, "y", 2).flagValue();
+        cli.opt(opt, "y !z", 2).flagValue();
         EXPECT_PARSE(cli, "-y");
         EXPECT(*opt == 2);
+        EXPECT_PARSE(cli, "-z");
+        EXPECT(*opt == 1);
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
 Options:
   -x        (default)
-  -y
+  -y / -z
 
   --help    Show this message and exit.
 )");
@@ -845,9 +914,11 @@ Options:
         cli = {};
         vector<int> vals;
         cli.optVec(&vals, "x").defaultValue(1).flagValue();
-        cli.optVec(&vals, "y").defaultValue(2).flagValue(true);
+        cli.optVec(&vals, "y !z").defaultValue(2).flagValue(true);
         EXPECT_PARSE(cli, "-x");
         EXPECT(vals == vector<int>{1});
+        EXPECT_PARSE(cli, "-z");
+        EXPECT(vals.empty());
     }
 }
 
@@ -1331,10 +1402,11 @@ void envTests() {
 
 //===========================================================================
 static int runTests(bool prompt) {
+    parseTests();
     basicTests();
     execTests();
     flagTests();
-    parseTests();
+    valueTests();
     choiceTests();
     helpTests();
     cmdTests();
