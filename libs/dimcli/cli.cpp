@@ -618,8 +618,8 @@ void Cli::OptIndex::index(OptBase & opt) {
 
 //===========================================================================
 void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
-    bool const invert = true;
-    bool const optional = true;
+    bool const kInvert = true;
+    bool const kOptional = true;
 
     auto where = m_argNames.end();
     switch (name[0]) {
@@ -627,7 +627,7 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
         assert(!"bad argument name");
         return;
     case '[':
-        m_argNames.push_back({&opt, !invert, optional, name.data() + 1});
+        m_argNames.push_back({&opt, !kInvert, kOptional, name.data() + 1});
         where = m_argNames.end() - 1;
         goto INDEX_POS_NAME;
     case '<':
@@ -638,7 +638,7 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
         );
         where = m_argNames.insert(
             where,
-            {&opt, !invert, !optional, name.data() + 1}
+            {&opt, !kInvert, !kOptional, name.data() + 1}
         );
     INDEX_POS_NAME:
         opt.setNameIfEmpty(where->name);
@@ -646,29 +646,39 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
             m_allowCommands = false;
         return;
     }
-    if (name.size() == 1)
-        return indexShortName(opt, name[0], !invert, !optional, pos);
-    switch (name[0]) {
-    case '!':
-        if (!opt.m_bool) {
-            assert(!"bad modifier '!' for non-bool argument");
-            return;
+    bool invert = false;
+    bool optional = false;
+    auto prefix = 0;
+    if (name.size() > 1) {
+        switch (name[0]) {
+        case '!':
+            if (!opt.m_bool) {
+                // Inversion doesn't make any sense for non-bool options and
+                // will be ignored for them. But it is allowed to be specified
+                // because they might be turned into flagValues, and flagValues
+                // act like bools syntacticly.
+                //
+                // And the case of an inverted bool converted to a flagValue
+                // has to be handled anyway.
+            }
+            prefix = 1;
+            invert = true;
+            break;
+        case '?':
+            if (opt.m_bool) {
+                assert(!"bad modifier '?' for bool argument");
+                return;
+            }
+            prefix = 1;
+            optional = true;
+            break;
         }
-        if (name.size() == 2)
-            return indexShortName(opt, name[1], invert, !optional, pos);
-        indexLongName(opt, name.substr(1), invert, !optional, pos);
-        return;
-    case '?':
-        if (opt.m_bool) {
-            assert(!"bad modifier '?' for bool argument");
-            return;
-        }
-        if (name.size() == 2)
-            return indexShortName(opt, name[1], !invert, optional, pos);
-        indexLongName(opt, name.substr(1), !invert, optional, pos);
-        return;
     }
-    indexLongName(opt, name, !invert, !optional, pos);
+    if (name.size() - prefix == 1) {
+        indexShortName(opt, name[prefix], invert, optional, pos);
+    } else {
+        indexLongName(opt, name.substr(prefix), invert, optional, pos);
+    }
 }
 
 //===========================================================================
