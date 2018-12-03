@@ -1102,6 +1102,12 @@ void responseTests() {
         EXPECT_PARSE(cli, "@test/f.rsp", false);
         EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
     }
+#else
+    {
+        chmod("test/f.rsp", 0111);
+        EXPECT_PARSE(cli, "@test/f.rsp", false);
+        EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
+    }
 #endif
 
 #endif

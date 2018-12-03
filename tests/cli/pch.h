@@ -23,6 +23,10 @@
 #endif
 #endif
 
+#if defined(_WIN32)
+#include <sys/stat.h>
+#endif
+
 // getenv/putenv trigger the visual c++ security warning
 #if (_MSC_VER >= 1400)
 #pragma warning(disable : 4996) // this function or variable may be unsafe.
