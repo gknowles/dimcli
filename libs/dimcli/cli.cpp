@@ -1618,8 +1618,13 @@ static bool loadFileUtf8(string & content, fs::path const & fn) {
 
     error_code ec;
     auto bytes = (size_t) fs::file_size(fn, ec);
-    if (ec)
-        return false;
+    if (ec) {
+        // A file system race is required for this to fail (fs::exist success
+        // immediately followed by fs::file_size failure) and there's no
+        // practical way to cause it in a test. So give up and exclude this
+        // line from the test coverage report.
+        return false; // LCOV_EXCL_LINE
+    }
 
     content.resize(bytes);
     ifstream f(fn, ios::binary);
