@@ -39,6 +39,7 @@ static int s_errors;
 #define EXPECT_ARGV(fn, cmdline, ...) \
     toArgvTest(__LINE__, fn, cmdline, __VA_ARGS__)
 #define EXPECT_CMDLINE(fn, ...) toCmdlineTest(__LINE__, fn, __VA_ARGS__)
+#define EXPECT_ASSERT(text) assertTest(__LINE__, text)
 
 //===========================================================================
 void failed(int line, char const msg[]) {
@@ -134,6 +135,111 @@ void toCmdlineTest(
         cerr << tmp << endl;
 
 }
+
+
+/****************************************************************************
+*
+*   Improper usage assertions
+*
+***/
+
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+
+struct AssertInfo {
+    char const * text;
+    unsigned line;
+};
+vector<AssertInfo> s_asserts;
+
+//===========================================================================
+void Dim::assertHandler(char const expr[], unsigned line) {
+    s_asserts.push_back({expr, line});
+}
+
+//===========================================================================
+void assertTest(int line, char const text[]) {
+    string tmp;
+    for (auto && ai : s_asserts) {
+        tmp += ai.text;
+        tmp += '\n';
+    }
+    EXPECT(tmp == text);
+    if (tmp != text)
+        cerr << tmp;
+    s_asserts.clear();
+}
+
+//===========================================================================
+void assertTests() {
+    Dim::CliLocal cli;
+
+    // bad usage
+    enum MyType {} mval;
+    cli.opt(&mval, "v");
+    EXPECT_PARSE(cli, "-v x", false);
+    EXPECT_ERR(cli, "Error: Invalid '-v' value: x\n");
+    EXPECT_ASSERT(1 + R"(
+!"no assignment from string or stream extraction operator"
+)");
+    cli.opt<bool>("t").implicitValue(false);
+    EXPECT_ASSERT(1 + R"(
+!"bool argument values can't be implicit"
+)");
+
+    // bad argument name
+    cli = {};
+    cli.opt<bool>("a=");
+    EXPECT_ASSERT(1 + R"(
+!"bad argument name, contains '='"
+)");
+    cli.opt<int>("[b] [c]");
+    EXPECT_ASSERT(1 + R"(
+!"argument with multiple positional names"
+)");
+    cli.opt<int>("-d");
+    EXPECT_ASSERT(1 + R"(
+!"bad argument name, contains '-'"
+)");
+    cli.opt<bool>("?e");
+    EXPECT_ASSERT(1 + R"(
+!"bad modifier '?' for bool argument"
+)");
+    cli.opt<bool>("f.");
+    EXPECT_ASSERT(1 + R"(
+!"bad modifier '.' for short name"
+)");
+    EXPECT_USAGE(cli, "", 1 + R"(
+usage: test [--help] [b]
+)");
+    EXPECT_ASSERT(1 + R"(
+!"bad argument name, contains '='"
+!"argument with multiple positional names"
+!"bad argument name, contains '-'"
+!"bad modifier '?' for bool argument"
+!"bad modifier '.' for short name"
+)");
+
+    // exec usage
+    {
+        cli = {};
+        cli.command("empty").action({});
+        EXPECT_PARSE(cli, "empty");
+        (void) cli.exec();
+        EXPECT_ERR(cli, "Error: Subcommand found by parse no longer exists.\n");
+        EXPECT_ASSERT(1 + R"(
+!"command found by parse no longer exists"
+)");
+        cli.action([](auto &) { return false; });
+        EXPECT_PARSE(cli, "empty");
+        (void) cli.exec();
+        EXPECT_ERR(cli, "Error: Subcommand failed without setting exit code.\n");
+        EXPECT_ASSERT(1 + R"(
+!"command failed without setting exit code"
+)");
+    }
+}
+
+#endif
 
 
 /****************************************************************************
@@ -1416,6 +1522,10 @@ static int runTests(bool prompt) {
     optCheckTests();
     responseTests();
     promptTests(prompt);
+
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+    assertTests();
+#endif
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

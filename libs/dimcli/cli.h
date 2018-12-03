@@ -143,6 +143,14 @@ namespace Dim {
 // forward declarations
 class Cli;
 
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+void assertHandler(char const expr[], unsigned line);
+
+#undef assert
+#define assert(expr) \
+    (void) ( (!!(expr)) || (Dim::assertHandler(#expr, unsigned(__LINE__)), 0) )
+#endif
+
 
 /****************************************************************************
 *

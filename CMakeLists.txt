@@ -438,6 +438,9 @@ endif()
 if(BUILD_UNICODE)
     add_definitions(/D_UNICODE)
 endif()
+if(BUILD_COVERAGE)
+    add_definitions(/D${DEFINE_PREFIX}_LIB_BUILD_COVERAGE)
+endif()
 
 # set list of defines that need to go in config.h
 if(BUILD_SHARED_LIBS)

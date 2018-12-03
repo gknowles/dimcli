@@ -7,12 +7,18 @@
 
 using namespace std::chrono;
 
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+void Dim::assertHandler(char const text[], unsigned line)
+{}
+#endif
+
 inline bool doubleequals(double const a, double const b)
 {
     static double const delta = 0.0001;
     double const diff = a - b;
     return diff < delta && diff > -delta;
 }
+
 int main()
 {
     std::vector<std::string> carguments({"-i", "7", "-c", "a", "2.7", "--char", "b", "8.4", "-c", "c", "8.8", "--char", "d"});

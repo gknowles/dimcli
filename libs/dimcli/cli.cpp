@@ -597,7 +597,7 @@ void Cli::OptIndex::index(OptBase & opt) {
             ptr += 1;
         }
         if (hasEqual && close == ' ') {
-            assert(!"bad argument name");
+            assert(!"bad argument name, contains '='");
         } else if (hasPos && close != ' ') {
             assert(!"argument with multiple positional names");
         } else {
@@ -624,7 +624,7 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
     auto where = m_argNames.end();
     switch (name[0]) {
     case '-':
-        assert(!"bad argument name");
+        assert(!"bad argument name, contains '-'");
         return;
     case '[':
         m_argNames.push_back({&opt, !kInvert, kOptional, name.data() + 1});
@@ -666,6 +666,8 @@ void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
             break;
         case '?':
             if (opt.m_bool) {
+                // Bool options don't have values, only their presences or
+                // absence, therefore they can't have optional values.
                 assert(!"bad modifier '?' for bool argument");
                 return;
             }
@@ -2064,14 +2066,23 @@ bool Cli::exec() {
     if (!cmd.action) {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"command found by parse no longer exists");
-        return false;
+        return fail(
+            Dim::kExitSoftware,
+            "Subcommand found by parse no longer exists."
+        );
     }
     if (!cmd.action(*this)) {
-        // If the command should exit but there is still asynchronous work
+        if (exitCode())
+            return false;
+
+        // If the process should exit but there is still asynchronous work
         // going on, consider a custom "exit pending" exit code with special
         // handling in your main function to wait for it to complete.
-        assert(exitCode() && "command failed without setting exit code");
-        return false;
+        assert(!"command failed without setting exit code");
+        return fail(
+            Dim::kExitSoftware,
+            "Subcommand failed without setting exit code."
+        );
     }
     return true;
 }
