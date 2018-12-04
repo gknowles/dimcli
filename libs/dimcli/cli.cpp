@@ -1640,7 +1640,10 @@ static bool loadFileUtf8(string & content, fs::path const & fn) {
     if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<CodecvtWchar> wcvt("");
         auto base = reinterpret_cast<wchar_t const *>(content.data());
-        auto tmp = (string) wcvt.to_bytes(base + 1, base + content.size() / 2);
+        auto tmp = (string) wcvt.to_bytes(
+            base + 1,
+            base + content.size() / sizeof(wchar_t)
+        );
         if (tmp.empty())
             return false;
         content = tmp;

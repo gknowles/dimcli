@@ -1079,13 +1079,8 @@ void responseTests() {
     EXPECT_PARSE(cli, "@test/none.rsp");
     EXPECT(args.size() == 0);
 
-#ifdef _MSC_VER
-    EXPECT_PARSE(cli, "@test/cL.rsp @test/du.rsp @test/f.rsp");
-    EXPECT(*args == vector<string>{"c1", "c2", "d1", "d2", "f"});
-#else
-    EXPECT_PARSE(cli, "@test/f.rsp");
-    EXPECT(*args == vector<string>{"f"});
-#endif
+    EXPECT_PARSE(cli, "@test/cL.rsp @test/f.rsp");
+    EXPECT(*args == vector<string>{"c1", "c2", "f"});
 
     EXPECT_PARSE(cli, "@test/gBad.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid encoding: eBad.rsp\n");
@@ -1107,6 +1102,7 @@ void responseTests() {
         chmod("test/f.rsp", 0111);
         EXPECT_PARSE(cli, "@test/f.rsp", false);
         EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
+        chmod("test/f.rsp", 0555);
     }
 #endif
 
