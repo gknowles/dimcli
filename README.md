@@ -40,7 +40,7 @@ All you need is:
 
 ### Using cmake
 Get the latest snapshot:
-[dimcli 4.0.1](https://github.com/gknowles/dimcli/archive/v4.0.1.zip)
+[dimcli 4.1.0](https://github.com/gknowles/dimcli/archive/v4.1.0.zip)
 
 Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):

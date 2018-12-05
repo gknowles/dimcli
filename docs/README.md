@@ -58,6 +58,9 @@ Greeting the unknown.
 Hello Unknown!
 Hello Unknown!
 Hello Unknown!
+
+$ a.out --name John
+Hello John!
 ~~~
 
 

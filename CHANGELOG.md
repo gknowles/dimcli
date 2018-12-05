@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 4.1.0 (2018-12-05)
 - Fixed - Order of keys in help text of multi-keyed options non-deterministic
 - Fixed - optVec flag values with inverted keys aren't ignored
 - Fixed - Nested response files not resolved relative to parent
