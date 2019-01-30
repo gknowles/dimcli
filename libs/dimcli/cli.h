@@ -121,6 +121,7 @@
 #include <utility>
 #include <vector>
 
+#ifndef DIMCLI_LIB_NOFILESYSTEM
 #if defined(_MSC_VER) && _MSC_VER < 1914
 #include <experimental/filesystem>
 #define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
@@ -134,6 +135,7 @@
 #include <experimental/filesystem>
 #define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
 #define DIMCLI_LIB_FILESYSTEM_PATH std::experimental::filesystem::path
+#endif
 #endif
 #endif
 
