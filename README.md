@@ -21,7 +21,7 @@ C++ command line parser toolkit for kids of all ages.
 - option definitions can be scattered across multiple files
 - git style subcommands
 - response files (requires `<filesystem>` support)
-- works with or without exceptions and RTTI enabled
+- works whether exceptions and RTTI are enabled or disabled
 
 ## Documentation
 Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad
