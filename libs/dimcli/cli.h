@@ -59,6 +59,11 @@
 // application to use. Also included are other platform specific adjustments,
 // such as suppression of specific compiler warnings.
 
+// DIMCLI_LIB_NO_FILESYSTEM: Prevents the <filesystem> header from being
+// included and as a side-effect disables support for response files. You can
+// try this if you are working with an older compiler with incompatible or 
+// broken filesystem support.
+
 
 //===========================================================================
 // Internal
@@ -121,7 +126,7 @@
 #include <utility>
 #include <vector>
 
-#ifndef DIMCLI_LIB_NOFILESYSTEM
+#ifndef DIMCLI_LIB_NO_FILESYSTEM
 #if defined(_MSC_VER) && _MSC_VER < 1914
 #include <experimental/filesystem>
 #define DIMCLI_LIB_FILESYSTEM std::experimental::filesystem
