@@ -71,11 +71,11 @@ struct CommandConfig {
 };
 
 struct OptName {
-    Cli::OptBase * opt{};
-    bool invert{};      // set to false instead of true (only for bools)
-    bool optional{};    // value need not be present? (non-bools only)
+    Cli::OptBase * opt;
+    bool invert;        // set to false instead of true (only for bools)
+    bool optional;      // value need not be present? (non-bools only)
     string name;        // name of argument (only for positionals)
-    int pos{};
+    int pos;
 };
 
 struct ArgKey {
