@@ -71,11 +71,11 @@ struct CommandConfig {
 };
 
 struct OptName {
-    Cli::OptBase * opt;
-    bool invert;    // set to false instead of true (only for bools)
-    bool optional;  // value doesn't have to be present? (non-bools only)
-    string name;    // name of argument (only for positionals)
-    int pos;
+    Cli::OptBase * opt{};
+    bool invert{};      // set to false instead of true (only for bools)
+    bool optional{};    // value need not be present? (non-bools only)
+    string name;        // name of argument (only for positionals)
+    int pos{};
 };
 
 struct ArgKey {
@@ -817,7 +817,7 @@ static shared_ptr<Cli::Config> globalConfig() {
 Cli::Cli()
     : m_cfg(globalConfig())
 {
-    m_interpreter.imbue(m_cfg->parserLocale);
+    (void) m_interpreter.imbue(m_cfg->parserLocale);
     helpOpt();
 }
 
@@ -827,7 +827,7 @@ Cli::Cli(Cli const & from)
     , m_group(from.m_group)
     , m_command(from.m_command)
 {
-    m_interpreter.imbue(m_cfg->parserLocale);
+    (void) m_interpreter.imbue(m_cfg->parserLocale);
 }
 
 //===========================================================================
@@ -835,7 +835,7 @@ Cli::Cli(Cli const & from)
 Cli::Cli(shared_ptr<Config> cfg)
     : m_cfg(cfg)
 {
-    m_interpreter.imbue(m_cfg->parserLocale);
+    (void) m_interpreter.imbue(m_cfg->parserLocale);
     helpOpt();
 }
 
@@ -844,16 +844,16 @@ Cli & Cli::operator=(Cli const & from) {
     m_cfg = from.m_cfg;
     m_group = from.m_group;
     m_command = from.m_command;
-    m_interpreter.imbue(m_cfg->parserLocale);
+    (void) m_interpreter.imbue(m_cfg->parserLocale);
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::operator=(Cli && from) {
+Cli & Cli::operator=(Cli && from) noexcept {
     m_cfg = move(from.m_cfg);
     m_group = move(from.m_group);
     m_command = move(from.m_command);
-    m_interpreter.imbue(m_cfg->parserLocale);
+    (void) m_interpreter.imbue(m_cfg->parserLocale);
     return *this;
 }
 
@@ -1056,7 +1056,7 @@ void Cli::envOpts(string const & var) {
 locale Cli::imbue(locale const & loc) {
     auto prev = m_cfg->parserLocale;
     m_cfg->parserLocale = loc;
-    m_interpreter.imbue(loc);
+    (void) m_interpreter.imbue(loc);
     return prev;
 }
 
@@ -1553,7 +1553,7 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
 
     for (;;) {
         auto base = out.size();
-        int backslashes = 0;
+        size_t backslashes = 0;
         auto ptr = *argv;
         for (; *ptr; ++ptr) {
             switch (*ptr) {

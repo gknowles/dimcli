@@ -61,7 +61,7 @@
 
 // DIMCLI_LIB_NO_FILESYSTEM: Prevents the <filesystem> header from being
 // included and as a side-effect disables support for response files. You can
-// try this if you are working with an older compiler with incompatible or 
+// try this if you are working with an older compiler with incompatible or
 // broken filesystem support.
 
 
@@ -200,7 +200,7 @@ public:
     Cli();
     Cli(Cli const & from);
     Cli & operator=(Cli const & from);
-    Cli & operator=(Cli && from);
+    Cli & operator=(Cli && from) noexcept;
 
     //-----------------------------------------------------------------------
     // Configuration
