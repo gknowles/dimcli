@@ -2,8 +2,12 @@
 # Distributed under the Boost Software License, Version 1.0.
 version: 0.1.{build}
 image:
-  - Visual Studio 2015
   - Visual Studio 2017
+
+environment:
+  matrix:
+    - toolset: v140
+    - toolset: v141
 
 platform:
   - Win32
@@ -19,20 +23,7 @@ build_script:
 
   - md build
   - cd build
-  - ps: |
-      if ($env:platform -eq "x64") {
-        if ($env:APPVEYOR_JOB_NAME.contains("Image: Visual Studio 2015")) {
-          Invoke-Expression 'cmake -G "Visual Studio 14 2015 Win64" ..'
-        } else {
-          Invoke-Expression 'cmake -G "Visual Studio 15 2017 Win64" ..'
-        }
-      } else {
-        if ($env:APPVEYOR_JOB_NAME.contains("Image: Visual Studio 2015")) {
-          Invoke-Expression 'cmake -G "Visual Studio 14 2015" ..'
-        } else {
-          Invoke-Expression 'cmake -G "Visual Studio 15 2017" ..'
-        }
-      }
+  - cmake -G "Visual Studio 15 2017" -A %platform% -T %toolset% ..
   - cmake . -DCMAKE_BUILD_TYPE=%configuration%
         -DCMAKE_INSTALL_PREFIX=publish
         -DINSTALL_LIBS:BOOL=ON
