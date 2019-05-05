@@ -1,11 +1,9 @@
 # Table of contents
 
-* [Overview](Overview.md)
-
 ## Basics
 
-* [Basic Usage](basics-1/basic-usage.md)
-* [Options](basics-1/options.md)
+* [Basic Usage](basics/basic-usage.md)
+* [Options](basics/options.md)
 
 ## Advanced
 * [Special Arguments](advanced/special-arguments.md)
