@@ -4,5 +4,5 @@
 root: ./docs/gitbook/
 
 structure:
-  readme: ./Overview.md
-  summary: ./Summary.md
+  readme: ./overview.md
+  summary: ./summary.md
