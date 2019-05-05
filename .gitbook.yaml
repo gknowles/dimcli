@@ -1,8 +1,8 @@
 # Copyright Glen Knowles 2019.
 # Distributed under the Boost Software License, Version 1.0.
 
-root: docs/gitbook
+root: ./docs/gitbook/
 
 structure:
-  readme: Overview.md
-  summary: Summary.md
+  readme: ./Overview.md
+  summary: ./Summary.md
