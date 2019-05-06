@@ -9,7 +9,7 @@ Distributed under the Boost Software License, Version 1.0.
 * [Basic Usage](basics/basic-usage.md)
 * [Options](basics/options.md)
 * [External Variables](basics/external-variables.md)
-* [Option Names](basics/options-names.md)
+* [Option Names](basics/option-names.md)
 * [Positional Arguments](basics/positional-arguments.md)
 * [Flag Arguments](basics/flag-arguments.md)
 * [Vector Options](basics/vector-options.md)
