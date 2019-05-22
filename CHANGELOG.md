@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Added - Configuration option to unconditionally exclude \<filesystem>
+- Added - Default valueDesc for floating point values ("FLOAT")
 
 ## dimcli 4.1.0 (2018-12-05)
 - Fixed - Order of keys in help text of multi-keyed options non-deterministic

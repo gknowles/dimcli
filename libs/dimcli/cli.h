@@ -931,6 +931,8 @@ template <typename T>
 void Cli::OptBase::setValueDesc() {
     if (std::is_integral<T>::value) {
         m_valueDesc = "NUM";
+    } else if (std::is_floating_point<T>::value) {
+        m_valueDesc = "FLOAT";
     } else if (std::is_convertible<T, std::string>::value) {
         m_valueDesc = "STRING";
     } else {
