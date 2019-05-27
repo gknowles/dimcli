@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+- Changed - Rename runCommand() to commandMatched()
 - Added - Configuration option to unconditionally exclude \<filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
 

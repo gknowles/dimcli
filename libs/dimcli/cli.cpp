@@ -762,7 +762,7 @@ static bool helpOptAction(
     string const & // val
 ) {
     if (*opt) {
-        cli.printHelp(cli.conout(), {}, cli.runCommand());
+        cli.printHelp(cli.conout(), {}, cli.commandMatched());
         return false;
     }
     return true;
@@ -770,11 +770,11 @@ static bool helpOptAction(
 
 //===========================================================================
 static bool defCmdAction(Cli & cli) {
-    if (cli.runCommand().empty()) {
+    if (cli.commandMatched().empty()) {
         return cli.fail(kExitUsage, "No command given.");
     } else {
         ostringstream os;
-        os << "Command '" << cli.runCommand() << "' has not been implemented.";
+        os << "Command '" << cli.commandMatched() << "' has not been implemented.";
         return cli.fail(kExitSoftware, os.str());
     }
 }
@@ -782,7 +782,7 @@ static bool defCmdAction(Cli & cli) {
 //===========================================================================
 static bool helpCmdAction(Cli & cli) {
     Cli::OptIndex ndx;
-    ndx.index(cli, cli.runCommand(), false);
+    ndx.index(cli, cli.commandMatched(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
     if (!cli.commandExists(cmd)) {
@@ -1813,7 +1813,7 @@ bool Cli::parseValue(
 //===========================================================================
 bool Cli::badUsage(string const & msg) {
     string out;
-    auto & cmd = runCommand();
+    auto & cmd = commandMatched();
     if (cmd.size())
         out = "Command '" + cmd + "': ";
     out += msg;
@@ -2006,7 +2006,7 @@ bool Cli::parse(vector<string> & args) {
 
     // after actions
     for (auto && opt : m_cfg->opts) {
-        if (!opt->m_command.empty() && opt->m_command != runCommand())
+        if (!opt->m_command.empty() && opt->m_command != commandMatched())
             continue;
         if (!opt->afterActions(*this))
             return false;
@@ -2063,13 +2063,13 @@ string const & Cli::progName() const {
 }
 
 //===========================================================================
-string const & Cli::runCommand() const {
+string const & Cli::commandMatched() const {
     return m_cfg->command;
 }
 
 //===========================================================================
 bool Cli::exec() {
-    auto & name = runCommand();
+    auto & name = commandMatched();
     auto & cmd = m_cfg->cmds[name];
     if (!cmd.action) {
         // Most likely parse failed, was never run, or "this" was reset.

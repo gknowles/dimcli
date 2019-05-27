@@ -586,7 +586,7 @@ Options:
         cli.opt<bool>("help. ?", false)
             .check([](auto & cli, auto & opt, auto &) {
                 if (*opt) {
-                    cli.printHelp(cli.conout(), {}, cli.runCommand());
+                    cli.printHelp(cli.conout(), {}, cli.commandMatched());
                     return false;
                 }
                 return true;
@@ -694,7 +694,7 @@ void cmdTests() {
         EXPECT_PARSE(c1, "one -a3");
         EXPECT(*a1 == 3);
         EXPECT(*a2 == 2);
-        EXPECT(c2.runCommand() == "one");
+        EXPECT(c2.commandMatched() == "one");
         EXPECT_PARSE(c1, "-a", false);
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);

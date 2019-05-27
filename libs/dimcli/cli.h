@@ -315,11 +315,11 @@ public:
     std::string const & footer() const;
 
     // Add "help" command that shows the help text for other commands. Allows
-    // users to run the more natural "prog help command" instead of the more
-    // annoying "prog command --help".
+    // users to run "prog help command" instead of the slightly more awkward
+    // "prog command --help".
     Cli & helpCmd();
 
-    // Adds before action that replaces empty command lines with --help.
+    // Adds before action that replaces the empty command line with "--help".
     Cli & helpNoArgs();
 
     //-----------------------------------------------------------------------
@@ -411,7 +411,7 @@ public:
     // If !exitCode() prints the errMsg and errDetail (if present), but does
     // nothing if exitCode() is EX_OK. Returns exitCode(). Only makes sense
     // after parsing has completed.
-    int printError(std::ostream & oerr);
+    int printError(std::ostream & os);
 
     //-----------------------------------------------------------------------
     // Parsing
@@ -443,6 +443,7 @@ public:
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
+
     // Create vector of pointers suitable for use with argc/argv APIs, has a
     // trailing null that is not included in size(). The return values point
     // into the source string vector and are only valid until that vector is
@@ -535,7 +536,7 @@ public:
 
     // Command to run, as selected by argv, empty string if there are no
     // commands defined or none were selected.
-    std::string const & runCommand() const;
+    std::string const & commandMatched() const;
 
     // Executes the action of the selected command; returns true if it worked.
     // On failure it's expected to have set exitCode, errMsg, and optionally
