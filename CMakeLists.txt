@@ -1,6 +1,6 @@
 # CMakeLists.txt - general project generator
 #
-# Copyright Glen Knowles 2016 - 2018.
+# Copyright Glen Knowles 2016 - 2019.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # Use this one file *unmodified* for all projects that follow the convections.
@@ -501,8 +501,7 @@ endif()
 file(GLOB sources
     LICENSE
     .clang-format
-    .travis.yml
-    appveyor.yml
+    *.yml
     *.md
     *.props
     configure.bat)
