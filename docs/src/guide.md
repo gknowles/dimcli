@@ -8,15 +8,16 @@ C++ command line parser toolkit for kids of all ages.
 
 - GNU style command lines (-o, --output=FILE, etc.)
 - parses directly to any supplied (or implicitly created) variable that is:
-  - default constructible
-  - copyable
-  - assignable from string, has an istream extraction operator, or has a
-    specialization of Cli\::fromString\<T>()
+    - default constructible
+    - copyable
+    - assignable from string, has an istream extraction operator, or has a
+      specialization of Cli::fromString&lt;T>()
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
 - response files (requires `<filesystem>` support)
 - works whether exceptions and RTTI are enabled or disabled
+- distributed under the Boost Software License, Version 1.0.
 
 How does it feel?
 
@@ -101,10 +102,10 @@ $ a.out
 Does the apple have a worm? No!
 ~~~
 
-The EX_* constants (along with standard values) are in sysexits.h on most
+The EX_* constants (along with standard values) are in `<sysexits.h>` on most
 unixes, although it may not be in any standard. Equivalent enum values
-Dim\::kExitOk (0) and Dim\::kExitUsage (64) are defined, which can be useful
-on Windows where \<sysexits.h> doesn't exist.
+Dim&#58;:kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful
+on Windows where `<sysexits.h>` doesn't exist.
 
 
 ## Options
@@ -112,7 +113,7 @@ Dim::Cli is used by declaring options to receive arguments. Either via
 pointer to a predefined external variable or by implicitly creating the
 variable when the option is declared.
 
-Use cli.opt\<T>(names, defaultValue) to link positional or named arguments to
+Use cli.opt&lt;T>(names, defaultValue) to link positional or named arguments to
 an option. It returns a proxy object that can be used like a pointer (* and ->)
 to access the value.
 
@@ -215,7 +216,7 @@ like these:
 | short name (single character)       | f            |
 | long name (more than one character) | file         |
 | optional positional                 | \[file name] |
-| required positional                 | \<file\>     |
+| required positional                 | &lt;file>     |
 
 Names for positionals (inside angled or square brackets) may contain spaces,
 and all names may have modifier flags:
@@ -224,7 +225,7 @@ and all names may have modifier flags:
 | :--: |--------|-----------------------------------------------------------------|
 | !    | prefix | for boolean values, when setting the value it is first inverted |
 | ?    | prefix | for non-boolean named options, makes the value [optional](Optional%20Values) |
-| .    | suffix | for long names, suppresses the implicit "no-" version           |
+| .    | suffix | for boolean values with long names, suppresses the implicit "no-" version |
 
 By default, long names for boolean values get a second "no-" version implicitly
 created for them.
@@ -284,8 +285,8 @@ A few things to keep in mind about positional arguments:
   a turn.
 
 
-## Flag Arguments
-Many arguments are flags with no associated value, they just set an option
+## Flag Options
+Many options are flags with no associated value, they just set an option
 to a predefined value. This is the default when you create a option of type
 bool. Normally flags set the option to true, but this can be changed in two
 ways:
@@ -336,7 +337,7 @@ I am A.OUT!!!!111
 ## Vector Options
 Allows for an unlimited (or specific) number of values to be returned in a
 vector. Vector options are declared using cli.optVec() which binds to a
-std::vector\<T>.
+std::vector&lt;T>.
 
 Example:
 
@@ -382,7 +383,7 @@ Comparing (red delicious, honeycrisp) and (mandarin, navel).
 ~~~
 
 While the * and -> operators get you full access to the underlying vector,
-size() and [] are also available directly on the OptVec<T>. Which may
+size() and [] are also available directly on the OptVec&lt;T>. Which may
 occasionally save a little bit of typing.
 
 ~~~ cpp
@@ -398,7 +399,7 @@ if (apples)
 If you are using external variables you just access them directly after using
 cli.parse() to populate them.
 
-If you use the proxy object returned from cli.opt\<T>() you can dereference it
+If you use the proxy object returned from cli.opt&lt;T>() you can dereference it
 like a smart pointer to get at the value. In addition, you can test whether
 it was explicitly set, find the argument name that populated it, and get the
 position in argv\[] it came from.
@@ -438,11 +439,11 @@ Hello Mary!
 
 ## Special Arguments
 
-| Value      | Description                                                      |
-|------------|------------------------------------------------------------------|
-| "-"        | Passed in as a positional argument.                              |
-| "--"       | Thrown away, but makes all remaining arguments positional        |
-| "@\<file>" | [Response file](Response%20Files) containing additional arguments  |
+| Value        | Description                                                      |
+|--------------|------------------------------------------------------------------|
+| "-"          | Passed in as a positional argument.                              |
+| "--"         | Thrown away, but makes all remaining arguments positional        |
+| "@&lt;file>" | [Response file](Response%20Files) containing additional arguments  |
 
 
 ## Optional Values
@@ -455,7 +456,7 @@ For a user to set a value on the command line when it is optional the value
 must be connected (no space) to the argument name, otherwise it is interpreted
 as not present and the arguments implicit value is used instead. If the name
 is not present at all the variable is set to the default given in the
-cli.opt\<T>() call.
+cli.opt&lt;T>() call.
 
 By default the implicit value is T{}, but can be changed using
 opt.implicitValue().
@@ -924,10 +925,9 @@ Options:
 ~~~
 
 #### Dim::CliLocal
-Although it was created for testing you can also use Dim::CliLocal, a
-completely self-contained parser, if you need to redefine options, have
-results from multiple parses at once, or otherwise avoid the shared
-configuration.
+You can also use Dim::CliLocal, a completely self-contained parser, if you
+need to redefine options, have results from multiple parses at once, or
+otherwise avoid the shared configuration.
 
 
 ## Response Files
@@ -1101,7 +1101,7 @@ Hello world!
 ## Help Option
 You can modify the implicitly create --help option. Use cli.helpOpt() to get
 a reference and then go to town. The most likely thing would be to change the
-description or option group, but since you get back an Opt\<T> you can use any
+description or option group, but since you get back an Opt&lt;T> you can use any
 of the standard functions.
 
 ~~~ cpp
@@ -1164,8 +1164,8 @@ Options:
 
 
 ## Feature Switches
-Using flag arguments, feature switches are implemented by creating multiple
-options that reference the same external variable and marking them flag
+Using flag options, feature switches are implemented by creating multiple
+options that reference the same external variable and marking them as flag
 values.
 
 To set the default, pass in a value of true to the flagValue() function of
@@ -1580,7 +1580,7 @@ with the title and sort key equal to the name.
 
 Additionally there are two predefined option groups:
 
-| Name | Sort | Title     | Description                                 |
+| Name | Sort | Title     | Description                                |
 |------|------|-----------|--------------------------------------------|
 | ""   | ""   | "Options" | Default group options are created          |
 | "~"  | "~"  | ""        | Footer group, default location for "--help" and "--version" |
@@ -1594,7 +1594,7 @@ has options. A group without a title is still separate from the previous group
 by a single blank line.
 
 To group options you either use opt.group() to set the group name or create
-the option using cli.opt\<T>() after changing the context with cli.group().
+the option using cli.opt&lt;T>() after changing the context with cli.group().
 
 ~~~ cpp
 int main(int argc, char * argv[]) {

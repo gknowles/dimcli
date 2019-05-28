@@ -22,12 +22,11 @@ C++ command line parser toolkit for kids of all ages.
 - git style subcommands
 - response files (requires `<filesystem>` support)
 - works whether exceptions and RTTI are enabled or disabled
+- distributed under the Boost Software License, Version 1.0.
 
 ## Documentation
-Check out the [wiki](https://github.com/gknowles/dimcli/wiki), you'll be glad
-you did! Contains thorough documentation with many examples. Or click
-[here](https://github.com/gknowles/dimcli/blob/master/docs/README.md) if you
-prefer it all on a single page.
+Check out the [documentation](https://gknowles.github.io/dimcli/), you'll be glad
+you did! Thorough with many examples.
 
 ## Include in Your Project
 ### Copy source directly into your project
@@ -96,3 +95,4 @@ Other interesting c++ command line parsers:
 - [tclap](http://tclap.sourceforge.net) - header only
 - [args](https://github.com/Taywee/args) - single header
 - [cxxopts](https://github.com/jarro2783/cxxopts) - single header
+- [CLI11](https://github.com/CLIUtils/CLI11) - header only
