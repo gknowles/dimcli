@@ -408,8 +408,8 @@ public:
     void printOptions(std::ostream & os, std::string const & cmd = {});
     void printCommands(std::ostream & os);
 
-    // If !exitCode() prints the errMsg and errDetail (if present), but does
-    // nothing if exitCode() is EX_OK. Returns exitCode(). Only makes sense
+    // If exitCode() is not EX_OK, prints the errMsg and errDetail (if
+    // present), otherwise does nothing. Returns exitCode(). Only makes sense
     // after parsing has completed.
     int printError(std::ostream & os);
 
