@@ -1,0 +1,7 @@
+.bs-sidebar .nav > li > a {
+    padding: 3px 40px;
+}
+.bs-sidebar .nav li.main a {
+    padding: 3px 20px;
+}
+
