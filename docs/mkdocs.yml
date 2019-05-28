@@ -3,9 +3,11 @@
 
 site_name: DIMCLI
 repo_url: https://github.com/gknowles/dimcli/
+edit_uri: ""
 docs_dir: src
 site_dir: ../bin/site
 nav:
   - User Guide: guide.md
   - Reference: reference.md
   - Change Log: CHANGELOG.md
+extra_css: [extra.css]
