@@ -116,6 +116,7 @@
 ***/
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <functional>
 #include <list>
