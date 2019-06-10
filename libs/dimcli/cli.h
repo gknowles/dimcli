@@ -1497,7 +1497,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
     }
     std::unordered_map<std::string, long double> units;
     if (flags & fUnitInsensitive) {
-        auto & f = std::use_facet<ctype<char>>(std::locale());
+        auto & f = std::use_facet<std::ctype<char>>(std::locale());
         std::string name;
         for (; first != last; ++first) {
             name = first->first;
