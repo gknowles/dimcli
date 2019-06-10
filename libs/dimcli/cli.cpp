@@ -1802,7 +1802,8 @@ bool Cli::withUnits(
 
     if (flags & fUnitInsensitive)
         f.tolower(unit.data(), unit.data() + unit.size());
-    if (auto i = units.find(unit); i != units.end()) {
+    auto i = units.find(unit);
+    if (i != units.end()) {
         out *= i->second;
         return true;
     } else {
