@@ -1233,13 +1233,13 @@ Cli::OptShim<A, T>::OptShim(std::string const & keys, bool boolean)
 
 //===========================================================================
 template <typename A, typename T>
-std::string Cli::OptShim<A, T>::defaultValueDesc() const {
+inline std::string Cli::OptShim<A, T>::defaultValueDesc() const {
     return Cli::defaultValueDesc<T>();
 }
 
 //===========================================================================
 template <typename A, typename T>
-bool Cli::OptShim<A, T>::doParseAction(
+inline bool Cli::OptShim<A, T>::doParseAction(
     Cli & cli,
     std::string const & val
 ) {
@@ -1249,7 +1249,7 @@ bool Cli::OptShim<A, T>::doParseAction(
 
 //===========================================================================
 template <typename A, typename T>
-bool Cli::OptShim<A, T>::doCheckAction(
+inline bool Cli::OptShim<A, T>::doCheckAction(
     Cli & cli,
     std::string const & val
 ) {
@@ -1258,13 +1258,13 @@ bool Cli::OptShim<A, T>::doCheckAction(
 
 //===========================================================================
 template <typename A, typename T>
-bool Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
+inline bool Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
     return exec(cli, {}, m_afters);
 }
 
 //===========================================================================
 template <typename A, typename T>
-bool Cli::OptShim<A, T>::inverted() const {
+inline bool Cli::OptShim<A, T>::inverted() const {
     return this->m_bool && this->m_flagValue && this->m_flagDefault;
 }
 
@@ -1280,7 +1280,7 @@ inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
 
 //===========================================================================
 template <typename A, typename T>
-bool Cli::OptShim<A, T>::exec(
+inline bool Cli::OptShim<A, T>::exec(
     Cli & cli,
     std::string const & val,
     std::vector<std::function<ActionFn>> const & actions
@@ -1655,7 +1655,7 @@ Cli::Opt<T>::Opt(
 
 //===========================================================================
 template <typename T>
-bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
+inline bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
     auto & tmp = *m_proxy->m_value;
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
@@ -1679,7 +1679,7 @@ bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
 
 //===========================================================================
 template <typename T>
-bool Cli::Opt<T>::defaultValueToString(
+inline bool Cli::Opt<T>::defaultValueToString(
     std::string & out,
     Cli const & cli
 ) const {
@@ -1688,7 +1688,7 @@ bool Cli::Opt<T>::defaultValueToString(
 
 //===========================================================================
 template <typename T>
-void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
+inline void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
@@ -1696,7 +1696,7 @@ void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
 
 //===========================================================================
 template <typename T>
-void Cli::Opt<T>::reset() {
+inline void Cli::Opt<T>::reset() {
     if (!this->m_flagValue || this->m_flagDefault)
         *m_proxy->m_value = this->defaultValue();
     m_proxy->m_match.name.clear();
@@ -1706,7 +1706,7 @@ void Cli::Opt<T>::reset() {
 
 //===========================================================================
 template <typename T>
-void Cli::Opt<T>::unspecifiedValue() {
+inline void Cli::Opt<T>::unspecifiedValue() {
     *m_proxy->m_value = this->implicitValue();
 }
 
@@ -1797,7 +1797,7 @@ Cli::OptVec<T>::OptVec(
 
 //===========================================================================
 template <typename T>
-bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
+inline bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
     auto & tmp = m_proxy->m_values->back();
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
@@ -1824,7 +1824,7 @@ bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
 
 //===========================================================================
 template <typename T>
-bool Cli::OptVec<T>::defaultValueToString(
+inline bool Cli::OptVec<T>::defaultValueToString(
     std::string & out,
     Cli const &
 ) const {
@@ -1834,7 +1834,7 @@ bool Cli::OptVec<T>::defaultValueToString(
 
 //===========================================================================
 template <typename T>
-void Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
+inline void Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
     ArgMatch match;
     match.name = name;
     match.pos = (int)pos;
@@ -1844,26 +1844,26 @@ void Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
 
 //===========================================================================
 template <typename T>
-void Cli::OptVec<T>::reset() {
+inline void Cli::OptVec<T>::reset() {
     m_proxy->m_values->clear();
     m_proxy->m_matches.clear();
 }
 
 //===========================================================================
 template <typename T>
-void Cli::OptVec<T>::unspecifiedValue() {
+inline void Cli::OptVec<T>::unspecifiedValue() {
     m_proxy->m_values->back() = this->implicitValue();
 }
 
 //===========================================================================
 template <typename T>
-std::string const & Cli::OptVec<T>::from(size_t index) const {
+inline std::string const & Cli::OptVec<T>::from(size_t index) const {
     return index >= size() ? m_empty : m_proxy->m_matches[index].name;
 }
 
 //===========================================================================
 template <typename T>
-int Cli::OptVec<T>::pos(size_t index) const {
+inline int Cli::OptVec<T>::pos(size_t index) const {
     return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
