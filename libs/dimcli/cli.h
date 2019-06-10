@@ -1501,7 +1501,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
         std::string name;
         for (; first != last; ++first) {
             name = first->first;
-            f.tolower(name.data(), name.data() + name.size());
+            f.tolower((char *) name.data(), name.data() + name.size());
             units[name] = first->second;
         }
     } else {
@@ -1515,7 +1515,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
             return false;
         std::string sval;
         if (std::is_integral<T>::value)
-            dval = round(dval);
+            dval = std::round(dval);
         auto ival = (int64_t) dval;
         if (ival == dval) {
             sval = std::to_string(ival);
