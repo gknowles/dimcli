@@ -564,12 +564,15 @@ string Cli::OptIndex::nameList(
         return list;
 
     // value
+    auto valDesc = opt.m_valueDesc.empty()
+        ? opt.defaultValueDesc()
+        : opt.m_valueDesc;
     if (optional) {
         list += foundLong ? "[=" : " [";
-        list += opt.m_valueDesc + "]";
+        list += valDesc + "]";
     } else {
         list += foundLong ? '=' : ' ';
-        list += opt.m_valueDesc;
+        list += valDesc;
     }
     return list;
 }
@@ -692,7 +695,7 @@ void Cli::OptIndex::indexShortName(
     int pos
 ) {
     m_shortNames[name] = {&opt, invert, optional, {}, pos};
-    opt.setNameIfEmpty("-"s += name);
+    opt.setNameIfEmpty("-"s + name);
 }
 
 //===========================================================================
@@ -713,10 +716,10 @@ void Cli::OptIndex::indexLongName(
         }
         key.pop_back();
     }
-    opt.setNameIfEmpty("--"s += key);
+    opt.setNameIfEmpty("--" + key);
     m_longNames[key] = {&opt, invert, optional, {}, pos};
     if (opt.m_bool && allowNo)
-        m_longNames["no-"s += key] = {&opt, !invert, optional, {}, pos + 1};
+        m_longNames["no-" + key] = {&opt, !invert, optional, {}, pos + 1};
 }
 
 
@@ -727,25 +730,25 @@ void Cli::OptIndex::indexLongName(
 ***/
 
 //===========================================================================
-bool Cli::defParseAction(OptBase & opt, string const & val) {
-    if (opt.fromString(*this, val))
+// static
+bool Cli::defParseAction(Cli & cli, OptBase & opt, string const & val) {
+    if (opt.fromString(cli, val))
         return true;
 
-    badUsage(opt, val);
     ostringstream os;
     printChoices(os, opt.m_choiceDescs);
-    m_cfg->errDetail = os.str();
-    return false;
+    return cli.badUsage(opt, val, os.str());
 }
 
 //===========================================================================
-bool Cli::requireAction(OptBase & opt) {
+// static
+bool Cli::requireAction(Cli & cli, OptBase & opt, string const &) {
     if (opt)
         return true;
     string const & name = !opt.defaultFrom().empty()
         ? opt.defaultFrom()
         : "UNKNOWN";
-    return badUsage("No value given for " + name);
+    return cli.badUsage("No value given for " + name);
 }
 
 //===========================================================================
@@ -1719,6 +1722,95 @@ static bool expandResponseFiles(
 ***/
 
 //===========================================================================
+// static
+vector<pair<string, double>> Cli::siUnitMapping(
+    string const & symbol,
+    int flags
+) {
+    vector<pair<string, double>> units({
+        {"ki", double(1ull << 10)},
+        {"Mi", double(1ull << 20)},
+        {"Gi", double(1ull << 30)},
+        {"Ti", double(1ull << 40)},
+        {"Pi", double(1ull << 50)},
+    });
+    if (flags & fUnitBinaryPrefix) {
+        units.insert(units.end(), {
+            {"k", double(1ull << 10)},
+            {"M", double(1ull << 20)},
+            {"G", double(1ull << 30)},
+            {"T", double(1ull << 40)},
+            {"P", double(1ull << 50)},
+        });
+    } else {
+        units.insert(units.end(), {
+            {"k", 1e+3},
+            {"M", 1e+6},
+            {"G", 1e+9},
+            {"T", 1e+12},
+            {"P", 1e+15},
+        });
+        if (~flags & fUnitInsensitive) {
+            units.insert(units.end(), {
+                {"m", 1e-3},
+                {"u", 1e-6},
+                {"n", 1e-9},
+                {"p", 1e-12},
+                {"f", 1e-15},
+            });
+        }
+    }
+    if (!symbol.empty()) {
+        if (flags & fUnitRequire) {
+            for (auto && kv : units)
+                kv.first += symbol;
+        } else {
+            units.reserve(2 * units.size());
+            for (auto && kv : units)
+                units.push_back({kv.first + symbol, kv.second});
+        }
+        units.push_back({symbol, 1});
+    }
+    return units;
+}
+
+//===========================================================================
+bool Cli::withUnits(
+    long double & out,
+    string const & val,
+    unordered_map<string, long double> const & units,
+    int flags
+) {
+    auto & f = use_facet<ctype<char>>(m_cfg->parserLocale);
+
+    auto pos = val.size();
+    for (;;) {
+        if (!pos--)
+            return false;
+        if (val[pos] == '.' || f.is(f.digit, val[pos])) {
+            pos += 1;
+            break;
+        }
+    }
+    auto num = val.substr(0, pos);
+    auto unit = val.substr(pos);
+
+    if (!fromString(out, num))
+        return false;
+    if (unit.empty())
+        return (~flags & fUnitRequire);
+
+    if (flags & fUnitInsensitive)
+        f.tolower(unit.data(), unit.data() + unit.size());
+    if (auto i = units.find(unit); i != units.end()) {
+        out *= i->second;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//===========================================================================
 Cli & Cli::resetValues() {
     for (auto && opt : m_cfg->opts)
         opt->reset();
@@ -1802,34 +1894,40 @@ bool Cli::parseValue(
     string val;
     if (ptr) {
         val = ptr;
-        if (!opt.parseAction(*this, val))
+        if (!opt.doParseAction(*this, val))
             return false;
     } else {
         opt.unspecifiedValue();
     }
-    return opt.checkAction(*this, val);
+    return opt.doCheckAction(*this, val);
 }
 
 //===========================================================================
-bool Cli::badUsage(string const & msg) {
+bool Cli::badUsage(
+    string const & prefix,
+    string const & value,
+    string const & detail
+) {
     string out;
     auto & cmd = commandMatched();
     if (cmd.size())
         out = "Command '" + cmd + "': ";
-    out += msg;
-    return fail(kExitUsage, out);
+    out += prefix;
+    if (!value.empty()) {
+        out += ": ";
+        out += value;
+    }
+    return fail(kExitUsage, out, detail);
 }
 
 //===========================================================================
-bool Cli::badUsage(string const & prefix, string const & value) {
-    string msg = prefix + ": " + value;
-    return badUsage(msg);
-}
-
-//===========================================================================
-bool Cli::badUsage(OptBase const & opt, string const & value) {
+bool Cli::badUsage(
+    OptBase const & opt,
+    string const & value,
+    string const & detail
+) {
     string prefix = "Invalid '" + opt.from() + "' value";
-    return badUsage(prefix, value);
+    return badUsage(prefix, value, detail);
 }
 
 //===========================================================================
@@ -2008,7 +2106,7 @@ bool Cli::parse(vector<string> & args) {
     for (auto && opt : m_cfg->opts) {
         if (!opt->m_command.empty() && opt->m_command != commandMatched())
             continue;
-        if (!opt->afterActions(*this))
+        if (!opt->doAfterActions(*this))
             return false;
     }
 

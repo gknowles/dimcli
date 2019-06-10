@@ -9,6 +9,7 @@
 # docs/build.bat
 # docs/mkdocs.yml
 # docs/src/CHANGELOG.md
+# docs/src/extra.css
 # docs/src/guide.md
 # docs/src/index.md
 # docs/src/reference.md

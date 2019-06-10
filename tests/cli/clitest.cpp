@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2018.
+// Copyright Glen Knowles 2016 - 2019.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // clitest.cpp - dimcli test cli
@@ -61,8 +61,11 @@ void parseTest(
     if (exitCode == -1)
         exitCode = rc ? Dim::kExitOk : Dim::kExitUsage;
     if (rc != continueFlag || exitCode != cli.exitCode()) {
-        if (exitCode)
+        if (exitCode) {
             cerr << cli.errMsg() << endl;
+            if (!cli.errDetail().empty())
+                cerr << cli.errDetail() << endl;
+        }
         EXPECT(rc == continueFlag);
         EXPECT(exitCode == cli.exitCode());
     }
@@ -931,7 +934,10 @@ void optCheckTests() {
         EXPECT(*letter == 'a');
         EXPECT_PARSE(cli, "5 0", false);
         EXPECT(*count == 5);
-        EXPECT_ERR(cli, "Error: Out of range 'letter' value [a - z]: 0\n");
+        EXPECT_ERR(cli,
+            "Error: Out of range 'letter' value: 0\n"
+            "Must be between 'a' and 'z'.\n"
+        );
         EXPECT_PARSE(cli, "-- -5", false);
         EXPECT(*count == 1);
         EXPECT_ERR(cli, "Error: Missing argument: letter\n");
@@ -1356,6 +1362,132 @@ Options:
 
 /****************************************************************************
 *
+*   Numerical values with units
+*
+***/
+
+//===========================================================================
+void unitsTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+
+    // si units
+    {
+        cli = {};
+        auto & dbls = cli.optVec<double>("[v]").siUnits("b");
+        EXPECT_PARSE(cli, "1 1k 1b 1kb 1Mb 1kib 1000mb");
+        EXPECT(dbls[0] == 1
+            && dbls[1] == 1000
+            && dbls[2] == 1
+            && dbls[3] == 1000
+            && dbls[4] == 1'000'000
+            && dbls[5] == 1024
+            && dbls[6] == 1
+        );
+        EXPECT_PARSE(cli, "b", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: b\n");
+        EXPECT_PARSE(cli, "1B", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1B\n");
+
+        dbls.siUnits("b", cli.fUnitBinaryPrefix);
+        EXPECT_PARSE(cli, "1k 1ki");
+        EXPECT(dbls[0] == 1024 && dbls[1] == 1024);
+        EXPECT_PARSE(cli, "1000m", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1000m\n");
+
+        dbls.siUnits("b", cli.fUnitInsensitive);
+        EXPECT_PARSE(cli, "1 1b 1B 1kB 1Kb");
+        EXPECT(dbls[0] == 1
+            && dbls[1] == 1
+            && dbls[2] == 1
+            && dbls[3] == 1000
+            && dbls[4] == 1000
+        );
+        EXPECT_PARSE(cli, "1000u", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1000u\n");
+
+        // with fUnitRequire
+        dbls.siUnits("b", cli.fUnitRequire);
+        EXPECT_PARSE(cli, "1b 1kb");
+        EXPECT(dbls[0] == 1 && dbls[1] == 1000);
+        EXPECT_PARSE(cli, "1", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1\n");
+        EXPECT_PARSE(cli, "1k", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1k\n");
+        EXPECT_PARSE(cli, "b", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: b\n");
+        EXPECT_PARSE(cli, "k", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: k\n");
+        EXPECT_PARSE(cli, "kb", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: kb\n");
+        dbls.siUnits("", cli.fUnitRequire);
+        EXPECT_PARSE(cli, "1k");
+        EXPECT(dbls[0] == 1000);
+
+        // to int, double, string
+        auto & sv = cli.opt<string>("s").siUnits();
+        EXPECT_PARSE(cli, "-s 1M");
+        EXPECT(*sv == "1000000");
+
+        auto & si = cli.opt<int>("i").siUnits();
+        EXPECT_PARSE(cli, "-i2G");
+        EXPECT(*si == 2'000'000'000);
+        EXPECT_PARSE(cli, "-i6G", false);
+
+        auto & sd = cli.opt<double>("d").siUnits();
+        EXPECT_PARSE(cli, "-d2.k");
+        EXPECT(*sd == 2000);
+
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] [v...]
+
+Options:
+  -d FLOAT[<units>]   (default: 0)
+  -i NUM[<units>]     (default: 0)
+  -s STRING[<units>]
+
+  --help              Show this message and exit.
+)");
+    }
+
+    // time units
+    {
+        cli = {};
+        auto & sht = cli.opt<uint16_t>("s").timeUnits();
+        EXPECT_PARSE(cli, "-s 1.5m");
+        EXPECT(*sht == 90);
+        EXPECT_PARSE(cli, "-s100ms");
+        EXPECT(*sht == 0);
+        EXPECT_PARSE(cli, "-s1y", false);
+        EXPECT_ERR(cli,
+            "Error: Out of range '-s' value: 1y\n"
+            "Must be between '0' and '65,535'.\n"
+        );
+        auto & lng = cli.opt<long>("l").timeUnits();
+        EXPECT_PARSE(cli, "-l1y");
+        EXPECT(*lng == 31'536'000);
+        auto & dbl = cli.opt<double>("d").timeUnits();
+        EXPECT_PARSE(cli, "-d 1.5 -s 1.4");
+        EXPECT(*dbl == 1.5 && *sht == 1);
+        EXPECT_PARSE(cli, "-s 1.6");
+        EXPECT(*sht == 2);
+        auto & dbls = cli.optVec<double>("v").timeUnits();
+        EXPECT_PARSE(cli, "-v1s -v1m -v1h -v1d -v1w -v1y");
+        EXPECT(dbls[0] == 1
+            && dbls[1] == 60 * dbls[0]
+            && dbls[2] == 60 * dbls[1]
+            && dbls[3] == 24 * dbls[2]
+            && dbls[4] == 7 * dbls[3]
+            && dbls[5] == 365 * dbls[3]
+        );
+        EXPECT_PARSE(cli, "-v1ms -v1us -v1ns");
+        EXPECT(dbls[0] == 1e-3 && dbls[1] == 1e-6 && dbls[2] == 1e-9);
+    }
+}
+
+
+/****************************************************************************
+*
 *   Prompting
 *
 ***/
@@ -1510,6 +1642,7 @@ void envTests() {
 
 //===========================================================================
 static int runTests(bool prompt) {
+    unitsTests();
     parseTests();
     basicTests();
     execTests();

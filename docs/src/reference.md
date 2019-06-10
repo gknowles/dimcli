@@ -35,8 +35,9 @@ cli.[passwordOpt](guide.md#password-prompting) | Add --password option and promp
 cli.[versionOpt](guide.md#version-option) | Add --version option that shows "${progName.filename()} version ${ver}" and exits. An empty progName defaults to argv[0].
 <b>Configuration</b> |
 opt.[after](guide.md#after-actions) | Action to run after all arguments have been parsed, any number of after actions can be added and will, for each option, be called in the order they're added.
+opt.[anyUnits](guide.md#any-units) | Given a series of unit names and factors, incoming values have trailing unit names removed and are multiplied by the factor.
 opt.[check](guide.md#check-actions) | Action to take immediately after each value is parsed, unlike parsing itself where there can only be one action, any number of check actions can be added.
-opt.[choice](guide.md#choice-options) | Adds a choice, when choices have been added only values that match one of the choices are allowed. Useful for things like enums where there is a controlled set of possible values.
+opt.[choice](guide.md#choice) | Adds a choice, when choices have been added only values that match one of the choices are allowed. Useful for things like enums where there is a controlled set of possible values.
 opt.[clamp](guide.md#range-and-clamp) | Forces the value to be within the range, if it's less than the low it's set to the low, if higher than high it's made merely high.
 opt.defaultValue | Allows the default to be changed after the opt has been created.
 opt.[flagValue](guide.md#feature-switches) | Turns the argument into a feature switch, there are normally multiple switches pointed at a single external value, one of which should be flagged as the default.
@@ -45,6 +46,8 @@ opt.[parse](guide.md#parse-actions) | Change the action to take when parsing thi
 opt.[prompt](guide.md#prompting) | Enables prompting. When the option hasn't been provided on the command line the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.
 opt.[range](guide.md#range-and-clamp) | Fail if the value given for this option is not in within the range (inclusive) of low to high.
 opt.[require](guide.md#require) | Causes a check whether the option value was set during parsing, and reports badUsage() if it wasn't.
+opt.[siUnits](guide.md#si-units) | Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are present, multiplies by the corresponding factor.
+opt.[timeUnits](guide.md#time-units) | Adjusts the value to seconds when time units are present: removes the units (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
 
 ## Parsing and execution
 
@@ -64,7 +67,7 @@ opt.[parseValue](guide.md#parse-actions) | Parse the string into the value, retu
 opt.reset | Set option to its default value.
 opt.unspecifiedValue | Set option (or add to option vector) to value for missing optionals.
 <b>Commands</b> |
-cli.fail | Sets exitCode(), errMsg(), and errDetail(), intended to be called from command actions, parsing related failures should use badUsage().
+cli.fail | Sets exitCode(), errMsg(), and errDetail(), intended to be called from command actions, parsing related failures normally use cli.badUsage() instead.
 <b>After parsing</b> |
 cli.[exitCode](guide.md#basic-usage) | EX_OK (0), EX_USAGE, or any value set by user defined actions.
 cli.errMsg | Error message, only meaningful when exitCode() != EX_OK

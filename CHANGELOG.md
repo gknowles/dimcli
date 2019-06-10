@@ -12,7 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 - Added - Configuration option to unconditionally exclude \<filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
-- Changed - Rename runCommand() to commandMatched()
+- Changed - Rename cli.runCommand() to cli.commandMatched()
+- Added - Optional error detail argument to cli.badUsage()
+- Changed - Replaced opt.setValueDesc() with cli.defaultValueDesc()
+- Fixed - Invalid array access using optVec.from() from parse action
+- Changed - Default constructed T() added to optVec&lt;T> before parse action
+- Added - cli.badRange() helper
+- Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()
 
 ## dimcli 4.1.0 (2018-12-05)
 - Fixed - Order of keys in help text of multi-keyed options non-deterministic

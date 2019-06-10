@@ -204,7 +204,7 @@ Does the apple have a worm? Yes :(
 ~~~
 
 You can also point multiple "options" at the same variable, as is common with
-[feature switches](Feature%20Switches).
+[feature switches](#feature-switches).
 
 
 ## Option Names
@@ -216,7 +216,7 @@ like these:
 | short name (single character)       | f            |
 | long name (more than one character) | file         |
 | optional positional                 | \[file name] |
-| required positional                 | &lt;file>     |
+| required positional                 | &lt;file>    |
 
 Names for positionals (inside angled or square brackets) may contain spaces,
 and all names may have modifier flags:
@@ -224,7 +224,7 @@ and all names may have modifier flags:
 | Flag | Type   | Description                                                     |
 | :--: |--------|-----------------------------------------------------------------|
 | !    | prefix | for boolean values, when setting the value it is first inverted |
-| ?    | prefix | for non-boolean named options, makes the value [optional](Optional%20Values) |
+| ?    | prefix | for non-boolean named options, makes the value [optional](#optional-values) |
 | .    | suffix | for boolean values with long names, suppresses the implicit "no-" version |
 
 By default, long names for boolean values get a second "no-" version implicitly
@@ -295,7 +295,7 @@ ways:
   - explicitly using the "!" modifier
   - define a long name and use the implicitly created "no-" prefix version
 - use opt.flagValue() to set the value, see
-  [feature switches](Feature%20Switches).
+  [feature switches](#feature-switches).
 
 ~~~ cpp
 int main(int argc, char * argv[]) {
@@ -434,6 +434,34 @@ Name selected using --name from argv[2]
 Hello Mary!
 ~~~
 
+If you want a little more control over error output you can use the two
+argument version of cli.parse() and then get the results with cli.printError()
+or manually using cli.exitCode(), cli.errMsg(), and cli.errDetail().
+
+~~~ cpp
+if (!cli.parse(argc, argv))
+    return cli.printError(cerr);
+~~~
+
+Because (unless you use CliLocal) there is a single program wide command line
+context, you can make an error handler that doesn't have to be passed the
+results.
+
+~~~ cpp
+void failed() {
+    Dim::Cli cli;
+    cli.printError(cerr);
+    exit(cli.exitCode());
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    if (!cli.parse(argc, argv))
+        failed();
+    ...
+    return EX_OK;
+}
+~~~
 
 # Advanced
 
@@ -443,11 +471,11 @@ Hello Mary!
 |--------------|------------------------------------------------------------------|
 | "-"          | Passed in as a positional argument.                              |
 | "--"         | Thrown away, but makes all remaining arguments positional        |
-| "@&lt;file>" | [Response file](Response%20Files) containing additional arguments  |
+| "@&lt;file>" | [Response file](#response-files) containing additional arguments |
 
 
 ## Optional Values
-You use the '?' [flag](Option%20Names) on an argument name to indicate that
+You use the '?' [flag](#option-names) on an argument name to indicate that
 its value is optional. Only non-booleans can have optional values, booleans
 are evaluated just on their presence or absence and don't otherwise have
 values.
@@ -560,7 +588,7 @@ to do the same thing.
 Sometimes, you want an argument to completely change the execution flow. For
 instance, to provide more detailed errors about badly formatted arguments. Or
 to make "--version" print some crazy ASCII artwork and exit the program (for
-a non-crazy --version use [opt.versionOpt()](Version%20Option)).
+a non-crazy --version use [opt.versionOpt()](#version-option)).
 
 Parsing actions are attached to options and get invoked when a value becomes
 available for it. Any std::function compatible object that accepts references
@@ -631,7 +659,7 @@ order they were added.
 The function should:
 - Check the options new value. Beware that options are process in the order
   they appear on the command line, so comparing with another option is
-  usually better done in an [after action](After%20Actions).
+  usually better done in an [after action](#after-actions).
 - Call cli.badUsage() with an error message if there's a problem.
 - Return false if the program should stop, otherwise true to let processing
   continue.
@@ -885,7 +913,7 @@ Options:
 ~~~
 
 When you want to put a bundle of stuff in a separate source file, such as a
-[command](Subcommands) and its options, it can be convenient to group them
+[command](#subcommands) and its options, it can be convenient to group them
 into a single static struct.
 ~~~ cpp
 // somefile.cpp
@@ -1221,12 +1249,12 @@ Does the fruit have a worm? No!
 ~~~
 
 
-## Choice Options
+## Choice
 Sometimes you want an option to have a fixed set of possible values, such as
 for an enum. You use opt.choice() to add legal choices, one at a time, to an
 option.
 
-Choices are similar to [feature switches](Feature%20Switches) but instead of
+Choices are similar to [feature switches](#feature-switches) but instead of
 multiple boolean options populating a single variable it is a single
 non-boolean option setting its variable to one of multiple values.
 
@@ -1333,7 +1361,156 @@ int main(int argc, char * argv[]) {
 $ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-Error: Out of range 'letter' value [a - z]: 1
+Error: Out of range 'letter' value: 1
+Must be between 'a' and 'z'.
+~~~
+
+
+## Units of Measure
+The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
+parser actions and provide a simple way to support unit suffixes on numerical
+values. The value has the units are removed, is parsed as a double, multiplied
+by the associated factor, rounded to an integer (unless the target is a
+floating point type), converted back to a string, and then finally passed to
+cli.fromString&lt;T>().
+
+Flag              | Description
+------------------|------------
+fUnitBinaryPrefix | Only for opt.siUnits(), makes k,M,G,T,P factors of 1024 (just like ki,Mi,Gi,Ti,Pi), and excludes fractional unit prefixes (milli, micro, etc).
+fUnitInsensitive  | Makes units case insensitive. For opt.siUnits(), unit prefixes are also case insensitive and fractional unit prefixes are excluded. So 'M' and 'm' are both mega.
+fUnitRequire      | Values without units are rejected, even if they have unit prefixes (k,M,G,etc).
+
+### SI Units
+SI units are considered to be anything that uses the SI prefixes. The
+supported prefixes range from 1e+15 to 1e-15 and are: P, Pi, T, Ti, G, Gi, M,
+Mi, k, ki, m, u, n, p, f.
+
+The following table shows the effects of the above flags (BP, I, R) and
+whether a symbol (such as "m") is specified on the parsing of some
+representative inputs:
+
+Input  | -        | +I    | +BP       | +BP,I     | "m"   | "m" +I | "m" +BP   | "m" +BP,I | "m" +R | "m" +I,R | "m" +BP,R | "m" +BP,I,R
+-------|----------|-------|-----------|-----------|-------|--------|-----------|-----------|--------|----------|-----------|------------
+"1M"   | 1e+6     | 1e+6  | 1,048,576 | 1,048,576 | 1e+6  | 1      | 1,048,576 | 1         | -      | 1        | -         | 1
+"1k"   | 1,000    | 1,000 | 1,024     | 1,024     | 1,000 | 1,000  | 1,024     | 1,024     | -      | -        | -         | -
+"1ki"  | 1,024    | 1,024 | 1,024     | 1,024     | 1,024 | 1,024  | 1,024     | 1,024     | -      | -        | -         | -
+"k"    | -        | -     | -         | -         | -     | -      | -         | -         | -      | -        | -         | -
+"1"    | 1        | 1     | 1         | 1         | 1     | 1      | 1         | 1         | -      | -        | -         | -
+"1m"   | 0.001    | 1e+6  | -         | 1,048,576 | 1     | 1      | 1         | 1         | 1      | 1        | 1         | 1
+"1u"   | 0.000001 | -     | -         | -         | -     | -      | -         | -         | -      | -        | -         | -
+"1Mm"  | -        | -     | -         | -         | 1e+6  | 1e+6   | 1,048,576 | 1,048,576 | 1e+6   | 1e+6     | 1,048,576 | 1,048,576
+"1km"  | -        | -     | -         | -         | 1,000 | 1,000  | 1,024     | 1,024     | 1,000  | 1,000    | 1,024     | 1,024
+"1kim" | -        | -     | -         | -         | 1,024 | 1,024  | 1,024     | 1,024     | 1,024  | 1,024    | 1,024     | 1,024
+"km"   | -        | -     | -         | -         | -     | -      | -         | -         | -      | -        | -         | -
+"1mm"  | -        | -     | -         | -         | 0.001 | 1e+6   | -         | -         | 0.001  | 1e+6     | -         | -
+
+An example with binary prefixes that is case insensitive:
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & bytes = cli.opt<uint64_t>("b bytes")
+        .siUnits("b", cli.fUnitBinaryPrefix | cli.fUnitInsensitive)
+        .desc("Number of bytes to process.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (bytes)
+        cout << *bytes << " bytes\n";
+    return EX_OK;
+}
+~~~
+
+~~~ console
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -b NUM[<units>]
+$ a.out -b 32768
+32768 bytes
+$ a.out -b 32k
+32768 bytes
+$ a.out -b 32KB
+32768 bytes
+$ a.out -b 32kib
+32768 bytes
+$ a.out -b 32bk
+Error: Invalid '-b' value: 32bk
+~~~
+
+### Time Units
+Adjusts the value to seconds when time units are present. The following units are supported:
+
+Input | Factor
+------|-------
+y     | 31,536,000 (365 days, leap years not considered)
+w     | 604,800 (7 days)
+d     | 86,400 (24 hours)
+h     | 3,600
+m     | 60
+min   | 60
+s     | 1
+ms    | 0.001
+us    | 0.000001
+ns    | 0.000000001
+
+Interval in seconds where units are required:
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & interval = cli.opt<uint32_t>("i interval")
+        .timeUnits(cli.fUnitRequire)
+        .desc("Time interval");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (interval)
+        cout << *interval << " seconds\n";
+    return EX_OK;
+}
+~~~
+
+~~~ console
+$ # Rounded to integer value so it can be stored in uint32_t
+$ a.out -i 2100ms
+2 seconds
+$ # One year
+$ a.out -i 1y
+31536000 seconds
+$ # You can only fit 136.2 years worth of seconds into uint32_t
+$ a.out -i 137y
+Error: Out of range '-i' value: 137y
+Must be between '0' and '4,294,967,296'.
+$ # We set fUnitRequire, so units are required...
+$ a.out -i 60
+Error: Invalid '-i' value: 60
+~~~
+
+### Any Units
+Allows any arbitrary set of unit+factor pairs, used by both opt.siUnits() and
+opt.timeUnits().
+
+Accept length in Imperial Units:
+~~~ cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & length = cli.opt<double>("l length")
+        .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001})
+        .desc("Length, in inches");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (length)
+        cout << *length << " inches\n";
+    return EX_OK;
+}
+~~~
+
+~~~ console
+$ a.out
+$ a.out -l 1yd
+36 inches
+$ a.out -l 3ft
+36 inches
+$ a.out -l 36
+36 inches
 ~~~
 
 
@@ -1360,7 +1537,7 @@ $ a.out -vvv
 Verbosity: 3
 ~~~
 
-This could also be done with a [parse action](Parse%20Actions), but that seems
+This could also be done with a [parse action](#parse-actions), but that seems
 like more work.
 
 
@@ -1514,18 +1691,18 @@ HELLO!!!
 
 ## Page Layout
 The main help page, and the help pages for subcommands, are built the same
-way and made up of the same six (not counting [option groups](Option%20Groups))
+way and made up of the same six (not counting [option groups](#option-groups))
 sections.
 
-| Section | Changed by | Description |
-|---------|------------|-------------|
-| Header | cli.header() | Generally a one line synopsis of the purpose of the command. |
-| Usage | cli.opt() | Generated text list the defined positional arguments. |
+| Section     | Changed by | Description |
+|-------------|------------|-------------|
+| Header      | cli.header() | Generally a one line synopsis of the purpose of the command. |
+| Usage       | cli.opt() | Generated text list the defined positional arguments. |
 | Description | cli.desc() | Text describing how to use the command and what it does. Sometimes used instead of the positionals list. |
-| Commands | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
+| Commands    | cli.command(), cli.desc(), opt.command() | List of commands and first line of their description, included if there are any git style subcommands. |
 | Positionals | cli.opt(), opt.desc() | List of positional arguments and their descriptions, omitted if none have descriptions. |
-| Options | cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
-| Footer | cli.footer() | Shown at the end, often contains references to further information. |
+| Options     | cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show() | List of named options and descriptions, included if there are any visible options. |
+| Footer      | cli.footer() | Shown at the end, often contains references to further information. |
 
 Within text, consecutive spaces are collapsed and words are wrapped at 80
 columns. Newlines should be reserved for paragraph breaks.

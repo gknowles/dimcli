@@ -413,6 +413,10 @@ public:
     // after parsing has completed.
     int printError(std::ostream & os);
 
+    // Friendly name for type T, used in help text.
+    template <typename T>
+    static std::string defaultValueDesc();
+
     //-----------------------------------------------------------------------
     // Parsing
 
@@ -482,19 +486,34 @@ public:
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
 
-    // Intended for use from return statements in action callbacks. Sets
-    // exit code (to EX_USAGE) and error msg, then returns false. If it's a
-    // subcommand the msg is prefixed with:
-    //  "Command: '<command>': "
-    bool badUsage(std::string const & msg);
+    // Intended for use in return statements from action callbacks. Sets
+    // exitCode (to EX_USAGE), errMsg, and errDetail. errMsg is set to
+    // "<prefix>: <value>" or "<prefix>" if value.empty(), with an additional
+    // leading prefix of "Command: '<command>'" for subcommands. Always
+    // returns false.
+    bool badUsage(
+        std::string const & prefix,
+        std::string const & value = {},
+        std::string const & detail = {}
+    );
 
-    // Calls badUsage(msg) with msg set to:
-    //  "<prefix>: <value>"
-    bool badUsage(std::string const & prefix, std::string const & value);
-
-    // Calls badUsage(prefix, value) with prefix set to:
+    // Calls badUsage(prefix, value, detail) with prefix set to:
     //  "Invalid '" + opt.from() + "' value"
-    bool badUsage(OptBase const & opt, std::string const & value);
+    bool badUsage(
+        OptBase const & opt,
+        std::string const & value,
+        std::string const & detail = {}
+    );
+
+    // True if low <= rawVal <= high, otherwise calls badUsage with "Out of
+    // range" message and the low and high in the detail.
+    template <typename A, typename T>
+    bool badRange(
+        A & opt,
+        std::string const & val,
+        T const & low,
+        T const & high
+    );
 
     // Used to populate an option with an arbitrary input string through the
     // standard parsing logic. Since it causes the parse and check actions to
@@ -507,6 +526,23 @@ public:
         char const src[]
     );
 
+    // fUnit* flags modify how unit suffixes are interpreted by opt.siUnits(),
+    // opt.timeUnits(), and opt.anyUnits().
+    enum {
+        // When this flag is set the symbol must be specified and it's
+        // absence in option values makes them invalid arguments.
+        fUnitRequire = 1,
+
+        // Makes units case insensitive. For siUnits() unit prefixes are
+        // also case insensitive, but fractional prefixes (milli, micro, etc)
+        // are prohibited because they would clash with mega and peta.
+        fUnitInsensitive = 2,
+
+        // Makes k,M,G,T,P factors of 1024, same as ki,Mi,Gi,Ti,Pi. Factional
+        // unit prefixes (milli, micro, etc) are prohibited.
+        fUnitBinaryPrefix = 4,
+    };
+
     // Prompt sends a prompt message to cout and read a response from cin
     // (unless cli.iostreams() changed the streams to use), the response is
     // then passed to cli.parseValue() to set the value and run any actions.
@@ -518,7 +554,7 @@ public:
     [[nodiscard]] bool prompt(
         OptBase & opt,
         std::string const & msg,
-        int flags
+        int flags // fPrompt* flags
     );
 
     //-----------------------------------------------------------------------
@@ -574,14 +610,33 @@ protected:
 private:
     static void consoleEnableEcho(bool enable = true);
 
-    bool defParseAction(OptBase & opt, std::string const & val);
-    bool requireAction(OptBase & opt);
+    static bool defParseAction(
+        Cli & cli,
+        OptBase & opt,
+        std::string const & val
+    );
+    static bool requireAction(
+        Cli & cli,
+        OptBase & opt,
+        std::string const & val
+    );
+
+    static std::vector<std::pair<std::string, double>> siUnitMapping(
+        std::string const & symbol,
+        int flags
+    );
+    bool withUnits(
+        long double & out,
+        std::string const & val,
+        std::unordered_map<std::string, long double> const & units,
+        int flags
+    );
 
     void addOpt(std::unique_ptr<OptBase> opt);
     template <typename A> A & addOpt(std::unique_ptr<A> ptr);
 
-    template <typename Opt, typename Value, typename T>
-    std::shared_ptr<Value> getProxy(T * ptr);
+    template <typename A, typename V, typename T>
+    std::shared_ptr<V> getProxy(T * ptr);
 
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(void const * value);
@@ -706,14 +761,55 @@ std::shared_ptr<V> Cli::getProxy(T * ptr) {
 }
 
 //===========================================================================
+template <typename A, typename T>
+bool Cli::badRange(
+    A & opt,
+    std::string const & val,
+    T const & low,
+    T const & high
+) {
+    auto prefix = "Out of range '" + opt.from() + "' value";
+    std::string detail, lstr, hstr;
+    if (toString(lstr, low) && toString(hstr, high))
+        detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
+    return badUsage(prefix, val, detail);
+}
+
+//===========================================================================
+// defaultValueDesc - descriptive name for values of type T
+//===========================================================================
+template <typename T>
+// static
+std::string Cli::defaultValueDesc() {
+    if (std::is_integral<T>::value) {
+        return "NUM";
+    } else if (std::is_floating_point<T>::value) {
+        return "FLOAT";
+    } else if (std::is_convertible<T, std::string>::value) {
+        return "STRING";
+    } else {
+        return "VALUE";
+    }
+}
+
+#ifdef DIMCLI_LIB_FILESYSTEM
+//===========================================================================
+template <>
+inline // static
+std::string Cli::defaultValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
+    return "FILE";
+}
+#endif
+
+//===========================================================================
 // fromString - converts from string to T
 //===========================================================================
 template <typename T>
-bool Cli::fromString(T & out, std::string const & src) const {
+[[nodiscard]] bool Cli::fromString(T & out, std::string const & src) const {
     // Versions of fromString_impl taking ints as extra parameters are
-    // preferred (better conversion from 0), if they don't exist for T
-    // (because no out=src assignment operator exists) then the versions
-    // taking longs are considered.
+    // preferred by the compiler (better conversion from 0), if they don't
+    // exist for T (because no out=src assignment operator exists) then the
+    // versions taking longs are considered.
     return fromString_impl(out, src, 0, 0);
 }
 
@@ -765,13 +861,17 @@ bool Cli::fromString_impl(
 // false if conversion fails or no conversion available.
 //===========================================================================
 template <typename T>
-bool Cli::toString(std::string & out, T const & src) const {
+[[nodiscard]] bool Cli::toString(std::string & out, T const & src) const {
     return toString_impl(out, src, 0);
 }
 
 //===========================================================================
 template <typename T>
-auto Cli::toString_impl(std::string & out, T const & src, int) const
+[[nodiscard]] auto Cli::toString_impl(
+    std::string & out,
+    T const & src,
+    int
+) const
     -> decltype(std::declval<std::ostream &>() << src, bool())
 {
     m_interpreter.clear();
@@ -868,9 +968,11 @@ public:
     virtual void reset() = 0;
 
     // Parse the string into the value, return false on error.
-    [[nodiscard]] virtual bool parseValue(std::string const & value);
+    [[nodiscard]] bool parseValue(std::string const & value);
 
-    // Set option (or add to option vector) to value for missing optionals.
+    // Store the unspecified value. Used when an option with an optional value
+    // is specified without it. The unspecified value is normally equal to
+    // the default value, but can be overridden.
     virtual void unspecifiedValue() = 0;
 
 protected:
@@ -879,10 +981,11 @@ protected:
         std::string & out,
         Cli const & cli
     ) const = 0;
+    virtual std::string defaultValueDesc() const = 0;
 
-    virtual bool parseAction(Cli & cli, std::string const & value) = 0;
-    virtual bool checkAction(Cli & cli, std::string const & value) = 0;
-    virtual bool afterActions(Cli & cli) = 0;
+    virtual bool doParseAction(Cli & cli, std::string const & value) = 0;
+    virtual bool doCheckAction(Cli & cli, std::string const & value) = 0;
+    virtual bool doAfterActions(Cli & cli) = 0;
     virtual void assign(std::string const & name, size_t pos) = 0;
     virtual bool assigned() const = 0;
 
@@ -892,8 +995,6 @@ protected:
     // Allows the type unaware layer to determine if a new option is pointing
     // at the same value as an existing option -- with RTTI disabled
     virtual bool sameValue(void const * value) const = 0;
-
-    template <typename T> void setValueDesc();
 
     void setNameIfEmpty(std::string const & name);
 
@@ -926,28 +1027,6 @@ private:
     std::string m_names;
     std::string m_fromName;
 };
-
-//===========================================================================
-template <typename T>
-void Cli::OptBase::setValueDesc() {
-    if (std::is_integral<T>::value) {
-        m_valueDesc = "NUM";
-    } else if (std::is_floating_point<T>::value) {
-        m_valueDesc = "FLOAT";
-    } else if (std::is_convertible<T, std::string>::value) {
-        m_valueDesc = "STRING";
-    } else {
-        m_valueDesc = "VALUE";
-    }
-}
-
-#ifdef DIMCLI_LIB_FILESYSTEM
-//===========================================================================
-template <>
-inline void Cli::OptBase::setValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
-    m_valueDesc = "FILE";
-}
-#endif
 
 
 /****************************************************************************
@@ -1015,6 +1094,35 @@ public:
         std::string const & desc = {},
         std::string const & sortKey = {}
     );
+
+    // Normalizes the value by removing the symbol and if SI unit prefixes
+    // (such as u, m, k, M, G, ki, Mi, and Gi) are present, multiplying the
+    // value by the corresponding factor and removing it as well. The
+    // Cli::fUnit* flags can be used to: base k and friends on 1024, require
+    // the symbol, and/or be case-insensitive. Fractional prefixes such as
+    // m (milli) work best with floating point options.
+    A & siUnits(
+        std::string const & symbol = {},
+        int flags = 0 // Cli::fUnit* flags
+    );
+
+    // Adjusts the value to seconds when time units are present: removing the
+    // units and multiplying by the required factor. Recognized units are:
+    // y (365d), w (7d), d, h, min, m (minute), s, ms, us, ns. Some behavior
+    // can be adjusted with Cli::fUnit* flags.
+    A & timeUnits(int flags = 0);
+
+    // Given a series of unit names and factors, incoming values have trailing
+    // unit names removed and are multiplied by the factor. For example,
+    // given {{"in",1},{"ft",12},{"yd",36}} the inputs '36in', '3ft', and '1yd'
+    // would all be converted to 36. Some behavior can be adjusted with
+    // Cli::fUnit* flags.
+    A & anyUnits(
+        std::initializer_list<std::pair<char const *, double>> units,
+        int flags = 0 // Cli::fUnit * flags
+    );
+    template <typename InputIt>
+    A & anyUnits(InputIt first, InputIt last, int flags = 0);
 
     // Forces the value to be within the range, if it's less than the low
     // it's set to the low, if higher than high it's made merely high.
@@ -1089,15 +1197,24 @@ public:
     T const & defaultValue() const { return m_defValue; }
 
 protected:
-    bool parseAction(Cli & cli, std::string const & value) final;
-    bool checkAction(Cli & cli, std::string const & value) final;
-    bool afterActions(Cli & cli) final;
+    std::string defaultValueDesc() const final;
+    bool doParseAction(Cli & cli, std::string const & value) final;
+    bool doCheckAction(Cli & cli, std::string const & value) final;
+    bool doAfterActions(Cli & cli) final;
     bool inverted() const final;
     bool exec(
         Cli & cli,
         std::string const & value,
         std::vector<std::function<ActionFn>> const & actions
     );
+
+    // If numeric_limits<T>::min & max are defined and 'x' is outside of
+    // those limits badRange() is called, otherwise returns true.
+    template <typename U>
+    auto checkLimits(Cli & cli, std::string const & val, U const & x, int)
+        -> decltype(x < std::numeric_limits<T>::min(), bool());
+    template <typename U>
+    bool checkLimits(Cli & cli, std::string const & val, U const & x, long);
 
     std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
@@ -1112,13 +1229,17 @@ protected:
 template <typename A, typename T>
 Cli::OptShim<A, T>::OptShim(std::string const & keys, bool boolean)
     : OptBase(keys, boolean)
-{
-    setValueDesc<T>();
+{}
+
+//===========================================================================
+template <typename A, typename T>
+std::string Cli::OptShim<A, T>::defaultValueDesc() const {
+    return Cli::defaultValueDesc<T>();
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::parseAction(
+bool Cli::OptShim<A, T>::doParseAction(
     Cli & cli,
     std::string const & val
 ) {
@@ -1128,7 +1249,7 @@ inline bool Cli::OptShim<A, T>::parseAction(
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::checkAction(
+bool Cli::OptShim<A, T>::doCheckAction(
     Cli & cli,
     std::string const & val
 ) {
@@ -1137,13 +1258,13 @@ inline bool Cli::OptShim<A, T>::checkAction(
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::afterActions(Cli & cli) {
+bool Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
     return exec(cli, {}, m_afters);
 }
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::inverted() const {
+bool Cli::OptShim<A, T>::inverted() const {
     return this->m_bool && this->m_flagValue && this->m_flagDefault;
 }
 
@@ -1300,22 +1421,109 @@ A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::require() {
-    return after([](auto & cli, auto & opt, auto & /* val */) {
-        return cli.requireAction(opt);
-    });
+    return after(&Cli::requireAction);
 }
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::range(T const & low, T const & high) {
-    assert(!(high < low) && "bad range, low greater than high");
-    return check([low, high](auto & cli, auto & opt, auto & val) {
-        if (*opt < low || high < *opt) {
-            std::ostringstream os;
-            os << "Out of range '" << opt.from() << "' value [" << low << " - "
-               << high << "]";
-            return cli.badUsage(os.str(), val);
+A & Cli::OptShim<A, T>::siUnits(std::string const & symbol, int flags) {
+    auto units = siUnitMapping(symbol, flags);
+    return anyUnits(units.begin(), units.end(), flags);
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::timeUnits(int flags) {
+    return anyUnits({
+            {"y", 365 * 24 * 60 * 60},
+            {"w", 7 * 24 * 60 * 60},
+            {"d", 24 * 60 * 60},
+            {"h", 60 * 60},
+            {"m", 60},
+            {"min", 60},
+            {"s", 1},
+            {"ms", 1e-3},
+            {"us", 1e-6},
+            {"ns", 1e-9},
+        },
+        flags
+    );
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::anyUnits(
+    std::initializer_list<std::pair<char const *, double>> units,
+    int flags
+) {
+    return anyUnits(units.begin(), units.end(), flags);
+}
+
+//===========================================================================
+template <typename A, typename T>
+template <typename U>
+auto Cli::OptShim<A, T>::checkLimits(
+    Cli & cli,
+    std::string const & val,
+    U const & x,
+    int
+) -> decltype(x < std::numeric_limits<T>::min(), bool())
+{
+    constexpr auto low = std::numeric_limits<T>::min();
+    constexpr auto high = std::numeric_limits<T>::max();
+    return (x >= low && x <= high)
+        || cli.badRange(*this, val, low, high);
+}
+
+//===========================================================================
+template <typename A, typename T>
+template <typename U>
+bool Cli::OptShim<A, T>::checkLimits(
+    Cli &,
+    std::string const &,
+    U const &,
+    long
+) {
+    return true;
+}
+
+//===========================================================================
+template <typename A, typename T>
+template <typename InputIt>
+A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
+    if (m_valueDesc.empty()) {
+        m_valueDesc = defaultValueDesc()
+            + ((flags & fUnitRequire) ? "<units>" : "[<units>]");
+    }
+    std::unordered_map<std::string, long double> units;
+    if (flags & fUnitInsensitive) {
+        auto & f = std::use_facet<ctype<char>>(std::locale());
+        std::string name;
+        for (; first != last; ++first) {
+            name = first->first;
+            f.tolower(name.data(), name.data() + name.size());
+            units[name] = first->second;
         }
+    } else {
+        units.insert(first, last);
+    }
+    return parse([units, flags](auto & cli, auto & opt, auto & val) {
+        long double dval;
+        if (!cli.withUnits(dval, val, units, flags))
+            return cli.badUsage(opt, val);
+        if (!opt.checkLimits(cli, val, dval, 0))
+            return false;
+        std::string sval;
+        if (std::is_integral<T>::value)
+            dval = round(dval);
+        auto ival = (int64_t) dval;
+        if (ival == dval) {
+            sval = std::to_string(ival);
+        } else if (!cli.toString(sval, dval)) {
+            return cli.badUsage(opt, val);
+        }
+        if (!opt.parseValue(sval))
+            return cli.badUsage(opt, val);
         return true;
     });
 }
@@ -1327,10 +1535,20 @@ A & Cli::OptShim<A, T>::clamp(T const & low, T const & high) {
     return check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
         if (*opt < low) {
             *opt = low;
-        } else if (high < *opt) {
+        } else if (*opt > high) {
             *opt = high;
         }
         return true;
+    });
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::range(T const & low, T const & high) {
+    assert(!(high < low) && "bad range, low greater than high");
+    return check([low, high](auto & cli, auto & opt, auto & val) {
+        return (*opt >= low && *opt <= high)
+            || cli.badRange(opt, val, low, high);
     });
 }
 
@@ -1437,7 +1655,7 @@ Cli::Opt<T>::Opt(
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
+bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
     auto & tmp = *m_proxy->m_value;
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
@@ -1461,7 +1679,7 @@ inline bool Cli::Opt<T>::fromString(Cli & cli, std::string const & value) {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Opt<T>::defaultValueToString(
+bool Cli::Opt<T>::defaultValueToString(
     std::string & out,
     Cli const & cli
 ) const {
@@ -1470,7 +1688,7 @@ inline bool Cli::Opt<T>::defaultValueToString(
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
+void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
@@ -1478,7 +1696,7 @@ inline void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::reset() {
+void Cli::Opt<T>::reset() {
     if (!this->m_flagValue || this->m_flagDefault)
         *m_proxy->m_value = this->defaultValue();
     m_proxy->m_match.name.clear();
@@ -1488,7 +1706,7 @@ inline void Cli::Opt<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::unspecifiedValue() {
+void Cli::Opt<T>::unspecifiedValue() {
     *m_proxy->m_value = this->implicitValue();
 }
 
@@ -1579,8 +1797,7 @@ Cli::OptVec<T>::OptVec(
 
 //===========================================================================
 template <typename T>
-inline bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
-    m_proxy->m_values->resize(m_proxy->m_values->size() + 1);
+bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
     auto & tmp = m_proxy->m_values->back();
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
@@ -1607,7 +1824,7 @@ inline bool Cli::OptVec<T>::fromString(Cli & cli, std::string const & value) {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::OptVec<T>::defaultValueToString(
+bool Cli::OptVec<T>::defaultValueToString(
     std::string & out,
     Cli const &
 ) const {
@@ -1617,24 +1834,25 @@ inline bool Cli::OptVec<T>::defaultValueToString(
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
+void Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
     ArgMatch match;
     match.name = name;
     match.pos = (int)pos;
     m_proxy->m_matches.push_back(match);
+    m_proxy->m_values->resize(m_proxy->m_values->size() + 1);
 }
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::reset() {
+void Cli::OptVec<T>::reset() {
     m_proxy->m_values->clear();
     m_proxy->m_matches.clear();
 }
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::unspecifiedValue() {
-    m_proxy->m_values->push_back(this->implicitValue());
+void Cli::OptVec<T>::unspecifiedValue() {
+    m_proxy->m_values->back() = this->implicitValue();
 }
 
 //===========================================================================
