@@ -199,11 +199,15 @@ Distributed under the Boost Software License, Version 1.0.
 <td>Action to run after all arguments have been parsed, any number of after actions can be added and will, for each option, be called in the order they're added.</td>
 </tr>
 <tr>
+<td>opt.<a href="../guide/#any-units">anyUnits</a></td>
+<td>Given a series of unit names and factors, incoming values have trailing unit names removed and are multiplied by the factor.</td>
+</tr>
+<tr>
 <td>opt.<a href="../guide/#check-actions">check</a></td>
 <td>Action to take immediately after each value is parsed, unlike parsing itself where there can only be one action, any number of check actions can be added.</td>
 </tr>
 <tr>
-<td>opt.<a href="../guide/#choice-options">choice</a></td>
+<td>opt.<a href="../guide/#choice">choice</a></td>
 <td>Adds a choice, when choices have been added only values that match one of the choices are allowed. Useful for things like enums where there is a controlled set of possible values.</td>
 </tr>
 <tr>
@@ -237,6 +241,14 @@ Distributed under the Boost Software License, Version 1.0.
 <tr>
 <td>opt.<a href="../guide/#require">require</a></td>
 <td>Causes a check whether the option value was set during parsing, and reports badUsage() if it wasn't.</td>
+</tr>
+<tr>
+<td>opt.<a href="../guide/#si-units">siUnits</a></td>
+<td>Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are present, multiplies by the corresponding factor.</td>
+</tr>
+<tr>
+<td>opt.<a href="../guide/#time-units">timeUnits</a></td>
+<td>Adjusts the value to seconds when time units are present: removes the units (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.</td>
 </tr>
 </tbody>
 </table>
@@ -307,7 +319,7 @@ Distributed under the Boost Software License, Version 1.0.
 </tr>
 <tr>
 <td>cli.fail</td>
-<td>Sets exitCode(), errMsg(), and errDetail(), intended to be called from command actions, parsing related failures should use badUsage().</td>
+<td>Sets exitCode(), errMsg(), and errDetail(), intended to be called from command actions, parsing related failures normally use cli.badUsage() instead.</td>
 </tr>
 <tr>
 <td><b>After parsing</b></td>

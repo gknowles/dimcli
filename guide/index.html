@@ -111,9 +111,10 @@
             <li><a href="#version-option">Version Option</a></li>
             <li><a href="#help-option">Help Option</a></li>
             <li><a href="#feature-switches">Feature Switches</a></li>
-            <li><a href="#choice-options">Choice Options</a></li>
+            <li><a href="#choice">Choice</a></li>
             <li><a href="#require">Require</a></li>
             <li><a href="#range-and-clamp">Range and Clamp</a></li>
+            <li><a href="#units-of-measure">Units of Measure</a></li>
             <li><a href="#counting">Counting</a></li>
             <li><a href="#prompting">Prompting</a></li>
             <li><a href="#password-prompting">Password Prompting</a></li>
@@ -312,7 +313,7 @@ Does the apple have a worm? Yes :(
 </code></pre>
 
 <p>You can also point multiple "options" at the same variable, as is common with
-<a href="Feature%20Switches">feature switches</a>.</p>
+<a href="#feature-switches">feature switches</a>.</p>
 <h2 id="option-names">Option Names</h2>
 <p>Names are passed in as a space separated list where the individual names look
 like these:</p>
@@ -361,7 +362,7 @@ and all names may have modifier flags:</p>
 <tr>
 <td align="center">?</td>
 <td>prefix</td>
-<td>for non-boolean named options, makes the value <a href="Optional%20Values">optional</a></td>
+<td>for non-boolean named options, makes the value <a href="#optional-values">optional</a></td>
 </tr>
 <tr>
 <td align="center">.</td>
@@ -429,7 +430,7 @@ ways:</p>
 <li>explicitly using the "!" modifier</li>
 <li>define a long name and use the implicitly created "no-" prefix version</li>
 <li>use opt.flagValue() to set the value, see
-  <a href="Feature%20Switches">feature switches</a>.</li>
+  <a href="#feature-switches">feature switches</a>.</li>
 </ul>
 <pre><code class="cpp">int main(int argc, char * argv[]) {
     Dim::Cli cli;
@@ -554,6 +555,31 @@ Name selected using --name from argv[2]
 Hello Mary!
 </code></pre>
 
+<p>If you want a little more control over error output you can use the two
+argument version of cli.parse() and then get the results with cli.printError()
+or manually using cli.exitCode(), cli.errMsg(), and cli.errDetail().</p>
+<pre><code class="cpp">if (!cli.parse(argc, argv))
+    return cli.printError(cerr);
+</code></pre>
+
+<p>Because (unless you use CliLocal) there is a single program wide command line
+context, you can make an error handler that doesn't have to be passed the
+results.</p>
+<pre><code class="cpp">void failed() {
+    Dim::Cli cli;
+    cli.printError(cerr);
+    exit(cli.exitCode());
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    if (!cli.parse(argc, argv))
+        failed();
+    ...
+    return EX_OK;
+}
+</code></pre>
+
 <h1 id="advanced">Advanced</h1>
 <h2 id="special-arguments">Special Arguments</h2>
 <table>
@@ -574,12 +600,12 @@ Hello Mary!
 </tr>
 <tr>
 <td>"@&lt;file&gt;"</td>
-<td><a href="Response%20Files">Response file</a> containing additional arguments</td>
+<td><a href="#response-files">Response file</a> containing additional arguments</td>
 </tr>
 </tbody>
 </table>
 <h2 id="optional-values">Optional Values</h2>
-<p>You use the '?' <a href="Option%20Names">flag</a> on an argument name to indicate that
+<p>You use the '?' <a href="#option-names">flag</a> on an argument name to indicate that
 its value is optional. Only non-booleans can have optional values, booleans
 are evaluated just on their presence or absence and don't otherwise have
 values.</p>
@@ -678,7 +704,7 @@ to do the same thing.</p>
 <p>Sometimes, you want an argument to completely change the execution flow. For
 instance, to provide more detailed errors about badly formatted arguments. Or
 to make "--version" print some crazy ASCII artwork and exit the program (for
-a non-crazy --version use <a href="Version%20Option">opt.versionOpt()</a>).</p>
+a non-crazy --version use <a href="#version-option">opt.versionOpt()</a>).</p>
 <p>Parsing actions are attached to options and get invoked when a value becomes
 available for it. Any std::function compatible object that accepts references
 to cli, opt, and string as parameters can be used. The function should:</p>
@@ -743,7 +769,7 @@ order they were added.</p>
 <p>The function should:
 - Check the options new value. Beware that options are process in the order
   they appear on the command line, so comparing with another option is
-  usually better done in an <a href="After%20Actions">after action</a>.
+  usually better done in an <a href="#after-actions">after action</a>.
 - Call cli.badUsage() with an error message if there's a problem.
 - Return false if the program should stop, otherwise true to let processing
   continue.</p>
@@ -972,7 +998,7 @@ Options:
 </code></pre>
 
 <p>When you want to put a bundle of stuff in a separate source file, such as a
-<a href="Subcommands">command</a> and its options, it can be convenient to group them
+<a href="#subcommands">command</a> and its options, it can be convenient to group them
 into a single static struct.</p>
 <pre><code class="cpp">// somefile.cpp
 static int myCmd(Dim::Cli &amp; cli);
@@ -1266,11 +1292,11 @@ cli.opt(&amp;fruit, &quot;&quot;, &quot;fruit&quot;).flagValue(true);
 Does the fruit have a worm? No!
 </code></pre>
 
-<h2 id="choice-options">Choice Options</h2>
+<h2 id="choice">Choice</h2>
 <p>Sometimes you want an option to have a fixed set of possible values, such as
 for an enum. You use opt.choice() to add legal choices, one at a time, to an
 option.</p>
-<p>Choices are similar to <a href="Feature%20Switches">feature switches</a> but instead of
+<p>Choices are similar to <a href="#feature-switches">feature switches</a> but instead of
 multiple boolean options populating a single variable it is a single
 non-boolean option setting its variable to one of multiple values.</p>
 <pre><code class="cpp">enum class State { go, wait, stop };
@@ -1364,7 +1390,383 @@ be equal to the nearest of the two edges.</p>
 <pre><code class="console">$ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-Error: Out of range 'letter' value [a - z]: 1
+Error: Out of range 'letter' value: 1
+Must be between 'a' and 'z'.
+</code></pre>
+
+<h2 id="units-of-measure">Units of Measure</h2>
+<p>The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
+parser actions and provide a simple way to support unit suffixes on numerical
+values. The value has the units are removed, is parsed as a double, multiplied
+by the associated factor, rounded to an integer (unless the target is a
+floating point type), converted back to a string, and then finally passed to
+cli.fromString&lt;T&gt;().</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fUnitBinaryPrefix</td>
+<td>Only for opt.siUnits(), makes k,M,G,T,P factors of 1024 (just like ki,Mi,Gi,Ti,Pi), and excludes fractional unit prefixes (milli, micro, etc).</td>
+</tr>
+<tr>
+<td>fUnitInsensitive</td>
+<td>Makes units case insensitive. For opt.siUnits(), unit prefixes are also case insensitive and fractional unit prefixes are excluded. So 'M' and 'm' are both mega.</td>
+</tr>
+<tr>
+<td>fUnitRequire</td>
+<td>Values without units are rejected, even if they have unit prefixes (k,M,G,etc).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="si-units">SI Units</h3>
+<p>SI units are considered to be anything that uses the SI prefixes. The
+supported prefixes range from 1e+15 to 1e-15 and are: P, Pi, T, Ti, G, Gi, M,
+Mi, k, ki, m, u, n, p, f.</p>
+<p>The following table shows the effects of the above flags (BP, I, R) and
+whether a symbol (such as "m") is specified on the parsing of some
+representative inputs:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>-</th>
+<th>+I</th>
+<th>+BP</th>
+<th>+BP,I</th>
+<th>"m"</th>
+<th>"m" +I</th>
+<th>"m" +BP</th>
+<th>"m" +BP,I</th>
+<th>"m" +R</th>
+<th>"m" +I,R</th>
+<th>"m" +BP,R</th>
+<th>"m" +BP,I,R</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"1M"</td>
+<td>1e+6</td>
+<td>1e+6</td>
+<td>1,048,576</td>
+<td>1,048,576</td>
+<td>1e+6</td>
+<td>1</td>
+<td>1,048,576</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+</tr>
+<tr>
+<td>"1k"</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>"1ki"</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>"k"</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>"1"</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>"1m"</td>
+<td>0.001</td>
+<td>1e+6</td>
+<td>-</td>
+<td>1,048,576</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>"1u"</td>
+<td>0.000001</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>"1Mm"</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>1e+6</td>
+<td>1e+6</td>
+<td>1,048,576</td>
+<td>1,048,576</td>
+<td>1e+6</td>
+<td>1e+6</td>
+<td>1,048,576</td>
+<td>1,048,576</td>
+</tr>
+<tr>
+<td>"1km"</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+</tr>
+<tr>
+<td>"1kim"</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+</tr>
+<tr>
+<td>"km"</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>"1mm"</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>0.001</td>
+<td>1e+6</td>
+<td>-</td>
+<td>-</td>
+<td>0.001</td>
+<td>1e+6</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>An example with binary prefixes that is case insensitive:</p>
+<pre><code class="cpp">int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; bytes = cli.opt&lt;uint64_t&gt;(&quot;b bytes&quot;)
+        .siUnits(&quot;b&quot;, cli.fUnitBinaryPrefix | cli.fUnitInsensitive)
+        .desc(&quot;Number of bytes to process.&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (bytes)
+        cout &lt;&lt; *bytes &lt;&lt; &quot; bytes\n&quot;;
+    return EX_OK;
+}
+</code></pre>
+
+<pre><code class="console">$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -b NUM[&lt;units&gt;]
+$ a.out -b 32768
+32768 bytes
+$ a.out -b 32k
+32768 bytes
+$ a.out -b 32KB
+32768 bytes
+$ a.out -b 32kib
+32768 bytes
+$ a.out -b 32bk
+Error: Invalid '-b' value: 32bk
+</code></pre>
+
+<h3 id="time-units">Time Units</h3>
+<p>Adjusts the value to seconds when time units are present. The following units are supported:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Factor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>y</td>
+<td>31,536,000 (365 days, leap years not considered)</td>
+</tr>
+<tr>
+<td>w</td>
+<td>604,800 (7 days)</td>
+</tr>
+<tr>
+<td>d</td>
+<td>86,400 (24 hours)</td>
+</tr>
+<tr>
+<td>h</td>
+<td>3,600</td>
+</tr>
+<tr>
+<td>m</td>
+<td>60</td>
+</tr>
+<tr>
+<td>min</td>
+<td>60</td>
+</tr>
+<tr>
+<td>s</td>
+<td>1</td>
+</tr>
+<tr>
+<td>ms</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>us</td>
+<td>0.000001</td>
+</tr>
+<tr>
+<td>ns</td>
+<td>0.000000001</td>
+</tr>
+</tbody>
+</table>
+<p>Interval in seconds where units are required:</p>
+<pre><code class="cpp">int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; interval = cli.opt&lt;uint32_t&gt;(&quot;i interval&quot;)
+        .timeUnits(cli.fUnitRequire)
+        .desc(&quot;Time interval&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (interval)
+        cout &lt;&lt; *interval &lt;&lt; &quot; seconds\n&quot;;
+    return EX_OK;
+}
+</code></pre>
+
+<pre><code class="console">$ # Rounded to integer value so it can be stored in uint32_t
+$ a.out -i 2100ms
+2 seconds
+$ # One year
+$ a.out -i 1y
+31536000 seconds
+$ # You can only fit 136.2 years worth of seconds into uint32_t
+$ a.out -i 137y
+Error: Out of range '-i' value: 137y
+Must be between '0' and '4,294,967,296'.
+$ # We set fUnitRequire, so units are required...
+$ a.out -i 60
+Error: Invalid '-i' value: 60
+</code></pre>
+
+<h3 id="any-units">Any Units</h3>
+<p>Allows any arbitrary set of unit+factor pairs, used by both opt.siUnits() and
+opt.timeUnits().</p>
+<p>Accept length in Imperial Units:</p>
+<pre><code class="cpp">int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; length = cli.opt&lt;double&gt;(&quot;l length&quot;)
+        .anyUnits({{&quot;yd&quot;, 36}, {&quot;ft&quot;, 12}, {&quot;in&quot;, 1}, {&quot;mil&quot;, 0.001})
+        .desc(&quot;Length, in inches&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (length)
+        cout &lt;&lt; *length &lt;&lt; &quot; inches\n&quot;;
+    return EX_OK;
+}
+</code></pre>
+
+<pre><code class="console">$ a.out
+$ a.out -l 1yd
+36 inches
+$ a.out -l 3ft
+36 inches
+$ a.out -l 36
+36 inches
 </code></pre>
 
 <h2 id="counting">Counting</h2>
@@ -1387,7 +1789,7 @@ instance:</p>
 Verbosity: 3
 </code></pre>
 
-<p>This could also be done with a <a href="Parse%20Actions">parse action</a>, but that seems
+<p>This could also be done with a <a href="#parse-actions">parse action</a>, but that seems
 like more work.</p>
 <h2 id="prompting">Prompting</h2>
 <p>You can have an option prompt the user for the value when it's left off of
@@ -1534,7 +1936,7 @@ HELLO!!!
 <h1 id="help-text">Help Text</h1>
 <h2 id="page-layout">Page Layout</h2>
 <p>The main help page, and the help pages for subcommands, are built the same
-way and made up of the same six (not counting <a href="Option%20Groups">option groups</a>)
+way and made up of the same six (not counting <a href="#option-groups">option groups</a>)
 sections.</p>
 <table>
 <thead>
