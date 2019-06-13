@@ -5,6 +5,7 @@
 
 #include "dimcli/cli.h"
 
+#include <complex>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>

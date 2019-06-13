@@ -370,6 +370,23 @@ Options:
   --help    Show this message and exit.
 )");
     }
+
+    // complex number
+    {
+        cli = {};
+        auto & opt = cli.opt<complex<double>>("complex")
+            .desc("Complex number to parse.");
+        EXPECT_PARSE(cli, "--complex=(1.0,2)");
+        EXPECT(*opt == complex{1.0,2.0});
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --complex=VALUE  Complex number to parse. (default: (0,0))
+
+  --help           Show this message and exit.
+)");
+    }
 }
 
 
@@ -1366,6 +1383,14 @@ Options:
 *
 ***/
 
+enum EnumAB { a = 1, b = 2 };
+istream & operator>>(istream & is, EnumAB & val) {
+    int ival;
+    is >> ival;
+    val = (EnumAB) ival;
+    return is;
+}
+
 //===========================================================================
 void unitsTests() {
     int line = 0;
@@ -1420,11 +1445,13 @@ void unitsTests() {
         EXPECT_ERR(cli, "Error: Invalid 'v' value: k\n");
         EXPECT_PARSE(cli, "kb", false);
         EXPECT_ERR(cli, "Error: Invalid 'v' value: kb\n");
+        EXPECT_PARSE(cli, "1x23kb", false);
+        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1x23kb\n");
         dbls.siUnits("", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1k");
         EXPECT(dbls[0] == 1000);
 
-        // to int, double, string
+        // to int, double, string, complex
         auto & sv = cli.opt<string>("s").siUnits();
         EXPECT_PARSE(cli, "-s 1M");
         EXPECT(*sv == "1000000");
@@ -1438,11 +1465,18 @@ void unitsTests() {
         EXPECT_PARSE(cli, "-d2.k");
         EXPECT(*sd == 2000);
 
+        EnumAB seRaw;
+        auto & se = cli.opt(&seRaw, "e").siUnits();
+        EXPECT_PARSE(cli, "-e500m", false);
+        EXPECT_ERR(cli, "Error: Invalid '-e' value: 500m\n");
+        EXPECT(se);
+
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS] [v...]
 
 Options:
   -d FLOAT[<units>]   (default: 0)
+  -e VALUE[<units>]   (default: 0)
   -i NUM[<units>]     (default: 0)
   -s STRING[<units>]
 
