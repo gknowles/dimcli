@@ -1766,8 +1766,10 @@ vector<pair<string, double>> Cli::siUnitMapping(
                 kv.first += symbol;
         } else {
             units.reserve(2 * units.size());
-            for (auto && kv : units)
+            for (auto i = units.size(); i-- > 0;) {
+                auto & kv = units[i];
                 units.push_back({kv.first + symbol, kv.second});
+            }
         }
         units.push_back({symbol, 1});
     }
