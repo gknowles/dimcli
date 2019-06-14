@@ -1212,11 +1212,10 @@ protected:
     // If numeric_limits<T>::min & max are defined and 'x' is outside of
     // those limits badRange() is called, otherwise returns true.
     template <typename U>
-    decltype(std::enable_if<std::is_arithmetic<T>::value, int>::type() > 0)
-    checkLimits(Cli & cli, std::string const & val, U const & x);
+    auto checkLimits(Cli & cli, std::string const & val, U const & x, int)
+    -> decltype(std::declval<T&>() > x);
     template <typename U>
-    decltype(std::enable_if<!std::is_arithmetic<T>::value, int>::type() > 0)
-    checkLimits(Cli & cli, std::string const & val, U const & x);
+    bool checkLimits(Cli & cli, std::string const & val, U const & x, long);
 
     std::function<ActionFn> m_parse;
     std::vector<std::function<ActionFn>> m_checks;
@@ -1464,14 +1463,17 @@ A & Cli::OptShim<A, T>::anyUnits(
 //===========================================================================
 template <typename A, typename T>
 template <typename U>
-decltype(std::enable_if<std::is_arithmetic<T>::value, int>::type() > 0)
-Cli::OptShim<A, T>::checkLimits(
+auto Cli::OptShim<A, T>::checkLimits(
     Cli & cli,
     std::string const & val,
-    U const & x
-) {
+    U const & x,
+    int
+) -> decltype(std::declval<T&>() > x)
+{
     constexpr auto low = std::numeric_limits<T>::min();
     constexpr auto high = std::numeric_limits<T>::max();
+    if (!std::is_arithmetic<T>::value)
+        return cli.badUsage(*this, val);
     return (x >= low && x <= high)
         || cli.badRange(*this, val, low, high);
 }
@@ -1479,11 +1481,11 @@ Cli::OptShim<A, T>::checkLimits(
 //===========================================================================
 template <typename A, typename T>
 template <typename U>
-decltype(std::enable_if<!std::is_arithmetic<T>::value, int>::type() > 0)
-Cli::OptShim<A, T>::checkLimits(
+bool Cli::OptShim<A, T>::checkLimits(
     Cli &,
     std::string const &,
-    U const &
+    U const &,
+    long
 ) {
     return true;
 }
@@ -1512,7 +1514,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
         long double dval;
         if (!cli.withUnits(dval, val, units, flags))
             return cli.badUsage(opt, val);
-        if (!opt.checkLimits(cli, val, dval))
+        if (!opt.checkLimits(cli, val, dval, 0))
             return false;
         std::string sval;
         if (std::is_integral<T>::value)

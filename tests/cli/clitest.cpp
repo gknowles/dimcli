@@ -377,7 +377,7 @@ Options:
         auto & opt = cli.opt<complex<double>>("complex")
             .desc("Complex number to parse.");
         EXPECT_PARSE(cli, "--complex=(1.0,2)");
-        EXPECT(*opt == complex{1.0,2.0});
+        EXPECT(*opt == complex<double>{1.0,2.0});
         EXPECT_HELP(cli, "", 1 + R"(
 usage: test [OPTIONS]
 
