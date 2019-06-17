@@ -1789,7 +1789,7 @@ bool Cli::withUnits(
     for (;;) {
         if (!pos--)
             return false;
-        if (val[pos] == '.' || f.is(f.digit, val[pos])) {
+        if (f.is(f.digit, val[pos]) || val[pos] == '.') {
             pos += 1;
             break;
         }

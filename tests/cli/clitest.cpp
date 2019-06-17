@@ -1460,6 +1460,12 @@ void unitsTests() {
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
         EXPECT_PARSE(cli, "-i6G", false);
+        EXPECT_ERR(cli,
+            "Error: Out of range '-i' value: 6G\n"
+            "Must be between '-2,147,483,648' and '2,147,483,647'.\n"
+        );
+        EXPECT_PARSE(cli, "-iNaN(1)k", false);
+        EXPECT_ERR(cli, "Error: Invalid '-i' value: NaN(1)k\n");
 
         auto & sd = cli.opt<double>("d").siUnits();
         EXPECT_PARSE(cli, "-d2.k");

@@ -1473,7 +1473,7 @@ auto Cli::OptShim<A, T>::checkLimits(
     constexpr auto low = std::numeric_limits<T>::min();
     constexpr auto high = std::numeric_limits<T>::max();
     if (!std::is_arithmetic<T>::value)
-        return cli.badUsage(*this, val);
+        return true;
     return (x >= low && x <= high)
         || cli.badRange(*this, val, low, high);
 }
@@ -1512,6 +1512,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
     }
     return parse([units, flags](auto & cli, auto & opt, auto & val) {
         long double dval;
+        bool success = true;
         if (!cli.withUnits(dval, val, units, flags))
             return cli.badUsage(opt, val);
         if (!opt.checkLimits(cli, val, dval, 0))
@@ -1522,12 +1523,15 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
         auto ival = (int64_t) dval;
         if (ival == dval) {
             sval = std::to_string(ival);
-        } else if (!cli.toString(sval, dval)) {
-            return cli.badUsage(opt, val);
+        } else {
+            success = cli.toString(sval, dval);
+            assert(success
+                && "internal dimcli error, convert double to string failed"
+            );
         }
         if (!opt.parseValue(sval))
             return cli.badUsage(opt, val);
-        return true;
+        return success;
     });
 }
 
