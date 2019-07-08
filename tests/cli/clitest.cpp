@@ -1494,6 +1494,14 @@ Options:
     {
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  -s NUM[<units>]  (default: 0)
+
+  --help           Show this message and exit.
+)");
         EXPECT_PARSE(cli, "-s 1.5m");
         EXPECT(*sht == 90);
         EXPECT_PARSE(cli, "-s100ms");
