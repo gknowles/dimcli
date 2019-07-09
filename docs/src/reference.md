@@ -27,8 +27,8 @@ cli.[action](guide.md#subcommands) | Action that should be taken when the curren
 
 Create | &nbsp;
 ---------|------------
-cli.[opt&lt;T>](guide.md#options) | Add command line option
-cli.[optVec&lt;T>](guide.md#vector-options) | Add multivalued option
+cli.[opt&lt;T>](guide.md#options) | Add command line option, flag, or argument
+cli.[optVec&lt;T>](guide.md#vector-options) | Add multivalued option, flag, or argument
 cli.[confirmOpt](guide.md#confirm-option) | Add -y, --yes option that exits early when false and has an "are you sure?" style prompt when it's not present.
 cli.[helpOpt](guide.md#help-option) | Get reference to internal help option, can be used to change the description, option group, etc. To completely replace it, add another option that responds to --help.
 cli.[passwordOpt](guide.md#password-prompting) | Add --password option and prompts for a password if it's not given on the command line. If confirm is true and it's not on the command line you have to enter it twice.

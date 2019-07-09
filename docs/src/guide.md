@@ -279,7 +279,8 @@ A few things to keep in mind about positional arguments:
 - Positional arguments are mapped by the order they are added, except that
   required ones appear before optional ones.
 - If there are multiple vector positionals with unlimited (nargs = -1) arity
-  all but the first will be treated as if they had nargs = 1.
+  all but the first will be treated as if they had nargs = 1. Or to put it
+  another way, the first unlimited positional is greedy.
 - If the unlimited one is required it will prevent any optional positionals
   from getting populated, since it eats up all the arguments before they get
   a turn.
@@ -355,10 +356,11 @@ ostream & operator<< (ostream & os, vector<T> const & v) {
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    // for oranges demonstrate using a separate vector
+    // for oranges demonstrate using an external vector, and limit
+    // the maximum number to 2.
     vector<string> oranges;
-    cli.optVec(&oranges, "o orange").desc("oranges");
-    // for apples demonstrate just using the proxy object
+    cli.optVec(&oranges, "o orange", 2).desc("oranges");
+    // for apples demonstrate just using the proxy object.
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -374,12 +376,15 @@ Usage: a.out [OPTIONS] [apple...]
   apple     red fruit
 
 Options:
-  -o, --orange=STRING  oranges
+  -o, --orange=STRING  oranges (limit: 2)
 
   --help               Show this message and exit.
 
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
+$ a.out -omandarin -onavel -ohamlin
+Error: Too many '-o' values: hamlin
+The maximum number of values is: 2
 ~~~
 
 While the * and -> operators get you full access to the underlying vector,

@@ -1350,6 +1350,34 @@ Options:
         EXPECT(*strs == vector<string>({"a"s, "b"s}));
     }
 
+    // optVec with nargs
+    {
+        cli = {};
+        auto & v0 = cli.optVec<int>("0", 0).desc("None allowed.");
+        EXPECT_PARSE(cli, "");
+        EXPECT(v0.size() == 0);
+        EXPECT_PARSE(cli, "-00", false);
+        EXPECT_ERR(cli,
+            "Error: Too many '-0' values: 0\n"
+            "The maximum number of values is 0.\n"
+        );
+        auto & v1 = cli.optVec<int>("1", 1).desc("Not more than one.");
+        auto & vn = cli.optVec<int>("N", -1).desc("Unlimited.");
+        EXPECT_PARSE(cli, "-11");
+        EXPECT(v1.size() == 1 && v1[0] == 1);
+        EXPECT(vn.size() == 0);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  -0 NUM    None allowed. (limit: 0)
+  -1 NUM    Not more than one. (limit: 1)
+  -N NUM    Unlimited.
+
+  --help    Show this message and exit.
+)");
+    }
+
     // filesystem
 #ifdef FILESYSTEM
     {

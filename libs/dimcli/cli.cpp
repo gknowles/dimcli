@@ -1893,7 +1893,12 @@ bool Cli::parseValue(
     size_t pos,
     char const ptr[]
 ) {
-    opt.assign(name, pos);
+    if (!opt.assign(name, pos)) {
+        string prefix = "Too many '" + name + "' values";
+        string detail = "The maximum number of values is "
+            + to_string(opt.m_nargs) + ".";
+        return badUsage(prefix, ptr, detail);
+    }
     string val;
     if (ptr) {
         val = ptr;
@@ -2332,7 +2337,12 @@ string Cli::descStr(Cli::OptBase const & opt) const {
         // "default" tag is added to individual choices later
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         desc += " (default)";
-    } else if (!opt.m_vector && !opt.m_bool) {
+    } else if (opt.m_vector) {
+        if (opt.m_nargs != -1) {
+            toString(tmp, opt.m_nargs);
+            desc += " (limit: " + tmp + ")";
+        }
+    } else if (!opt.m_bool) {
         if (opt.m_defaultDesc.empty()) {
             if (!opt.defaultValueToString(tmp, *this))
                 tmp.clear();

@@ -5,8 +5,8 @@
 //
 // Command line parser toolkit
 //
-// Instead of trying to figure it all out from just this header please take
-// a moment and look at the documentation and examples:
+// Instead of trying to figure it out from just this header please, PLEASE,
+// take a moment and look at the documentation and examples:
 // https://github.com/gknowles/dimcli
 
 #pragma once
@@ -166,7 +166,7 @@ void assertHandler(char const expr[], unsigned line);
 *
 ***/
 
-// These mirror the program exit codes defined in <sysexits.h>
+// These mirror the program exit codes defined in <sysexits.h> on Unix.
 enum {
     kExitOk = 0,        // EX_OK
     kExitUsage = 64,    // EX_USAGE     - bad command line
@@ -204,27 +204,21 @@ public:
     Cli & operator=(Cli && from) noexcept;
 
     //-----------------------------------------------------------------------
-    // Configuration
+    // CONFIGURATION
+
+    template <typename T>
+    Opt<T> & opt(std::string const & keys, T const & def = {});
+
+    template <typename T>
+    Opt<T> & opt(T * value, std::string const & keys);
 
     template <typename T, typename U, typename =
         typename std::enable_if<std::is_convertible<U, T>::value>::type
     >
     Opt<T> & opt(T * value, std::string const & keys, U const & def);
 
-    template <typename T> Opt<T> & opt(T * value, std::string const & keys);
-
     template <typename T>
-    OptVec<T> & optVec(
-        std::vector<T> * values,
-        std::string const & keys,
-        int nargs = -1
-    );
-
-    template <typename T>
-    Opt<T> & opt(std::string const & keys, T const & def = {});
-
-    template <typename T>
-    OptVec<T> & optVec(std::string const & keys, int nargs = -1);
+    Opt<T> & opt(Opt<T> & value, std::string const & keys);
 
     template <typename T, typename U, typename =
         typename std::enable_if<std::is_convertible<U, T>::value>::type
@@ -232,7 +226,14 @@ public:
     Opt<T> & opt(Opt<T> & value, std::string const & keys, U const & def);
 
     template <typename T>
-    Opt<T> & opt(Opt<T> & value, std::string const & keys);
+    OptVec<T> & optVec(std::string const & keys, int nargs = -1);
+
+    template <typename T>
+    OptVec<T> & optVec(
+        std::vector<T> * values,
+        std::string const & keys,
+        int nargs = -1
+    );
 
     template <typename T>
     OptVec<T> & optVec(
@@ -381,7 +382,7 @@ public:
     std::ostream & conout();
 
     //-----------------------------------------------------------------------
-    // Rendering help text
+    // RENDERING HELP TEXT
 
     // printHelp & printUsage return the current exitCode()
     int printHelp(
@@ -419,7 +420,7 @@ public:
     static std::string defaultValueDesc();
 
     //-----------------------------------------------------------------------
-    // Parsing
+    // PARSING
 
     // Parse the command line, populate the options, and set the error and
     // other miscellaneous state. Returns true if processing should continue.
@@ -559,7 +560,7 @@ public:
     );
 
     //-----------------------------------------------------------------------
-    // After parsing
+    // AFTER PARSING
 
     int exitCode() const;
     std::string const & errMsg() const;
@@ -987,7 +988,7 @@ protected:
     virtual bool doParseAction(Cli & cli, std::string const & value) = 0;
     virtual bool doCheckAction(Cli & cli, std::string const & value) = 0;
     virtual bool doAfterActions(Cli & cli) = 0;
-    virtual void assign(std::string const & name, size_t pos) = 0;
+    virtual bool assign(std::string const & name, size_t pos) = 0;
     virtual bool assigned() const = 0;
 
     // True for flags (bool on command line) that default to true.
@@ -1013,8 +1014,7 @@ protected:
 
     // Whether this option has one value or a vector of values.
     bool m_vector{};
-    // IGNORED. Maximum allowed values, only when a vector is used (-1 for
-    // unlimited).
+    // Maximum allowed values, only for vectors (-1 for unlimited).
     int m_nargs{1};
 
     // Whether the value is a bool on the command line (no separate value).
@@ -1641,7 +1641,7 @@ private:
     friend class Cli;
     bool fromString(Cli & cli, std::string const & value) final;
     bool defaultValueToString(std::string & out, Cli const & cli) const final;
-    void assign(std::string const & name, size_t pos) final;
+    bool assign(std::string const & name, size_t pos) final;
     bool assigned() const final { return m_proxy->m_explicit; }
     bool sameValue(void const * value) const final {
         return value == m_proxy->m_value;
@@ -1695,10 +1695,11 @@ inline bool Cli::Opt<T>::defaultValueToString(
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::assign(std::string const & name, size_t pos) {
+inline bool Cli::Opt<T>::assign(std::string const & name, size_t pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
+    return true;
 }
 
 //===========================================================================
@@ -1778,7 +1779,7 @@ private:
     friend class Cli;
     bool fromString(Cli & cli, std::string const & value) final;
     bool defaultValueToString(std::string & out, Cli const & cli) const final;
-    void assign(std::string const & name, size_t pos) final;
+    bool assign(std::string const & name, size_t pos) final;
     bool assigned() const final { return !m_proxy->m_values->empty(); }
     bool sameValue(void const * value) const final {
         return value == m_proxy->m_values;
@@ -1798,6 +1799,8 @@ Cli::OptVec<T>::OptVec(
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values)
 {
+    assert(nargs >= -1
+        && "max values in a vector option must be >= 0, or -1 (unlimited)");
     this->m_vector = true;
     this->m_nargs = nargs;
 }
@@ -1841,12 +1844,16 @@ inline bool Cli::OptVec<T>::defaultValueToString(
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
+inline bool Cli::OptVec<T>::assign(std::string const & name, size_t pos) {
+    if (this->m_nargs != -1 && this->m_nargs == m_proxy->m_matches.size())
+        return false;
+
     ArgMatch match;
     match.name = name;
     match.pos = (int)pos;
     m_proxy->m_matches.push_back(match);
-    m_proxy->m_values->resize(m_proxy->m_values->size() + 1);
+    m_proxy->m_values->resize(m_proxy->m_matches.size());
+    return true;
 }
 
 //===========================================================================
