@@ -415,7 +415,8 @@ cli.opt&lt;string&gt;(&quot;n&quot;);
 <li>Positional arguments are mapped by the order they are added, except that
   required ones appear before optional ones.</li>
 <li>If there are multiple vector positionals with unlimited (nargs = -1) arity
-  all but the first will be treated as if they had nargs = 1.</li>
+  all but the first will be treated as if they had nargs = 1. Or to put it
+  another way, the first unlimited positional is greedy.</li>
 <li>If the unlimited one is required it will prevent any optional positionals
   from getting populated, since it eats up all the arguments before they get
   a turn.</li>
@@ -484,10 +485,11 @@ ostream &amp; operator&lt;&lt; (ostream &amp; os, vector&lt;T&gt; const &amp; v)
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    // for oranges demonstrate using a separate vector
+    // for oranges demonstrate using an external vector, and limit
+    // the maximum number to 2.
     vector&lt;string&gt; oranges;
-    cli.optVec(&amp;oranges, &quot;o orange&quot;).desc(&quot;oranges&quot;);
-    // for apples demonstrate just using the proxy object
+    cli.optVec(&amp;oranges, &quot;o orange&quot;, 2).desc(&quot;oranges&quot;);
+    // for apples demonstrate just using the proxy object.
     auto &amp; apples = cli.optVec&lt;string&gt;(&quot;[apple]&quot;).desc(&quot;red fruit&quot;);
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
@@ -502,12 +504,15 @@ Usage: a.out [OPTIONS] [apple...]
   apple     red fruit
 
 Options:
-  -o, --orange=STRING  oranges
+  -o, --orange=STRING  oranges (limit: 2)
 
   --help               Show this message and exit.
 
 $ a.out -o mandarin -onavel &quot;red delicious&quot; honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
+$ a.out -omandarin -onavel -ohamlin
+Error: Too many '-o' values: hamlin
+The maximum number of values is: 2
 </code></pre>
 
 <p>While the * and -&gt; operators get you full access to the underlying vector,
