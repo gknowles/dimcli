@@ -41,6 +41,9 @@ namespace fs = DIMCLI_LIB_FILESYSTEM;
 size_t const kMinDescCol = 11;
 size_t const kMaxDescCol = 28;
 
+// maximum help text line length
+size_t const kMaxLineWidth = 79;
+
 
 /****************************************************************************
 *
@@ -2246,7 +2249,7 @@ namespace {
 
 struct WrapPos {
     size_t pos{0};
-    size_t maxWidth{79};
+    size_t maxWidth{kMaxLineWidth};
     string prefix;
 };
 
@@ -2492,7 +2495,6 @@ int Cli::writeUsageImpl(
     string const usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
-    wp.maxWidth = 79;
     wp.pos = prog.size() + usageStr.size();
     wp.prefix = string(wp.pos, ' ');
     if (cmdName.size())
