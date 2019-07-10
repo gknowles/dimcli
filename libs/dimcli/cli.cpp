@@ -2342,7 +2342,7 @@ string Cli::descStr(Cli::OptBase const & opt) const {
         desc += " (default)";
     } else if (opt.m_vector) {
         if (opt.m_nargs != -1) {
-            toString(tmp, opt.m_nargs);
+            (void) toString(tmp, opt.m_nargs);
             desc += " (limit: " + tmp + ")";
         }
     } else if (!opt.m_bool) {
