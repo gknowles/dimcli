@@ -18,7 +18,10 @@
 # tests/cli/clitest.cpp
 # tests/cli/pch.cpp
 # tests/cli/pch.h
-# tools/perf/args.h
-# tools/perf/pch.cpp
-# tools/perf/pch.h
-# tools/perf/perftest.cpp
+# tests/ostrm/ostrmtest.cpp
+# tests/ostrm/pch.cpp
+# tests/ostrm/pch.h
+# tests/perf/args.h
+# tests/perf/pch.cpp
+# tests/perf/pch.h
+# tests/perf/perftest.cpp

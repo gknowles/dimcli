@@ -11,7 +11,7 @@ C++ command line parser toolkit for kids of all ages.
     - default constructible
     - copyable
     - assignable from string, has an istream extraction operator, or has a
-      specialization of Cli::fromString&lt;T>()
+      specialization of Cli&#58;:OptBase::fromString&lt;T>()
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands
@@ -1377,7 +1377,7 @@ parser actions and provide a simple way to support unit suffixes on numerical
 values. The value has the units are removed, is parsed as a double, multiplied
 by the associated factor, rounded to an integer (unless the target is a
 floating point type), converted back to a string, and then finally passed to
-cli.fromString&lt;T>().
+opt.fromString&lt;T>().
 
 Flag              | Description
 ------------------|------------

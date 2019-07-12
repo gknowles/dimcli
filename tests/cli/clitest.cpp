@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 //
 // clitest.cpp - dimcli test cli
+
 #include "pch.h"
 #pragma hdrstop
 
@@ -1195,8 +1196,6 @@ void execTests() {
 void basicTests() {
     int line = 0;
     Dim::CliLocal cli;
-
-    (void) cli.imbue(locale{});
 
     // assignment operator
     {

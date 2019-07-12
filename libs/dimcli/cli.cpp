@@ -154,7 +154,8 @@ struct Cli::Config {
     string envOpts;
     istream * conin{&cin};
     ostream * conout{&cout};
-    locale parserLocale{""};
+    shared_ptr<locale> defLoc = make_shared<locale>();
+    shared_ptr<locale> numLoc = make_shared<locale>("");
 
     int exitCode{kExitOk};
     string errMsg;
@@ -401,15 +402,8 @@ Cli::OptBase::OptBase(string const & names, bool boolean)
 }
 
 //===========================================================================
-void Cli::OptBase::setNameIfEmpty(string const & name) {
-    if (m_fromName.empty())
-        m_fromName = name;
-}
-
-//===========================================================================
-bool Cli::OptBase::parseValue(string const & value) {
-    Cli cli;
-    return fromString(cli, value);
+locale Cli::OptBase::imbue(locale const & loc) {
+    return m_interpreter.imbue(loc);
 }
 
 //===========================================================================
@@ -420,6 +414,49 @@ string Cli::OptBase::defaultPrompt() const {
     if (name.size())
         name[0] = (char)toupper(name[0]);
     return name;
+}
+
+//===========================================================================
+void Cli::OptBase::setNameIfEmpty(string const & name) {
+    if (m_fromName.empty())
+        m_fromName = name;
+}
+
+//===========================================================================
+bool Cli::OptBase::withUnits(
+    long double & out,
+    string const & val,
+    unordered_map<string, long double> const & units,
+    int flags
+) const {
+    auto & f = use_facet<ctype<char>>(m_interpreter.getloc());
+
+    auto pos = val.size();
+    for (;;) {
+        if (!pos--)
+            return false;
+        if (f.is(f.digit, val[pos]) || val[pos] == '.') {
+            pos += 1;
+            break;
+        }
+    }
+    auto num = val.substr(0, pos);
+    auto unit = val.substr(pos);
+
+    if (!fromString(out, num))
+        return false;
+    if (unit.empty())
+        return (~flags & fUnitRequire);
+
+    if (flags & fUnitInsensitive)
+        f.tolower((char *) unit.data(), unit.data() + unit.size());
+    auto i = units.find(unit);
+    if (i != units.end()) {
+        out *= i->second;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 
@@ -735,7 +772,7 @@ void Cli::OptIndex::indexLongName(
 //===========================================================================
 // static
 bool Cli::defParseAction(Cli & cli, OptBase & opt, string const & val) {
-    if (opt.fromString(cli, val))
+    if (opt.parseValue(val))
         return true;
 
     ostringstream os;
@@ -823,7 +860,6 @@ static shared_ptr<Cli::Config> globalConfig() {
 Cli::Cli()
     : m_cfg(globalConfig())
 {
-    (void) m_interpreter.imbue(m_cfg->parserLocale);
     helpOpt();
 }
 
@@ -832,16 +868,13 @@ Cli::Cli(Cli const & from)
     : m_cfg(from.m_cfg)
     , m_group(from.m_group)
     , m_command(from.m_command)
-{
-    (void) m_interpreter.imbue(m_cfg->parserLocale);
-}
+{}
 
 //===========================================================================
 // protected
 Cli::Cli(shared_ptr<Config> cfg)
     : m_cfg(cfg)
 {
-    (void) m_interpreter.imbue(m_cfg->parserLocale);
     helpOpt();
 }
 
@@ -850,7 +883,6 @@ Cli & Cli::operator=(Cli const & from) {
     m_cfg = from.m_cfg;
     m_group = from.m_group;
     m_command = from.m_command;
-    (void) m_interpreter.imbue(m_cfg->parserLocale);
     return *this;
 }
 
@@ -859,7 +891,6 @@ Cli & Cli::operator=(Cli && from) noexcept {
     m_cfg = move(from.m_cfg);
     m_group = move(from.m_group);
     m_command = move(from.m_command);
-    (void) m_interpreter.imbue(m_cfg->parserLocale);
     return *this;
 }
 
@@ -1057,14 +1088,6 @@ void Cli::envOpts(string const & var) {
     m_cfg->envOpts = var;
 }
 #endif
-
-//===========================================================================
-locale Cli::imbue(locale const & loc) {
-    auto prev = m_cfg->parserLocale;
-    m_cfg->parserLocale = loc;
-    (void) m_interpreter.imbue(loc);
-    return prev;
-}
 
 //===========================================================================
 Cli & Cli::before(function<BeforeFn> fn) {
@@ -1780,43 +1803,6 @@ vector<pair<string, double>> Cli::siUnitMapping(
 }
 
 //===========================================================================
-bool Cli::withUnits(
-    long double & out,
-    string const & val,
-    unordered_map<string, long double> const & units,
-    int flags
-) {
-    auto & f = use_facet<ctype<char>>(m_cfg->parserLocale);
-
-    auto pos = val.size();
-    for (;;) {
-        if (!pos--)
-            return false;
-        if (f.is(f.digit, val[pos]) || val[pos] == '.') {
-            pos += 1;
-            break;
-        }
-    }
-    auto num = val.substr(0, pos);
-    auto unit = val.substr(pos);
-
-    if (!fromString(out, num))
-        return false;
-    if (unit.empty())
-        return (~flags & fUnitRequire);
-
-    if (flags & fUnitInsensitive)
-        f.tolower((char *) unit.data(), unit.data() + unit.size());
-    auto i = units.find(unit);
-    if (i != units.end()) {
-        out *= i->second;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-//===========================================================================
 Cli & Cli::resetValues() {
     for (auto && opt : m_cfg->opts)
         opt->reset();
@@ -1851,7 +1837,7 @@ bool Cli::prompt(OptBase & opt, string const & msg, int flags) {
             os << (def ? " [Y/n]:" : " [y/N]:");
         } else {
             string tmp;
-            if (opt.defaultValueToString(tmp, *this) && !tmp.empty()) {
+            if (opt.defaultValueToString(tmp) && !tmp.empty()) {
                 defAdded = true;
                 os << " [" << tmp << "]:";
             }
@@ -2342,12 +2328,12 @@ string Cli::descStr(Cli::OptBase const & opt) const {
         desc += " (default)";
     } else if (opt.m_vector) {
         if (opt.m_nargs != -1) {
-            (void) toString(tmp, opt.m_nargs);
+            (void) opt.toString(tmp, opt.m_nargs);
             desc += " (limit: " + tmp + ")";
         }
     } else if (!opt.m_bool) {
         if (opt.m_defaultDesc.empty()) {
-            if (!opt.defaultValueToString(tmp, *this))
+            if (!opt.defaultValueToString(tmp))
                 tmp.clear();
         } else {
             tmp = opt.m_defaultDesc;

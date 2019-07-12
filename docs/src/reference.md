@@ -11,8 +11,8 @@ Class | Description
 ------|------------
 [Cli](guide.md#basic-usage) | Creates a handle to the shared command line configuration, this indirection allows options to be statically registered from multiple source files.
 [CliLocal](guide.md#dimclilocal) | Stand-alone cli instance independent of the shared configuration. Mainly for testing.
-Cli::Opt&lt;T> | Metadata and reference to single value option.
-Cli::OptVec&lt;T> | Metadata and reference to vector of values for multivalued options.
+Cli::Opt&lt;T> | Reference to single value option and it's metadata.
+Cli::OptVec&lt;T> | Reference to vector of values and metadata for multivalued option.
 
 ## Subcommands
 
@@ -41,6 +41,7 @@ opt.[choice](guide.md#choice) | Adds a choice, when choices have been added only
 opt.[clamp](guide.md#range-and-clamp) | Forces the value to be within the range, if it's less than the low it's set to the low, if higher than high it's made merely high.
 opt.defaultValue | Allows the default to be changed after the opt has been created.
 opt.[flagValue](guide.md#feature-switches) | Turns the argument into a feature switch, there are normally multiple switches pointed at a single external value, one of which should be flagged as the default.
+opt.imbue | Change the locale used when parsing values via iostream. Defaults to the user's preferred locale (aka locale("")) for arithmetic types and the "C" locale for everything else.
 opt.[implicitValue](guide.md#optional-values) | The implicit value is used for arguments with optional values when the argument was specified in the command line without a value.
 opt.[parse](guide.md#parse-actions) | Change the action to take when parsing this argument.
 opt.[prompt](guide.md#prompting) | Enables prompting. When the option hasn't been provided on the command line the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.
@@ -122,7 +123,6 @@ cli.conin | Get console input stream that will be used for prompting.
 cli.conout | Get console output stream that will be used for prompting.
 cli.[envOpts](guide.md#environment-variable) | Environment variable to get initial options from. Defaults to the empty string, but when set the content of the named variable is parsed into args which are then inserted into the argument list right after arg0.
 cli.[helpNoArgs](guide.md#help-option) | Adds before action that replaces the empty command line with "--help".
-cli.imbue | Change the locale used when parsing values via iostream. Defaults to the user's preferred locale (aka locale("")).
 cli.iostreams | Changes the streams used for prompting, printing help messages, etc. Mainly intended for testing. Setting to null restores the defaults which are cin and cout respectively.
 cli.[responseFiles](guide.md#response-files) | Enabled by default, response file expansion replaces arguments of the form "@file" with the contents of the file.
 
@@ -140,5 +140,5 @@ Cli::toGlibCmdline | Join according to glib conventions, based on UNIX98 shell s
 Cli::toGnuCmdline | Join using GNU conventions, same rules as buildargv()
 Cli::toWindowsCmdline | Join using Windows rules.
 <b>Member functions</b> |
-cli.fromString&lt;T> | Parses string into any supported type.
-cli.toString&lt;T> | Converts value of any supported type into a string.
+opt.fromString&lt;T> | Parses string into any supported type.
+opt.toString&lt;T> | Converts value of any supported type into a string.
