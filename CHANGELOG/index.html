@@ -87,6 +87,7 @@
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#change-log">Change Log</a></li>
             <li><a href="#unreleased">Unreleased</a></li>
+            <li><a href="#dimcli-500-2019-07-11">dimcli 5.0.0 (2019-07-11)</a></li>
             <li><a href="#dimcli-410-2018-12-05">dimcli 4.1.0 (2018-12-05)</a></li>
             <li><a href="#dimcli-401-2018-10-22">dimcli 4.0.1 (2018-10-22)</a></li>
             <li><a href="#dimcli-311-2017-11-10">dimcli 3.1.1 (2017-11-10)</a></li>
@@ -107,17 +108,20 @@ Distributed under the Boost Software License, Version 1.0.
 <p>The format is based on <a href="http://keepachangelog.com/">Keep a Changelog</a>
 and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>.</p>
 <h2 id="unreleased">Unreleased</h2>
+<h2 id="dimcli-500-2019-07-11">dimcli 5.0.0 (2019-07-11)</h2>
 <ul>
 <li>Added - Configuration option to unconditionally exclude \<filesystem></li>
 <li>Added - Default valueDesc for floating point values ("FLOAT")</li>
 <li>Changed - Rename cli.runCommand() to cli.commandMatched()</li>
 <li>Added - Optional error detail argument to cli.badUsage()</li>
-<li>Changed - Replaced opt.setValueDesc() with cli.defaultValueDesc()</li>
+<li>Changed - Replaced opt.setValueDesc() with opt.toValueDesc()</li>
 <li>Fixed - Invalid array access using optVec.from() from parse action</li>
-<li>Changed - Default constructed T() added to optVec&lt;T&gt; before parse action</li>
+<li>Changed - Default constructed T added to optVec&lt;T&gt; before parse action</li>
 <li>Added - cli.badRange() helper</li>
 <li>Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()</li>
 <li>Added - Allow limiting the number of values for vector options</li>
+<li>Changed - Moved fromString() &amp; toString() from Cli to OptBase</li>
+<li>Changed - locale now set per option instead of for entire cli</li>
 </ul>
 <h2 id="dimcli-410-2018-12-05">dimcli 4.1.0 (2018-12-05)</h2>
 <ul>

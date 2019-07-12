@@ -122,11 +122,11 @@ Distributed under the Boost Software License, Version 1.0.
 </tr>
 <tr>
 <td>Cli::Opt&lt;T&gt;</td>
-<td>Metadata and reference to single value option.</td>
+<td>Reference to single value option and it's metadata.</td>
 </tr>
 <tr>
 <td>Cli::OptVec&lt;T&gt;</td>
-<td>Metadata and reference to vector of values for multivalued options.</td>
+<td>Reference to vector of values and metadata for multivalued option.</td>
 </tr>
 </tbody>
 </table>
@@ -221,6 +221,10 @@ Distributed under the Boost Software License, Version 1.0.
 <tr>
 <td>opt.<a href="../guide/#feature-switches">flagValue</a></td>
 <td>Turns the argument into a feature switch, there are normally multiple switches pointed at a single external value, one of which should be flagged as the default.</td>
+</tr>
+<tr>
+<td>opt.imbue</td>
+<td>Change the locale used when parsing values via iostream. Defaults to the user's preferred locale (aka locale("")) for arithmetic types and the "C" locale for everything else.</td>
 </tr>
 <tr>
 <td>opt.<a href="../guide/#optional-values">implicitValue</a></td>
@@ -520,10 +524,6 @@ Distributed under the Boost Software License, Version 1.0.
 <td>Adds before action that replaces the empty command line with "--help".</td>
 </tr>
 <tr>
-<td>cli.imbue</td>
-<td>Change the locale used when parsing values via iostream. Defaults to the user's preferred locale (aka locale("")).</td>
-</tr>
-<tr>
 <td>cli.iostreams</td>
 <td>Changes the streams used for prompting, printing help messages, etc. Mainly intended for testing. Setting to null restores the defaults which are cin and cout respectively.</td>
 </tr>
@@ -583,11 +583,11 @@ Distributed under the Boost Software License, Version 1.0.
 <td></td>
 </tr>
 <tr>
-<td>cli.fromString&lt;T&gt;</td>
+<td>opt.fromString&lt;T&gt;</td>
 <td>Parses string into any supported type.</td>
 </tr>
 <tr>
-<td>cli.toString&lt;T&gt;</td>
+<td>opt.toString&lt;T&gt;</td>
 <td>Converts value of any supported type into a string.</td>
 </tr>
 </tbody>

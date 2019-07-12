@@ -142,7 +142,7 @@ Distributed under the Boost Software License, Version 1.0.
 <li>default constructible</li>
 <li>copyable</li>
 <li>assignable from string, has an istream extraction operator, or has a
-  specialization of Cli::fromString&lt;T&gt;()</li>
+  specialization of Cli&#58;:OptBase::fromString&lt;T&gt;()</li>
 </ul>
 </li>
 <li>help generation</li>
@@ -1405,7 +1405,7 @@ parser actions and provide a simple way to support unit suffixes on numerical
 values. The value has the units are removed, is parsed as a double, multiplied
 by the associated factor, rounded to an integer (unless the target is a
 floating point type), converted back to a string, and then finally passed to
-cli.fromString&lt;T&gt;().</p>
+opt.fromString&lt;T&gt;().</p>
 <table>
 <thead>
 <tr>
