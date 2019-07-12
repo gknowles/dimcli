@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 5.0.0 (2019-07-11)
 - Added - Configuration option to unconditionally exclude \<filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
 - Changed - Rename cli.runCommand() to cli.commandMatched()
