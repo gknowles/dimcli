@@ -8,7 +8,7 @@ environment:
   matrix:
     - toolset: v140
     - toolset: v141
-	- toolset: v142
+    - toolset: v142
 platform:
   - Win32
   - x64
