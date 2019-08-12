@@ -17,10 +17,6 @@ configuration:
   - Release
 
 build_script:
-  # hack to stop sea of Xamarin (which isn't being used at all) warnings
-  # during cmake configuration
-  - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
-
   - md build
   - cd build
   - cmake -G "Visual Studio 15 2017" -A %platform% -T %toolset% ..
