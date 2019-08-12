@@ -10,16 +10,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## dimcli 5.0.0 (2019-07-11)
 - Added - Configuration option to unconditionally exclude \<filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
 - Changed - Rename cli.runCommand() to cli.commandMatched()
 - Added - Optional error detail argument to cli.badUsage()
-- Changed - Replaced opt.setValueDesc() with cli.defaultValueDesc()
+- Changed - Replaced opt.setValueDesc() with opt.toValueDesc()
 - Fixed - Invalid array access using optVec.from() from parse action
-- Changed - Default constructed T() added to optVec&lt;T> before parse action
+- Changed - Default constructed T added to optVec&lt;T> before parse action
 - Added - cli.badRange() helper
 - Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()
 - Added - Allow limiting the number of values for vector options
+- Changed - Moved fromString() & toString() from Cli to OptBase
+- Changed - locale now set per option instead of for entire cli
 
 ## dimcli 4.1.0 (2018-12-05)
 - Fixed - Order of keys in help text of multi-keyed options non-deterministic

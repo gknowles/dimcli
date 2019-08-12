@@ -2,12 +2,13 @@
 # Distributed under the Boost Software License, Version 1.0.
 version: 0.1.{build}
 image:
-  - Visual Studio 2017
+  - Visual Studio 2019
 
 environment:
   matrix:
     - toolset: v140
     - toolset: v141
+	- toolset: v142
 platform:
   - Win32
   - x64
