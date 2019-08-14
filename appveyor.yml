@@ -22,9 +22,9 @@ build_script:
   - cd build
   - ps: |
       if ($env:APPVEYOR_JOB_NAME.contains("Image: Visual Studio 2017")) {
-          Invoke-Expression 'cmake -G "Visual Studio 15 2017 Win64" -A %platform% -T %toolset% ..'
+          Invoke-Expression 'cmake -G "Visual Studio 15 2017" -A %platform% -T %toolset% ..'
       } else {
-          Invoke-Expression 'cmake -G "Visual Studio 16 2019 Win64" -A %platform% -T %toolset% ..'
+          Invoke-Expression 'cmake -G "Visual Studio 16 2019" -A %platform% -T %toolset% ..'
       }
   - cmake . -DCMAKE_BUILD_TYPE=%configuration%
         -DCMAKE_INSTALL_PREFIX=publish
