@@ -20,9 +20,8 @@ configuration:
 build_script:
   - md build
   - cd build
-  - echo %APPVEYOR_JOB_NAME%
   - ps: |
-      if ($env:APPVEYOR_JOB_NAME.contains("Image=Visual Studio 2017")) {
+      if ($env:APPVEYOR_JOB_NAME.contains("image=Visual Studio 2017")) {
           Invoke-Expression 'cmake -G "Visual Studio 15 2017" -A %platform% -T %toolset% ..'
       } else {
           Invoke-Expression 'cmake -G "Visual Studio 16 2019" -A %platform% -T %toolset% ..'
