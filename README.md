@@ -51,7 +51,7 @@ c:\dimcli on a windows machine):
 ## Working on the dimcli Project
 - Prerequisites
   - install cmake >= 3.6
-  - install Visual Studio 2015
+  - install Visual Studio >= 2015
     - include the "Github Extension for Visual Studio" (if you care)
     - include git
 - Make the library
@@ -62,7 +62,7 @@ c:\dimcli on a windows machine):
   - cmake . --build
 - Test
   - ctest -C Debug
-- Visual Studio 2015
+- Visual Studio
   - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln) for github
     integration to work
 

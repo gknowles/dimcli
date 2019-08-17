@@ -18,7 +18,7 @@ Cli::OptVec&lt;T> | Reference to vector of values and metadata for multivalued o
 
 Create | &nbsp;
 ---------|------------
-cli.[command](guide.md#subcommands) | Changes config context to reference the options of the selected command. Use "" to specify the top level context. If a new command is selected it will be created in the command group of the current context.
+cli.[command](guide.md#subcommands) | Changes config context to reference the options of the selected command. Use an empty string to specify the top level context. If a new command is selected it will be created in the command group of the current context.
 cli.[helpCmd](guide.md#help-subcommand) | Add "help" command that shows the help text for other commands. Allows users to run "prog help command" instead of the more awkward "prog command --help".
 <b>Configuration</b> |
 cli.[action](guide.md#subcommands) | Action that should be taken when the currently selected command is run. Actions are executed when cli.exec() is called by the application.
@@ -74,7 +74,7 @@ cli.[exitCode](guide.md#basic-usage) | EX_OK (0), EX_USAGE, or any value set by 
 cli.errMsg | Error message, only meaningful when exitCode() != EX_OK
 cli.errDetail | Additional information that may help the user correct their mistake, may be empty.
 cli.progName | Program name received in argv[0]
-cli.commandMatched | Command to run, as selected by argv, empty string if there are no commands defined or none were selected.
+cli.commandMatched | Command to run, as selected by the arguments, empty string if there are no commands defined or none were selected.
 opt.[operator&nbsp;bool](guide.md#life-after-parsing) | True if the value was populated from the command line, whether the resulting value is the same as the default is immaterial.
 opt.[operator *](guide.md#life-after-parsing) | Reference to underlying value or, for OptVec, vector of values.
 opt.[operator ->](guide.md#life-after-parsing) | Pointer to underlying value or value vector.
@@ -86,7 +86,7 @@ opt.[size](guide.md#life-after-parsing) | Number of values, non-vectors are alwa
 ## Help Text
 
 Command&nbsp;groups | &nbsp;
----------|-------
+--------|-------
 cli.[cmdGroup](guide.md#command-groups) | Changes the command group of the current command. Because new commands start out in the same group as the current command, it can be convenient to create all the commands of one group before moving to the next.
 cli.[cmdSortKey](guide.md#command-groups) | Command groups are sorted by key, defaults to group name.
 cli.[cmdTitle](guide.md#command-groups) | Heading title to display, defaults to group name. If empty there will be a single blank line separating this group from the previous one.
@@ -128,7 +128,7 @@ cli.[responseFiles](guide.md#response-files) | Enabled by default, response file
 
 ## Conversions
 
-Static member functions | &nbsp;
+Argv | &nbsp;
 ---------|------------
 Cli::toArgv(string) | Parse command line into argument vector of strings, using default conventions (Gnu or Windows) of the platform.
 Cli::toArgv(argc, argv) | Copy array of pointers into argument vector of strings.
@@ -139,6 +139,6 @@ Cli::toCmdline | Join arguments into a single command line, escaping as needed, 
 Cli::toGlibCmdline | Join according to glib conventions, based on UNIX98 shell spec.
 Cli::toGnuCmdline | Join using GNU conventions, same rules as buildargv()
 Cli::toWindowsCmdline | Join using Windows rules.
-<b>Member functions</b> |
+<b>Value</b> |
 opt.fromString&lt;T> | Parses string into any supported type.
 opt.toString&lt;T> | Converts value of any supported type into a string.

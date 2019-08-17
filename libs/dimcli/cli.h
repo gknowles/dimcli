@@ -285,8 +285,9 @@ public:
 
     //-----------------------------------------------------------------------
     // Changes config context to reference the options of the selected
-    // command. Use "" to specify the top level context. If a new command is
-    // selected it will be created in the command group of the current context.
+    // command. Use an empty string to specify the top level context. If a
+    // new command is selected it will be created in the command group of the
+    // current context.
     Cli & command(std::string const & name, std::string const & group = {});
 
     // Function signature of actions that are tied to commands.
@@ -559,8 +560,8 @@ public:
     // Program name received in argv[0]
     std::string const & progName() const;
 
-    // Command to run, as selected by argv, empty string if there are no
-    // commands defined or none were selected.
+    // Command to run, as selected by the arguments, empty string if there are
+    // no commands defined or none were selected.
     std::string const & commandMatched() const;
 
     // Executes the action of the selected command; returns true if it worked.

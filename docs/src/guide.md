@@ -440,8 +440,9 @@ Hello Mary!
 ~~~
 
 If you want a little more control over error output you can use the two
-argument version of cli.parse() and then get the results with cli.printError()
-or manually using cli.exitCode(), cli.errMsg(), and cli.errDetail().
+argument version of cli.parse() and then either print the results with
+cli.printError() or inspect it manually using cli.exitCode(), cli.errMsg(),
+and cli.errDetail().
 
 ~~~ cpp
 if (!cli.parse(argc, argv))
