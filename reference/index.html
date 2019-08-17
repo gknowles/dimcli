@@ -141,7 +141,7 @@ Distributed under the Boost Software License, Version 1.0.
 <tbody>
 <tr>
 <td>cli.<a href="../guide/#subcommands">command</a></td>
-<td>Changes config context to reference the options of the selected command. Use "" to specify the top level context. If a new command is selected it will be created in the command group of the current context.</td>
+<td>Changes config context to reference the options of the selected command. Use an empty string to specify the top level context. If a new command is selected it will be created in the command group of the current context.</td>
 </tr>
 <tr>
 <td>cli.<a href="../guide/#help-subcommand">helpCmd</a></td>
@@ -347,7 +347,7 @@ Distributed under the Boost Software License, Version 1.0.
 </tr>
 <tr>
 <td>cli.commandMatched</td>
-<td>Command to run, as selected by argv, empty string if there are no commands defined or none were selected.</td>
+<td>Command to run, as selected by the arguments, empty string if there are no commands defined or none were selected.</td>
 </tr>
 <tr>
 <td>opt.<a href="../guide/#life-after-parsing">operator&nbsp;bool</a></td>
@@ -537,7 +537,7 @@ Distributed under the Boost Software License, Version 1.0.
 <table>
 <thead>
 <tr>
-<th>Static member functions</th>
+<th>Argv</th>
 <th>&nbsp;</th>
 </tr>
 </thead>
@@ -579,7 +579,7 @@ Distributed under the Boost Software License, Version 1.0.
 <td>Join using Windows rules.</td>
 </tr>
 <tr>
-<td><b>Member functions</b></td>
+<td><b>Value</b></td>
 <td></td>
 </tr>
 <tr>
