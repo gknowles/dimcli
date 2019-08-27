@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## dimcli 5.0.1 (2019-08-26)
+- Added - Support and automated testing for VS2019
+
 ## dimcli 5.0.0 (2019-07-11)
 - Added - Configuration option to unconditionally exclude \<filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
