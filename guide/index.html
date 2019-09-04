@@ -1756,7 +1756,7 @@ opt.timeUnits().</p>
 <pre><code class="cpp">int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; length = cli.opt&lt;double&gt;(&quot;l length&quot;)
-        .anyUnits({{&quot;yd&quot;, 36}, {&quot;ft&quot;, 12}, {&quot;in&quot;, 1}, {&quot;mil&quot;, 0.001})
+        .anyUnits({{&quot;yd&quot;, 36}, {&quot;ft&quot;, 12}, {&quot;in&quot;, 1}, {&quot;mil&quot;, 0.001}})
         .desc(&quot;Length, in inches&quot;);
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();
