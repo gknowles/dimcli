@@ -1499,7 +1499,7 @@ Accept length in Imperial Units:
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & length = cli.opt<double>("l length")
-        .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001})
+        .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001}})
         .desc("Length, in inches");
     if (!cli.parse(cerr, argc, argv))
         return cli.exitCode();

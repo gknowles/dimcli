@@ -1558,6 +1558,20 @@ Options:
         EXPECT_PARSE(cli, "-v1ms -v1us -v1ns");
         EXPECT(dbls[0] == 1e-3 && dbls[1] == 1e-6 && dbls[2] == 1e-9);
     }
+
+    // any units
+    {
+        cli = {};
+        auto & length = cli.opt<double>("l length")
+            .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001}})
+            .desc("Length, in inches");
+        EXPECT_PARSE(cli, "-l 1yd");
+        EXPECT(*length == 36);
+        EXPECT_PARSE(cli, "-l 3ft");
+        EXPECT(*length == 36);
+        EXPECT_PARSE(cli, "-l 36");
+        EXPECT(*length == 36);
+    }
 }
 
 
