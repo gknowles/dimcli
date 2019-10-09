@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+- Fixed - Rename 'boolean' variable to avoid name conflict with std::boolean
 
 ## dimcli 5.0.1 (2019-08-26)
 - Added - Support and automated testing for VS2019

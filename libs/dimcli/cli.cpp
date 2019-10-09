@@ -392,8 +392,8 @@ GroupConfig const & Cli::Config::findGrpOrDie(Cli const & cli) {
 ***/
 
 //===========================================================================
-Cli::OptBase::OptBase(string const & names, bool boolean)
-    : m_bool{boolean}
+Cli::OptBase::OptBase(string const & names, bool flag)
+    : m_bool{flag}
     , m_names{names}
 {
     // set m_fromName and assert if names is malformed
@@ -526,12 +526,12 @@ static bool includeName(
     OptName const & name,
     NameListType type,
     Cli::OptBase const & opt,
-    bool boolean,
+    bool flag,
     bool inverted
 ) {
     if (name.opt != &opt)
         return false;
-    if (boolean) {
+    if (flag) {
         if (type == kNameEnable)
             return !name.invert;
         if (type == kNameDisable)

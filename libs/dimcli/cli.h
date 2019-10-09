@@ -778,7 +778,7 @@ public:
     };
 
 public:
-    OptBase(std::string const & keys, bool boolean);
+    OptBase(std::string const & keys, bool flag);
     virtual ~OptBase() {}
 
     //-----------------------------------------------------------------------
@@ -1063,7 +1063,7 @@ std::string Cli::OptBase::toValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() const {
 template <typename A, typename T>
 class Cli::OptShim : public OptBase {
 public:
-    OptShim(std::string const & keys, bool boolean);
+    OptShim(std::string const & keys, bool flag);
     OptShim(OptShim const &) = delete;
     OptShim & operator=(OptShim const &) = delete;
 
@@ -1250,8 +1250,8 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-Cli::OptShim<A, T>::OptShim(std::string const & keys, bool boolean)
-    : OptBase(keys, boolean)
+Cli::OptShim<A, T>::OptShim(std::string const & keys, bool flag)
+    : OptBase(keys, flag)
 {
     if (std::is_arithmetic<T>::value)
         this->imbue(std::locale(""));
