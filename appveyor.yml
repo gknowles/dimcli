@@ -1,25 +1,17 @@
 # Copyright Glen Knowles 2016 - 2019.
 # Distributed under the Boost Software License, Version 1.0.
 version: 0.1.{build}
-image:
-  - Visual Studio 2017
-  - Visual Studio 2019
 environment:
   matrix:
-    - toolset: v140
-      generator: Visual Studio 16 2019
-    - toolset: v141
-      generator: Visual Studio 15 2017
-    - toolset: v142
-      generator: Visual Studio 16 2019
-matrix:
-  exclude:
-    - image: Visual Studio 2017
-      toolset: v140
-    - image: Visual Studio 2019
-      toolset: v141
-    - image: Visual Studio 2017
-      toolset: v142
+    - TOOLSET: v140
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+    - TOOLSET: v141
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 15 2017
+    - TOOLSET: v142
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
 platform:
   - Win32
   - x64
@@ -30,7 +22,7 @@ configuration:
 build_script:
   - md build
   - cd build
-  - cmake -G "%generator%" -A %platform% -T %toolset% ..
+  - cmake -G "%GENERATOR%" -A %platform% -T %TOOLSET% ..
   - cmake . -DCMAKE_BUILD_TYPE=%configuration%
         -DCMAKE_INSTALL_PREFIX=publish
         -DINSTALL_LIBS:BOOL=ON
