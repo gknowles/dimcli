@@ -25,22 +25,22 @@ configuration:
 for:
   - matrix:
       only:
-        - image: Visual Studio 2017
-        - image: Visual Studio 2019
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     build_script:
       - md build
       - cd build
       - cmake -G "%GENERATOR%" -A %platform% -T %TOOLSET% ..
       - cmake . -DCMAKE_BUILD_TYPE=%configuration%
-            -DCMAKE_INSTALL_PREFIX=publish
-            -DINSTALL_LIBS:BOOL=ON
+          -DCMAKE_INSTALL_PREFIX=publish
+          -DINSTALL_LIBS:BOOL=ON
       - cmake --build . --target install --config %configuration%
       - cd publish
       - 7z a dimcli-latest.zip include lib
       - cd ..\..
   - matrix:
       only:
-        - image: Ubuntu
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     build_script:
       - export CXX=g++-7 CC=gcc-7
       - mkdir -p build && cd build
