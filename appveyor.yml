@@ -12,6 +12,9 @@ environment:
     - TOOLSET: v142
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
+    - TOOLSET: x64
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+
 platform:
   - Win32
   - x64
@@ -19,17 +22,30 @@ configuration:
   - Debug
   - Release
 
-build_script:
-  - md build
-  - cd build
-  - cmake -G "%GENERATOR%" -A %platform% -T %TOOLSET% ..
-  - cmake . -DCMAKE_BUILD_TYPE=%configuration%
-        -DCMAKE_INSTALL_PREFIX=publish
-        -DINSTALL_LIBS:BOOL=ON
-  - cmake --build . --target install --config %configuration%
-  - cd publish
-  - 7z a dimcli-latest.zip include lib
-  - cd ..\..
+for:
+  - matrix:
+      except:
+        - image: Ubuntu
+    build_script:
+      - md build
+      - cd build
+      - cmake -G "%GENERATOR%" -A %platform% -T %TOOLSET% ..
+      - cmake . -DCMAKE_BUILD_TYPE=%configuration%
+            -DCMAKE_INSTALL_PREFIX=publish
+            -DINSTALL_LIBS:BOOL=ON
+      - cmake --build . --target install --config %configuration%
+      - cd publish
+      - 7z a dimcli-latest.zip include lib
+      - cd ..\..
+  - matrix:
+      only:
+        - image: Ubuntu
+    build_script:
+      - export CXX=g++-7 CC=gcc-7
+      - mkdir -p build && cd build
+      - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+      - cmake -- build .
+      - ../bin/cli --test
 
 artifacts:
   - path: build\publish\dimcli-latest.zip
