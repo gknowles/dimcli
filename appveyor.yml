@@ -15,11 +15,11 @@ environment:
 matrix:
   exclude:
     - image: Visual Studio 2017
-      toolset:
-        - v140
-        - v142
+      toolset: v140
     - image: Visual Studio 2019
       toolset: v141
+    - image: Visual Studio 2017
+      toolset: v142
 platform:
   - Win32
   - x64
