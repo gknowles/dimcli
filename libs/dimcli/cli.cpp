@@ -816,9 +816,10 @@ static bool defCmdAction(Cli & cli) {
     if (cli.commandMatched().empty()) {
         return cli.fail(kExitUsage, "No command given.");
     } else {
-        ostringstream os;
-        os << "Command '" << cli.commandMatched() << "' has not been implemented.";
-        return cli.fail(kExitSoftware, os.str());
+        return cli.fail(
+            kExitSoftware,
+            "Command '" + cli.commandMatched() + "' has not been implemented."
+        );
     }
 }
 
@@ -828,12 +829,8 @@ static bool helpCmdAction(Cli & cli) {
     ndx.index(cli, cli.commandMatched(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
-    if (!cli.commandExists(cmd)) {
-        return cli.fail(
-            kExitUsage,
-            "Command 'help': Help requested for unknown command: " + cmd
-        );
-    }
+    if (!cli.commandExists(cmd))
+        return cli.badUsage("Help requested for unknown command", cmd);
     if (usage) {
         cli.printUsageEx(cli.conout(), {}, cmd);
     } else {
@@ -2168,10 +2165,10 @@ bool Cli::exec() {
     auto & cmd = m_cfg->cmds[name];
     if (!cmd.action) {
         // Most likely parse failed, was never run, or "this" was reset.
-        assert(!"command found by parse no longer exists");
+        assert(!"command found by parse no longer defined");
         return fail(
             Dim::kExitSoftware,
-            "Subcommand found by parse no longer exists."
+            "Command '" + name + "' found by parse no longer defined."
         );
     }
     if (!cmd.action(*this)) {
@@ -2184,7 +2181,7 @@ bool Cli::exec() {
         assert(!"command failed without setting exit code");
         return fail(
             Dim::kExitSoftware,
-            "Subcommand failed without setting exit code."
+            "Command '" + name + "' failed without setting exit code."
         );
     }
     return true;
