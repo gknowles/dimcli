@@ -229,14 +229,20 @@ usage: test [--help] [b]
         cli.command("empty").action({});
         EXPECT_PARSE(cli, "empty");
         (void) cli.exec();
-        EXPECT_ERR(cli, "Error: Subcommand found by parse no longer exists.\n");
+        EXPECT_ERR(
+            cli,
+            "Error: Command 'empty' found by parse no longer defined.\n"
+        );
         EXPECT_ASSERT(1 + R"(
-!"command found by parse no longer exists"
+!"command found by parse no longer defined"
 )");
         cli.action([](auto &) { return false; });
         EXPECT_PARSE(cli, "empty");
         (void) cli.exec();
-        EXPECT_ERR(cli, "Error: Subcommand failed without setting exit code.\n");
+        EXPECT_ERR(
+            cli,
+            "Error: Command 'empty' failed without setting exit code.\n"
+        );
         EXPECT_ASSERT(1 + R"(
 !"command failed without setting exit code"
 )");
