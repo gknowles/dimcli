@@ -4,13 +4,13 @@ version: 0.1.{build}
 environment:
   matrix:
     - image: Visual Studio 2019
-	  toolset: v140
+      toolset: v140
       generator: Visual Studio 16 2019
     - image: Visual Studio 2017
-	  toolset: v141
+      toolset: v141
       generator: Visual Studio 15 2017
     - image: Visual Studio 2019
-	  toolset: v142
+      toolset: v142
       generator: Visual Studio 16 2019
 platform:
   - Win32
