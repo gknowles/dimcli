@@ -3,15 +3,6 @@
 version: 0.1.{build}
 environment:
   matrix:
-    - TOOLSET: v140
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GENERATOR: Visual Studio 16 2019
-    - TOOLSET: v141
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      GENERATOR: Visual Studio 15 2017
-    - TOOLSET: v142
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GENERATOR: Visual Studio 16 2019
     - TOOLSET: x64
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
 
@@ -41,11 +32,12 @@ for:
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+        - platform: x64
     build_script:
       - export CXX=g++-7 CC=gcc-7
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-      - cmake -- build .
+      - cmake --build .
       - ../bin/cli --test
 
 artifacts:
