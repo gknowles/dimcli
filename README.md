@@ -5,9 +5,9 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| msvc 2015, msvc 2017, msvc 2019 | gcc 6, gcc 7, clang 3.6, clang 5.0 | test coverage |
-|:-------------------------------:|:----------------------------------:|:-------------:|
-| [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![Travis Status](https://travis-ci.org/gknowles/dimcli.svg?branch=master)](https://travis-ci.org/gknowles/dimcli) | [![codecov](https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg)](https://codecov.io/gh/gknowles/dimcli) |
+| msvc 2015, msvc 2017, msvc 2019 <br/> gcc 7, gcc 8, gcc 9, clang 6 | test coverage |
+|:------------------------------------------------------------------:|:-------------:|
+| [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![codecov](https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg)](https://codecov.io/gh/gknowles/dimcli) |
 
 C++ command line parser toolkit for kids of all ages.
 
