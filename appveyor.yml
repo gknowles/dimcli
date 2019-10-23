@@ -38,6 +38,7 @@ for:
       - cd publish
       - 7z a dimcli-latest.zip include lib
       - cd ..\..
+      - bin\cli --test
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -47,13 +48,10 @@ for:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-      - cmake --build .
+      - cmake --build . --config ${CONFIGURATION}
       - ../bin/cli --test
 
 artifacts:
   - path: build\publish\dimcli-latest.zip
     name: dimcli
     type: zip
-
-test_script:
-  - bin\cli --test
