@@ -42,7 +42,7 @@ for:
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-        - PLATFORM: x64
+          PLATFORM: x64
     build_script:
       - export CXX=g++-7 CC=gcc-7
       - export LANG=en_US.UTF-8
