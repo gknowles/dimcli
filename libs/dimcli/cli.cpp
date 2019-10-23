@@ -2277,8 +2277,8 @@ static void writeText(ostream & os, WrapPos & wp, string const & text) {
             base += 1;
         if (!*base)
             return;
-        auto nl = strchr(base, '\n');
-        auto ptr = strchr(base, ' ');
+        char const * nl = strchr(base, '\n');
+        char const * ptr = strchr(base, ' ');
         if (!ptr)
             ptr = text.c_str() + text.size();
         if (nl && nl < ptr) {
