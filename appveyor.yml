@@ -3,7 +3,23 @@
 version: 0.1.{build}
 environment:
   matrix:
-    - TOOLSET: x64
+    - CXX: clang++-6.0
+      CC: clang-6.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-5
+      CC: gcc-5
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-6
+      CC: gcc-6
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-8
+      CC: gcc-8
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-8
+      CC: gcc-8
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -47,7 +63,6 @@ for:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     build_script:
-      - export CXX=g++-7 CC=gcc-7
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
