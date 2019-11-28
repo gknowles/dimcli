@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2018.
+// Copyright Glen Knowles 2016 - 2019.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.cpp - dimcli
@@ -38,11 +38,11 @@ namespace fs = DIMCLI_LIB_FILESYSTEM;
 ***/
 
 // column where description text starts
-size_t const kMinDescCol = 11;
-size_t const kMaxDescCol = 28;
+const size_t kMinDescCol = 11;
+const size_t kMaxDescCol = 28;
 
 // maximum help text line length
-size_t const kMaxLineWidth = 79;
+const size_t kMaxLineWidth = 79;
 
 
 /****************************************************************************
@@ -52,7 +52,7 @@ size_t const kMaxLineWidth = 79;
 ***/
 
 // Name of group containing --help, --version, etc
-char const kInternalOptionGroup[] = "~";
+const char kInternalOptionGroup[] = "~";
 
 namespace {
 
@@ -109,26 +109,26 @@ struct Cli::OptIndex {
     bool m_allowCommands{};
 
     void index(
-        Cli const & cli,
-        string const & cmd,
+        const Cli & cli,
+        const string & cmd,
         bool requireVisible
     );
     bool findNamedArgs(
         vector<ArgKey> & namedArgs,
         size_t & colWidth,
-        Cli const & cli,
+        const Cli & cli,
         CommandConfig & cmd,
         NameListType type,
         bool flatten
     ) const;
     string nameList(
-        Cli const & cli,
-        OptBase const & opt,
+        const Cli & cli,
+        const OptBase & opt,
         NameListType type
     ) const;
 
     void index(OptBase & opt);
-    void indexName(OptBase & opt, string const & name, int pos);
+    void indexName(OptBase & opt, const string & name, int pos);
     void indexShortName(
         OptBase & opt,
         char name,
@@ -138,7 +138,7 @@ struct Cli::OptIndex {
     );
     void indexLongName(
         OptBase & opt,
-        string const & name,
+        const string & name,
         bool invert,
         bool optional,
         int pos
@@ -165,19 +165,19 @@ struct Cli::Config {
 
     static void touchAllCmds(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli);
-    static CommandConfig & findCmdAlways(Cli & cli, string const & name);
-    static CommandConfig const & findCmdOrDie(Cli const & cli);
+    static CommandConfig & findCmdAlways(Cli & cli, const string & name);
+    static const CommandConfig & findCmdOrDie(const Cli & cli);
 
     static GroupConfig & findCmdGrpAlways(Cli & cli);
-    static GroupConfig & findCmdGrpAlways(Cli & cli, string const & name);
-    static GroupConfig & findCmdGrpOrDie(Cli const & cli);
+    static GroupConfig & findCmdGrpAlways(Cli & cli, const string & name);
+    static GroupConfig & findCmdGrpOrDie(const Cli & cli);
 
     static GroupConfig & findGrpAlways(Cli & cli);
     static GroupConfig & findGrpAlways(
         CommandConfig & cmd,
-        string const & name
+        const string & name
     );
-    static GroupConfig const & findGrpOrDie(Cli const & cli);
+    static const GroupConfig & findGrpOrDie(const Cli & cli);
 };
 
 
@@ -188,7 +188,7 @@ struct Cli::Config {
 ***/
 
 // forward declarations
-static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, string const & val);
+static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static bool defCmdAction(Cli & cli);
 static void printChoices(
     ostream & os,
@@ -197,7 +197,7 @@ static void printChoices(
 
 //===========================================================================
 #if defined(_WIN32)
-static string displayName(string const & file) {
+static string displayName(const string & file) {
     char fname[_MAX_FNAME];
     _splitpath(file.c_str(), nullptr, nullptr, fname, nullptr);
     return fname;
@@ -231,7 +231,7 @@ static void replace(
 }
 
 //===========================================================================
-static string trim(string const & val) {
+static string trim(const string & val) {
     auto first = val.c_str();
     auto last = first + val.size();
     while (isspace(*first))
@@ -283,7 +283,7 @@ CommandConfig & Cli::Config::findCmdAlways(Cli & cli) {
 // static
 CommandConfig & Cli::Config::findCmdAlways(
     Cli & cli,
-    string const & name
+    const string & name
 ) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(name);
@@ -309,7 +309,7 @@ CommandConfig & Cli::Config::findCmdAlways(
 
 //===========================================================================
 // static
-CommandConfig const & Cli::Config::findCmdOrDie(Cli const & cli) {
+const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
     assert(i != cmds.end()
@@ -325,7 +325,7 @@ GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli) {
 
 //===========================================================================
 // static
-GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli, string const & name) {
+GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli, const string & name) {
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
     if (i != grps.end())
@@ -345,7 +345,7 @@ GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli, string const & name) {
 
 //===========================================================================
 // static
-GroupConfig & Cli::Config::findCmdGrpOrDie(Cli const & cli) {
+GroupConfig & Cli::Config::findCmdGrpOrDie(const Cli & cli) {
     auto & name = cli.cmdGroup();
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
@@ -364,7 +364,7 @@ GroupConfig & Cli::Config::findGrpAlways(Cli & cli) {
 // static
 GroupConfig & Cli::Config::findGrpAlways(
     CommandConfig & cmd,
-    string const & name
+    const string & name
 ) {
     auto i = cmd.groups.find(name);
     if (i != cmd.groups.end())
@@ -376,7 +376,7 @@ GroupConfig & Cli::Config::findGrpAlways(
 
 //===========================================================================
 // static
-GroupConfig const & Cli::Config::findGrpOrDie(Cli const & cli) {
+const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
     assert(i != grps.end()
@@ -392,7 +392,7 @@ GroupConfig const & Cli::Config::findGrpOrDie(Cli const & cli) {
 ***/
 
 //===========================================================================
-Cli::OptBase::OptBase(string const & names, bool flag)
+Cli::OptBase::OptBase(const string & names, bool flag)
     : m_bool{flag}
     , m_names{names}
 {
@@ -402,7 +402,7 @@ Cli::OptBase::OptBase(string const & names, bool flag)
 }
 
 //===========================================================================
-locale Cli::OptBase::imbue(locale const & loc) {
+locale Cli::OptBase::imbue(const locale & loc) {
     return m_interpreter.imbue(loc);
 }
 
@@ -417,7 +417,7 @@ string Cli::OptBase::defaultPrompt() const {
 }
 
 //===========================================================================
-void Cli::OptBase::setNameIfEmpty(string const & name) {
+void Cli::OptBase::setNameIfEmpty(const string & name) {
     if (m_fromName.empty())
         m_fromName = name;
 }
@@ -425,7 +425,7 @@ void Cli::OptBase::setNameIfEmpty(string const & name) {
 //===========================================================================
 bool Cli::OptBase::withUnits(
     long double & out,
-    string const & val,
+    const string & val,
     unordered_map<string, long double> const & units,
     int flags
 ) const {
@@ -468,8 +468,8 @@ bool Cli::OptBase::withUnits(
 
 //===========================================================================
 void Cli::OptIndex::index(
-    Cli const & cli,
-    string const & cmd,
+    const Cli & cli,
+    const string & cmd,
     bool requireVisible
 ) {
     m_argNames.clear();
@@ -491,7 +491,7 @@ void Cli::OptIndex::index(
 bool Cli::OptIndex::findNamedArgs(
     vector<ArgKey> & namedArgs,
     size_t & colWidth,
-    Cli const & cli,
+    const Cli & cli,
     CommandConfig & cmd,
     NameListType type,
     bool flatten
@@ -523,9 +523,9 @@ bool Cli::OptIndex::findNamedArgs(
 
 //===========================================================================
 static bool includeName(
-    OptName const & name,
+    const OptName & name,
     NameListType type,
-    Cli::OptBase const & opt,
+    const Cli::OptBase & opt,
     bool flag,
     bool inverted
 ) {
@@ -547,8 +547,8 @@ static bool includeName(
 
 //===========================================================================
 string Cli::OptIndex::nameList(
-    Cli const & cli,
-    Cli::OptBase const & opt,
+    const Cli & cli,
+    const Cli::OptBase & opt,
     NameListType type
 ) const {
     string list;
@@ -660,9 +660,9 @@ void Cli::OptIndex::index(OptBase & opt) {
 }
 
 //===========================================================================
-void Cli::OptIndex::indexName(OptBase & opt, string const & name, int pos) {
-    bool const kInvert = true;
-    bool const kOptional = true;
+void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
+    const bool kInvert = true;
+    const bool kOptional = true;
 
     auto where = m_argNames.end();
     switch (name[0]) {
@@ -741,7 +741,7 @@ void Cli::OptIndex::indexShortName(
 //===========================================================================
 void Cli::OptIndex::indexLongName(
     OptBase & opt,
-    string const & name,
+    const string & name,
     bool invert,
     bool optional,
     int pos
@@ -771,7 +771,7 @@ void Cli::OptIndex::indexLongName(
 
 //===========================================================================
 // static
-bool Cli::defParseAction(Cli & cli, OptBase & opt, string const & val) {
+bool Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
     if (opt.parseValue(val))
         return true;
 
@@ -782,10 +782,10 @@ bool Cli::defParseAction(Cli & cli, OptBase & opt, string const & val) {
 
 //===========================================================================
 // static
-bool Cli::requireAction(Cli & cli, OptBase & opt, string const &) {
+bool Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
     if (opt)
         return true;
-    string const & name = !opt.defaultFrom().empty()
+    const string & name = !opt.defaultFrom().empty()
         ? opt.defaultFrom()
         : "UNKNOWN";
     return cli.badUsage("No value given for " + name);
@@ -802,7 +802,7 @@ static bool helpBeforeAction(Cli &, vector<string> & args) {
 static bool helpOptAction(
     Cli & cli,
     Cli::Opt<bool> & opt,
-    string const & // val
+    const string & // val
 ) {
     if (*opt) {
         cli.printHelp(cli.conout(), {}, cli.commandMatched());
@@ -861,7 +861,7 @@ Cli::Cli()
 }
 
 //===========================================================================
-Cli::Cli(Cli const & from)
+Cli::Cli(const Cli & from)
     : m_cfg(from.m_cfg)
     , m_group(from.m_group)
     , m_command(from.m_command)
@@ -876,7 +876,7 @@ Cli::Cli(shared_ptr<Config> cfg)
 }
 
 //===========================================================================
-Cli & Cli::operator=(Cli const & from) {
+Cli & Cli::operator=(const Cli & from) {
     m_cfg = from.m_cfg;
     m_group = from.m_group;
     m_command = from.m_command;
@@ -899,7 +899,7 @@ Cli & Cli::operator=(Cli && from) noexcept {
 ***/
 
 //===========================================================================
-Cli::Opt<bool> & Cli::confirmOpt(string const & prompt) {
+Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes")
         .desc("Suppress prompting to allow execution.")
         .check([](auto &, auto & opt, auto &) { return *opt; })
@@ -921,8 +921,8 @@ Cli::Opt<string> & Cli::passwordOpt(bool confirm) {
 
 //===========================================================================
 Cli::Opt<bool> & Cli::versionOpt(
-    string const & version,
-    string const & progName
+    const string & version,
+    const string & progName
 ) {
     auto act = [version, progName](auto & cli, auto &/*opt*/, auto &/*val*/) {
         auto prog = string{progName};
@@ -938,36 +938,36 @@ Cli::Opt<bool> & Cli::versionOpt(
 }
 
 //===========================================================================
-Cli & Cli::group(string const & name) {
+Cli & Cli::group(const string & name) {
     m_group = name;
     Config::findGrpAlways(*this);
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::title(string const & val) {
+Cli & Cli::title(const string & val) {
     Config::findGrpAlways(*this).title = val;
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::sortKey(string const & val) {
+Cli & Cli::sortKey(const string & val) {
     Config::findGrpAlways(*this).sortKey = val;
     return *this;
 }
 
 //===========================================================================
-string const & Cli::title() const {
+const string & Cli::title() const {
     return Config::findGrpOrDie(*this).title;
 }
 
 //===========================================================================
-string const & Cli::sortKey() const {
+const string & Cli::sortKey() const {
     return Config::findGrpOrDie(*this).sortKey;
 }
 
 //===========================================================================
-Cli & Cli::command(string const & name, string const & grpName) {
+Cli & Cli::command(const string & name, const string & grpName) {
     Config::findCmdAlways(*this, name);
     m_command = name;
     m_group = grpName;
@@ -981,7 +981,7 @@ Cli & Cli::action(function<ActionFn> fn) {
 }
 
 //===========================================================================
-Cli & Cli::header(string const & val) {
+Cli & Cli::header(const string & val) {
     auto & hdr = Config::findCmdAlways(*this).header;
     hdr = val;
     if (hdr.empty())
@@ -990,13 +990,13 @@ Cli & Cli::header(string const & val) {
 }
 
 //===========================================================================
-Cli & Cli::desc(string const & val) {
+Cli & Cli::desc(const string & val) {
     Config::findCmdAlways(*this).desc = val;
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::footer(string const & val) {
+Cli & Cli::footer(const string & val) {
     auto & ftr = Config::findCmdAlways(*this).footer;
     ftr = val;
     if (ftr.empty())
@@ -1005,17 +1005,17 @@ Cli & Cli::footer(string const & val) {
 }
 
 //===========================================================================
-string const & Cli::header() const {
+const string & Cli::header() const {
     return Config::findCmdOrDie(*this).header;
 }
 
 //===========================================================================
-string const & Cli::desc() const {
+const string & Cli::desc() const {
     return Config::findCmdOrDie(*this).desc;
 }
 
 //===========================================================================
-string const & Cli::footer() const {
+const string & Cli::footer() const {
     return Config::findCmdOrDie(*this).footer;
 }
 
@@ -1041,36 +1041,36 @@ Cli & Cli::helpNoArgs() {
 }
 
 //===========================================================================
-Cli & Cli::cmdGroup(string const & name) {
+Cli & Cli::cmdGroup(const string & name) {
     Config::findCmdAlways(*this).cmdGroup = name;
     Config::findCmdGrpAlways(*this);
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::cmdTitle(string const & val) {
+Cli & Cli::cmdTitle(const string & val) {
     Config::findCmdGrpAlways(*this).title = val;
     return *this;
 }
 
 //===========================================================================
-Cli & Cli::cmdSortKey(string const & key) {
+Cli & Cli::cmdSortKey(const string & key) {
     Config::findCmdGrpAlways(*this).sortKey = key;
     return *this;
 }
 
 //===========================================================================
-string const & Cli::cmdGroup() const {
+const string & Cli::cmdGroup() const {
     return Config::findCmdOrDie(*this).cmdGroup;
 }
 
 //===========================================================================
-string const & Cli::cmdTitle() const {
+const string & Cli::cmdTitle() const {
     return Config::findCmdGrpOrDie(*this).title;
 }
 
 //===========================================================================
-string const & Cli::cmdSortKey() const {
+const string & Cli::cmdSortKey() const {
     return Config::findCmdGrpOrDie(*this).sortKey;
 }
 
@@ -1081,7 +1081,7 @@ void Cli::responseFiles(bool enable) {
 
 #if !defined(DIMCLI_LIB_NO_ENV)
 //===========================================================================
-void Cli::envOpts(string const & var) {
+void Cli::envOpts(const string & var) {
     m_cfg->envOpts = var;
 }
 #endif
@@ -1115,7 +1115,7 @@ void Cli::addOpt(unique_ptr<OptBase> src) {
 }
 
 //===========================================================================
-Cli::OptBase * Cli::findOpt(void const * value) {
+Cli::OptBase * Cli::findOpt(const void * value) {
     if (value) {
         for (auto && opt : m_cfg->opts) {
             if (opt->sameValue(value))
@@ -1134,7 +1134,7 @@ Cli::OptBase * Cli::findOpt(void const * value) {
 
 //===========================================================================
 // static
-vector<string> Cli::toArgv(string const & cmdline) {
+vector<string> Cli::toArgv(const string & cmdline) {
 #if defined(_WIN32)
     return toWindowsArgv(cmdline);
 #else
@@ -1171,8 +1171,8 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
 
 //===========================================================================
 // static
-vector<char const *> Cli::toPtrArgv(vector<string> const & args) {
-    vector<char const *> argv;
+vector<const char *> Cli::toPtrArgv(vector<string> const & args) {
+    vector<const char *> argv;
     argv.reserve(args.size() + 1);
     for (auto && arg : args)
         argv.push_back(arg.data());
@@ -1203,10 +1203,10 @@ vector<char const *> Cli::toPtrArgv(vector<string> const & args) {
 //   Should: * ? [ # ~ = %
 //===========================================================================
 // static
-vector<string> Cli::toGlibArgv(string const & cmdline) {
+vector<string> Cli::toGlibArgv(const string & cmdline) {
     vector<string> out;
-    char const * cur = cmdline.c_str();
-    char const * last = cur + cmdline.size();
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
 
     string arg;
 
@@ -1319,10 +1319,10 @@ IN_DQUOTE:
 //  - single quotes and double quotes: escape each other and whitespace.
 //===========================================================================
 // static
-vector<string> Cli::toGnuArgv(string const & cmdline) {
+vector<string> Cli::toGnuArgv(const string & cmdline) {
     vector<string> out;
-    char const * cur = cmdline.c_str();
-    char const * last = cur + cmdline.size();
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
 
     string arg;
     char quote;
@@ -1411,10 +1411,10 @@ static void appendBackslashes(string & arg, int & backslashes) {
 
 //===========================================================================
 // static
-vector<string> Cli::toWindowsArgv(string const & cmdline) {
+vector<string> Cli::toWindowsArgv(const string & cmdline) {
     vector<string> out;
-    char const * cur = cmdline.c_str();
-    char const * last = cur + cmdline.size();
+    const char * cur = cmdline.c_str();
+    const char * last = cur + cmdline.size();
 
     string arg;
     int backslashes = 0;
@@ -1519,7 +1519,7 @@ string Cli::toCmdline(size_t argc, char * argv[]) {
 
 //===========================================================================
 // static
-string Cli::toCmdline(size_t argc, char const * argv[]) {
+string Cli::toCmdline(size_t argc, const char * argv[]) {
     return toCmdline(argc, (char **) argv);
 }
 
@@ -1639,7 +1639,7 @@ static bool expandResponseFiles(
 //===========================================================================
 // Returns false on error, if there was an error content will either be empty
 // or - if there was a transcoding error - contain the original content.
-static bool loadFileUtf8(string & content, fs::path const & fn) {
+static bool loadFileUtf8(string & content, const fs::path & fn) {
     content.clear();
 
     error_code ec;
@@ -1665,7 +1665,7 @@ static bool loadFileUtf8(string & content, fs::path const & fn) {
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
         wstring_convert<CodecvtWchar> wcvt("");
-        auto base = reinterpret_cast<wchar_t const *>(content.data());
+        auto base = reinterpret_cast<const wchar_t *>(content.data());
         auto tmp = (string) wcvt.to_bytes(
             base + 1,
             base + content.size() / sizeof *base
@@ -1747,7 +1747,7 @@ static bool expandResponseFiles(
 //===========================================================================
 // static
 vector<pair<string, double>> Cli::siUnitMapping(
-    string const & symbol,
+    const string & symbol,
     int flags
 ) {
     vector<pair<string, double>> units({
@@ -1812,7 +1812,7 @@ Cli & Cli::resetValues() {
 }
 
 //===========================================================================
-bool Cli::prompt(OptBase & opt, string const & msg, int flags) {
+bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
     if (!opt.from().empty())
         return true;
     auto & is = conin();
@@ -1875,9 +1875,9 @@ bool Cli::prompt(OptBase & opt, string const & msg, int flags) {
 //===========================================================================
 bool Cli::parseValue(
     OptBase & opt,
-    string const & name,
+    const string & name,
     size_t pos,
-    char const ptr[]
+    const char ptr[]
 ) {
     if (!opt.assign(name, pos)) {
         string prefix = "Too many '" + name + "' values";
@@ -1898,9 +1898,9 @@ bool Cli::parseValue(
 
 //===========================================================================
 bool Cli::badUsage(
-    string const & prefix,
-    string const & value,
-    string const & detail
+    const string & prefix,
+    const string & value,
+    const string & detail
 ) {
     string out;
     auto & cmd = commandMatched();
@@ -1916,16 +1916,16 @@ bool Cli::badUsage(
 
 //===========================================================================
 bool Cli::badUsage(
-    OptBase const & opt,
-    string const & value,
-    string const & detail
+    const OptBase & opt,
+    const string & value,
+    const string & detail
 ) {
     string prefix = "Invalid '" + opt.from() + "' value";
     return badUsage(prefix, value, detail);
 }
 
 //===========================================================================
-bool Cli::fail(int code, string const & msg, string const & detail) {
+bool Cli::fail(int code, const string & msg, const string & detail) {
     m_cfg->exitCode = code;
     m_cfg->errMsg = msg;
     m_cfg->errDetail = detail;
@@ -1953,7 +1953,7 @@ bool Cli::parse(vector<string> & args) {
 #if !defined(DIMCLI_LIB_NO_ENV)
     // insert environment options
     if (m_cfg->envOpts.size()) {
-        if (char const * val = getenv(m_cfg->envOpts.c_str()))
+        if (const char * val = getenv(m_cfg->envOpts.c_str()))
             replace(args, 1, 0, toArgv(val));
     }
 #endif
@@ -1984,7 +1984,7 @@ bool Cli::parse(vector<string> & args) {
 
     for (; argPos < argc; ++argPos, ++arg) {
         OptName argName;
-        char const * equal = nullptr;
+        const char * equal = nullptr;
         auto ptr = arg->c_str();
         if (*ptr == '-' && ptr[1] && moreOpts) {
             ptr += 1;
@@ -2140,22 +2140,22 @@ int Cli::exitCode() const {
 };
 
 //===========================================================================
-string const & Cli::errMsg() const {
+const string & Cli::errMsg() const {
     return m_cfg->errMsg;
 }
 
 //===========================================================================
-string const & Cli::errDetail() const {
+const string & Cli::errDetail() const {
     return m_cfg->errDetail;
 }
 
 //===========================================================================
-string const & Cli::progName() const {
+const string & Cli::progName() const {
     return m_cfg->progName;
 }
 
 //===========================================================================
-string const & Cli::commandMatched() const {
+const string & Cli::commandMatched() const {
     return m_cfg->command;
 }
 
@@ -2216,7 +2216,7 @@ bool Cli::exec(ostream & os, vector<string> & args) {
 }
 
 //===========================================================================
-bool Cli::commandExists(string const & name) const {
+bool Cli::commandExists(const string & name) const {
     auto & cmds = m_cfg->cmds;
     return cmds.find(name) != cmds.end();
 }
@@ -2238,9 +2238,9 @@ struct WrapPos {
 
 struct ChoiceKey {
     size_t pos;
-    char const * key;
-    char const * desc;
-    char const * sortKey;
+    const char * key;
+    const char * desc;
+    const char * sortKey;
     bool def;
 };
 
@@ -2254,7 +2254,7 @@ static void writeNewline(ostream & os, WrapPos & wp) {
 
 //===========================================================================
 // Write token, potentially adding a line break first.
-static void writeToken(ostream & os, WrapPos & wp, string const & token) {
+static void writeToken(ostream & os, WrapPos & wp, const string & token) {
     if (wp.pos + token.size() + 1 > wp.maxWidth) {
         if (wp.pos > wp.prefix.size()) {
             writeNewline(os, wp);
@@ -2270,15 +2270,15 @@ static void writeToken(ostream & os, WrapPos & wp, string const & token) {
 
 //===========================================================================
 // Write series of tokens, collapsing (and potentially breaking on) spaces.
-static void writeText(ostream & os, WrapPos & wp, string const & text) {
-    char const * base = text.c_str();
+static void writeText(ostream & os, WrapPos & wp, const string & text) {
+    const char * base = text.c_str();
     for (;;) {
         while (*base == ' ')
             base += 1;
         if (!*base)
             return;
-        char const * nl = strchr(base, '\n');
-        char const * ptr = strchr(base, ' ');
+        const char * nl = strchr(base, '\n');
+        const char * ptr = strchr(base, ' ');
         if (!ptr)
             ptr = text.c_str() + text.size();
         if (nl && nl < ptr) {
@@ -2298,7 +2298,7 @@ static void writeText(ostream & os, WrapPos & wp, string const & text) {
 static void writeDescCol(
     ostream & os,
     WrapPos & wp,
-    string const & text,
+    const string & text,
     size_t descCol
 ) {
     if (text.empty())
@@ -2316,7 +2316,7 @@ static void writeDescCol(
 }
 
 //===========================================================================
-string Cli::descStr(Cli::OptBase const & opt) const {
+string Cli::descStr(const Cli::OptBase & opt) const {
     string desc = opt.m_desc;
     string tmp;
     if (!opt.m_choiceDescs.empty()) {
@@ -2379,7 +2379,7 @@ static void writeChoices(
     size_t colWidth = 0;
     vector<ChoiceKey> keys;
     getChoiceKeys(keys, colWidth, choices);
-    size_t const indent = 6;
+    const size_t indent = 6;
     colWidth = max(min(colWidth + indent + 1, kMaxDescCol), kMinDescCol);
 
     string desc;
@@ -2433,8 +2433,8 @@ static void printChoices(
 //===========================================================================
 int Cli::printHelp(
     ostream & os,
-    string const & progName,
-    string const & cmdName
+    const string & progName,
+    const string & cmdName
 ) {
     auto & cmd = Config::findCmdAlways(*this, cmdName);
     auto & top = Config::findCmdAlways(*this, "");
@@ -2467,15 +2467,15 @@ int Cli::printHelp(
 //===========================================================================
 int Cli::writeUsageImpl(
     ostream & os,
-    string const & arg0,
-    string const & cmdName,
+    const string & arg0,
+    const string & cmdName,
     bool expandedOptions
 ) {
     OptIndex ndx;
     ndx.index(*this, cmdName, true);
     auto & cmd = Config::findCmdAlways(*this, cmdName);
     auto prog = displayName(arg0.empty() ? progName() : arg0);
-    string const usageStr{"usage: "};
+    const string usageStr{"usage: "};
     os << usageStr << prog;
     WrapPos wp;
     wp.pos = prog.size() + usageStr.size();
@@ -2524,8 +2524,8 @@ int Cli::writeUsageImpl(
 //===========================================================================
 int Cli::printUsage(
     ostream & os,
-    string const & arg0,
-    string const & cmd
+    const string & arg0,
+    const string & cmd
 ) {
     return writeUsageImpl(os, arg0, cmd, false);
 }
@@ -2533,8 +2533,8 @@ int Cli::printUsage(
 //===========================================================================
 int Cli::printUsageEx(
     ostream & os,
-    string const & arg0,
-    string const & cmd
+    const string & arg0,
+    const string & cmd
 ) {
     return writeUsageImpl(os, arg0, cmd, true);
 }
@@ -2549,7 +2549,7 @@ static size_t clampDescWidth(size_t colWidth) {
 }
 
 //===========================================================================
-void Cli::printPositionals(ostream & os, string const & cmd) {
+void Cli::printPositionals(ostream & os, const string & cmd) {
     OptIndex ndx;
     ndx.index(*this, cmd, true);
     size_t colWidth = 0;
@@ -2575,7 +2575,7 @@ void Cli::printPositionals(ostream & os, string const & cmd) {
 }
 
 //===========================================================================
-void Cli::printOptions(ostream & os, string const & cmdName) {
+void Cli::printOptions(ostream & os, const string & cmdName) {
     OptIndex ndx;
     ndx.index(*this, cmdName, true);
     auto & cmd = Config::findCmdAlways(*this, cmdName);
@@ -2588,7 +2588,7 @@ void Cli::printOptions(ostream & os, string const & cmdName) {
     colWidth = clampDescWidth(colWidth + 3);
 
     WrapPos wp;
-    char const * gname = nullptr;
+    const char * gname = nullptr;
     for (auto && key : namedArgs) {
         if (!gname || key.opt->m_group != gname) {
             gname = key.opt->m_group.c_str();
@@ -2626,9 +2626,9 @@ void Cli::printCommands(ostream & os) {
 
     size_t colWidth = 0;
     struct CmdKey {
-        char const * name;
-        CommandConfig const * cmd;
-        GroupConfig const * grp;
+        const char * name;
+        const CommandConfig * cmd;
+        const GroupConfig * grp;
     };
     vector<CmdKey> keys;
     for (auto && cmd : m_cfg->cmds) {
@@ -2652,7 +2652,7 @@ void Cli::printCommands(ostream & os) {
     });
 
     WrapPos wp;
-    char const * gname = nullptr;
+    const char * gname = nullptr;
     for (auto && key : keys) {
         if (!gname || key.grp->name != gname) {
             gname = key.grp->name.c_str();

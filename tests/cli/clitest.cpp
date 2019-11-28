@@ -16,9 +16,9 @@ using namespace std;
 ***/
 
 #if defined(_WIN32)
-char const kCommand[] = "test.exe";
+const char kCommand[] = "test.exe";
 #else
-char const kCommand[] = "test";
+const char kCommand[] = "test";
 #endif
 
 static int s_errors;
@@ -43,7 +43,7 @@ static int s_errors;
 #define EXPECT_ASSERT(text) assertTest(__LINE__, text)
 
 //===========================================================================
-void failed(int line, char const msg[]) {
+void failed(int line, const char msg[]) {
     cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
     s_errors += 1;
 }
@@ -52,7 +52,7 @@ void failed(int line, char const msg[]) {
 void parseTest(
     int line,
     Dim::Cli & cli,
-    string const & cmdline = {},
+    const string & cmdline = {},
     bool continueFlag = true,
     int exitCode = -1
 ) {
@@ -73,7 +73,7 @@ void parseTest(
 }
 
 //===========================================================================
-void errTest(int line, Dim::Cli & cli, string const & errText) {
+void errTest(int line, Dim::Cli & cli, const string & errText) {
     ostringstream os;
     cli.printError(os);
     auto tmp = os.str();
@@ -86,8 +86,8 @@ void errTest(int line, Dim::Cli & cli, string const & errText) {
 void helpTest(
     int line,
     Dim::Cli & cli,
-    string const & cmd,
-    string const & helpText
+    const string & cmd,
+    const string & helpText
 ) {
     ostringstream os;
     cli.printHelp(os, kCommand, cmd);
@@ -101,8 +101,8 @@ void helpTest(
 void usageTest(
     int line,
     Dim::Cli & cli,
-    string const & cmd,
-    string const & usageText
+    const string & cmd,
+    const string & usageText
 ) {
     ostringstream os;
     cli.printUsageEx(os, kCommand, cmd);
@@ -115,8 +115,8 @@ void usageTest(
 //===========================================================================
 void toArgvTest(
     int line,
-    function<vector<string>(string const &)> fn,
-    string const & cmdline,
+    function<vector<string>(const string &)> fn,
+    const string & cmdline,
     vector<string> const & argv
 ) {
     auto args = fn(cmdline);
@@ -127,9 +127,9 @@ void toArgvTest(
 void toCmdlineTest(
     int line,
     function<string(size_t, char**)> fn,
-    function<vector<string>(string const &)> fnv,
+    function<vector<string>(const string &)> fnv,
     vector<string> const & argv,
-    string const & cmdline
+    const string & cmdline
 ) {
     auto pargs = Dim::Cli::toPtrArgv(argv);
     auto tmp = fn(pargs.size(), (char **) pargs.data());
@@ -150,18 +150,18 @@ void toCmdlineTest(
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
 
 struct AssertInfo {
-    char const * text;
+    const char * text;
     unsigned line;
 };
 vector<AssertInfo> s_asserts;
 
 //===========================================================================
-void Dim::assertHandler(char const expr[], unsigned line) {
+void Dim::assertHandler(const char expr[], unsigned line) {
     s_asserts.push_back({expr, line});
 }
 
 //===========================================================================
-void assertTest(int line, char const text[]) {
+void assertTest(int line, const char text[]) {
     string tmp;
     for (auto && ai : s_asserts) {
         tmp += ai.text;
@@ -315,7 +315,7 @@ void valueTests() {
         cli = {};
         auto & sum = cli.opt<int>("n number", 1)
             .desc("numbers to multiply")
-            .parse([](auto & cli, auto & arg, string const & val) {
+            .parse([](auto & cli, auto & arg, const string & val) {
                 int tmp = *arg;
                 if (!arg.parseValue(val))
                     return cli.badUsage(
@@ -907,7 +907,7 @@ c\d)", {"ab$c\\d"});
     }
 
     // argv to/from cmdline
-    char const cmdline[] = "a b c";
+    const char cmdline[] = "a b c";
     auto a1 = cli.toArgv(cmdline);
     EXPECT(cli.toCmdline(a1) == cmdline);
     auto p1 = cli.toPtrArgv(a1);
@@ -1067,7 +1067,7 @@ Options:
 
 //===========================================================================
 template<typename T, int N>
-void writeRsp(char const path[], T const (&data)[N]) {
+void writeRsp(const char path[], T const (&data)[N]) {
     fstream f(path, ios::out | ios::trunc | ios::binary);
     f.write((char *) data, sizeof *data * (N - 1));
 }
@@ -1152,9 +1152,9 @@ void execTests() {
     Dim::CliLocal cli;
     ostringstream out;
 
-    char const * argsNone[] = { "test", nullptr };
+    const char * argsNone[] = { "test", nullptr };
     auto nargsNone = sizeof argsNone / sizeof *argsNone - 1;
-    char const * argsUnknown[] = { "test", "unknown", nullptr };
+    const char * argsUnknown[] = { "test", "unknown", nullptr };
     auto nargsUnknown = sizeof argsUnknown / sizeof *argsUnknown - 1;
 
     auto vargsNone = vector<string>{argsNone, argsNone + nargsNone};

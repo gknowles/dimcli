@@ -9,14 +9,14 @@
 using namespace std::chrono;
 
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
-void Dim::assertHandler(char const text[], unsigned line)
+void Dim::assertHandler(const char text[], unsigned line)
 {}
 #endif
 
-inline bool doubleequals(double const a, double const b)
+inline bool doubleequals(const double a, const double b)
 {
-    static double const delta = 0.0001;
-    double const diff = a - b;
+    static const double delta = 0.0001;
+    const double diff = a - b;
     return diff < delta && diff > -delta;
 }
 
@@ -48,7 +48,7 @@ int main()
         for (int x = 0; x < 10'000; ++x)
         {
             parser.ParseArgs(arguments);
-            int const i = args::get(integer);
+            const int i = args::get(integer);
             std::vector<char> const c(args::get(characters));
             std::vector<double> const n(args::get(numbers));
             assert(i == 7);
