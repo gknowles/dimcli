@@ -913,7 +913,7 @@ c\d)", {"ab$c\\d"});
     auto p1 = cli.toPtrArgv(a1);
     EXPECT(cli.toCmdline(p1.size(), p1.data()) == cmdline);
     wchar_t const * wargs[] = { L"a", L"b", L"c", NULL };
-    a1 = cli.toArgv(sizeof(wargs) / sizeof(*wargs) - 1, (wchar_t **) wargs);
+    a1 = cli.toArgv(sizeof wargs / sizeof *wargs - 1, (wchar_t **) wargs);
     EXPECT(cli.toCmdline(a1) == cmdline);
 }
 
@@ -1069,7 +1069,7 @@ Options:
 template<typename T, int N>
 void writeRsp(char const path[], T const (&data)[N]) {
     fstream f(path, ios::out | ios::trunc | ios::binary);
-    f.write((char *) data, sizeof(*data) * (N - 1));
+    f.write((char *) data, sizeof *data * (N - 1));
 }
 
 //===========================================================================
@@ -1153,9 +1153,9 @@ void execTests() {
     ostringstream out;
 
     char const * argsNone[] = { "test", nullptr };
-    auto nargsNone = sizeof(argsNone) / sizeof(*argsNone) - 1;
+    auto nargsNone = sizeof argsNone / sizeof *argsNone - 1;
     char const * argsUnknown[] = { "test", "unknown", nullptr };
-    auto nargsUnknown = sizeof(argsUnknown) / sizeof(*argsUnknown) - 1;
+    auto nargsUnknown = sizeof argsUnknown / sizeof *argsUnknown - 1;
 
     auto vargsNone = vector<string>{argsNone, argsNone + nargsNone};
     auto vargsUnknown = vector<string>{argsUnknown, argsUnknown + nargsUnknown};

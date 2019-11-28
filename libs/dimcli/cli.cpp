@@ -1668,7 +1668,7 @@ static bool loadFileUtf8(string & content, fs::path const & fn) {
         auto base = reinterpret_cast<wchar_t const *>(content.data());
         auto tmp = (string) wcvt.to_bytes(
             base + 1,
-            base + content.size() / sizeof(wchar_t)
+            base + content.size() / sizeof *base
         );
         if (tmp.empty())
             return false;
