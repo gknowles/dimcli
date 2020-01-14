@@ -1,5 +1,5 @@
 ﻿<!--
-Copyright Glen Knowles 2016 - 2019.
+Copyright Glen Knowles 2016 - 2020.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
@@ -34,12 +34,12 @@ All you need is:
 - libs/dimcli/cli.h
 - libs/dimcli/cli.cpp
 
-### Using [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
+### Using [vcpkg](https://github.com/Microsoft/vcpkg)
 - vcpkg install dimcli
 
 ### Using cmake
 Get the latest snapshot:
-[dimcli 5.0.1](https://github.com/gknowles/dimcli/archive/v5.0.1.zip)
+[dimcli 5.0.2](https://github.com/gknowles/dimcli/archive/v5.0.2.zip)
 
 Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):
