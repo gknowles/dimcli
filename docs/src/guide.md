@@ -284,7 +284,10 @@ A few things to keep in mind about positional arguments:
 - If the unlimited one is required it will prevent any optional positionals
   from getting populated, since it eats up all the arguments before they get
   a turn.
-
+- A positional with nargs set to `Dim::superGreedyMode` becomes very greedy
+  and eats up everything, including arguments with '-' and '--'. This can be
+  useful if you want to pass rest of your command line to another program
+  with its own options.
 
 ## Flag Options
 Many options are flags with no associated value, they just set an option

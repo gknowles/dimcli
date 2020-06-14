@@ -174,6 +174,7 @@ enum {
     kExitSoftware = 70, // EX_SOFTWARE  - internal software error
 };
 
+const int superGreedyMode = -2;
 
 /****************************************************************************
 *
@@ -1823,8 +1824,8 @@ Cli::OptVec<T>::OptVec(
     : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
     , m_proxy(values)
 {
-    assert(nargs >= -1
-        && "max values in a vector option must be >= 0, or -1 (unlimited)");
+    assert(nargs >= -2
+        && "max values in a vector option must be >= 0, -1 (unlimited), or Cli::superGreedyMode");
     this->m_vector = true;
     this->m_nargs = nargs;
 }
@@ -1866,7 +1867,7 @@ inline bool Cli::OptVec<T>::defaultValueToString(std::string & out) const {
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
-    if (this->m_nargs != -1
+    if (this->m_nargs >= 0
         && (size_t) this->m_nargs == m_proxy->m_matches.size()
     ) {
         return false;

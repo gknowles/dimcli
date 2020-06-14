@@ -1982,6 +1982,16 @@ bool Cli::parse(vector<string> & args) {
     size_t argPos = 1;
     arg += 1;
 
+    const auto handleSuperGreedyArg = [&]() -> const char* {
+        if (ndx.m_argNames.size() > pos && ndx.m_argNames[pos].opt->m_nargs == superGreedyMode) {
+            moreOpts = false;
+            --argPos;
+            --arg;
+            return arg->c_str();
+        }
+        return nullptr;
+    };
+
     for (; argPos < argc; ++argPos, ++arg) {
         OptName argName;
         const char * equal = nullptr;
@@ -1992,8 +2002,13 @@ bool Cli::parse(vector<string> & args) {
                 auto it = ndx.m_shortNames.find(*ptr);
                 name = '-';
                 name += *ptr;
-                if (it == ndx.m_shortNames.end())
-                    return badUsage("Unknown option", name);
+                if (it == ndx.m_shortNames.end()) {
+                    ptr = handleSuperGreedyArg();
+                    if (ptr)
+                        continue;
+                    else
+                        return badUsage("Unknown option", name);
+                }
                 argName = it->second;
                 if (argName.opt->m_bool) {
                     if (!parseValue(
@@ -2030,8 +2045,12 @@ bool Cli::parse(vector<string> & args) {
             auto it = ndx.m_longNames.find(key);
             name = "--";
             name += key;
-            if (it == ndx.m_longNames.end())
-                return badUsage("Unknown option", name);
+            if (it == ndx.m_longNames.end()) {
+                if (handleSuperGreedyArg())
+                    continue;
+                else
+                    return badUsage("Unknown option", name);
+            }
             argName = it->second;
             if (argName.opt->m_bool) {
                 if (equal)
@@ -2068,6 +2087,11 @@ bool Cli::parse(vector<string> & args) {
             return false;
         if (!argName.opt->m_vector)
             pos += 1;
+        if (argName.opt->m_nargs == superGreedyMode) {
+            // found a super-greedy positional argument that eats everything including argument
+            // switches.
+            moreOpts = false;
+        }
         continue;
 
     OPTION_VALUE:
@@ -2324,7 +2348,7 @@ string Cli::descStr(const Cli::OptBase & opt) const {
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         desc += " (default)";
     } else if (opt.m_vector) {
-        if (opt.m_nargs != -1) {
+        if (opt.m_nargs >= 0) {
             (void) opt.toString(tmp, opt.m_nargs);
             desc += " (limit: " + tmp + ")";
         }
