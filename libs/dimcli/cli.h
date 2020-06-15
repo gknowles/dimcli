@@ -94,10 +94,18 @@
 #endif
 
 #if defined(_WIN32)
-#ifdef DIMCLI_LIB_SOURCE
-#define DIMCLI_LIB_DECL __declspec(dllexport)
+#  ifdef DIMCLI_LIB_SOURCE
+#    define DIMCLI_LIB_DECL __declspec(dllexport)
+#  else
+#    define DIMCLI_LIB_DECL __declspec(dllimport)
+#  endif
 #else
-#define DIMCLI_LIB_DECL __declspec(dllimport)
+#if defined(__GNUC__)
+#  ifdef DIMCLI_LIB_SOURCE
+#    define DIMCLI_LIB_DECL __attribute__((visibility("default")))
+#  else
+#    define DIMCLI_LIB_DECL __attribute__((visibility("default")))
+#  endif
 #endif
 #endif
 #else
