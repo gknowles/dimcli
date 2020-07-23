@@ -5,7 +5,8 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| msvc 2015, msvc 2017, msvc 2019 <br/> gcc 7, gcc 8, gcc 9, clang 6 | test coverage |
+| msvc 2015, msvc 2017, msvc 2019 <br/> gcc 7, gcc 8, gcc 9, clang 6, clang 9,
+  clang 10 | test coverage |
 |:------------------------------------------------------------------:|:-------------:|
 | [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![codecov](https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg)](https://codecov.io/gh/gknowles/dimcli) |
 
@@ -66,7 +67,7 @@ c:\dimcli on a windows machine):
   - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln) for github
     integration to work
 
-# Random Thoughts
+## Random Thoughts
 Why not a single header file?
 
 - On large projects with many binaries (tests, utilities, etc) it's good for
