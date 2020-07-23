@@ -149,9 +149,6 @@
 
 namespace Dim {
 
-// forward declarations
-class Cli;
-
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
 void assertHandler(const char expr[], unsigned line);
 
@@ -600,6 +597,7 @@ protected:
 
 private:
     static void consoleEnableEcho(bool enable = true);
+    static unsigned consoleWidth();
 
     static bool defParseAction(
         Cli & cli,

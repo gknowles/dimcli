@@ -44,6 +44,8 @@ const size_t kMaxDescCol = 28;
 // maximum help text line length
 const size_t kMaxLineWidth = 79;
 
+const size_t kDefaultConsoleWidth = 80;
+
 
 /****************************************************************************
 *
@@ -2737,8 +2739,18 @@ void Cli::consoleEnableEcho(bool enable) {
     SetConsoleMode(hInput, mode);
 }
 
+//===========================================================================
+unsigned Cli::consoleWidth() {
+    HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    if (!GetConsoleScreenBufferInfo(hOutput, &info))
+        return kDefaultConsoleWidth;
+    return info.dwSize.X;
+}
+
 #else
 
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -2752,6 +2764,14 @@ void Cli::consoleEnableEcho(bool enable) {
         tty.c_lflag &= ~ECHO;
     }
     tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
+//===========================================================================
+unsigned Cli::consoleWidth() {
+    winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
+        return kDefaultConsoleWidth;
+    return w.ws_col;
 }
 
 #endif
