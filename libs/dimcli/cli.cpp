@@ -2722,9 +2722,13 @@ void Cli::consoleEnableEcho(bool enable) {
 
 #elif defined(_WIN32)
 
+#pragma pack(push)
+#pragma pack()
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
+#define UNICODE
 #include <Windows.h>
+#pragma pack(pop)
 
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {
