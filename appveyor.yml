@@ -10,11 +10,11 @@ environment:
       CC: clang-6.0
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       INSTALL_COMPILER: ON
-    - CXX: clang++-9.0
-      CC: clang-9.0
+    - CXX: clang++-9
+      CC: clang-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: clang++-10.0
-      CC: clang-10.0
+    - CXX: clang++-10
+      CC: clang-10
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: g++-7
       CC: gcc-7
