@@ -1,10 +1,20 @@
 # Copyright Glen Knowles 2016 - 2019.
 # Distributed under the Boost Software License, Version 1.0.
+#
+# appveyor.yml
+#
 version: 0.1.{build}
 environment:
   matrix:
     - CXX: clang++-6.0
       CC: clang-6.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - CXX: clang++-9.0
+      CC: clang-9.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: clang++-10.0
+      CC: clang-10.0
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: g++-7
       CC: gcc-7
@@ -62,6 +72,8 @@ for:
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    install:
+      - [ -z "$INSTALL_COMPILER" ] && sudo apt-get install ${CC}
     build_script:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
