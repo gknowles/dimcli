@@ -73,8 +73,10 @@ for:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     install:
-      - |
-          [ -z "$INSTALL_COMPILER" ] && sudo apt-get install ${CC}
+      - sh: |
+            if [ "$INSTALL_COMPILER" = "ON" ]; then
+                sudo apt-get install ${CC}
+            fi
     build_script:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
