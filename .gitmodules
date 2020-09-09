@@ -1,0 +1,4 @@
+[submodule "vendor/gh-pages"]
+	path = vendor/gh-pages
+	url = https://github.com/gknowles/dimcli.git
+	branch = gh-pages
