@@ -1,21 +1,23 @@
-﻿<!--
+﻿
+////
 Copyright Glen Knowles 2016 - 2020.
 Distributed under the Boost Software License, Version 1.0.
--->
+////
 
-# Change Log
+= Change Log
+
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/)
-and this project adheres to [Semantic Versioning](http://semver.org/).
+The format is based on http://keepachangelog.com/[Keep a Changelog]
+and this project adheres to http://semver.org/[Semantic Versioning].
 
-## dimcli 5.0.2 (2020-01-14)
+== dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean
 
-## dimcli 5.0.1 (2019-08-26)
+== dimcli 5.0.1 (2019-08-26)
 - Added - Support and automated testing for VS2019
 
-## dimcli 5.0.0 (2019-07-11)
+== dimcli 5.0.0 (2019-07-11)
 - Added - Configuration option to unconditionally exclude \<filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
 - Changed - Rename cli.runCommand() to cli.commandMatched()
@@ -29,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed - Moved fromString() & toString() from Cli to OptBase
 - Changed - locale now set per option instead of for entire cli
 
-## dimcli 4.1.0 (2018-12-05)
+== dimcli 4.1.0 (2018-12-05)
 - Fixed - Order of keys in help text of multi-keyed options non-deterministic
 - Fixed - optVec flag values with inverted keys aren't ignored
 - Fixed - Nested response files not resolved relative to parent
@@ -40,7 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - Allow non-bool options to be inverted ('!' name prefix)
 - Fixed - Failure loading wchar_t response files on linux
 
-## dimcli 4.0.1 (2018-10-22)
+== dimcli 4.0.1 (2018-10-22)
 - Changed - Default to user's preferred (instead of global) locale for parsing
 - Changed - Rename kPrompt* flags to fPrompt*
 - Added - Allow showing non-bool defaults in prompts
@@ -52,14 +54,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added - Command groups for grouping subcommands in help text
 - Added - cli.toCmdline() static method
 
-## dimcli 3.1.1 (2017-11-10)
+== dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()
 - Added - Before actions to adjust expanded args list before option assignment
 - Added - cli.helpNoArgs() to print help when command line is empty
 - Added - opt.command() and opt.group() access methods
 - Added - Relax clamp and range to allow the low and high to be equal
 
-## dimcli 3.0.0 (2017-10-17)
+== dimcli 3.0.0 (2017-10-17)
 - Added - Support for clang >= 3.6
 - Added - Support for gcc >= 6.2
 - Added - Show default option values in help text
@@ -75,7 +77,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed - cli.print*() functions now non-const
 - Added - cli.helpCmd()
 
-## dimcli 2.0.0 (2017-02-25)
+== dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]
 - Changed - Rename opt.write*() functions to opt.print*()
 - Added - Reduce footprint to just two files (cli.h & cli.cpp)
@@ -84,5 +86,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed - Help text for choices not aligned
 - Fixed - Option groups sorted by name instead of sort key
 
-## dimcli 1.0.3 (2016-12-03)
+== dimcli 1.0.3 (2016-12-03)
 First public release

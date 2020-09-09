@@ -1,8 +1,0 @@
-# Copyright Glen Knowles 2019.
-# Distributed under the Boost Software License, Version 1.0.
-
-root: ./docs/gitbook/
-
-structure:
-  readme: ./overview.md
-  summary: ./summary.md

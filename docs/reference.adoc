@@ -1,0 +1,423 @@
+﻿////
+Copyright Glen Knowles 2019 - 2020.
+Distributed under the Boost Software License, Version 1.0.
+////
+
+= Reference
+:idprefix:
+:idseparator: -
+
+== Classes
+
+[cols=2, options=autowidth]
+|===
+| <<guide.adoc#basic-usage, Cli>>
+| Handle to the shared command line configuration, this shared configuration
+allows options to be statically registered from multiple source files.
+
+| <<guide.adoc#dimclilocal, CliLocal>>
+| Stand-alone cli instance independent of the shared configuration. Mainly for
+testing.
+
+| Cli::Opt&lt;T>
+| Reference to single value option and it's metadata.
+
+| Cli::OptVec&lt;T>
+| Reference to vector of values and metadata for multivalued option.
+|===
+
+== Subcommands
+
+[%autowidth]
+|===
+2+| Create
+
+| cli.<<guide.adoc#subcommands, command>>
+| Changes config context to reference the options of the selected command. Use
+an empty string to specify the top level context. If a new command is selected
+it will be created in the command group of the current context.
+
+| cli.<<guide.adoc#help-subcommand, helpCmd>>
+| Add "help" command that shows the help text for other commands. Allows users
+to run "prog help command" instead of the more awkward "prog command --help".
+h| Configuration |
+
+| cli.<<guide.adoc#subcommands, action>>
+| Action that should be taken when the currently selected command is run.
+Actions are executed when cli.exec() is called by the application.
+|===
+
+== Options
+
+[%autowidth]
+|===
+2+| Create
+
+| cli.<<guide.adoc#options, opt<T{gt}>>
+| Add command line option, flag, or argument
+
+| cli.<<guide.adoc#vector-options, optVec<T{gt}>>
+| Add multivalued option, flag, or argument
+
+| cli.<<guide.adoc#confirm-option, confirmOpt>>
+| Add -y, --yes option that exits early when false and has an "are you sure?"
+style prompt when it's not present.
+
+| cli.<<guide.adoc#help-option, helpOpt>>
+| Get reference to internal help option, can be used to change the description,
+option group, etc. To completely replace it, add another option that responds
+to --help.
+
+| cli.<<guide.adoc#password-prompting, passwordOpt>>
+| Add --password option and prompts for a password if it's not given on the
+command line. If confirm is true and it's not on the command line you have to
+enter it twice.
+
+| cli.<<guide.adoc#version-option, versionOpt>>
+| Add --version option that shows "${progName.filename()} version $\{ver}" and
+exits. An empty progName defaults to argv[0].
+
+2+h| Configuration
+
+| opt.<<guide.adoc#after-actions, after>>
+| Action to run after all arguments have been parsed, any number of after
+actions can be added and will, for each option, be called in the order they're
+added.
+
+| opt.<<guide.adoc#any-units, anyUnits>>
+| Given a series of unit names and factors, incoming values have trailing unit
+names removed and are multiplied by the factor.
+
+| opt.<<guide.adoc#check-actions, check>>
+| Action to take immediately after each value is parsed, unlike parsing itself
+where there can only be one action, any number of check actions can be added.
+
+| opt.<<guide.adoc#choice, choice>>
+| Adds a choice, when choices have been added only values that match one of the
+choices are allowed. Useful for things like enums where there is a controlled
+set of possible values.
+
+| opt.<<guide.adoc#range-and-clamp, clamp>>
+| Forces the value to be within the range, if it's less than the low it's set
+to the low, if higher than high it's made merely high.
+
+| opt.defaultValue
+| Allows the default to be changed after the opt has been created.
+
+| opt.<<guide.adoc#feature-switches, flagValue>>
+| Turns the argument into a feature switch, there are normally multiple
+switches pointed at a single external value, one of which should be flagged as
+the default.
+
+| opt.imbue
+| Change the locale used when parsing values via iostream. Defaults to the
+user's preferred locale (aka locale("")) for arithmetic types and the "C"
+locale for everything else.
+
+| opt.<<guide.adoc#optional-values, implicitValue>>
+| The implicit value is used for arguments with optional values when the
+argument was specified in the command line without a value.
+
+| opt.<<guide.adoc#parse-actions, parse>>
+| Change the action to take when parsing this argument.
+
+| opt.<<guide.adoc#prompting, prompt>>
+| Enables prompting. When the option hasn't been provided on the command line
+the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.
+
+| opt.<<guide.adoc#range-and-clamp, range>>
+| Fail if the value given for this option is not in within the range
+(inclusive) of low to high.
+
+| opt.<<guide.adoc#require, require>>
+| Causes a check whether the option value was set during parsing, and reports
+badUsage() if it wasn't.
+
+| opt.<<guide.adoc#si-units, siUnits>>
+| Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are
+present, multiplies by the corresponding factor.
+
+| opt.<<guide.adoc#time-units, timeUnits>>
+| Adjusts the value to seconds when time units are present: removes the units
+(y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
+|===
+
+== Parsing and execution
+
+[%autowidth]
+|===
+2+| Application
+
+| cli.<<guide.adoc#subcommands, exec>>
+| Optionally parses, and then executes the action of the selected command;
+returns true if it worked. On failure it's expected to have set exitCode,
+errMsg, and optionally errDetail via fail().
+
+| cli.<<guide.adoc#basic-usage, parse>>
+| Parse the command line, populate the options, and set the error and other
+miscellaneous state. Returns true if processing should continue.
+
+| cli.resetValues
+| Sets all options to their defaults, called internally when parsing starts.
+
+2+h| Actions
+
+| cli.<<guide.adoc#after-actions, badUsage>>
+| Intended for use from return statements in action callbacks. Sets exit code
+(to EX_USAGE) and error msg, then returns false.
+
+| cli.commandExists
+| Returns true if the named command has been defined, used by the help command
+implementation. Not reliable before cli.parse() has been called and had a
+chance to update the internal data structures.
+
+| cli.parseValue
+| Used to populate an option with an arbitrary input string through the
+standard parsing logic. Since it causes the parse and check actions to be
+called care must be taken to avoid infinite recursion if used from those
+actions. Can be used from after actions to simulate a value.
+
+| cli.prompt
+| Prompt sends a prompt message to cout and read a response from cin (unless
+cli.iostreams() changed the streams to use), the response is then passed to
+cli.parseValue() to set the value and run any actions.
+
+| opt.defaultFrom
+| Get default from to use when populating the option from an action that's not
+tied to a command line argument.
+
+| opt.defaultPrompt
+| Get default name to use in prompts when not tied to a command line.
+
+| opt.<<guide.adoc#parse-actions, parseValue>>
+| Parse the string into the value, return false on error.
+
+| opt.reset
+| Set option to its default value.
+
+| opt.unspecifiedValue
+| Set option (or add to option vector) to value for missing optionals.
+
+2+h| Commands
+
+| cli.fail
+| Sets exitCode(), errMsg(), and errDetail(), intended to be called from
+command actions, parsing related failures normally use cli.badUsage() instead.
+
+2+h| After parsing
+
+| cli.<<guide.adoc#basic-usage, exitCode>>
+| EX_OK (0), EX_USAGE, or any value set by user defined actions.
+
+| cli.errMsg
+| Error message, only meaningful when exitCode() != EX_OK
+
+| cli.errDetail
+| Additional information that may help the user correct their mistake, may be
+empty.
+
+| cli.progName
+| Program name received in argv[0]
+
+| cli.commandMatched
+| Command to run, as selected by the arguments, empty string if there are no
+commands defined or none were selected.
+
+| opt.<<guide.adoc#life-after-parsing, operator bool>>
+| True if the value was populated from the command line, whether the resulting
+value is the same as the default is immaterial.
+
+| opt.<<guide.adoc#life-after-parsing, operator *>>
+| Reference to underlying value or, for OptVec, vector of values.
+
+| opt.<<guide.adoc#life-after-parsing, operator -{gt}>>
+| Pointer to underlying value or value vector.
+
+| opt.<<guide.adoc#vector-options, operator []>>
+| Array access to members of value vector (OptVec only).
+
+| opt.<<guide.adoc#life-after-parsing, from>>
+| Name of the last argument to populated the value, or an empty string if it
+wasn't populated. For vectors, it's what populated the last value.
+
+| opt.<<guide.adoc#life-after-parsing, pos>>
+| Absolute position in argv[] of last the argument that populated the value.
+For vectors, it refers to where the value on the back came from. If pos() is 0
+the value wasn't populated from the command line or wasn't populated at all,
+check from() to tell the difference.
+
+| opt.<<guide.adoc#life-after-parsing, size>>
+| Number of values, non-vectors are always 1.
+|===
+
+== Help Text
+
+[%autowidth]
+|===
+2+| Command groups
+
+| cli.<<guide.adoc#command-groups, cmdGroup>>
+| Changes the command group of the current command. Because new commands start
+out in the same group as the current command, it can be convenient to create
+all the commands of one group before moving to the next.
+
+| cli.<<guide.adoc#command-groups, cmdSortKey>>
+| Command groups are sorted by key, defaults to group name.
+
+| cli.<<guide.adoc#command-groups, cmdTitle>>
+| Heading title to display, defaults to group name. If empty there will be a
+single blank line separating this group from the previous one.
+
+2+h| Commands
+
+| cli.<<guide.adoc#page-layout, header>>
+| Arbitrary help text, for the command, before the usage section.
+
+| cli.<<guide.adoc#page-layout, desc>>
+| Help text, for the command, between the usage and arguments / options.
+
+| cli.<<guide.adoc#page-layout, footer>>
+| Help text, for the command, after the options.
+
+2+h| Option groups
+
+| cli.<<guide.adoc#option-groups, group>>
+| Changes configuration context to point at the selected option group of the
+current command.
+
+| cli.<<guide.adoc#option-groups, sortKey>>
+| Sets sort key of current option group. Option groups are sorted by key,
+defaults to group name.
+
+| cli.<<guide.adoc#option-groups, title>>
+| Sets heading title for current option group to display, defaults to group
+name. If empty there will be a single blank line separating this group from the
+previous one.
+
+2+h| Options
+
+| opt.show
+| Controls whether or not the option appears in help pages.
+
+| opt.<<guide.adoc#subcommands,command>>
+| Set subcommand for which this is an option.
+
+| opt.<<guide.adoc#option-groups, group>>
+| Set group under which this argument will show up in the help text.
+
+| opt.<<guide.adoc#page-layout, desc>>
+| Set description to associate with the argument in help text.
+
+| opt.<<guide.adoc#page-layout, valueDesc>>
+| Set name of meta-variable in help text. For example, in "--count NUM" this is
+used to change "NUM" to something else.
+
+| opt.<<guide.adoc#page-layout, defaultDesc>>
+| Set text to appear in the default clause of this options the help text. Can
+change the "0" in "(default: 0)" to something else, or use an empty string to
+suppress the entire clause.
+
+2+h| Rendering
+
+| cli.<<guide.adoc#going-your-own-way, printHelp>>
+| Write help page for selected command to std::ostream&amp;
+
+| cli.<<guide.adoc#going-your-own-way, printUsage>>
+| Write simple usage.
+
+| cli.<<guide.adoc#going-your-own-way, printUsageEx>>
+| Write usage, but include names of all non-default options.
+
+| cli.<<guide.adoc#going-your-own-way, printPositionals>>
+| Write names and descriptions of positional arguments.
+
+| cli.<<guide.adoc#going-your-own-way, printOptions>>
+| Write full option descriptions.
+
+| cli.<<guide.adoc#going-your-own-way, printCommands>>
+| Write names and descriptions of commands
+
+| cli.<<guide.adoc#going-your-own-way, printError>>
+| If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
+otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
+completed.
+|===
+
+== Configuration
+
+[%autowidth]
+|===
+2+| Miscellaneous
+
+| cli.<<guide.adoc#before-actions, before>>
+| Actions taken after environment variable and response file expansion but
+before any individual arguments are parsed.
+
+| cli.conin
+| Get console input stream that will be used for prompting.
+
+| cli.conout
+| Get console output stream that will be used for prompting.
+
+| cli.<<guide.adoc#environment-variable, envOpts>>
+| Environment variable to get initial options from. Defaults to the empty
+string, but when set the content of the named variable is parsed into args
+which are then inserted into the argument list right after arg0.
+
+| cli.<<guide.adoc#help-option, helpNoArgs>>
+| Adds before action that replaces the empty command line with "--help".
+
+| cli.iostreams
+| Changes the streams used for prompting, printing help messages, etc. Mainly
+intended for testing. Setting to null restores the defaults which are cin and
+cout respectively.
+
+| cli.<<guide.adoc#response-files, responseFiles>>
+| Enabled by default, response file expansion replaces arguments of the form
+"@file" with the contents of the file.
+|===
+
+== Conversions
+
+[%autowidth]
+|===
+2+| Argv
+
+| Cli::toArgv(string)
+| Parse command line into argument vector of strings, using default conventions
+(Gnu or Windows) of the platform.
+
+| Cli::toArgv(argc, argv)
+| Copy array of pointers into argument vector of strings.
+
+| Cli::toGlibArgv(string)
+| Parse according to glib conventions, based on the UNIX98 shell spec.
+
+| Cli::toGnuArgv(string)
+| Parse using GNU conventions, same rules as buildargv().
+
+| Cli::toWindowsArgv(string)
+| Parse using Windows rules.
+
+| Cli::toCmdline
+| Join arguments into a single command line, escaping as needed, that will
+parse back into those same arguments. Uses the default conventions (Gnu or
+Windows).
+
+| Cli::toGlibCmdline
+| Join according to glib conventions, based on UNIX98 shell spec.
+
+| Cli::toGnuCmdline
+| Join using GNU conventions, same rules as buildargv().
+
+| Cli::toWindowsCmdline
+| Join using Windows rules.
+
+2+h| Value
+
+| opt.fromString<T>
+| Parses string into any supported type.
+
+| opt.toString<T>
+| Converts value of any supported type into a string.
+|===
