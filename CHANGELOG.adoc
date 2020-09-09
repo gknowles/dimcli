@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 The format is based on http://keepachangelog.com/[Keep a Changelog]
 and this project adheres to http://semver.org/[Semantic Versioning].
 
+== Unreleased
+- Cosmetic - Converted docs from markdown to asciidoc
+
 == dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean
 
