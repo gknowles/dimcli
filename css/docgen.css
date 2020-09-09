@@ -13,6 +13,9 @@ nav.navbar .navbar-nav .nav-link.active {
     background-color: steelblue;
     color: white;
 }
+nav.navbar span.badge {
+    margin-left: .25rem;
+}
 nav.navbar .dropdown-menu {
     min-width: unset;
 }
