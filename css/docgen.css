@@ -1,0 +1,64 @@
+body {
+    position: relative;
+}
+
+nav.navbar {
+    padding: .125rem 1rem;
+}
+nav.navbar-dark .navbar-nav .nav-link {
+    color: white;
+}
+nav.navbar .navbar-nav .nav-link:hover,
+nav.navbar .navbar-nav .nav-link.active {
+    background-color: steelblue;
+    color: white;
+}
+nav.navbar .dropdown-menu {
+    min-width: unset;
+}
+
+nav#toc {
+    top: 4rem;
+    height: calc(100vh - 4rem);
+    overflow-y: visible;
+}
+nav#toc .nav-link {
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: .875em;
+}
+nav#toc .nav-link:hover {
+    background-color: steelblue;
+    color: white;
+}
+nav#toc .nav-link.active {
+    color: black;
+}
+nav#toc .nav-link.toc-2 {
+    padding-left: 2rem;
+}
+nav#toc .nav-link.toc-3 {
+    padding-left: 3rem;
+}
+
+h1[id]::before,
+h2[id]::before,
+h3[id]::before,
+h4[id]::before,
+h5[id]::before,
+h6[id]::before {
+    display: block;
+    height: calc(3rem + 1rem);
+    margin-top: -4rem;
+    visibility: hidden;
+    content: "";
+}
+ul p {
+    margin-bottom: 0;
+}
+table {
+    margin-bottom: 1rem;
+}
+table p {
+    margin-bottom: 0;
+}

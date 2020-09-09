@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    try {
+        var lang = block.parentElement.lang.toLowerCase();
+        if (lang == 'shell session') {
+            lang = 'console';
+        }
+        var code = hljs.highlight(lang, block.textContent);
+        block.className += 'hljs';
+        block.innerHTML = code.value;
+    } catch (e) {
+    }
+  });
+});
+</script>
+<link rel="stylesheet" href="../css/docgen.css"/>
+<title>Change Log - DIMCLI</title>
+</head>
+<body data-spy="scroll" data-target="#toc">
+<nav class="navbar navbar-expand-sm sticky-top bg-primary navbar-dark">
+<a class="navbar-brand font-weight-bolder" href="..">DIMCLI</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+<div class="navbar-nav mr-auto">
+<a class="nav-link" href="guide.html">User's Guide</a>
+<a class="nav-link" href="reference.html">Reference</a>
+<a class="nav-link active" href="changelog.html">Change Log <span class="sr-only">(current)</span>
+</a>
+</div>
+<div class="navbar-nav">
+<div class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" data-reference="parent" aria-haspopup="true" aria-expanded="false" title="Version">v5.0.1</a>
+<div class="dropdown-menu dropdown-menu-md-right" aria-labelledby="navbarDropdown">
+<a class="dropdown-item" href="../HEAD/changelog.html">HEAD</a>
+<a class="dropdown-item" href="../v5.0.2/changelog.html">v5.0.2</a>
+<a class="dropdown-item active" href="../v5.0.1/changelog.html">v5.0.1</a>
+<a class="dropdown-item" href="../v5.0.0/changelog.html">v5.0.0</a>
+<a class="dropdown-item" href="../v4.1.0/changelog.html">v4.1.0</a>
+<a class="dropdown-item" href="../v4.0.1/changelog.html">v4.0.1</a>
+<a class="dropdown-item" href="../v3.1.1/changelog.html">v3.1.1</a>
+<a class="dropdown-item" href="../v3.1.0/changelog.html">v3.1.0</a>
+<a class="dropdown-item" href="../v3.0.0/changelog.html">v3.0.0</a>
+<a class="dropdown-item" href="../v2.0.0/changelog.html">v2.0.0</a>
+<a class="dropdown-item" href="../v1.0.3/changelog.html">v1.0.3</a>
+</div>
+</div>
+<a class="nav-link py-0 px-3" href="https://github.com/gknowles/dimcli/" style="font-size: 24px;">
+<i class="fa fa-github" title="GitHub"></i>
+</a>
+</div>
+</div>
+</nav>
+<div class="container">
+<div class="row">
+<div class="col-lg-auto">
+<nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
+<div class="bg-light"><a class="nav-link toc-1" href="#unreleased">Unreleased</a>
+<a class="nav-link toc-1" href="#dimcli-5-0-1-2019-08-26-">dimcli 5.0.1 (2019-08-26)</a>
+<a class="nav-link toc-1" href="#dimcli-5-0-0-2019-07-11-">dimcli 5.0.0 (2019-07-11)</a>
+<a class="nav-link toc-1" href="#dimcli-4-1-0-2018-12-05-">dimcli 4.1.0 (2018-12-05)</a>
+<a class="nav-link toc-1" href="#dimcli-4-0-1-2018-10-22-">dimcli 4.0.1 (2018-10-22)</a>
+<a class="nav-link toc-1" href="#dimcli-3-1-1-2017-11-10-">dimcli 3.1.1 (2017-11-10)</a>
+<a class="nav-link toc-1" href="#dimcli-3-0-0-2017-10-17-">dimcli 3.0.0 (2017-10-17)</a>
+<a class="nav-link toc-1" href="#dimcli-2-0-0-2017-02-25-">dimcli 2.0.0 (2017-02-25)</a>
+<a class="nav-link toc-1" href="#dimcli-1-0-3-2016-12-03-">dimcli 1.0.3 (2016-12-03)</a>
+</div>
+</nav>
+</div>
+<div class="col col-md-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><!-- raw HTML omitted -->
+<h1 id="change-log">Change Log</h1>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="http://keepachangelog.com/">Keep a Changelog</a>
+and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>.</p>
+<h2 id="unreleased">Unreleased</h2>
+<h2 id="dimcli-5-0-1-2019-08-26-">dimcli 5.0.1 (2019-08-26)</h2>
+<ul>
+<li>Added - Support and automated testing for VS2019</li>
+</ul>
+<h2 id="dimcli-5-0-0-2019-07-11-">dimcli 5.0.0 (2019-07-11)</h2>
+<ul>
+<li>Added - Configuration option to unconditionally exclude &lt;filesystem&gt;</li>
+<li>Added - Default valueDesc for floating point values (&quot;FLOAT&quot;)</li>
+<li>Changed - Rename cli.runCommand() to cli.commandMatched()</li>
+<li>Added - Optional error detail argument to cli.badUsage()</li>
+<li>Changed - Replaced opt.setValueDesc() with opt.toValueDesc()</li>
+<li>Fixed - Invalid array access using optVec.from() from parse action</li>
+<li>Changed - Default constructed T added to optVec&lt;T&gt; before parse action</li>
+<li>Added - cli.badRange() helper</li>
+<li>Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()</li>
+<li>Added - Allow limiting the number of values for vector options</li>
+<li>Changed - Moved fromString() &amp; toString() from Cli to OptBase</li>
+<li>Changed - locale now set per option instead of for entire cli</li>
+</ul>
+<h2 id="dimcli-4-1-0-2018-12-05-">dimcli 4.1.0 (2018-12-05)</h2>
+<ul>
+<li>Fixed - Order of keys in help text of multi-keyed options non-deterministic</li>
+<li>Fixed - optVec flag values with inverted keys aren't ignored</li>
+<li>Fixed - Nested response files not resolved relative to parent</li>
+<li>Fixed - Not all response files expanded when multiple appear</li>
+<li>Added - Trim spaces around positional argument names</li>
+<li>Fixed - Error detail for options with two choices missing &quot;or&quot;</li>
+<li>Fixed - Subcommand help summary terminated by '.' instead of &quot;[.!?] &quot;</li>
+<li>Added - Allow non-bool options to be inverted ('!' name prefix)</li>
+<li>Fixed - Failure loading wchar_t response files on linux</li>
+</ul>
+<h2 id="dimcli-4-0-1-2018-10-22-">dimcli 4.0.1 (2018-10-22)</h2>
+<ul>
+<li>Changed - Default to user's preferred (instead of global) locale for parsing</li>
+<li>Changed - Rename kPrompt* flags to fPrompt*</li>
+<li>Added - Allow showing non-bool defaults in prompts</li>
+<li>Added - Conditionally use &lt;filesystem&gt; instead of &lt;experimental/filesystem&gt;</li>
+<li>Added - Allow limited operation when &lt;filesystem&gt; not available</li>
+<li>Fixed - &quot;--opt=&quot; should use &quot;&quot; as value instead of the next arg</li>
+<li>Added - Word wrap list of choices in error detail</li>
+<li>Fixed - Parse errors for optVec report an empty string for the opt name</li>
+<li>Added - Command groups for grouping subcommands in help text</li>
+<li>Added - cli.toCmdline() static method</li>
+</ul>
+<h2 id="dimcli-3-1-1-2017-11-10-">dimcli 3.1.1 (2017-11-10)</h2>
+<ul>
+<li>Added - cli.exec() overloads that both parse() and exec()</li>
+<li>Added - Before actions to adjust expanded args list before option assignment</li>
+<li>Added - cli.helpNoArgs() to print help when command line is empty</li>
+<li>Added - opt.command() and opt.group() access methods</li>
+<li>Added - Relax clamp and range to allow the low and high to be equal</li>
+</ul>
+<h2 id="dimcli-3-0-0-2017-10-17-">dimcli 3.0.0 (2017-10-17)</h2>
+<ul>
+<li>Added - Support for clang &gt;= 3.6</li>
+<li>Added - Support for gcc &gt;= 6.2</li>
+<li>Added - Show default option values in help text</li>
+<li>Added - Cli() copy constructor</li>
+<li>Fixed - cli.toPtrArgv() trailing nullptr improperly added</li>
+<li>Changed - Rename cli.run() to cli.exec() and invert the return value</li>
+<li>Fixed - Internal group name relies on static init order</li>
+<li>Added - opt.require()</li>
+<li>Fixed - After actions of unselected commands should not be run</li>
+<li>Added - opt.defaultDesc() to modify &quot;(default: )&quot; clause</li>
+<li>Fixed - &quot;No command given.&quot; should return kExitUsage</li>
+<li>Changed - Command header and footer default to the top level values</li>
+<li>Changed - cli.print*() functions now non-const</li>
+<li>Added - cli.helpCmd()</li>
+</ul>
+<h2 id="dimcli-2-0-0-2017-02-25-">dimcli 2.0.0 (2017-02-25)</h2>
+<ul>
+<li>Added - optVec.operator[]</li>
+<li>Changed - Rename opt.write*() functions to opt.print*()</li>
+<li>Added - Reduce footprint to just two files (cli.h &amp; cli.cpp)</li>
+<li>Added - opt.writeUsageEx() includes option names in usage text</li>
+<li>Fixed - opt.choice() should be usable when no string conversion exists</li>
+<li>Fixed - Help text for choices not aligned</li>
+<li>Fixed - Option groups sorted by name instead of sort key</li>
+</ul>
+<h2 id="dimcli-1-0-3-2016-12-03-">dimcli 1.0.3 (2016-12-03)</h2>
+<p>First public release</p>
+</div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+</html>

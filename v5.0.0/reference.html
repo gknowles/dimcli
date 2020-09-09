@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    try {
+        var lang = block.parentElement.lang.toLowerCase();
+        if (lang == 'shell session') {
+            lang = 'console';
+        }
+        var code = hljs.highlight(lang, block.textContent);
+        block.className += 'hljs';
+        block.innerHTML = code.value;
+    } catch (e) {
+    }
+  });
+});
+</script>
+<link rel="stylesheet" href="../css/docgen.css"/>
+<title>Reference - DIMCLI</title>
+</head>
+<body data-spy="scroll" data-target="#toc">
+<nav class="navbar navbar-expand-sm sticky-top bg-primary navbar-dark">
+<a class="navbar-brand font-weight-bolder" href="..">DIMCLI</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+<div class="navbar-nav mr-auto">
+<a class="nav-link" href="guide.html">User's Guide</a>
+<a class="nav-link active" href="reference.html">Reference <span class="sr-only">(current)</span>
+</a>
+<a class="nav-link" href="changelog.html">Change Log</a>
+</div>
+<div class="navbar-nav">
+<div class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" data-reference="parent" aria-haspopup="true" aria-expanded="false" title="Version">v5.0.0</a>
+<div class="dropdown-menu dropdown-menu-md-right" aria-labelledby="navbarDropdown">
+<a class="dropdown-item" href="../HEAD/reference.html">HEAD</a>
+<a class="dropdown-item" href="../v5.0.2/reference.html">v5.0.2</a>
+<a class="dropdown-item" href="../v5.0.1/reference.html">v5.0.1</a>
+<a class="dropdown-item active" href="../v5.0.0/reference.html">v5.0.0</a>
+<a class="dropdown-item" href="../v4.1.0/index.html">v4.1.0</a>
+<a class="dropdown-item" href="../v4.0.1/index.html">v4.0.1</a>
+<a class="dropdown-item" href="../v3.1.1/index.html">v3.1.1</a>
+<a class="dropdown-item" href="../v3.1.0/index.html">v3.1.0</a>
+<a class="dropdown-item" href="../v3.0.0/index.html">v3.0.0</a>
+<a class="dropdown-item" href="../v2.0.0/index.html">v2.0.0</a>
+<a class="dropdown-item" href="../v1.0.3/index.html">v1.0.3</a>
+</div>
+</div>
+<a class="nav-link py-0 px-3" href="https://github.com/gknowles/dimcli/" style="font-size: 24px;">
+<i class="fa fa-github" title="GitHub"></i>
+</a>
+</div>
+</div>
+</nav>
+<div class="container">
+<div class="row">
+<div class="col-lg-auto">
+<nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
+<div class="bg-light"><a class="nav-link toc-1" href="#classes">Classes</a>
+<a class="nav-link toc-1" href="#subcommands">Subcommands</a>
+<a class="nav-link toc-1" href="#options">Options</a>
+<a class="nav-link toc-1" href="#parsing-and-execution">Parsing and execution</a>
+<a class="nav-link toc-1" href="#help-text">Help Text</a>
+<a class="nav-link toc-1" href="#configuration">Configuration</a>
+<a class="nav-link toc-1" href="#conversions">Conversions</a>
+</div>
+</nav>
+</div>
+<div class="col col-md-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><!-- raw HTML omitted -->
+<h1 id="reference">Reference</h1>
+<h2 id="classes">Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="guide.html#basic-usage">Cli</a></td>
+<td>Creates a handle to the shared command line configuration, this indirection allows options to be statically registered from multiple source files.</td>
+</tr>
+<tr>
+<td><a href="guide.html#dimclilocal">CliLocal</a></td>
+<td>Stand-alone cli instance independent of the shared configuration. Mainly for testing.</td>
+</tr>
+<tr>
+<td>Cli::Opt&lt;T&gt;</td>
+<td>Reference to single value option and it's metadata.</td>
+</tr>
+<tr>
+<td>Cli::OptVec&lt;T&gt;</td>
+<td>Reference to vector of values and metadata for multivalued option.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcommands">Subcommands</h2>
+<table>
+<thead>
+<tr>
+<th>Create</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cli.<a href="guide.html#subcommands">command</a></td>
+<td>Changes config context to reference the options of the selected command. Use &quot;&quot; to specify the top level context. If a new command is selected it will be created in the command group of the current context.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#help-subcommand">helpCmd</a></td>
+<td>Add &quot;help&quot; command that shows the help text for other commands. Allows users to run &quot;prog help command&quot; instead of the more awkward &quot;prog command --help&quot;.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Configuration<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#subcommands">action</a></td>
+<td>Action that should be taken when the currently selected command is run. Actions are executed when cli.exec() is called by the application.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Create</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cli.<a href="guide.html#options">opt&lt;T&gt;</a></td>
+<td>Add command line option, flag, or argument</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#vector-options">optVec&lt;T&gt;</a></td>
+<td>Add multivalued option, flag, or argument</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#confirm-option">confirmOpt</a></td>
+<td>Add -y, --yes option that exits early when false and has an &quot;are you sure?&quot; style prompt when it's not present.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#help-option">helpOpt</a></td>
+<td>Get reference to internal help option, can be used to change the description, option group, etc. To completely replace it, add another option that responds to --help.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#password-prompting">passwordOpt</a></td>
+<td>Add --password option and prompts for a password if it's not given on the command line. If confirm is true and it's not on the command line you have to enter it twice.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#version-option">versionOpt</a></td>
+<td>Add --version option that shows &quot;${progName.filename()} version ${ver}&quot; and exits. An empty progName defaults to argv[0].</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Configuration<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#after-actions">after</a></td>
+<td>Action to run after all arguments have been parsed, any number of after actions can be added and will, for each option, be called in the order they're added.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#any-units">anyUnits</a></td>
+<td>Given a series of unit names and factors, incoming values have trailing unit names removed and are multiplied by the factor.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#check-actions">check</a></td>
+<td>Action to take immediately after each value is parsed, unlike parsing itself where there can only be one action, any number of check actions can be added.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#choice">choice</a></td>
+<td>Adds a choice, when choices have been added only values that match one of the choices are allowed. Useful for things like enums where there is a controlled set of possible values.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#range-and-clamp">clamp</a></td>
+<td>Forces the value to be within the range, if it's less than the low it's set to the low, if higher than high it's made merely high.</td>
+</tr>
+<tr>
+<td>opt.defaultValue</td>
+<td>Allows the default to be changed after the opt has been created.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#feature-switches">flagValue</a></td>
+<td>Turns the argument into a feature switch, there are normally multiple switches pointed at a single external value, one of which should be flagged as the default.</td>
+</tr>
+<tr>
+<td>opt.imbue</td>
+<td>Change the locale used when parsing values via iostream. Defaults to the user's preferred locale (aka locale(&quot;&quot;)) for arithmetic types and the &quot;C&quot; locale for everything else.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#optional-values">implicitValue</a></td>
+<td>The implicit value is used for arguments with optional values when the argument was specified in the command line without a value.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#parse-actions">parse</a></td>
+<td>Change the action to take when parsing this argument.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#prompting">prompt</a></td>
+<td>Enables prompting. When the option hasn't been provided on the command line the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#range-and-clamp">range</a></td>
+<td>Fail if the value given for this option is not in within the range (inclusive) of low to high.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#require">require</a></td>
+<td>Causes a check whether the option value was set during parsing, and reports badUsage() if it wasn't.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#si-units">siUnits</a></td>
+<td>Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are present, multiplies by the corresponding factor.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#time-units">timeUnits</a></td>
+<td>Adjusts the value to seconds when time units are present: removes the units (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="parsing-and-execution">Parsing and execution</h2>
+<table>
+<thead>
+<tr>
+<th>Application</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cli.<a href="guide.html#subcommands">exec</a></td>
+<td>Optionally parses, and then executes the action of the selected command; returns true if it worked. On failure it's expected to have set exitCode, errMsg, and optionally errDetail via fail().</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#basic-usage">parse</a></td>
+<td>Parse the command line, populate the options, and set the error and other miscellaneous state. Returns true if processing should continue.</td>
+</tr>
+<tr>
+<td>cli.resetValues</td>
+<td>Sets all options to their defaults, called internally when parsing starts.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Actions<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#after-actions">badUsage</a></td>
+<td>Intended for use from return statements in action callbacks. Sets exit code (to EX_USAGE) and error msg, then returns false.</td>
+</tr>
+<tr>
+<td>cli.commandExists</td>
+<td>Returns true if the named command has been defined, used by the help command implementation. Not reliable before cli.parse() has been called and had a chance to update the internal data structures.</td>
+</tr>
+<tr>
+<td>cli.parseValue</td>
+<td>Used to populate an option with an arbitrary input string through the standard parsing logic. Since it causes the parse and check actions to be called care must be taken to avoid infinite recursion if used from those actions. Can be used from after actions to simulate a value.</td>
+</tr>
+<tr>
+<td>cli.prompt</td>
+<td>Prompt sends a prompt message to cout and read a response from cin (unless cli.iostreams() changed the streams to use), the response is then passed to cli.parseValue() to set the value and run any actions.</td>
+</tr>
+<tr>
+<td>opt.defaultFrom</td>
+<td>Get default from to use when populating the option from an action that's not tied to a command line argument.</td>
+</tr>
+<tr>
+<td>opt.defaultPrompt</td>
+<td>Get default name to use in prompts when not tied to a command line.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#parse-actions">parseValue</a></td>
+<td>Parse the string into the value, return false on error.</td>
+</tr>
+<tr>
+<td>opt.reset</td>
+<td>Set option to its default value.</td>
+</tr>
+<tr>
+<td>opt.unspecifiedValue</td>
+<td>Set option (or add to option vector) to value for missing optionals.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Commands<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.fail</td>
+<td>Sets exitCode(), errMsg(), and errDetail(), intended to be called from command actions, parsing related failures normally use cli.badUsage() instead.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->After parsing<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#basic-usage">exitCode</a></td>
+<td>EX_OK (0), EX_USAGE, or any value set by user defined actions.</td>
+</tr>
+<tr>
+<td>cli.errMsg</td>
+<td>Error message, only meaningful when exitCode() != EX_OK</td>
+</tr>
+<tr>
+<td>cli.errDetail</td>
+<td>Additional information that may help the user correct their mistake, may be empty.</td>
+</tr>
+<tr>
+<td>cli.progName</td>
+<td>Program name received in argv[0]</td>
+</tr>
+<tr>
+<td>cli.commandMatched</td>
+<td>Command to run, as selected by argv, empty string if there are no commands defined or none were selected.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#life-after-parsing">operator bool</a></td>
+<td>True if the value was populated from the command line, whether the resulting value is the same as the default is immaterial.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#life-after-parsing">operator *</a></td>
+<td>Reference to underlying value or, for OptVec, vector of values.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#life-after-parsing">operator -&gt;</a></td>
+<td>Pointer to underlying value or value vector.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#vector-options">operator []</a></td>
+<td>Array access to members of value vector (OptVec only).</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#life-after-parsing">from</a></td>
+<td>Name of the last argument to populated the value, or an empty string if it wasn't populated. For vectors, it's what populated the last value.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#life-after-parsing">pos</a></td>
+<td>Absolute position in argv[] of last the argument that populated the value. For vectors, it refers to where the value on the back came from. If pos() is 0 the value wasn't populated from the command line or wasn't populated at all, check from() to tell the difference.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#life-after-parsing">size</a></td>
+<td>Number of values, non-vectors are always 1.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="help-text">Help Text</h2>
+<table>
+<thead>
+<tr>
+<th>Command groups</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cli.<a href="guide.html#command-groups">cmdGroup</a></td>
+<td>Changes the command group of the current command. Because new commands start out in the same group as the current command, it can be convenient to create all the commands of one group before moving to the next.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#command-groups">cmdSortKey</a></td>
+<td>Command groups are sorted by key, defaults to group name.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#command-groups">cmdTitle</a></td>
+<td>Heading title to display, defaults to group name. If empty there will be a single blank line separating this group from the previous one.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Commands<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#page-layout">header</a></td>
+<td>Arbitrary help text, for the command, before the usage section.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#page-layout">desc</a></td>
+<td>Help text, for the command, between the usage and arguments / options.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#page-layout">footer</a></td>
+<td>Help text, for the command, after the options.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Option groups<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#option-groups">group</a></td>
+<td>Changes configuration context to point at the selected option group of the current command.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#option-groups">sortKey</a></td>
+<td>Sets sort key of current option group. Option groups are sorted by key, defaults to group name.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#option-groups">title</a></td>
+<td>Sets heading title for current option group to display, defaults to group name. If empty there will be a single blank line separating this group from the previous one.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Options<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>opt.show</td>
+<td>Controls whether or not the option appears in help pages.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#subcommands">command</a></td>
+<td>Set subcommand for which this is an option.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#option-groups">group</a></td>
+<td>Set group under which this argument will show up in the help text.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#page-layout">desc</a></td>
+<td>Set description to associate with the argument in help text.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#page-layout">valueDesc</a></td>
+<td>Set name of meta-variable in help text. For example, in &quot;--count NUM&quot; this is used to change &quot;NUM&quot; to something else.</td>
+</tr>
+<tr>
+<td>opt.<a href="guide.html#page-layout">defaultDesc</a></td>
+<td>Set text to appear in the default clause of this options the help text. Can change the &quot;0&quot; in &quot;(default: 0)&quot; to something else, or use an empty string to suppress the entire clause.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Rendering<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printHelp</a></td>
+<td>Write help page for selected command to std::ostream&amp;</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printUsage</a></td>
+<td>Write simple usage.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printUsageEx</a></td>
+<td>Write usage, but include names of all non-default options.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printPositionals</a></td>
+<td>Write names and descriptions of positional arguments.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printOptions</a></td>
+<td>Write full option descriptions.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printCommands</a></td>
+<td>Write names and descriptions of commands</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#going-your-own-way">printError</a></td>
+<td>If exitCode() is not EX_OK, prints the errMsg and errDetail (if present), otherwise does nothing. Returns exitCode(). Only makes sense after parsing has completed.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration">Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Miscellaneous</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cli.<a href="guide.html#before-actions">before</a></td>
+<td>Actions taken after environment variable and response file expansion but before any individual arguments are parsed.</td>
+</tr>
+<tr>
+<td>cli.conin</td>
+<td>Get console input stream that will be used for prompting.</td>
+</tr>
+<tr>
+<td>cli.conout</td>
+<td>Get console output stream that will be used for prompting.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#environment-variable">envOpts</a></td>
+<td>Environment variable to get initial options from. Defaults to the empty string, but when set the content of the named variable is parsed into args which are then inserted into the argument list right after arg0.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#help-option">helpNoArgs</a></td>
+<td>Adds before action that replaces the empty command line with &quot;--help&quot;.</td>
+</tr>
+<tr>
+<td>cli.iostreams</td>
+<td>Changes the streams used for prompting, printing help messages, etc. Mainly intended for testing. Setting to null restores the defaults which are cin and cout respectively.</td>
+</tr>
+<tr>
+<td>cli.<a href="guide.html#response-files">responseFiles</a></td>
+<td>Enabled by default, response file expansion replaces arguments of the form &quot;@file&quot; with the contents of the file.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="conversions">Conversions</h2>
+<table>
+<thead>
+<tr>
+<th>Static member functions</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cli::toArgv(string)</td>
+<td>Parse command line into argument vector of strings, using default conventions (Gnu or Windows) of the platform.</td>
+</tr>
+<tr>
+<td>Cli::toArgv(argc, argv)</td>
+<td>Copy array of pointers into argument vector of strings.</td>
+</tr>
+<tr>
+<td>Cli::toGlibArgv(string)</td>
+<td>Parse according to glib conventions, based on the UNIX98 shell spec.</td>
+</tr>
+<tr>
+<td>Cli::toGnuArgv(string)</td>
+<td>Parse using GNU conventions, same rules as buildargv().</td>
+</tr>
+<tr>
+<td>Cli::toWindowsArgv(string)</td>
+<td>Parse using Windows rules.</td>
+</tr>
+<tr>
+<td>Cli::toCmdline</td>
+<td>Join arguments into a single command line, escaping as needed, that will parse back into those same arguments. Uses the default conventions (Gnu or Windows).</td>
+</tr>
+<tr>
+<td>Cli::toGlibCmdline</td>
+<td>Join according to glib conventions, based on UNIX98 shell spec.</td>
+</tr>
+<tr>
+<td>Cli::toGnuCmdline</td>
+<td>Join using GNU conventions, same rules as buildargv()</td>
+</tr>
+<tr>
+<td>Cli::toWindowsCmdline</td>
+<td>Join using Windows rules.</td>
+</tr>
+<tr>
+<td><!-- raw HTML omitted -->Member functions<!-- raw HTML omitted --></td>
+<td></td>
+</tr>
+<tr>
+<td>opt.fromString&lt;T&gt;</td>
+<td>Parses string into any supported type.</td>
+</tr>
+<tr>
+<td>opt.toString&lt;T&gt;</td>
+<td>Converts value of any supported type into a string.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+</html>

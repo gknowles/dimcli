@@ -1,0 +1,2998 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    try {
+        var lang = block.parentElement.lang.toLowerCase();
+        if (lang == 'shell session') {
+            lang = 'console';
+        }
+        var code = hljs.highlight(lang, block.textContent);
+        block.className += 'hljs';
+        block.innerHTML = code.value;
+    } catch (e) {
+    }
+  });
+});
+</script>
+<link rel="stylesheet" href="../css/docgen.css"/>
+<title>User's Guide - DIMCLI</title>
+</head>
+<body data-spy="scroll" data-target="#toc">
+<nav class="navbar navbar-expand-sm sticky-top bg-primary navbar-dark">
+<a class="navbar-brand font-weight-bolder" href="..">DIMCLI</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+<div class="navbar-nav mr-auto">
+<a class="nav-link active" href="guide.html">User's Guide <span class="sr-only">(current)</span>
+</a>
+<a class="nav-link" href="reference.html">Reference</a>
+<a class="nav-link" href="changelog.html">Change Log</a>
+</div>
+<div class="navbar-nav">
+<div class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" data-reference="parent" aria-haspopup="true" aria-expanded="false" title="Version">HEAD</a>
+<div class="dropdown-menu dropdown-menu-md-right" aria-labelledby="navbarDropdown">
+<a class="dropdown-item active" href="../HEAD/guide.html">HEAD</a>
+<a class="dropdown-item" href="../v5.0.2/guide.html">v5.0.2</a>
+<a class="dropdown-item" href="../v5.0.1/guide.html">v5.0.1</a>
+<a class="dropdown-item" href="../v5.0.0/guide.html">v5.0.0</a>
+<a class="dropdown-item" href="../v4.1.0/guide.html">v4.1.0</a>
+<a class="dropdown-item" href="../v4.0.1/guide.html">v4.0.1</a>
+<a class="dropdown-item" href="../v3.1.1/guide.html">v3.1.1</a>
+<a class="dropdown-item" href="../v3.1.0/guide.html">v3.1.0</a>
+<a class="dropdown-item" href="../v3.0.0/guide.html">v3.0.0</a>
+<a class="dropdown-item" href="../v2.0.0/guide.html">v2.0.0</a>
+<a class="dropdown-item" href="../v1.0.3/guide.html">v1.0.3</a>
+</div>
+</div>
+<a class="nav-link py-0 px-3" href="https://github.com/gknowles/dimcli/" style="font-size: 24px;">
+<i class="fa fa-github" title="GitHub"></i>
+</a>
+</div>
+</div>
+</nav>
+<div class="container">
+<div class="row">
+<div class="col-lg-auto">
+<nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
+<div class="bg-light"><a class="nav-link toc-1" href="#overview">Overview</a>
+<a class="nav-link toc-1" href="#basics">Basics</a>
+<a class="nav-link toc-2" href="#basic-usage">Basic Usage</a>
+<a class="nav-link toc-2" href="#options">Options</a>
+<a class="nav-link toc-2" href="#external-variables">External Variables</a>
+<a class="nav-link toc-2" href="#option-names">Option Names</a>
+<a class="nav-link toc-2" href="#positional-arguments">Positional Arguments</a>
+<a class="nav-link toc-2" href="#flag-options">Flag Options</a>
+<a class="nav-link toc-2" href="#vector-options">Vector Options</a>
+<a class="nav-link toc-2" href="#life-after-parsing">Life After Parsing</a>
+<a class="nav-link toc-1" href="#advanced">Advanced</a>
+<a class="nav-link toc-2" href="#special-arguments">Special Arguments</a>
+<a class="nav-link toc-2" href="#optional-values">Optional Values</a>
+<a class="nav-link toc-2" href="#before-actions">Before Actions</a>
+<a class="nav-link toc-2" href="#parse-actions">Parse Actions</a>
+<a class="nav-link toc-2" href="#check-actions">Check Actions</a>
+<a class="nav-link toc-2" href="#after-actions">After Actions</a>
+<a class="nav-link toc-2" href="#subcommands">Subcommands</a>
+<a class="nav-link toc-2" href="#multiple-source-files">Multiple Source Files</a>
+<a class="nav-link toc-2" href="#response-files">Response Files</a>
+<a class="nav-link toc-2" href="#environment-variable">Environment Variable</a>
+<a class="nav-link toc-2" href="#keep-it-quiet">Keep It Quiet</a>
+<a class="nav-link toc-1" href="#options-and-modifiers">Options and Modifiers</a>
+<a class="nav-link toc-2" href="#version-option">Version Option</a>
+<a class="nav-link toc-2" href="#help-option">Help Option</a>
+<a class="nav-link toc-2" href="#feature-switches">Feature Switches</a>
+<a class="nav-link toc-2" href="#choice">Choice</a>
+<a class="nav-link toc-2" href="#require">Require</a>
+<a class="nav-link toc-2" href="#range-and-clamp">Range and Clamp</a>
+<a class="nav-link toc-2" href="#units-of-measure">Units of Measure</a>
+<a class="nav-link toc-3" href="#si-units">SI Units</a>
+<a class="nav-link toc-3" href="#time-units">Time Units</a>
+<a class="nav-link toc-3" href="#any-units">Any Units</a>
+<a class="nav-link toc-2" href="#counting">Counting</a>
+<a class="nav-link toc-2" href="#prompting">Prompting</a>
+<a class="nav-link toc-2" href="#password-prompting">Password Prompting</a>
+<a class="nav-link toc-2" href="#confirm-option">Confirm Option</a>
+<a class="nav-link toc-1" href="#help-text">Help Text</a>
+<a class="nav-link toc-2" href="#page-layout">Page Layout</a>
+<a class="nav-link toc-2" href="#option-groups">Option Groups</a>
+<a class="nav-link toc-2" href="#command-groups">Command Groups</a>
+<a class="nav-link toc-2" href="#help-subcommand">Help Subcommand</a>
+<a class="nav-link toc-2" href="#going-your-own-way">Going Your Own Way</a>
+</div>
+</nav>
+</div>
+<div class="col col-md-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><h1 id="user-8217-s-guide">User&#8217;s Guide</h1>
+<div class="sect1">
+<h2 id="overview">Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>C++ command line parser toolkit for kids of all ages.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>GNU style command lines (-o, --output=FILE, etc.)</p>
+</li>
+<li>
+<p>parses directly to any supplied (or implicitly created) variable that is:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>default constructible</p>
+</li>
+<li>
+<p>copyable</p>
+</li>
+<li>
+<p>assignable from string, has an istream extraction operator, or has a
+specialization of Cli&#58;:OptBase::fromString&lt;T&gt;()</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>help generation</p>
+</li>
+<li>
+<p>option definitions can be scattered across multiple files</p>
+</li>
+<li>
+<p>git style subcommands</p>
+</li>
+<li>
+<p>response files (requires <code>&lt;filesystem&gt;</code> support)</p>
+</li>
+<li>
+<p>works whether exceptions and RTTI are enabled or disabled</p>
+</li>
+<li>
+<p>distributed under the Boost Software License, Version 1.0.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>How does it feel?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>#include "dimcli/cli.h"
+#include &lt;iostream&gt;
+using namespace std;
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; count = cli.opt&lt;int&gt;("c n count", 1).desc("times to say hello");
+    auto &amp; name = cli.opt&lt;string&gt;("name", "Unknown").desc("who to greet");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (!name)
+        cout &lt;&lt; "Greeting the unknown." &lt;&lt; endl;
+    for (unsigned i = 0; i &lt; *count; ++i)
+        cout &lt;&lt; "Hello " &lt;&lt; *name &lt;&lt; "!" &lt;&lt; endl;
+    return 0;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What it does when run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out -x
+Error: Unknown option: -x
+
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -c, -n, --count=INTEGER  times to say hello (default: 1)
+  --name STRING            who to greet (default: Unknown)
+
+  --help                   Show this message and exit.
+
+$ a.out --count=3
+Greeting the unknown.
+Hello Unknown!
+Hello Unknown!
+Hello Unknown!
+
+$ a.out --name John
+Hello John!</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="basics">Basics</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="basic-usage">Basic Usage</h3>
+<div class="paragraph">
+<p>After inspecting args cli.parse() returns false if it thinks the program
+should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64)
+for early exit (like --help) or bad arguments respectively. Otherwise the
+command line was valid, arguments have been parsed, and cli.exitCode() is
+EX_OK.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>#include "dimcli/cli.h"
+#include &lt;iostream&gt;
+#include &lt;sysexits.h&gt; // if you want the unix exit code macros (EX_*)
+using namespace std;
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Does the apple have a worm? No!";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And what it looks like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out
+Does the apple have a worm? No!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The EX_* constants (along with standard values) are in <code>&lt;sysexits.h&gt;</code> on most
+unixes, although it may not be in any standard. Equivalent enum values
+Dim&#58;:kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful
+on Windows where <code>&lt;sysexits.h&gt;</code> doesn&#8217;t exist.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="options">Options</h3>
+<div class="paragraph">
+<p>Dim::Cli is used by declaring options to receive arguments. Either via
+pointer to a predefined external variable or by implicitly creating the
+variable when the option is declared.</p>
+</div>
+<div class="paragraph">
+<p>Use cli.opt&lt;T&gt;(names, defaultValue) to link positional or named arguments to
+an option. It returns a proxy object that can be used like a pointer (* and &#8594;)
+to access the value.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; fruit = cli.opt&lt;string&gt;("fruit", "apple");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Does the " &lt;&lt; *fruit &lt;&lt; " have a worm? No!";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And what you get:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --fruit=STRING  (default: apple)
+
+  --help          Show this message and exit.
+
+$ a.out --fruit=orange
+Does the orange have a worm? No!
+$ a.out --fruit orange
+Does the orange have a worm? No!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Add a description and change the value&#8217;s name in the description:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; fruit = cli.opt&lt;string&gt;("fruit", "apple")
+    .desc("type of fruit")
+    .valueDesc("FRUIT");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And you get:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --fruit=FRUIT  type of fruit (default: apple)
+
+  --help         Show this message and exit.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="external-variables">External Variables</h3>
+<div class="paragraph">
+<p>In addition to using the option proxies you can bind options directly to
+predefined variables. This can be used to set a global flag, or populate a
+struct that you access later.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    bool worm;
+    Dim::Cli cli;
+    cli.opt(&amp;worm, "w worm").desc("make it icky");
+    auto &amp; fruit = cli.opt&lt;string&gt;("fruit", "apple").desc("type of fruit");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Does the " &lt;&lt; *fruit &lt;&lt; " have a worm? "
+        &lt;&lt; worm ? "Yes :(" : "No!";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And what it looks like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --fruit=STRING  type of fruit (default: apple)
+  -w, --worm      make it icky
+
+  --help          Show this message and exit.
+
+$ a.out --fruit=orange
+Does the orange have a worm? No!
+$ a.out -w
+Does the apple have a worm? Yes :(</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also point multiple "options" at the same variable, as is common with
+<a href="#feature-switches">feature switches</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="option-names">Option Names</h3>
+<div class="paragraph">
+<p>Names are passed in as a space separated list where the individual names look
+like these:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Type of name</th>
+<th class="tableblock halign-left valign-top">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">short name (single character)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">f</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long name (more than one character)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">optional positional</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[file name]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">required positional</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">&lt;file&gt;</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Names for positionals (inside angled or square brackets) may contain spaces,
+and all names may have modifier flags:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Flag</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">!</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">prefix</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">for boolean values, when setting the value it is first inverted</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">?</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">prefix</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">for non-boolean named options, makes the value <a href="#optional-values">optional</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">suffix</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">for boolean values with long names, suppresses the implicit "no-" version</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>By default, long names for boolean values get a second "no-" version implicitly
+created for them.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.opt&lt;string&gt;("a apple [apple]").desc("apples are red");
+    cli.opt&lt;bool&gt;("!o orange apricot.").desc("oranges are orange");
+    cli.opt&lt;string&gt;("&lt;pear&gt;").desc("pears are yellow");
+    cli.parse(cerr, argc, argv);
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Ends up looking like this (note: required positionals are <strong>always</strong> placed
+before any optional ones):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS] pear [apple]
+  pear      pears are yellow
+  apple     apples are red
+
+Options:
+  -a, --apple=STRING          apples are red
+  --apricot, --orange / -o, --no-orange
+                              oranges are orange
+
+  --help                      Show this message and exit.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When named options are added they replace any previous rule with the same
+name, therefore this option declares '-n' an inverted bool:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.opt&lt;bool&gt;("n !n");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>But with these it becomes '-n STRING', a string:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.opt&lt;bool&gt;("n !n");
+cli.opt&lt;string&gt;("n");</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="positional-arguments">Positional Arguments</h3>
+<div class="paragraph">
+<p>A few things to keep in mind about positional arguments:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Positional arguments are mapped by the order they are added, except that
+required ones appear before optional ones.</p>
+</li>
+<li>
+<p>If there are multiple vector positionals with unlimited (nargs = -1) arity
+all but the first will be treated as if they had nargs = 1. Or to put it
+another way, the first unlimited positional is greedy.</p>
+</li>
+<li>
+<p>If the unlimited one is required it will prevent any optional positionals
+from getting populated, since it eats up all the arguments before they get
+a turn.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="flag-options">Flag Options</h3>
+<div class="paragraph">
+<p>Many options are flags with no associated value, they just set an option
+to a predefined value. This is the default when you create a option of type
+bool. Normally flags set the option to true, but this can be changed in two
+ways:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>make it an inverted bool, which will set it to false</p>
+<div class="ulist">
+<ul>
+<li>
+<p>explicitly using the "!" modifier</p>
+</li>
+<li>
+<p>define a long name and use the implicitly created "no-" prefix version</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>use opt.flagValue() to set the value, see
+<a href="#feature-switches">feature switches</a>.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; shout = cli.opt&lt;bool&gt;("shout !whisper").desc("I can't hear you!");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    string prog = argv[0];
+    if (*shout) {
+        auto &amp; f = use_facet&lt;ctype&lt;char&gt;&gt;(cout.getloc());
+        f.toupper(prog.data(), prog.data() + prog.size());
+        prog += "!!!!111";
+    }
+    cout &lt;&lt; "I am " &lt;&lt; prog;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What you see:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --shout, --no-whisper / --no-shout, --whisper
+            I can't hear you!
+
+  --help    Show this message and exit.
+
+$ a.out
+I am a.out
+$ a.out --shout
+I am A.OUT!!!!111
+$ a.out --no-whisper
+I am A.OUT!!!!111</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="vector-options">Vector Options</h3>
+<div class="paragraph">
+<p>Allows for an unlimited (or specific) number of values to be returned in a
+vector. Vector options are declared using cli.optVec() which binds to a
+std::vector&lt;T&gt;.</p>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>// printing a comma separated list is annoying...
+template&lt;typename T&gt;
+ostream &amp; operator&lt;&lt; (ostream &amp; os, vector&lt;T&gt; const &amp; v) {
+    auto i = v.begin(), e = v.end();
+    if (i != e) {
+        os &lt;&lt; *i++;
+        for (; i != e; ++i) os &lt;&lt; ", " &lt;&lt; *i;
+    }
+    return os;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    // for oranges demonstrate using an external vector, and limit
+    // the maximum number to 2.
+    vector&lt;string&gt; oranges;
+    cli.optVec(&amp;oranges, "o orange", 2).desc("oranges");
+    // for apples demonstrate just using the proxy object.
+    auto &amp; apples = cli.optVec&lt;string&gt;("[apple]").desc("red fruit");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Comparing (" &lt;&lt; *apples &lt;&lt; ") and (" &lt;&lt; *oranges &lt;&lt; ").";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>View from the command line:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS] [apple...]
+  apple     red fruit
+
+Options:
+  -o, --orange=STRING  oranges (limit: 2)
+
+  --help               Show this message and exit.
+
+$ a.out -o mandarin -onavel "red delicious" honeycrisp
+Comparing (red delicious, honeycrisp) and (mandarin, navel).
+$ a.out -omandarin -onavel -ohamlin
+Error: Too many '-o' values: hamlin
+The maximum number of values is: 2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>While the * and &#8594; operators get you full access to the underlying vector,
+size() and [] are also available directly on the OptVec&lt;T&gt;. Which may
+occasionally save a little bit of typing.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; apples = cli.optVec&lt;string&gt;("[apple]").desc("red fruit");
+...
+cout &lt;&lt; "There were " &lt;&lt; apples.size() &lt;&lt; " apples." &lt;&lt; endl;
+if (apples)
+    cout &lt;&lt; "The first was " &lt;&lt; apples[0] &lt;&lt; endl;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="life-after-parsing">Life After Parsing</h3>
+<div class="paragraph">
+<p>If you are using external variables you just access them directly after using
+cli.parse() to populate them.</p>
+</div>
+<div class="paragraph">
+<p>If you use the proxy object returned from cli.opt&lt;T&gt;() you can dereference
+it like a smart pointer to get at the value. In addition, you can test whether
+it was explicitly set, find the argument name that populated it, and get the
+position in argv\[] it came from.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; name = cli.opt&lt;string&gt;("n name", "Unknown");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (!name) {
+        cout &lt;&lt; "Using the unknown name." &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "Name selected using " &lt;&lt; name.from()
+            &lt;&lt; " from argv[" &lt;&lt; name.pos() &lt;&lt; "]" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "Hello " &lt;&lt; *name &lt;&lt; "!" &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What it does:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Using the unknown name.
+Hello Unknown!
+$ a.out -n John
+Name selected using -n
+Hello John!
+$ a.out --name Mary
+Name selected using --name from argv[2]
+Hello Mary!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you want a little more control over error output you can use the two
+argument version of cli.parse() and then either print the results with
+cli.printError() or inspect it manually using cli.exitCode(), cli.errMsg(),
+and cli.errDetail().</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>if (!cli.parse(argc, argv))
+    return cli.printError(cerr);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Because (unless you use CliLocal) there is a single program wide command line
+context, you can make an error handler that doesn&#8217;t have to be passed the
+results.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>void failed() {
+    Dim::Cli cli;
+    cli.printError(cerr);
+    exit(cli.exitCode());
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    if (!cli.parse(argc, argv))
+        failed();
+    ...
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="advanced">Advanced</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="special-arguments">Special Arguments</h3>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"-"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Passed in as a positional argument.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"--"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Thrown away, but makes all remaining arguments positional</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"@&lt;file&gt;"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#response-files">Response file</a> containing additional
+                 arguments</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="optional-values">Optional Values</h3>
+<div class="paragraph">
+<p>You use the '?' <a href="#option-names">flag</a> on an argument name to indicate that
+its value is optional. Only non-booleans can have optional values, booleans
+are evaluated just on their presence or absence and don&#8217;t otherwise have
+values.</p>
+</div>
+<div class="paragraph">
+<p>For a user to set a value on the command line when it is optional the value
+must be connected (no space) to the argument name, otherwise it is interpreted
+as not present and the arguments implicit value is used instead. If the name
+is not present at all the variable is set to the default given in the
+cli.opt&lt;T&gt;() call.</p>
+</div>
+<div class="paragraph">
+<p>By default the implicit value is T{}, but can be changed using
+opt.implicitValue().</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; v1 = cli.opt&lt;string&gt;("?o ?optional", "default");
+    auto &amp; v2 = cli.opt&lt;string&gt;("?i ?with-implicit", "default");
+    v2.implicitValue("implicit");
+    auto &amp; p = cli.opt&lt;string&gt;("[positional]", "default");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "v1 = " &lt;&lt; *v1 &lt;&lt; ", v2 = " &lt;&lt; *v2 &lt;&lt; ", p = " &lt;&lt; *p;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What happens:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+v1 = default, v2 = default, p = default
+$ a.out -oone -i two
+v1 = one, v2 = implicit, p = two
+$ a.out -o one -itwo
+v1 =, v2 = two, p = one
+$ a.out --optional=one --with-implicit two
+v1 = one, v2 = implicit, p = two
+$ a.out --optional one --with-implicit=two
+v1 =, v2 = two, p = one</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="before-actions">Before Actions</h3>
+<div class="paragraph">
+<p>It&#8217;s unusual to want a before action. They operate on the entire argument
+list, after environment variable and response file expansion, but before any
+individual arguments are parsed. The before action should:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Inspect and possibly modify the raw arguments. The args are guaranteed to
+start out valid, but be careful that it still starts with a program name
+in arg0 when you&#8217;re done.</p>
+</li>
+<li>
+<p>Call cli.badUsage() with an error message for problems.</p>
+</li>
+<li>
+<p>Return false if the program should stop, otherwise true.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>There can be any number of before actions, they are executed in the order
+they are added.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s test for empty command lines and add "--help" to them. But first, our
+"before" program:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; val = cli.opt&lt;string&gt;("&lt;value&gt;").desc("It's required!");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "The value: " &lt;&lt; *val;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And it&#8217;s output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out 99
+The value: 99
+$ a.out --help
+usage: a.out [OPTIONS]
+  value     It's required!
+
+Options:
+  --help    Show this message and exit.
+$ a.out
+Error: Missing argument: value</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now add the before action:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.before([](Cli &amp;, vector&lt;string&gt; &amp; args) {
+    if (args.size() == 1) // it's just the program name?
+        args.push_back("--help");
+    return true;
+});</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And missing arguments are a thing of the past&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+usage: a.out [OPTIONS]
+  value     It's required!
+
+Options:
+  --help    Show this message and exit.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That isn&#8217;t too complicated, but for this case cli.helpNoArgs() is available
+to do the same thing.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="parse-actions">Parse Actions</h3>
+<div class="paragraph">
+<p>Sometimes, you want an argument to completely change the execution flow. For
+instance, to provide more detailed errors about badly formatted arguments. Or
+to make "--version" print some crazy ASCII artwork and exit the program (for
+a non-crazy --version use <a href="#version-option">opt.versionOpt()</a>).</p>
+</div>
+<div class="paragraph">
+<p>Parsing actions are attached to options and get invoked when a value becomes
+available for it. Any std::function compatible object that accepts references
+to cli, opt, and string as parameters can be used. The function should:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Parse the source string and use the result to set the option value (or
+push back the additional value for vector arguments).</p>
+</li>
+<li>
+<p>Call cli.badUsage() with an error message if there&#8217;s a problem.</p>
+</li>
+<li>
+<p>Return false if the program should stop, otherwise true. You may want to
+stop due to error or just to early out like "--version" and "--help".</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Other things to keep in mind:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Options only have one parse action, changing it <strong>replaces</strong> the default.</p>
+</li>
+<li>
+<p>You can use opt.from() and opt.pos() to get the argument name that the value
+was attached to on the command line and its position in argv\[].</p>
+</li>
+<li>
+<p>For bool options the source value string will always be either "0" or "1".</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Here&#8217;s an action that multiples multiple values together:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; sum = cli.opt&lt;int&gt;("n number", 1)
+        .desc("numbers to multiply")
+        .parse([](auto &amp; cli, auto &amp; opt, string const &amp; val) {
+            int tmp = *opt; // save the old value
+            if (!opt.parseValue(val)) // parse the new value into opt
+                return cli.badUsage(opt, val);
+            *opt *= tmp; // multiply old and new together
+            return true;
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "The product is: " &lt;&lt; *sum &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s do some math!</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -n, --number=NUM  numbers to multiply (default: 1)
+
+  --help            Show this message and exit.
+
+$ a.out
+The product is: 1
+$ a.out -n3 -n2
+The product is: 6
+$ a.out -nx
+Error: Invalid '-n' value: x</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="check-actions">Check Actions</h3>
+<div class="paragraph">
+<p>Check actions run for each value that is successfully parsed and are a good
+place for additional work. For example, opt.range() and opt.clamp() are
+implemented as check actions. Just like parse actions the callback is any
+std::function compatible object that accepts references to cli, opt, and
+string as parameters and returns bool.</p>
+</div>
+<div class="paragraph">
+<p>An option can have any number of check actions and they are called in the
+order they were added.</p>
+</div>
+<div class="paragraph">
+<p>The function should:
+* Check the options new value. Beware that options are process in the order
+  they appear on the command line, so comparing with another option is
+  usually better done in an <a href="#after-actions">after action</a>.
+* Call cli.badUsage() with an error message if there&#8217;s a problem.
+* Return false if the program should stop, otherwise true to let processing
+  continue.</p>
+</div>
+<div class="paragraph">
+<p>The opt is fully populated, so *opt, opt.from(), etc are all available.</p>
+</div>
+<div class="paragraph">
+<p>Sample check action that rounds up to an even number of socks:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; socks = cli.opt&lt;int&gt;("socks")
+        .desc("Number of socks, rounded up to even number.")
+        .check([](auto &amp; cli, auto &amp; opt, auto &amp; val) {
+            *opt += *opt % 2;
+            return true;
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; *socks &lt;&lt; " socks";
+    if (*socks) cout &lt;&lt; ", where are the people?";
+    cout &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s&#8230;&#8203; wash some socks?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -socks=NUM  Number of socks, rounded up to even number.
+
+  --help      Show this message and exit.
+
+$ a.out
+0 socks
+$ a.out --socks 3
+4 socks, where are the people?</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="after-actions">After Actions</h3>
+<div class="paragraph">
+<p>After actions run after all arguments have been parsed. For example,
+opt.prompt() and opt.require() are both implemented as after actions. Any
+number of after actions can be added and will, for every (not just the
+ones referenced by the command line!) registered option, be called in the
+order they&#8217;re added. They are called with the three parameters, like other
+option actions, that are references to cli, opt, and the value string
+respectively. However the value string is always empty(), so any information
+about the value must come from the opt reference.</p>
+</div>
+<div class="paragraph">
+<p>When using subcommands, only the after actions bound to the top level or the
+selected command are executed. After actions on the options of all other
+commands are, like the options themselves, ignored.</p>
+</div>
+<div class="paragraph">
+<p>The function should:
+* Do something interesting.
+* Call cli.badUsage() and return false on error.
+* Return true if processing should continue.</p>
+</div>
+<div class="paragraph">
+<p>Action to make sure the high is not less than the low:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; low = cli.opt&lt;int&gt;("l").desc("Low value.");
+    auto &amp; high = cli.opt&lt;int&gt;("h")
+        .desc("High value, must be greater than the low.")
+        .after([&amp;](auto &amp; cli, auto &amp; opt, auto &amp;) {
+            return (*opt &gt;= *low)
+                || cli.badUsage("High must not be less than the low.");
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Range is from " &lt;&lt; *low &lt;&lt; " to " &lt;&lt; *high &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Set the range:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -h=NUM    High value, must be greater than the low.
+  -l=NUM    Low value.
+
+  --help    Show this message and exit.
+
+$ a.out
+Range is from 0 to 0
+$ a.out -l1
+High must not be less than the low.
+$ a.out -h5 -l2
+Range is from 2 to 5</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="subcommands">Subcommands</h3>
+<div class="paragraph">
+<p>Git style subcommands are created by either cli.command("cmd"), which changes
+the cli objects context to the command, or with opt.command("cmd"), which
+changes the command that option is for. Once the cli object context has been
+changed it can than be used to add (description, footer, options, etc) to the
+command. Exactly the same as when working with a simple command line. If you
+pass an empty string to cli.command() or opt.command() it represents the top
+level processing that takes place before a command has been found.</p>
+</div>
+<div class="paragraph">
+<p>Options are processed on the top level up to the first positional. The first
+positional is the command, and the rest of the arguments are processed in the
+context of that command. Since the top level doesn&#8217;t process positionals when
+commands are present, it will assert in debug builds and ignore them in
+release if positionals are defined.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>static auto &amp; yell = Dim::Cli().opt&lt;bool&gt;("yell").desc("Say it loud.");
+static auto &amp; color = Dim::Cli().opt&lt;string&gt;("color", "red")
+    .command("apple")
+    .desc("Change color of the apple.");
+
+int apple(Dim::Cli &amp; cli) {
+    cout &lt;&lt; "It's a " &lt;&lt; *color &lt;&lt; " apple" &lt;&lt; (*yell ? "!!!" : ".");
+    return EX_OK;
+}
+
+int orange(Dim::Cli &amp; cli) {
+    cout &lt;&lt; "It's an orange" &lt;&lt; (*yell ? "!!!" : ".");
+    return EX_OK;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.command("apple").desc("Show apple. No other fruit.").action(apple);
+    cli.command("orange").desc("Show orange.").action(orange);
+    cli.exec(cerr, argc, argv);
+    return cli.exitCode();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The same thing could also be done with external variables:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>static bool yell;
+static string color;
+...
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.opt(&amp;yell, "yell").desc("Say it loud.");
+    cli.opt(&amp;color, "color", "red").command("apple")
+        .desc("Change color of the apple.");
+    ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or if there&#8217;s some additional argument checks or setup you need to do, the
+exec() call can be separate from parse():</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    // any additional validation...
+    cli.exec(cerr);
+    return cli.exitCode();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The end result at the console:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Error: No command given.
+$ a.out --help
+usage: a.out [OPTIONS] command [args...]
+
+Commands:
+  apple     Show apple.
+  orange    Show orange.
+
+Options:
+  --yell    Say it loud.
+
+  --help    Show this message and exit.
+
+$ a.out apple
+It's a red apple.
+$ a.out apple --color=yellow
+It's a yellow apple.
+$ a.out orange
+It's an orange.
+$ a.out --yell orange
+It's an orange!!!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the commands list, only the first sentence of cli.desc() (up to the first
+'.', '!', or '?' that&#8217;s followed by a space) is shown, but in command specific
+pages you see the whole thing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out apple --help
+usage: a.out apple [OPTIONS]
+
+Show apple. No other fruit.
+
+Options:
+  --color=STRING  Change color of the apple. (default: red)
+
+  --help          Show this message and exit.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="multiple-source-files">Multiple Source Files</h3>
+<div class="paragraph">
+<p>Options don&#8217;t have to be defined all in one source file, separate source
+files can each define options of interest to that file and get them populated
+when the command line is processed.</p>
+</div>
+<div class="paragraph">
+<p>When you instantiate Dim::Cli you&#8217;re creating a handle to the globally shared
+configuration. So multiple translation units can each create one and use it to
+update the shared configuration.</p>
+</div>
+<div class="paragraph">
+<p>The following example has a logMsg function in log.cpp with its own "-1"
+option while main.cpp registers "--version":</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>// main.cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt("1.0");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    // do stuff that might call logMsg...
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>// log.cpp
+static Dim::Cli cli;
+static auto &amp; failEarly = cli.opt&lt;bool&gt;("1").desc("Exit on first error");
+
+void logMsg(string &amp; msg) {
+    cerr &lt;&lt; msg &lt;&lt; endl;
+    if (*failEarly)
+        exit(EX_SOFTWARE);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1         Exit on first error
+
+  --help     Show this message and exit.
+  --version  Show version and exit.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When you want to put a bundle of stuff in a separate source file, such as a
+<a href="#subcommands">command</a> and its options, it can be convenient to group them
+into a single static struct.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>// somefile.cpp
+static int myCmd(Dim::Cli &amp; cli);
+
+static struct CmdOpts {
+    int option1;
+    string option2;
+    string option3;
+
+    CmdOpts() {
+        Cli cli;
+        cli.command("my").action(myCmd).desc("What my command does.");
+        cli.opt(&amp;option1, "1 one", 1).desc("First option.");
+        cli.opt(&amp;option2, "2", "two").desc("Second option.");
+        cli.opt(&amp;option3, "three", "three").desc("Third option.");
+    }
+} s_opts;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then in myCmd() and throughout the rest of somefile.cpp you can reference the
+options as <strong>s_opts.option1</strong>, <strong>s_opts.option2</strong>, and <strong>s_opts.option3</strong>.</p>
+</div>
+<div class="paragraph">
+<p>And the help text will be:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out my --help
+usage: a.out my [OPTIONS]
+
+What my command does.
+
+Options:
+  -1, --one  First option. (default: 1)
+  -2         Second option. (default: two)
+  --three    Third option. (default: three)
+
+  --help     Show this message and exit.</code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="dimclilocal">Dim::CliLocal</h5>
+<div class="paragraph">
+<p>You can also use Dim::CliLocal, a completely self-contained parser, if you
+need to redefine options, have results from multiple parses at once, or
+otherwise avoid the shared configuration.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="response-files">Response Files</h3>
+<div class="paragraph">
+<p>A response file is a collection of frequently used or generated arguments
+saved as text, often with a ".rsp" extension, that is substituted into the
+command line when referenced.</p>
+</div>
+<div class="paragraph">
+<p>What you write:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; words = cli.optVec&lt;string&gt;("[words]").desc("Things you say.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Words:";
+    for (auto &amp; w : words)
+        cout &lt;&lt; " " &lt;&lt; w;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What happens later:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS] [words...]
+  words     Things you say.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out a b
+Words: a b
+$ echo c &gt;one.rsp
+$ a.out a b @one.rsp d
+Words: a b c d</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Response files can be used multiple times and the arguments in them can be
+broken into multiple lines:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ echo d &gt;one.rsp
+$ echo e &gt;&gt;one.rsp
+$ a.out x @one.rsp y @one.rsp
+Words: x d e y d e</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Response files also can be nested, when a response file contains a reference
+to another response file the path is relative to the parent response file,
+not to the working directory.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ md rsp &amp; cd rsp
+$ echo one @more.rsp &gt;one.rsp
+$ echo two three &gt;more.rsp
+$ cd ..
+$ a.out @rsp/one.rsp
+Words: one two three</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Recursive response files will fail, don&#8217;t worry!</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ echo "@one.rsp" &gt;one.rsp
+$ a.out @one.rsp
+Error: Recursive response file: one.rsp</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>While generally useful response file processing can be disabled via
+cli.responseFiles(false).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="environment-variable">Environment Variable</h3>
+<div class="paragraph">
+<p>You can specify an environment variable that will have its contents
+prepended to the command line. This happens before response file expansion
+and any before actions.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; words = cli.optVec&lt;string&gt;("[words]");
+    cli.envOpts("AOUT_OPTS");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Words:";
+    for (auto &amp;&amp; word : *words)
+        cout &lt;&lt; " '" &lt;&lt; word &lt;&lt; "'";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The same can also be done manually, as shown below. This is a good starting
+point if you need something slightly different:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>vector&lt;string&gt; args = cli.toArgv(argc, argv);
+if (char const * eopts = getenv("AOUT_OPTS")) {
+    vector&lt;string&gt; eargs = cli.toArgv(eopts);
+    // Insert the environment args after arg0 (program name) but before
+    // the rest of the command line.
+    args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+}
+if (!cli.parse(cerr, args))
+    return cli.exitCode();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or as a before action (after response file expansion):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.before([](Cli &amp;, vector&lt;string&gt; &amp; args) {
+    if (char const * eopts = getenv("AOUT_OPTS")) {
+        vector&lt;string&gt; eargs = cli.toArgv(eopts);
+        args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+    }
+});
+if (!cli.parse(cerr, args))
+    return cli.exitCode();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>How this works:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ export AOUT_OPTS=
+$ a.out c d
+Words: 'c' 'd'
+$ export AOUT_OPTS=a b
+$ a.out 'c' 'd'
+Words: 'a' 'b' 'c' 'd'</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="keep-it-quiet">Keep It Quiet</h3>
+<div class="paragraph">
+<p>For some applications, such as Windows services, it&#8217;s important not to
+interact with the console. Simple steps to avoid cli.parse() doing console IO:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Don&#8217;t use things (such as opt.prompt()) that explicitly ask for IO.</p>
+</li>
+<li>
+<p>Add your own "help" argument to override the default, you can still turn
+around and call cli.printHelp(ostream&amp;) if desired.</p>
+</li>
+<li>
+<p>Use the two argument version of cli.parse() and get the error message from
+cli.errMsg() and cli.errDetail() if it fails.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="options-and-modifiers">Options and Modifiers</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="version-option">Version Option</h3>
+<div class="paragraph">
+<p>Use cli.versionOpt() to add simple --version processing.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt("1.0");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Hello world!" &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Is version 1.0 ready to ship?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help     Show this message and exit.
+  --version  Show version and exit.
+
+$ a.out --version
+a.out version 1.0
+$ a.out
+Hello world!</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="help-option">Help Option</h3>
+<div class="paragraph">
+<p>You can modify the implicitly create --help option. Use cli.helpOpt() to get a
+reference and then go to town. The most likely thing would be to change the
+description or option group, but since you get back an Opt&lt;T&gt; you can use
+any of the standard functions.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.helpOpt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And when run&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    Show this message and exit.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It can be modified like any other bool option.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.helpOpt().desc("What you see is what you get.");</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; help = cli.helpOpt();
+help.desc("What you see is what you get.");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Either of which gets you this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    What you see is what you get.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Another related command is cli.helpNoArgs(), which internally adds "--help" to
+otherwise empty command lines.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.helpNoArgs();
+cli.helpOpt().desc("What you see is what you get.");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now all there is, is help:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+usage: a.out [OPTIONS]
+
+Options:
+  --help    What you see is what you get.
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    What you see is what you get.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="feature-switches">Feature Switches</h3>
+<div class="paragraph">
+<p>Using flag options, feature switches are implemented by creating multiple
+options that reference the same external variable and marking them as flag
+values.</p>
+</div>
+<div class="paragraph">
+<p>To set the default, pass in a value of true to the flagValue() function of
+the option that should be the default.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    string fruit;
+    // "~" is the default option group for --help, --version, etc. Give
+    // it a title so it doesn't look like more fruit.
+    cli.group("~").title("Other options");
+    cli.group("Type of fruit");
+    cli.opt(&amp;fruit, "o orange", "orange").desc("oranges").flagValue();
+    cli.opt(&amp;fruit, "a", "apple").desc("red fruit").flagValue(true);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Does the " &lt;&lt; fruit &lt;&lt; " have a worm? No!";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which looks like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Type of fruit:
+  -a            red fruit (default)
+  -o, --orange  oranges
+
+Other options:
+  --help        Show this message and exit.
+
+$ a.out
+Does the apple have a worm? No!
+$ a.out -o
+Does the orange have a worm? No!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can use an inaccessible option (empty string for the keys) that doesn&#8217;t
+show up in the interface (or the help text) to set an explicit default.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.opt(&amp;fruit, "o orange", "orange").desc("oranges").flagValue();
+cli.opt(&amp;fruit, "a", "apple").desc("red fruit").flagValue();
+cli.opt(&amp;fruit, "", "fruit").flagValue(true);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now instead of an apple there&#8217;s a generic fruit default.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Does the fruit have a worm? No!</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="choice">Choice</h3>
+<div class="paragraph">
+<p>Sometimes you want an option to have a fixed set of possible values, such as
+for an enum. You use opt.choice() to add legal choices, one at a time, to an
+option.</p>
+</div>
+<div class="paragraph">
+<p>Choices are similar to <a href="#feature-switches">feature switches</a> but instead of
+multiple boolean options populating a single variable it is a single
+non-boolean option setting its variable to one of multiple values.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>enum class State { go, wait, stop };
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; state = cli.opt&lt;State&gt;("streetlight", State::wait)
+        .desc("Color of street light.").valueDesc("COLOR")
+        .choice(State::go, "green", "Means go!")
+        .choice(State::wait, "yellow", "Means wait, even if you're late.")
+        .choice(State::stop, "red", "Means stop.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    switch (*state) {
+        case State::stop: cout &lt;&lt; "STOP!"; break;
+        case State::go: cout &lt;&lt; "Go!"; break;
+        case State::wait: cout &lt;&lt; "Wait"; break;
+    }
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --streetlight=COLOR  Color of street light.
+      green   Means go!
+      yellow  Means wait, even if you're late. (default)
+      red     Means stop.
+
+  --help               Show this message and exit.
+
+$ a.out
+Wait
+$ a.out --streetlight
+Error: Option requires value: --streetlight
+$ a.out --streetlight=purple
+Error: Invalid "--streetlight" value: purple
+Error: Must be "green", "red", or "yellow"
+$ a.out --streetlight=green
+Go!</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="require">Require</h3>
+<div class="paragraph">
+<p>A simple way to make sure an option is specified is to mark it required with
+opt.require(). This adds an after action that fails if no explicit value was
+set for the option.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; file = cli.opt&lt;string&gt;("file f").require();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Selected file: " &lt;&lt; *file &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What you get:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Error: No value given for --file
+$ a.out -ffile.txt
+Selected file: file.txt</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The error message references the first name in the list so if you flip it
+around&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; file = cli.opt&lt;string&gt;("f file").require();</code></pre>
+</div>
+</div>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>it will complain about '-f' instead of '--file'.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ a.out
+Error: No value given for -f</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="range-and-clamp">Range and Clamp</h3>
+<div class="paragraph">
+<p>When you want to limit a value to be within a range (inclusive) you can use
+opt.range() to error out or opt.clamp() to convert values outside the range to
+be equal to the nearest of the two edges.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; count = cli.opt&lt;int&gt;("&lt;count&gt;").clamp(1, 10);
+    auto &amp; letter = cli.opt&lt;char&gt;("&lt;letter&gt;").range('a','z');
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; string(*count, *letter) &lt;&lt; endl;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out 1000 b
+bbbbbbbbbb
+$ a.out 1000 1
+Error: Out of range 'letter' value: 1
+Must be between 'a' and 'z'.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="units-of-measure">Units of Measure</h3>
+<div class="paragraph">
+<p>The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
+parser actions and provide a simple way to support unit suffixes on numerical
+values. The value has the units are removed, is parsed as a double, multiplied
+by the associated factor, rounded to an integer (unless the target is a
+floating point type), converted back to a string, and then finally passed to
+opt.fromString&lt;T&gt;().</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Flag</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fUnitBinaryPrefix</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only for opt.siUnits(), makes k,M,G,T,P factors of 1024 (just like
+ki,Mi,Gi,Ti,Pi), and excludes fractional unit prefixes (milli, micro, etc).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fUnitInsensitive</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Makes units case insensitive. For opt.siUnits(), unit prefixes are also case
+insensitive and fractional unit prefixes are excluded. So 'M' and 'm' are both
+mega.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fUnitRequire</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Values without units are rejected, even if they have unit prefixes
+(k,M,G,etc).</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect3">
+<h4 id="si-units">SI Units</h4>
+<div class="paragraph">
+<p>SI units are considered to be anything that uses the SI prefixes. The
+supported prefixes range from 1e+15 to 1e-15 and are: P, Pi, T, Ti, G, Gi, M,
+Mi, k, ki, m, u, n, p, f.</p>
+</div>
+<div class="paragraph">
+<p>The following table shows the effects of the above flags (BP, I, R) and
+whether a symbol (such as "m") is specified on the parsing of some
+representative inputs:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<th class="tableblock halign-left valign-top"><p class="tableblock">Input</p></th>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+BP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">+BP,I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +BP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +BP,I</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +I,R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +BP,R</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"m" +BP,I,R</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1M"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1k"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1ki"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"k"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1m"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.001</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1u"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.000001</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1Mm"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,048,576</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1km"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1kim"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1,024</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"km"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"1mm"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.001</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.001</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1e+6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>An example with binary prefixes that is case insensitive:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; bytes = cli.opt&lt;uint64_t&gt;("b bytes")
+        .siUnits("b", cli.fUnitBinaryPrefix | cli.fUnitInsensitive)
+        .desc("Number of bytes to process.");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (bytes)
+        cout &lt;&lt; *bytes &lt;&lt; " bytes\n";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -b NUM[&lt;units&gt;]
+$ a.out -b 32768
+32768 bytes
+$ a.out -b 32k
+32768 bytes
+$ a.out -b 32KB
+32768 bytes
+$ a.out -b 32kib
+32768 bytes
+$ a.out -b 32bk
+Error: Invalid '-b' value: 32bk</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="time-units">Time Units</h4>
+<div class="paragraph">
+<p>Adjusts the value to seconds when time units are present. The following units
+are supported:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Input</th>
+<th class="tableblock halign-left valign-top">Factor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">y</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">31,536,000 (365 days, leap years not considered)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">w</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">604,800 (7 days)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">d</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">86,400 (24 hours)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">h</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3,600</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">m</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">60</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">min</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">60</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">s</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ms</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.001</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">us</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.000001</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ns</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.000000001</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Interval in seconds where units are required:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; interval = cli.opt&lt;uint32_t&gt;("i interval")
+        .timeUnits(cli.fUnitRequire)
+        .desc("Time interval");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (interval)
+        cout &lt;&lt; *interval &lt;&lt; " seconds\n";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ # Rounded to integer value so it can be stored in uint32_t
+$ a.out -i 2100ms
+2 seconds
+$ # One year
+$ a.out -i 1y
+31536000 seconds
+$ # You can only fit 136.2 years worth of seconds into uint32_t
+$ a.out -i 137y
+Error: Out of range '-i' value: 137y
+Must be between '0' and '4,294,967,296'.
+$ # We set fUnitRequire, so units are required...
+$ a.out -i 60
+Error: Invalid '-i' value: 60</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="any-units">Any Units</h4>
+<div class="paragraph">
+<p>Allows any arbitrary set of unit+factor pairs, used by both opt.siUnits() and
+opt.timeUnits().</p>
+</div>
+<div class="paragraph">
+<p>Accept length in Imperial Units:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; length = cli.opt&lt;double&gt;("l length")
+        .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001}})
+        .desc("Length, in inches");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (length)
+        cout &lt;&lt; *length &lt;&lt; " inches\n";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+$ a.out -l 1yd
+36 inches
+$ a.out -l 3ft
+36 inches
+$ a.out -l 36
+36 inches</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="counting">Counting</h3>
+<div class="paragraph">
+<p>In very rare circumstances, it might be useful to use repetition to increase
+an integer. There is no special handling for it, but counting can be done
+easily enough with a vector. This can be used for verbosity flags, for
+instance:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; v = cli.optVec&lt;bool&gt;("v verbose");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Verbosity: " &lt;&lt; v.size();
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And on the command line:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out -vvv
+Verbosity: 3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This could also be done with a <a href="#parse-actions">parse action</a>, but that seems
+like more work.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="prompting">Prompting</h3>
+<div class="paragraph">
+<p>You can have an option prompt the user for the value when it&#8217;s left off of
+the command line.</p>
+</div>
+<div class="paragraph">
+<p>In addition to simple prompting, there are some flags that modify the behavior.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Flag</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fPromptHide</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hide the input from the console</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fPromptConfirm</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Require the value be entered twice</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fPromptNoDefault</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Don&#8217;t show the default</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; cookies = cli.opt&lt;int&gt;("cookies c").prompt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "There are " &lt;&lt; *cookies &lt;&lt; " cookies.";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By default the prompt is a capitalized version of the first option name.
+Which is why this example uses "cookies c" instead of "c cookies".</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out -c5
+There are 5 cookies.
+$ a.out
+Cookies [0]: 3
+There are 3 cookies.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first option name is also used in errors where no name is available from
+the command line, such as when the value is from a prompt. The following
+fails because "nine" isn&#8217;t an int.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Cookies [0]: nine
+Error: Invalid '--cookies' value: nine</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can change the prompt to something more appropriate and hide the default:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; cookies = cli.opt&lt;int&gt;("cookies c")
+    .prompt("How many cookies did you buy?", cli.fPromptNoDefault);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which gives you:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+How many cookies did you buy? 9
+There are 9 cookies.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="password-prompting">Password Prompting</h3>
+<div class="paragraph">
+<p>The fPromptHide and fPromptConfirm options are especially handy when asking
+for passwords.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; pass = cli.opt&lt;string&gt;("password")
+        .prompt(cli.fPromptHide | cli.fPromptConfirm);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "Password was: " &lt;&lt; *pass;
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Results in:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Password:
+Enter again to confirm:
+Password was: secret</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For passwords you can use opt.passwordOpt() instead of spelling it out.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; pass = cli.passwordOpt(/*confirm=*/true);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which gives you:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --password=STRING  Password required for access.
+
+  --help             Show this message and exit.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="confirm-option">Confirm Option</h3>
+<div class="paragraph">
+<p>There is a short cut for a "-y, --yes" option, called cli.confirmOpt(), that
+only lets the program run if the option is set or the user responds with 'y'
+or 'Y' when asked if they are sure. Otherwise it sets cli.exitCode() to EX_OK
+and causes cli.parse() to return false.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.confirmOpt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; "HELLO!!!";
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Cover your ears&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -y, --yes  Suppress prompting to allow execution.
+
+  --help     Show this message and exit.
+
+$ a.out -y
+HELLO!!!
+$ a.out
+Are you sure? [y/N]: n
+$ a.out
+Are you sure? [y/N]: y
+HELLO!!!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can change the prompt:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>cli.confirmOpt("Are loud noises okay?");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now it asks:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out
+Are loud noises okay? [y/N]: y
+HELLO!!!</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="help-text">Help Text</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="page-layout">Page Layout</h3>
+<div class="paragraph">
+<p>The main help page, and the help pages for subcommands, are built the same
+way and made up of the same six (not counting <a href="#option-groups">option groups</a>)
+sections.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Section</th>
+<th class="tableblock halign-left valign-top">Changed by</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Header</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.header()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generally a one line synopsis of the purpose of the command.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Usage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.opt()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generated text list the defined positional arguments.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.desc()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Text describing how to use the command and what it does. Sometimes used
+instead of the positionals list.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Commands</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.command(), cli.desc(), opt.command()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of commands and first line of their description, included if there are
+any git style subcommands.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Positionals</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.opt(), opt.desc()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of positional arguments and their descriptions, omitted if none have
+descriptions.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Options</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of named options and descriptions, included if there are any visible
+options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Footer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.footer()</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Shown at the end, often contains references to further information.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Within text, consecutive spaces are collapsed and words are wrapped at 80
+columns. Newlines should be reserved for paragraph breaks.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>Dim::Cli cli;
+cli.header("Heading before usage");
+cli.desc("Desciption of what the command does, including any general "
+    "discussion of the various aspects of its use.");
+cli.opt&lt;bool&gt;("[positional]");
+cli.opt&lt;string&gt;("option").valueDesc("OPT_VAL").desc("About this option.");
+cli.opt&lt;int&gt;("p", 1).desc("Option p.");
+cli.opt&lt;int&gt;("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
+cli.opt&lt;int&gt;("r", 3).desc("Option r.").defaultDesc("");
+cli.footer(
+    "Footer at end, usually with where to find more info.\n"
+    "- first reference\n"
+    "- second reference\n"
+);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example the positionals section is omitted because the positional
+doesn&#8217;t have a description.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+Heading before usage
+usage: a.out [OPTIONS] positional
+
+Description of what the command does, including any general discussion of the
+various aspects of its use.
+
+Options:
+  --option=OPT_VAL  About this options.
+  -p NUM            Option p. (default: 1)
+  -q NUM            Option q. (default: two, yes TWO!)
+  -r NUM            Option r.
+
+  --help            Show this message and exit.
+
+Footer at end, usually with where to find more info.
+- first reference
+- second reference</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="option-groups">Option Groups</h3>
+<div class="paragraph">
+<p>Option groups are used to collect related options together in the help text.
+In addition to name, groups have a title and sort key that determine section
+heading and the order groups are rendered. Groups are created on reference,
+with the title and sort key equal to the name.</p>
+</div>
+<div class="paragraph">
+<p>Additionally there are two predefined option groups:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Sort</th>
+<th class="tableblock halign-left valign-top">Title</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"Options"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default group options are created</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"~"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"~"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Footer group, default location for "--help" and "--version"</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In order to generate the help text the visible options are collected into
+groups, the groups are sorted by sort key and the options within each group
+are sorted by name.</p>
+</div>
+<div class="paragraph">
+<p>The group title followed by the options is then output for each group that
+has options. A group without a title is still separate from the previous group
+by a single blank line.</p>
+</div>
+<div class="paragraph">
+<p>To group options you either use opt.group() to set the group name or create
+the option using cli.opt&lt;T&gt;() after changing the context with cli.group().</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt("1.0");
+    // move 1b into 'First' group after creation
+    cli.opt&lt;bool&gt;("1b").group("First").desc("boolean 1b");
+    // set context to 'First' group, update its key and add 1a directly to it
+    cli.group("First").sortKey("a").title(
+        "First has a really long title that wraps around to more than "
+        "a single line, quite a lot of text for so few options"
+    );
+    cli.opt&lt;bool&gt;("1a");
+    // add 2a to 'Second'
+    cli.group("Second").sortKey("b").opt&lt;bool&gt;("2a");
+    cli.group("Third").sortKey("c").opt&lt;bool&gt;("3a");
+    // give the footer group a title
+    cli.group("~").title("Internally Generated");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see the groupings&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+First has a really long title that wraps around to more than a single line,
+quite a lot of text for so few options:
+  --1a
+  --1b       boolean 1b
+
+Second:
+  --2a
+
+Third:
+  --3a
+
+Internally Generated:
+  --help     Show this message and exit.
+  --version  Show version and exit.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="command-groups">Command Groups</h3>
+<div class="paragraph">
+<p>Command groups collect related commands together in the help text, in the same
+way that option groups do with options.</p>
+</div>
+<div class="paragraph">
+<p>There are two predefined command groups:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Sort</th>
+<th class="tableblock halign-left valign-top">Title</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"Commands"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default command group</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"~"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"~"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Footer group, default location for "help"</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>To group commands you either use cli.cmdGroup() to set the group name or create
+the command using cli.command() from the context of another command that is
+already in the command group that you want for the new command.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+
+    // move 1a into 'First' group after creation
+    cli.command("1a").cmdGroup("First").cmdSortKey("1");
+    // create 1b in current 'First' group.
+    cli.command("1b");
+    // create 2a and move it into 'Second'
+    cli.command("2a").cmdGroup("Second").cmdSortKey("2");
+    // create 3a and move to 'Third'
+    cli.command("3a").cmdGroup("Third").cmdSortKey("3");
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see the command groupings&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+First:
+  1a
+  1b
+
+Second:
+  2a
+
+Third:
+  3a
+
+Options:
+  --help     Show this message and exit.</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="help-subcommand">Help Subcommand</h3>
+<div class="paragraph">
+<p>A simple help command can be added via cli.helpCmd(). Having a help command
+allows users to run the more natural "a.out help command" to get help with a
+subcommand instead of the more annoying "a.out command --help".</p>
+</div>
+<div class="paragraph">
+<p>How to add it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.helpCmd();
+    cli.exec(cerr, argc, argv);
+    return cli.exitCode();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Programs that only have a simple help command aren&#8217;t very helpful, but it
+should give you an idea. If you have more commands they will show up as you&#8217;d
+expect.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="shell session"><code>$ a.out help
+usage: a.out [OPTIONS] command [args...]
+
+Commands:
+  help      Show help for individual commands and exit.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out help help
+usage: a.out help [OPTIONS] [command]
+
+Show help for individual commands and exit. If no command is given the list of
+commands and general options are shown.
+  command    Command to show help information about.
+
+Options:
+  -u, --usage / --no-usage  Only show condensed usage.
+
+  --help                    Show this message and exit.
+
+$ a.out help -u
+usage: a.out [--help] command [args..]
+$ a.out help help -u
+usage: a.out help [-u, --usage] [--help] [command]</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="going-your-own-way">Going Your Own Way</h3>
+<div class="paragraph">
+<p>If generated help doesn&#8217;t work for you, you can override the built-in help
+with your own.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre lang="C++"><code>auto &amp; help = cli.opt&lt;bool&gt;("help"); // or maybe "help." to suppress --no-help
+if (!cli.parse(cerr, argv, argc))
+    return cli.exitCode();
+if (*help)
+    return printMyHelp();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This works because the last definition for named options overrides any
+previous ones.</p>
+</div>
+<div class="paragraph">
+<p>Within your help printer you can use the existing functions to do some of the
+work:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>cli.printHelp</p>
+</li>
+<li>
+<p>cli.printUsage / cli.printUsageEx</p>
+</li>
+<li>
+<p>cli.printPositionals</p>
+</li>
+<li>
+<p>cli.printOptions</p>
+</li>
+<li>
+<p>cli.printCommands</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+</html>

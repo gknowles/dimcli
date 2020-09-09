@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    try {
+        var lang = block.parentElement.lang.toLowerCase();
+        if (lang == 'shell session') {
+            lang = 'console';
+        }
+        var code = hljs.highlight(lang, block.textContent);
+        block.className += 'hljs';
+        block.innerHTML = code.value;
+    } catch (e) {
+    }
+  });
+});
+</script>
+<link rel="stylesheet" href="../css/docgen.css"/>
+<title>Reference - DIMCLI</title>
+</head>
+<body data-spy="scroll" data-target="#toc">
+<nav class="navbar navbar-expand-sm sticky-top bg-primary navbar-dark">
+<a class="navbar-brand font-weight-bolder" href="..">DIMCLI</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+<div class="navbar-nav mr-auto">
+<a class="nav-link" href="guide.html">User's Guide</a>
+<a class="nav-link active" href="reference.html">Reference <span class="sr-only">(current)</span>
+</a>
+<a class="nav-link" href="changelog.html">Change Log</a>
+</div>
+<div class="navbar-nav">
+<div class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" data-reference="parent" aria-haspopup="true" aria-expanded="false" title="Version">HEAD</a>
+<div class="dropdown-menu dropdown-menu-md-right" aria-labelledby="navbarDropdown">
+<a class="dropdown-item active" href="../HEAD/reference.html">HEAD</a>
+<a class="dropdown-item" href="../v5.0.2/reference.html">v5.0.2</a>
+<a class="dropdown-item" href="../v5.0.1/reference.html">v5.0.1</a>
+<a class="dropdown-item" href="../v5.0.0/reference.html">v5.0.0</a>
+<a class="dropdown-item" href="../v4.1.0/index.html">v4.1.0</a>
+<a class="dropdown-item" href="../v4.0.1/index.html">v4.0.1</a>
+<a class="dropdown-item" href="../v3.1.1/index.html">v3.1.1</a>
+<a class="dropdown-item" href="../v3.1.0/index.html">v3.1.0</a>
+<a class="dropdown-item" href="../v3.0.0/index.html">v3.0.0</a>
+<a class="dropdown-item" href="../v2.0.0/index.html">v2.0.0</a>
+<a class="dropdown-item" href="../v1.0.3/index.html">v1.0.3</a>
+</div>
+</div>
+<a class="nav-link py-0 px-3" href="https://github.com/gknowles/dimcli/" style="font-size: 24px;">
+<i class="fa fa-github" title="GitHub"></i>
+</a>
+</div>
+</div>
+</nav>
+<div class="container">
+<div class="row">
+<div class="col-lg-auto">
+<nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
+<div class="bg-light"><a class="nav-link toc-1" href="#classes">Classes</a>
+<a class="nav-link toc-1" href="#subcommands">Subcommands</a>
+<a class="nav-link toc-1" href="#options">Options</a>
+<a class="nav-link toc-1" href="#parsing-and-execution">Parsing and execution</a>
+<a class="nav-link toc-1" href="#help-text">Help Text</a>
+<a class="nav-link toc-1" href="#configuration">Configuration</a>
+<a class="nav-link toc-1" href="#conversions">Conversions</a>
+</div>
+</nav>
+</div>
+<div class="col col-md-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><h1 id="reference">Reference</h1>
+<div class="sect1">
+<h2 id="classes">Classes</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="guide.html#basic-usage">Cli</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Handle to the shared command line configuration, this shared configuration
+allows options to be statically registered from multiple source files.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="guide.html#dimclilocal">CliLocal</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stand-alone cli instance independent of the shared configuration. Mainly for
+testing.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::Opt&lt;T&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reference to single value option and it&#8217;s metadata.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::OptVec&lt;T&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reference to vector of values and metadata for multivalued option.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="subcommands">Subcommands</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2">Create</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#subcommands">command</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Changes config context to reference the options of the selected command. Use
+an empty string to specify the top level context. If a new command is selected
+it will be created in the command group of the current context.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#help-subcommand">helpCmd</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add "help" command that shows the help text for other commands. Allows users
+to run "prog help command" instead of the more awkward "prog command --help".</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top"><p class="tableblock">Configuration</p></th>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#subcommands">action</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action that should be taken when the currently selected command is run.
+Actions are executed when cli.exec() is called by the application.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="options">Options</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2">Create</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#options">opt&lt;T></a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add command line option, flag, or argument</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#vector-options">optVec&lt;T></a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add multivalued option, flag, or argument</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#confirm-option">confirmOpt</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add -y, --yes option that exits early when false and has an "are you sure?"
+style prompt when it&#8217;s not present.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#help-option">helpOpt</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get reference to internal help option, can be used to change the description,
+option group, etc. To completely replace it, add another option that responds
+to --help.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#password-prompting">passwordOpt</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add --password option and prompts for a password if it&#8217;s not given on the
+command line. If confirm is true and it&#8217;s not on the command line you have to
+enter it twice.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#version-option">versionOpt</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add --version option that shows "${progName.filename()} version ${ver}" and
+exits. An empty progName defaults to argv[0].</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Configuration</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#after-actions">after</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action to run after all arguments have been parsed, any number of after
+actions can be added and will, for each option, be called in the order they&#8217;re
+added.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#any-units">anyUnits</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Given a series of unit names and factors, incoming values have trailing unit
+names removed and are multiplied by the factor.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#check-actions">check</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action to take immediately after each value is parsed, unlike parsing itself
+where there can only be one action, any number of check actions can be added.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#choice">choice</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adds a choice, when choices have been added only values that match one of the
+choices are allowed. Useful for things like enums where there is a controlled
+set of possible values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#range-and-clamp">clamp</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Forces the value to be within the range, if it&#8217;s less than the low it&#8217;s set
+to the low, if higher than high it&#8217;s made merely high.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.defaultValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows the default to be changed after the opt has been created.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#feature-switches">flagValue</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Turns the argument into a feature switch, there are normally multiple
+switches pointed at a single external value, one of which should be flagged as
+the default.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.imbue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change the locale used when parsing values via iostream. Defaults to the
+user&#8217;s preferred locale (aka locale("")) for arithmetic types and the "C"
+locale for everything else.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#optional-values">implicitValue</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The implicit value is used for arguments with optional values when the
+argument was specified in the command line without a value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#parse-actions">parse</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change the action to take when parsing this argument.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#prompting">prompt</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables prompting. When the option hasn&#8217;t been provided on the command line
+the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#range-and-clamp">range</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fail if the value given for this option is not in within the range
+(inclusive) of low to high.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#require">require</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Causes a check whether the option value was set during parsing, and reports
+badUsage() if it wasn&#8217;t.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#si-units">siUnits</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are
+present, multiplies by the corresponding factor.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#time-units">timeUnits</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adjusts the value to seconds when time units are present: removes the units
+(y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="parsing-and-execution">Parsing and execution</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2">Application</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#subcommands">exec</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optionally parses, and then executes the action of the selected command;
+returns true if it worked. On failure it&#8217;s expected to have set exitCode,
+errMsg, and optionally errDetail via fail().</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#basic-usage">parse</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the command line, populate the options, and set the error and other
+miscellaneous state. Returns true if processing should continue.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.resetValues</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets all options to their defaults, called internally when parsing starts.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Actions</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#after-actions">badUsage</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Intended for use from return statements in action callbacks. Sets exit code
+(to EX_USAGE) and error msg, then returns false.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.commandExists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the named command has been defined, used by the help command
+implementation. Not reliable before cli.parse() has been called and had a
+chance to update the internal data structures.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.parseValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to populate an option with an arbitrary input string through the
+standard parsing logic. Since it causes the parse and check actions to be
+called care must be taken to avoid infinite recursion if used from those
+actions. Can be used from after actions to simulate a value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.prompt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prompt sends a prompt message to cout and read a response from cin (unless
+cli.iostreams() changed the streams to use), the response is then passed to
+cli.parseValue() to set the value and run any actions.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.defaultFrom</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get default from to use when populating the option from an action that&#8217;s not
+tied to a command line argument.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.defaultPrompt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get default name to use in prompts when not tied to a command line.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#parse-actions">parseValue</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse the string into the value, return false on error.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.reset</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set option to its default value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.unspecifiedValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set option (or add to option vector) to value for missing optionals.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Commands</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets exitCode(), errMsg(), and errDetail(), intended to be called from
+command actions, parsing related failures normally use cli.badUsage() instead.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">After parsing</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#basic-usage">exitCode</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EX_OK (0), EX_USAGE, or any value set by user defined actions.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.errMsg</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Error message, only meaningful when exitCode() != EX_OK</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.errDetail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Additional information that may help the user correct their mistake, may be
+empty.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.progName</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Program name received in argv[0]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.commandMatched</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Command to run, as selected by the arguments, empty string if there are no
+commands defined or none were selected.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">operator bool</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">True if the value was populated from the command line, whether the resulting
+value is the same as the default is immaterial.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">operator *</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reference to underlying value or, for OptVec, vector of values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">operator -></a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pointer to underlying value or value vector.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#vector-options">operator []</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Array access to members of value vector (OptVec only).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">from</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the last argument to populated the value, or an empty string if it
+wasn&#8217;t populated. For vectors, it&#8217;s what populated the last value.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">pos</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Absolute position in argv[] of last the argument that populated the value.
+For vectors, it refers to where the value on the back came from. If pos() is 0
+the value wasn&#8217;t populated from the command line or wasn&#8217;t populated at all,
+check from() to tell the difference.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">size</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of values, non-vectors are always 1.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="help-text">Help Text</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2">Command groups</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#command-groups">cmdGroup</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Changes the command group of the current command. Because new commands start
+out in the same group as the current command, it can be convenient to create
+all the commands of one group before moving to the next.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#command-groups">cmdSortKey</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Command groups are sorted by key, defaults to group name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#command-groups">cmdTitle</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Heading title to display, defaults to group name. If empty there will be a
+single blank line separating this group from the previous one.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Commands</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#page-layout">header</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Arbitrary help text, for the command, before the usage section.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#page-layout">desc</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Help text, for the command, between the usage and arguments / options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#page-layout">footer</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Help text, for the command, after the options.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Option groups</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#option-groups">group</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Changes configuration context to point at the selected option group of the
+current command.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#option-groups">sortKey</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets sort key of current option group. Option groups are sorted by key,
+defaults to group name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#option-groups">title</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets heading title for current option group to display, defaults to group
+name. If empty there will be a single blank line separating this group from the
+previous one.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Options</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.show</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Controls whether or not the option appears in help pages.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#subcommands">command</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set subcommand for which this is an option.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#option-groups">group</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set group under which this argument will show up in the help text.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#page-layout">desc</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set description to associate with the argument in help text.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#page-layout">valueDesc</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set name of meta-variable in help text. For example, in "--count NUM" this is
+used to change "NUM" to something else.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#page-layout">defaultDesc</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set text to appear in the default clause of this options the help text. Can
+change the "0" in "(default: 0)" to something else, or use an empty string to
+suppress the entire clause.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Rendering</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printHelp</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write help page for selected command to std::ostream&amp;</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printUsage</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write simple usage.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printUsageEx</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write usage, but include names of all non-default options.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printPositionals</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write names and descriptions of positional arguments.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printOptions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write full option descriptions.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printCommands</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write names and descriptions of commands</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printError</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
+otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
+completed.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuration">Configuration</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2">Miscellaneous</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#before-actions">before</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Actions taken after environment variable and response file expansion but
+before any individual arguments are parsed.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.conin</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get console input stream that will be used for prompting.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.conout</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get console output stream that will be used for prompting.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#environment-variable">envOpts</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment variable to get initial options from. Defaults to the empty
+string, but when set the content of the named variable is parsed into args
+which are then inserted into the argument list right after arg0.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#help-option">helpNoArgs</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adds before action that replaces the empty command line with "--help".</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.iostreams</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Changes the streams used for prompting, printing help messages, etc. Mainly
+intended for testing. Setting to null restores the defaults which are cin and
+cout respectively.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#response-files">responseFiles</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enabled by default, response file expansion replaces arguments of the form
+"@file" with the contents of the file.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="conversions">Conversions</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2">Argv</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toArgv(string)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse command line into argument vector of strings, using default conventions
+(Gnu or Windows) of the platform.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toArgv(argc, argv)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Copy array of pointers into argument vector of strings.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toGlibArgv(string)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse according to glib conventions, based on the UNIX98 shell spec.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toGnuArgv(string)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse using GNU conventions, same rules as buildargv().</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toWindowsArgv(string)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parse using Windows rules.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toCmdline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Join arguments into a single command line, escaping as needed, that will
+parse back into those same arguments. Uses the default conventions (Gnu or
+Windows).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toGlibCmdline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Join according to glib conventions, based on UNIX98 shell spec.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toGnuCmdline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Join using GNU conventions, same rules as buildargv().</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toWindowsCmdline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Join using Windows rules.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Value</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.fromString&lt;T&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parses string into any supported type.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.toString&lt;T&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Converts value of any supported type into a string.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+</html>

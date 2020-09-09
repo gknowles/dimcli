@@ -1,0 +1,2130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    try {
+        var lang = block.parentElement.lang.toLowerCase();
+        if (lang == 'shell session') {
+            lang = 'console';
+        }
+        var code = hljs.highlight(lang, block.textContent);
+        block.className += 'hljs';
+        block.innerHTML = code.value;
+    } catch (e) {
+    }
+  });
+});
+</script>
+<link rel="stylesheet" href="../css/docgen.css"/>
+<title>User's Guide - DIMCLI</title>
+</head>
+<body data-spy="scroll" data-target="#toc">
+<nav class="navbar navbar-expand-sm sticky-top bg-primary navbar-dark">
+<a class="navbar-brand font-weight-bolder" href="..">DIMCLI</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+<div class="navbar-nav mr-auto">
+<a class="nav-link active" href="guide.html">User's Guide <span class="sr-only">(current)</span>
+</a>
+<a class="nav-link" href="reference.html">Reference</a>
+<a class="nav-link" href="changelog.html">Change Log</a>
+</div>
+<div class="navbar-nav">
+<div class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" data-reference="parent" aria-haspopup="true" aria-expanded="false" title="Version">v5.0.0</a>
+<div class="dropdown-menu dropdown-menu-md-right" aria-labelledby="navbarDropdown">
+<a class="dropdown-item" href="../HEAD/guide.html">HEAD</a>
+<a class="dropdown-item" href="../v5.0.2/guide.html">v5.0.2</a>
+<a class="dropdown-item" href="../v5.0.1/guide.html">v5.0.1</a>
+<a class="dropdown-item active" href="../v5.0.0/guide.html">v5.0.0</a>
+<a class="dropdown-item" href="../v4.1.0/guide.html">v4.1.0</a>
+<a class="dropdown-item" href="../v4.0.1/guide.html">v4.0.1</a>
+<a class="dropdown-item" href="../v3.1.1/guide.html">v3.1.1</a>
+<a class="dropdown-item" href="../v3.1.0/guide.html">v3.1.0</a>
+<a class="dropdown-item" href="../v3.0.0/guide.html">v3.0.0</a>
+<a class="dropdown-item" href="../v2.0.0/guide.html">v2.0.0</a>
+<a class="dropdown-item" href="../v1.0.3/guide.html">v1.0.3</a>
+</div>
+</div>
+<a class="nav-link py-0 px-3" href="https://github.com/gknowles/dimcli/" style="font-size: 24px;">
+<i class="fa fa-github" title="GitHub"></i>
+</a>
+</div>
+</div>
+</nav>
+<div class="container">
+<div class="row">
+<div class="col-lg-auto">
+<nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
+<div class="bg-light"><a class="nav-link toc-1" href="#overview">Overview</a>
+<a class="nav-link toc-1" href="#basics">Basics</a>
+<a class="nav-link toc-2" href="#basic-usage">Basic Usage</a>
+<a class="nav-link toc-2" href="#options">Options</a>
+<a class="nav-link toc-2" href="#external-variables">External Variables</a>
+<a class="nav-link toc-2" href="#option-names">Option Names</a>
+<a class="nav-link toc-2" href="#positional-arguments">Positional Arguments</a>
+<a class="nav-link toc-2" href="#flag-options">Flag Options</a>
+<a class="nav-link toc-2" href="#vector-options">Vector Options</a>
+<a class="nav-link toc-2" href="#life-after-parsing">Life After Parsing</a>
+<a class="nav-link toc-1" href="#advanced">Advanced</a>
+<a class="nav-link toc-2" href="#special-arguments">Special Arguments</a>
+<a class="nav-link toc-2" href="#optional-values">Optional Values</a>
+<a class="nav-link toc-2" href="#before-actions">Before Actions</a>
+<a class="nav-link toc-2" href="#parse-actions">Parse Actions</a>
+<a class="nav-link toc-2" href="#check-actions">Check Actions</a>
+<a class="nav-link toc-2" href="#after-actions">After Actions</a>
+<a class="nav-link toc-2" href="#subcommands">Subcommands</a>
+<a class="nav-link toc-2" href="#multiple-source-files">Multiple Source Files</a>
+<a class="nav-link toc-2" href="#response-files">Response Files</a>
+<a class="nav-link toc-2" href="#environment-variable">Environment Variable</a>
+<a class="nav-link toc-2" href="#keep-it-quiet">Keep It Quiet</a>
+<a class="nav-link toc-1" href="#options-and-modifiers">Options and Modifiers</a>
+<a class="nav-link toc-2" href="#version-option">Version Option</a>
+<a class="nav-link toc-2" href="#help-option">Help Option</a>
+<a class="nav-link toc-2" href="#feature-switches">Feature Switches</a>
+<a class="nav-link toc-2" href="#choice">Choice</a>
+<a class="nav-link toc-2" href="#require">Require</a>
+<a class="nav-link toc-2" href="#range-and-clamp">Range and Clamp</a>
+<a class="nav-link toc-2" href="#units-of-measure">Units of Measure</a>
+<a class="nav-link toc-3" href="#si-units">SI Units</a>
+<a class="nav-link toc-3" href="#time-units">Time Units</a>
+<a class="nav-link toc-3" href="#any-units">Any Units</a>
+<a class="nav-link toc-2" href="#counting">Counting</a>
+<a class="nav-link toc-2" href="#prompting">Prompting</a>
+<a class="nav-link toc-2" href="#password-prompting">Password Prompting</a>
+<a class="nav-link toc-2" href="#confirm-option">Confirm Option</a>
+<a class="nav-link toc-1" href="#help-text">Help Text</a>
+<a class="nav-link toc-2" href="#page-layout">Page Layout</a>
+<a class="nav-link toc-2" href="#option-groups">Option Groups</a>
+<a class="nav-link toc-2" href="#command-groups">Command Groups</a>
+<a class="nav-link toc-2" href="#help-subcommand">Help Subcommand</a>
+<a class="nav-link toc-2" href="#going-your-own-way">Going Your Own Way</a>
+</div>
+</nav>
+</div>
+<div class="col col-md-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><!-- raw HTML omitted -->
+<h1 id="overview">Overview</h1>
+<p>C++ command line parser toolkit for kids of all ages.</p>
+<ul>
+<li>GNU style command lines (-o, --output=FILE, etc.)</li>
+<li>parses directly to any supplied (or implicitly created) variable that is:
+<ul>
+<li>default constructible</li>
+<li>copyable</li>
+<li>assignable from string, has an istream extraction operator, or has a
+specialization of Cli::OptBase::fromString&lt;T&gt;()</li>
+</ul>
+</li>
+<li>help generation</li>
+<li>option definitions can be scattered across multiple files</li>
+<li>git style subcommands</li>
+<li>response files (requires <code>&lt;filesystem&gt;</code> support)</li>
+<li>works whether exceptions and RTTI are enabled or disabled</li>
+<li>distributed under the Boost Software License, Version 1.0.</li>
+</ul>
+<p>How does it feel?</p>
+<pre lang="cpp"><code>#include &quot;dimcli/cli.h&quot;
+#include &lt;iostream&gt;
+using namespace std;
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; count = cli.opt&lt;int&gt;(&quot;c n count&quot;, 1).desc(&quot;times to say hello&quot;);
+    auto &amp; name = cli.opt&lt;string&gt;(&quot;name&quot;, &quot;Unknown&quot;).desc(&quot;who to greet&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (!name)
+        cout &lt;&lt; &quot;Greeting the unknown.&quot; &lt;&lt; endl;
+    for (unsigned i = 0; i &lt; *count; ++i)
+        cout &lt;&lt; &quot;Hello &quot; &lt;&lt; *name &lt;&lt; &quot;!&quot; &lt;&lt; endl;
+    return 0;
+}
+</code></pre>
+<p>What it does when run:</p>
+<pre lang="console"><code>$ a.out -x
+Error: Unknown option: -x
+
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -c, -n, --count=INTEGER  times to say hello (default: 1)
+  --name STRING            who to greet (default: Unknown)
+
+  --help                   Show this message and exit.
+
+$ a.out --count=3
+Greeting the unknown.
+Hello Unknown!
+Hello Unknown!
+Hello Unknown!
+
+$ a.out --name John
+Hello John!
+</code></pre>
+<h1 id="basics">Basics</h1>
+<h2 id="basic-usage">Basic Usage</h2>
+<p>After inspecting args cli.parse() returns false if it thinks the program
+should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64)
+for early exit (like --help) or bad arguments respectively. Otherwise the
+command line was valid, arguments have been parsed, and cli.exitCode() is
+EX_OK.</p>
+<pre lang="cpp"><code>#include &quot;dimcli/cli.h&quot;
+#include &lt;iostream&gt;
+#include &lt;sysexits.h&gt; // if you want the unix exit code macros (EX_*)
+using namespace std;
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Does the apple have a worm? No!&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>And what it looks like:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out
+Does the apple have a worm? No!
+</code></pre>
+<p>The EX_* constants (along with standard values) are in <code>&lt;sysexits.h&gt;</code> on most
+unixes, although it may not be in any standard. Equivalent enum values
+Dim::kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful
+on Windows where <code>&lt;sysexits.h&gt;</code> doesn't exist.</p>
+<h2 id="options">Options</h2>
+<p>Dim::Cli is used by declaring options to receive arguments. Either via
+pointer to a predefined external variable or by implicitly creating the
+variable when the option is declared.</p>
+<p>Use cli.opt&lt;T&gt;(names, defaultValue) to link positional or named arguments to
+an option. It returns a proxy object that can be used like a pointer (* and -&gt;)
+to access the value.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; fruit = cli.opt&lt;string&gt;(&quot;fruit&quot;, &quot;apple&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Does the &quot; &lt;&lt; *fruit &lt;&lt; &quot; have a worm? No!&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>And what you get:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --fruit=STRING  (default: apple)
+
+  --help          Show this message and exit.
+
+$ a.out --fruit=orange
+Does the orange have a worm? No!
+$ a.out --fruit orange
+Does the orange have a worm? No!
+</code></pre>
+<p>Add a description and change the value's name in the description:</p>
+<pre lang="cpp"><code>auto &amp; fruit = cli.opt&lt;string&gt;(&quot;fruit&quot;, &quot;apple&quot;)
+    .desc(&quot;type of fruit&quot;)
+    .valueDesc(&quot;FRUIT&quot;);
+</code></pre>
+<p>And you get:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --fruit=FRUIT  type of fruit (default: apple)
+
+  --help         Show this message and exit.
+</code></pre>
+<h2 id="external-variables">External Variables</h2>
+<p>In addition to using the option proxies you can bind options directly to
+predefined variables. This can be used to set a global flag, or populate a
+struct that you access later.</p>
+<p>For example:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    bool worm;
+    Dim::Cli cli;
+    cli.opt(&amp;worm, &quot;w worm&quot;).desc(&quot;make it icky&quot;);
+    auto &amp; fruit = cli.opt&lt;string&gt;(&quot;fruit&quot;, &quot;apple&quot;).desc(&quot;type of fruit&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Does the &quot; &lt;&lt; *fruit &lt;&lt; &quot; have a worm? &quot;
+        &lt;&lt; worm ? &quot;Yes :(&quot; : &quot;No!&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>And what it looks like:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --fruit=STRING  type of fruit (default: apple)
+  -w, --worm      make it icky
+
+  --help          Show this message and exit.
+
+$ a.out --fruit=orange
+Does the orange have a worm? No!
+$ a.out -w
+Does the apple have a worm? Yes :(
+</code></pre>
+<p>You can also point multiple &quot;options&quot; at the same variable, as is common with
+<a href="#feature-switches">feature switches</a>.</p>
+<h2 id="option-names">Option Names</h2>
+<p>Names are passed in as a space separated list where the individual names look
+like these:</p>
+<table>
+<thead>
+<tr>
+<th>Type of name</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>short name (single character)</td>
+<td>f</td>
+</tr>
+<tr>
+<td>long name (more than one character)</td>
+<td>file</td>
+</tr>
+<tr>
+<td>optional positional</td>
+<td>[file name]</td>
+</tr>
+<tr>
+<td>required positional</td>
+<td>&lt;file&gt;</td>
+</tr>
+</tbody>
+</table>
+<p>Names for positionals (inside angled or square brackets) may contain spaces,
+and all names may have modifier flags:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Flag</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">!</td>
+<td>prefix</td>
+<td>for boolean values, when setting the value it is first inverted</td>
+</tr>
+<tr>
+<td align="center">?</td>
+<td>prefix</td>
+<td>for non-boolean named options, makes the value <a href="#optional-values">optional</a></td>
+</tr>
+<tr>
+<td align="center">.</td>
+<td>suffix</td>
+<td>for boolean values with long names, suppresses the implicit &quot;no-&quot; version</td>
+</tr>
+</tbody>
+</table>
+<p>By default, long names for boolean values get a second &quot;no-&quot; version implicitly
+created for them.</p>
+<p>For example:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.opt&lt;string&gt;(&quot;a apple [apple]&quot;).desc(&quot;apples are red&quot;);
+    cli.opt&lt;bool&gt;(&quot;!o orange apricot.&quot;).desc(&quot;oranges are orange&quot;);
+    cli.opt&lt;string&gt;(&quot;&lt;pear&gt;&quot;).desc(&quot;pears are yellow&quot;);
+    cli.parse(cerr, argc, argv);
+    return EX_OK;
+}
+</code></pre>
+<p>Ends up looking like this (note: required positionals are <strong>always</strong> placed
+before any optional ones):</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS] pear [apple]
+  pear      pears are yellow
+  apple     apples are red
+
+Options:
+  -a, --apple=STRING          apples are red
+  --apricot, --orange / -o, --no-orange
+                              oranges are orange
+
+  --help                      Show this message and exit.
+</code></pre>
+<p>When named options are added they replace any previous rule with the same
+name, therefore this option declares '-n' an inverted bool:</p>
+<pre lang="cpp"><code>cli.opt&lt;bool&gt;(&quot;n !n&quot;);
+</code></pre>
+<p>But with these it becomes '-n STRING', a string:</p>
+<pre lang="cpp"><code>cli.opt&lt;bool&gt;(&quot;n !n&quot;);
+cli.opt&lt;string&gt;(&quot;n&quot;);
+</code></pre>
+<h2 id="positional-arguments">Positional Arguments</h2>
+<p>A few things to keep in mind about positional arguments:</p>
+<ul>
+<li>Positional arguments are mapped by the order they are added, except that
+required ones appear before optional ones.</li>
+<li>If there are multiple vector positionals with unlimited (nargs = -1) arity
+all but the first will be treated as if they had nargs = 1. Or to put it
+another way, the first unlimited positional is greedy.</li>
+<li>If the unlimited one is required it will prevent any optional positionals
+from getting populated, since it eats up all the arguments before they get
+a turn.</li>
+</ul>
+<h2 id="flag-options">Flag Options</h2>
+<p>Many options are flags with no associated value, they just set an option
+to a predefined value. This is the default when you create a option of type
+bool. Normally flags set the option to true, but this can be changed in two
+ways:</p>
+<ul>
+<li>make it an inverted bool, which will set it to false
+<ul>
+<li>explicitly using the &quot;!&quot; modifier</li>
+<li>define a long name and use the implicitly created &quot;no-&quot; prefix version</li>
+</ul>
+</li>
+<li>use opt.flagValue() to set the value, see
+<a href="#feature-switches">feature switches</a>.</li>
+</ul>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; shout = cli.opt&lt;bool&gt;(&quot;shout !whisper&quot;).desc(&quot;I can't hear you!&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    string prog = argv[0];
+    if (*shout) {
+        auto &amp; f = use_facet&lt;ctype&lt;char&gt;&gt;(cout.getloc());
+        f.toupper(prog.data(), prog.data() + prog.size());
+        prog += &quot;!!!!111&quot;;
+    }
+    cout &lt;&lt; &quot;I am &quot; &lt;&lt; prog;
+    return EX_OK;
+}
+</code></pre>
+<p>What you see:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --shout, --no-whisper / --no-shout, --whisper
+            I can't hear you!
+
+  --help    Show this message and exit.
+
+$ a.out
+I am a.out
+$ a.out --shout
+I am A.OUT!!!!111
+$ a.out --no-whisper
+I am A.OUT!!!!111
+</code></pre>
+<h2 id="vector-options">Vector Options</h2>
+<p>Allows for an unlimited (or specific) number of values to be returned in a
+vector. Vector options are declared using cli.optVec() which binds to a
+std::vector&lt;T&gt;.</p>
+<p>Example:</p>
+<pre lang="cpp"><code>// printing a comma separated list is annoying...
+template&lt;typename T&gt;
+ostream &amp; operator&lt;&lt; (ostream &amp; os, vector&lt;T&gt; const &amp; v) {
+    auto i = v.begin(), e = v.end();
+    if (i != e) {
+        os &lt;&lt; *i++;
+        for (; i != e; ++i) os &lt;&lt; &quot;, &quot; &lt;&lt; *i;
+    }
+    return os;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    // for oranges demonstrate using an external vector, and limit
+    // the maximum number to 2.
+    vector&lt;string&gt; oranges;
+    cli.optVec(&amp;oranges, &quot;o orange&quot;, 2).desc(&quot;oranges&quot;);
+    // for apples demonstrate just using the proxy object.
+    auto &amp; apples = cli.optVec&lt;string&gt;(&quot;[apple]&quot;).desc(&quot;red fruit&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Comparing (&quot; &lt;&lt; *apples &lt;&lt; &quot;) and (&quot; &lt;&lt; *oranges &lt;&lt; &quot;).&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>View from the command line:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS] [apple...]
+  apple     red fruit
+
+Options:
+  -o, --orange=STRING  oranges (limit: 2)
+
+  --help               Show this message and exit.
+
+$ a.out -o mandarin -onavel &quot;red delicious&quot; honeycrisp
+Comparing (red delicious, honeycrisp) and (mandarin, navel).
+$ a.out -omandarin -onavel -ohamlin
+Error: Too many '-o' values: hamlin
+The maximum number of values is: 2
+</code></pre>
+<p>While the * and -&gt; operators get you full access to the underlying vector,
+size() and [] are also available directly on the OptVec&lt;T&gt;. Which may
+occasionally save a little bit of typing.</p>
+<pre lang="cpp"><code>auto &amp; apples = cli.optVec&lt;string&gt;(&quot;[apple]&quot;).desc(&quot;red fruit&quot;);
+...
+cout &lt;&lt; &quot;There were &quot; &lt;&lt; apples.size() &lt;&lt; &quot; apples.&quot; &lt;&lt; endl;
+if (apples)
+    cout &lt;&lt; &quot;The first was &quot; &lt;&lt; apples[0] &lt;&lt; endl;
+</code></pre>
+<h2 id="life-after-parsing">Life After Parsing</h2>
+<p>If you are using external variables you just access them directly after using
+cli.parse() to populate them.</p>
+<p>If you use the proxy object returned from cli.opt&lt;T&gt;() you can dereference it
+like a smart pointer to get at the value. In addition, you can test whether
+it was explicitly set, find the argument name that populated it, and get the
+position in argv[] it came from.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; name = cli.opt&lt;string&gt;(&quot;n name&quot;, &quot;Unknown&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (!name) {
+        cout &lt;&lt; &quot;Using the unknown name.&quot; &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; &quot;Name selected using &quot; &lt;&lt; name.from()
+            &lt;&lt; &quot; from argv[&quot; &lt;&lt; name.pos() &lt;&lt; &quot;]&quot; &lt;&lt; endl;
+    }
+    cout &lt;&lt; &quot;Hello &quot; &lt;&lt; *name &lt;&lt; &quot;!&quot; &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<p>What it does:</p>
+<pre lang="console"><code>$ a.out
+Using the unknown name.
+Hello Unknown!
+$ a.out -n John
+Name selected using -n
+Hello John!
+$ a.out --name Mary
+Name selected using --name from argv[2]
+Hello Mary!
+</code></pre>
+<p>If you want a little more control over error output you can use the two
+argument version of cli.parse() and then get the results with cli.printError()
+or manually using cli.exitCode(), cli.errMsg(), and cli.errDetail().</p>
+<pre lang="cpp"><code>if (!cli.parse(argc, argv))
+    return cli.printError(cerr);
+</code></pre>
+<p>Because (unless you use CliLocal) there is a single program wide command line
+context, you can make an error handler that doesn't have to be passed the
+results.</p>
+<pre lang="cpp"><code>void failed() {
+    Dim::Cli cli;
+    cli.printError(cerr);
+    exit(cli.exitCode());
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    if (!cli.parse(argc, argv))
+        failed();
+    ...
+    return EX_OK;
+}
+</code></pre>
+<h1 id="advanced">Advanced</h1>
+<h2 id="special-arguments">Special Arguments</h2>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;-&quot;</td>
+<td>Passed in as a positional argument.</td>
+</tr>
+<tr>
+<td>&quot;--&quot;</td>
+<td>Thrown away, but makes all remaining arguments positional</td>
+</tr>
+<tr>
+<td>&quot;@&lt;file&gt;&quot;</td>
+<td><a href="#response-files">Response file</a> containing additional arguments</td>
+</tr>
+</tbody>
+</table>
+<h2 id="optional-values">Optional Values</h2>
+<p>You use the '?' <a href="#option-names">flag</a> on an argument name to indicate that
+its value is optional. Only non-booleans can have optional values, booleans
+are evaluated just on their presence or absence and don't otherwise have
+values.</p>
+<p>For a user to set a value on the command line when it is optional the value
+must be connected (no space) to the argument name, otherwise it is interpreted
+as not present and the arguments implicit value is used instead. If the name
+is not present at all the variable is set to the default given in the
+cli.opt&lt;T&gt;() call.</p>
+<p>By default the implicit value is T{}, but can be changed using
+opt.implicitValue().</p>
+<p>For example:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; v1 = cli.opt&lt;string&gt;(&quot;?o ?optional&quot;, &quot;default&quot;);
+    auto &amp; v2 = cli.opt&lt;string&gt;(&quot;?i ?with-implicit&quot;, &quot;default&quot;);
+    v2.implicitValue(&quot;implicit&quot;);
+    auto &amp; p = cli.opt&lt;string&gt;(&quot;[positional]&quot;, &quot;default&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;v1 = &quot; &lt;&lt; *v1 &lt;&lt; &quot;, v2 = &quot; &lt;&lt; *v2 &lt;&lt; &quot;, p = &quot; &lt;&lt; *p;
+    return EX_OK;
+}
+</code></pre>
+<p>What happens:</p>
+<pre lang="console"><code>$ a.out
+v1 = default, v2 = default, p = default
+$ a.out -oone -i two
+v1 = one, v2 = implicit, p = two
+$ a.out -o one -itwo
+v1 =, v2 = two, p = one
+$ a.out --optional=one --with-implicit two
+v1 = one, v2 = implicit, p = two
+$ a.out --optional one --with-implicit=two
+v1 =, v2 = two, p = one
+</code></pre>
+<h2 id="before-actions">Before Actions</h2>
+<p>It's unusual to want a before action. They operate on the entire argument
+list, after environment variable and response file expansion, but before any
+individual arguments are parsed. The before action should:</p>
+<ul>
+<li>Inspect and possibly modify the raw arguments. The args are guaranteed to
+start out valid, but be careful that it still starts with a program name
+in arg0 when you're done.</li>
+<li>Call cli.badUsage() with an error message for problems.</li>
+<li>Return false if the program should stop, otherwise true.</li>
+</ul>
+<p>There can be any number of before actions, they are executed in the order
+they are added.</p>
+<p>Let's test for empty command lines and add &quot;--help&quot; to them. But first, our
+&quot;before&quot; program:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; val = cli.opt&lt;string&gt;(&quot;&lt;value&gt;&quot;).desc(&quot;It's required!&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;The value: &quot; &lt;&lt; *val;
+    return EX_OK;
+}
+</code></pre>
+<p>And it's output:</p>
+<pre lang="console"><code>$ a.out 99
+The value: 99
+$ a.out --help
+usage: a.out [OPTIONS]
+  value     It's required!
+
+Options:
+  --help    Show this message and exit.
+$ a.out
+Error: Missing argument: value
+</code></pre>
+<p>Now add the before action:</p>
+<pre lang="cpp"><code>cli.before([](Cli &amp;, vector&lt;string&gt; &amp; args) {
+    if (args.size() == 1) // it's just the program name?
+        args.push_back(&quot;--help&quot;);
+    return true;
+});
+</code></pre>
+<p>And missing arguments are a thing of the past...</p>
+<pre lang="console"><code>$ a.out
+usage: a.out [OPTIONS]
+  value     It's required!
+
+Options:
+  --help    Show this message and exit.
+</code></pre>
+<p>That isn't too complicated, but for this case cli.helpNoArgs() is available
+to do the same thing.</p>
+<h2 id="parse-actions">Parse Actions</h2>
+<p>Sometimes, you want an argument to completely change the execution flow. For
+instance, to provide more detailed errors about badly formatted arguments. Or
+to make &quot;--version&quot; print some crazy ASCII artwork and exit the program (for
+a non-crazy --version use <a href="#version-option">opt.versionOpt()</a>).</p>
+<p>Parsing actions are attached to options and get invoked when a value becomes
+available for it. Any std::function compatible object that accepts references
+to cli, opt, and string as parameters can be used. The function should:</p>
+<ul>
+<li>Parse the source string and use the result to set the option value (or
+push back the additional value for vector arguments).</li>
+<li>Call cli.badUsage() with an error message if there's a problem.</li>
+<li>Return false if the program should stop, otherwise true. You may want to
+stop due to error or just to early out like &quot;--version&quot; and &quot;--help&quot;.</li>
+</ul>
+<p>Other things to keep in mind:</p>
+<ul>
+<li>Options only have one parse action, changing it <em>replaces</em> the default.</li>
+<li>You can use opt.from() and opt.pos() to get the argument name that the value
+was attached to on the command line and its position in argv[].</li>
+<li>For bool options the source value string will always be either &quot;0&quot; or &quot;1&quot;.</li>
+</ul>
+<p>Here's an action that multiples multiple values together:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; sum = cli.opt&lt;int&gt;(&quot;n number&quot;, 1)
+        .desc(&quot;numbers to multiply&quot;)
+        .parse([](auto &amp; cli, auto &amp; opt, string const &amp; val) {
+            int tmp = *opt; // save the old value
+            if (!opt.parseValue(val)) // parse the new value into opt
+                return cli.badUsage(opt, val);
+            *opt *= tmp; // multiply old and new together
+            return true;
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;The product is: &quot; &lt;&lt; *sum &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<p>Let's do some math!</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -n, --number=NUM  numbers to multiply (default: 1)
+
+  --help            Show this message and exit.
+
+$ a.out
+The product is: 1
+$ a.out -n3 -n2
+The product is: 6
+$ a.out -nx
+Error: Invalid '-n' value: x
+</code></pre>
+<h2 id="check-actions">Check Actions</h2>
+<p>Check actions run for each value that is successfully parsed and are a good
+place for additional work. For example, opt.range() and opt.clamp() are
+implemented as check actions. Just like parse actions the callback is any
+std::function compatible object that accepts references to cli, opt, and
+string as parameters and returns bool.</p>
+<p>An option can have any number of check actions and they are called in the
+order they were added.</p>
+<p>The function should:</p>
+<ul>
+<li>Check the options new value. Beware that options are process in the order
+they appear on the command line, so comparing with another option is
+usually better done in an <a href="#after-actions">after action</a>.</li>
+<li>Call cli.badUsage() with an error message if there's a problem.</li>
+<li>Return false if the program should stop, otherwise true to let processing
+continue.</li>
+</ul>
+<p>The opt is fully populated, so *opt, opt.from(), etc are all available.</p>
+<p>Sample check action that rounds up to an even number of socks:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; socks = cli.opt&lt;int&gt;(&quot;socks&quot;)
+        .desc(&quot;Number of socks, rounded up to even number.&quot;)
+        .check([](auto &amp; cli, auto &amp; opt, auto &amp; val) {
+            *opt += *opt % 2;
+            return true;
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; *socks &lt;&lt; &quot; socks&quot;;
+    if (*socks) cout &lt;&lt; &quot;, where are the people?&quot;;
+    cout &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<p>Let's... wash some socks?</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -socks=NUM  Number of socks, rounded up to even number.
+
+  --help      Show this message and exit.
+
+$ a.out
+0 socks
+$ a.out --socks 3
+4 socks, where are the people?
+</code></pre>
+<h2 id="after-actions">After Actions</h2>
+<p>After actions run after all arguments have been parsed. For example,
+opt.prompt() and opt.require() are both implemented as after actions. Any
+number of after actions can be added and will, for every (not just the
+ones referenced by the command line!) registered option, be called in the
+order they're added. They are called with the three parameters, like other
+option actions, that are references to cli, opt, and the value string
+respectively. However the value string is always empty(), so any information
+about the value must come from the opt reference.</p>
+<p>When using subcommands, only the after actions bound to the top level or the
+selected command are executed. After actions on the options of all other
+commands are, like the options themselves, ignored.</p>
+<p>The function should:</p>
+<ul>
+<li>Do something interesting.</li>
+<li>Call cli.badUsage() and return false on error.</li>
+<li>Return true if processing should continue.</li>
+</ul>
+<p>Action to make sure the high is not less than the low:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; low = cli.opt&lt;int&gt;(&quot;l&quot;).desc(&quot;Low value.&quot;);
+    auto &amp; high = cli.opt&lt;int&gt;(&quot;h&quot;)
+        .desc(&quot;High value, must be greater than the low.&quot;)
+        .after([&amp;](auto &amp; cli, auto &amp; opt, auto &amp;) {
+            return (*opt &gt;= *low)
+                || cli.badUsage(&quot;High must not be less than the low.&quot;);
+        });
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Range is from &quot; &lt;&lt; *low &lt;&lt; &quot; to &quot; &lt;&lt; *high &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<p>Set the range:</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -h=NUM    High value, must be greater than the low.
+  -l=NUM    Low value.
+
+  --help    Show this message and exit.
+
+$ a.out
+Range is from 0 to 0
+$ a.out -l1
+High must not be less than the low.
+$ a.out -h5 -l2
+Range is from 2 to 5
+</code></pre>
+<h2 id="subcommands">Subcommands</h2>
+<p>Git style subcommands are created by either cli.command(&quot;cmd&quot;), which changes
+the cli objects context to the command, or with opt.command(&quot;cmd&quot;), which
+changes the command that option is for. Once the cli object context has been
+changed it can than be used to add (description, footer, options, etc) to the
+command. Exactly the same as when working with a simple command line. If you
+pass an empty string to cli.command() or opt.command() it represents the top
+level processing that takes place before a command has been found.</p>
+<p>Options are processed on the top level up to the first positional. The first
+positional is the command, and the rest of the arguments are processed in the
+context of that command. Since the top level doesn't process positionals when
+commands are present, it will assert in debug builds and ignore them in
+release if positionals are defined.</p>
+<pre lang="cpp"><code>static auto &amp; yell = Dim::Cli().opt&lt;bool&gt;(&quot;yell&quot;).desc(&quot;Say it loud.&quot;);
+static auto &amp; color = Dim::Cli().opt&lt;string&gt;(&quot;color&quot;, &quot;red&quot;)
+    .command(&quot;apple&quot;)
+    .desc(&quot;Change color of the apple.&quot;);
+
+int apple(Dim::Cli &amp; cli) {
+    cout &lt;&lt; &quot;It's a &quot; &lt;&lt; *color &lt;&lt; &quot; apple&quot; &lt;&lt; (*yell ? &quot;!!!&quot; : &quot;.&quot;);
+    return EX_OK;
+}
+
+int orange(Dim::Cli &amp; cli) {
+    cout &lt;&lt; &quot;It's an orange&quot; &lt;&lt; (*yell ? &quot;!!!&quot; : &quot;.&quot;);
+    return EX_OK;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.command(&quot;apple&quot;).desc(&quot;Show apple. No other fruit.&quot;).action(apple);
+    cli.command(&quot;orange&quot;).desc(&quot;Show orange.&quot;).action(orange);
+    cli.exec(cerr, argc, argv);
+    return cli.exitCode();
+}
+</code></pre>
+<p>The same thing could also be done with external variables:</p>
+<pre lang="cpp"><code>static bool yell;
+static string color;
+...
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.opt(&amp;yell, &quot;yell&quot;).desc(&quot;Say it loud.&quot;);
+    cli.opt(&amp;color, &quot;color&quot;, &quot;red&quot;).command(&quot;apple&quot;)
+        .desc(&quot;Change color of the apple.&quot;);
+    ...
+</code></pre>
+<p>Or if there's some additional argument checks or setup you need to do, the
+exec() call can be separate from parse():</p>
+<pre lang="cpp"><code>    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    // any additional validation...
+    cli.exec(cerr);
+    return cli.exitCode();
+</code></pre>
+<p>The end result at the console:</p>
+<pre lang="console"><code>$ a.out
+Error: No command given.
+$ a.out --help
+usage: a.out [OPTIONS] command [args...]
+
+Commands:
+  apple     Show apple.
+  orange    Show orange.
+
+Options:
+  --yell    Say it loud.
+
+  --help    Show this message and exit.
+
+$ a.out apple
+It's a red apple.
+$ a.out apple --color=yellow
+It's a yellow apple.
+$ a.out orange
+It's an orange.
+$ a.out --yell orange
+It's an orange!!!
+</code></pre>
+<p>In the commands list, only the first sentence of cli.desc() (up to the first
+'.', '!', or '?' that's followed by a space) is shown, but in command specific
+pages you see the whole thing:</p>
+<pre lang="console"><code>$ a.out apple --help
+usage: a.out apple [OPTIONS]
+
+Show apple. No other fruit.
+
+Options:
+  --color=STRING  Change color of the apple. (default: red)
+
+  --help          Show this message and exit.
+</code></pre>
+<h2 id="multiple-source-files">Multiple Source Files</h2>
+<p>Options don't have to be defined all in one source file, separate source
+files can each define options of interest to that file and get them populated
+when the command line is processed.</p>
+<p>When you instantiate Dim::Cli you're creating a handle to the globally shared
+configuration. So multiple translation units can each create one and use it to
+update the shared configuration.</p>
+<p>The following example has a logMsg function in log.cpp with its own &quot;-1&quot;
+option while main.cpp registers &quot;--version&quot;:</p>
+<pre lang="cpp"><code>// main.cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt(&quot;1.0&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    // do stuff that might call logMsg...
+    return EX_OK;
+}
+</code></pre>
+<pre lang="cpp"><code>// log.cpp
+static Dim::Cli cli;
+static auto &amp; failEarly = cli.opt&lt;bool&gt;(&quot;1&quot;).desc(&quot;Exit on first error&quot;);
+
+void logMsg(string &amp; msg) {
+    cerr &lt;&lt; msg &lt;&lt; endl;
+    if (*failEarly)
+        exit(EX_SOFTWARE);
+}
+</code></pre>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1         Exit on first error
+
+  --help     Show this message and exit.
+  --version  Show version and exit.
+</code></pre>
+<p>When you want to put a bundle of stuff in a separate source file, such as a
+<a href="#subcommands">command</a> and its options, it can be convenient to group them
+into a single static struct.</p>
+<pre lang="cpp"><code>// somefile.cpp
+static int myCmd(Dim::Cli &amp; cli);
+
+static struct CmdOpts {
+    int option1;
+    string option2;
+    string option3;
+
+    CmdOpts() {
+        Cli cli;
+        cli.command(&quot;my&quot;).action(myCmd).desc(&quot;What my command does.&quot;);
+        cli.opt(&amp;option1, &quot;1 one&quot;, 1).desc(&quot;First option.&quot;);
+        cli.opt(&amp;option2, &quot;2&quot;, &quot;two&quot;).desc(&quot;Second option.&quot;);
+        cli.opt(&amp;option3, &quot;three&quot;, &quot;three&quot;).desc(&quot;Third option.&quot;);
+    }
+} s_opts;
+</code></pre>
+<p>Then in myCmd() and throughout the rest of somefile.cpp you can reference the
+options as <strong>s_opts.option1</strong>, <strong>s_opts.option2</strong>, and <strong>s_opts.option3</strong>.</p>
+<p>And the help text will be:</p>
+<pre lang="console"><code>$ a.out my --help
+usage: a.out my [OPTIONS]
+
+What my command does.
+
+Options:
+  -1, --one  First option. (default: 1)
+  -2         Second option. (default: two)
+  --three    Third option. (default: three)
+
+  --help     Show this message and exit.
+</code></pre>
+<h4 id="dim-clilocal">Dim::CliLocal</h4>
+<p>You can also use Dim::CliLocal, a completely self-contained parser, if you
+need to redefine options, have results from multiple parses at once, or
+otherwise avoid the shared configuration.</p>
+<h2 id="response-files">Response Files</h2>
+<p>A response file is a collection of frequently used or generated arguments
+saved as text, often with a &quot;.rsp&quot; extension, that is substituted into the
+command line when referenced.</p>
+<p>What you write:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; words = cli.optVec&lt;string&gt;(&quot;[words]&quot;).desc(&quot;Things you say.&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Words:&quot;;
+    for (auto &amp; w : words)
+        cout &lt;&lt; &quot; &quot; &lt;&lt; w;
+    return EX_OK;
+}
+</code></pre>
+<p>What happens later:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS] [words...]
+  words     Things you say.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out a b
+Words: a b
+$ echo c &gt;one.rsp
+$ a.out a b @one.rsp d
+Words: a b c d
+</code></pre>
+<p>Response files can be used multiple times and the arguments in them can be
+broken into multiple lines:</p>
+<pre lang="console"><code>$ echo d &gt;one.rsp
+$ echo e &gt;&gt;one.rsp
+$ a.out x @one.rsp y @one.rsp
+Words: x d e y d e
+</code></pre>
+<p>Response files also can be nested, when a response file contains a reference
+to another response file the path is relative to the parent response file,
+not to the working directory.</p>
+<pre lang="console"><code>$ md rsp &amp; cd rsp
+$ echo one @more.rsp &gt;one.rsp
+$ echo two three &gt;more.rsp
+$ cd ..
+$ a.out @rsp/one.rsp
+Words: one two three
+</code></pre>
+<p>Recursive response files will fail, don't worry!</p>
+<pre lang="console"><code>$ echo &quot;@one.rsp&quot; &gt;one.rsp
+$ a.out @one.rsp
+Error: Recursive response file: one.rsp
+</code></pre>
+<p>While generally useful response file processing can be disabled via
+cli.responseFiles(false).</p>
+<h2 id="environment-variable">Environment Variable</h2>
+<p>You can specify an environment variable that will have its contents
+prepended to the command line. This happens before response file expansion
+and any before actions.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; words = cli.optVec&lt;string&gt;(&quot;[words]&quot;);
+    cli.envOpts(&quot;AOUT_OPTS&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Words:&quot;;
+    for (auto &amp;&amp; word : *words)
+        cout &lt;&lt; &quot; '&quot; &lt;&lt; word &lt;&lt; &quot;'&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>The same can also be done manually, as shown below. This is a good starting
+point if you need something slightly different:</p>
+<pre lang="cpp"><code>vector&lt;string&gt; args = cli.toArgv(argc, argv);
+if (char const * eopts = getenv(&quot;AOUT_OPTS&quot;)) {
+    vector&lt;string&gt; eargs = cli.toArgv(eopts);
+    // Insert the environment args after arg0 (program name) but before
+    // the rest of the command line.
+    args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+}
+if (!cli.parse(cerr, args))
+    return cli.exitCode();
+</code></pre>
+<p>Or as a before action (after response file expansion):</p>
+<pre lang="cpp"><code>cli.before([](Cli &amp;, vector&lt;string&gt; &amp; args) {
+    if (char const * eopts = getenv(&quot;AOUT_OPTS&quot;)) {
+        vector&lt;string&gt; eargs = cli.toArgv(eopts);
+        args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+    }
+});
+if (!cli.parse(cerr, args))
+    return cli.exitCode();
+</code></pre>
+<p>How this works:</p>
+<pre lang="console"><code>$ export AOUT_OPTS=
+$ a.out c d
+Words: 'c' 'd'
+$ export AOUT_OPTS=a b
+$ a.out 'c' 'd'
+Words: 'a' 'b' 'c' 'd'
+</code></pre>
+<h2 id="keep-it-quiet">Keep It Quiet</h2>
+<p>For some applications, such as Windows services, it's important not to
+interact with the console. Simple steps to avoid cli.parse() doing console IO:</p>
+<ol>
+<li>Don't use things (such as opt.prompt()) that explicitly ask for IO.</li>
+<li>Add your own &quot;help&quot; argument to override the default, you can still turn
+around and call cli.printHelp(ostream&amp;) if desired.</li>
+<li>Use the two argument version of cli.parse() and get the error message from
+cli.errMsg() and cli.errDetail() if it fails.</li>
+</ol>
+<h1 id="options-and-modifiers">Options and Modifiers</h1>
+<h2 id="version-option">Version Option</h2>
+<p>Use cli.versionOpt() to add simple --version processing.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt(&quot;1.0&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Hello world!&quot; &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<p>Is version 1.0 ready to ship?</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help     Show this message and exit.
+  --version  Show version and exit.
+
+$ a.out --version
+a.out version 1.0
+$ a.out
+Hello world!
+</code></pre>
+<h2 id="help-option">Help Option</h2>
+<p>You can modify the implicitly create --help option. Use cli.helpOpt() to get
+a reference and then go to town. The most likely thing would be to change the
+description or option group, but since you get back an Opt&lt;T&gt; you can use any
+of the standard functions.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.helpOpt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}
+</code></pre>
+<p>And when run...</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+</code></pre>
+<p>It can be modified like any other bool option.</p>
+<pre lang="cpp"><code>cli.helpOpt().desc(&quot;What you see is what you get.&quot;);
+</code></pre>
+<pre lang="cpp"><code>auto &amp; help = cli.helpOpt();
+help.desc(&quot;What you see is what you get.&quot;);
+</code></pre>
+<p>Either of which gets you this:</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    What you see is what you get.
+</code></pre>
+<p>Another related command is cli.helpNoArgs(), which internally adds &quot;--help&quot; to
+otherwise empty command lines.</p>
+<pre lang="cpp"><code>cli.helpNoArgs();
+cli.helpOpt().desc(&quot;What you see is what you get.&quot;);
+</code></pre>
+<p>Now all there is, is help:</p>
+<pre lang="console"><code>$ a.out
+usage: a.out [OPTIONS]
+
+Options:
+  --help    What you see is what you get.
+$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --help    What you see is what you get.
+</code></pre>
+<h2 id="feature-switches">Feature Switches</h2>
+<p>Using flag options, feature switches are implemented by creating multiple
+options that reference the same external variable and marking them as flag
+values.</p>
+<p>To set the default, pass in a value of true to the flagValue() function of
+the option that should be the default.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    string fruit;
+    // &quot;~&quot; is the default option group for --help, --version, etc. Give
+    // it a title so it doesn't look like more fruit.
+    cli.group(&quot;~&quot;).title(&quot;Other options&quot;);
+    cli.group(&quot;Type of fruit&quot;);
+    cli.opt(&amp;fruit, &quot;o orange&quot;, &quot;orange&quot;).desc(&quot;oranges&quot;).flagValue();
+    cli.opt(&amp;fruit, &quot;a&quot;, &quot;apple&quot;).desc(&quot;red fruit&quot;).flagValue(true);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Does the &quot; &lt;&lt; fruit &lt;&lt; &quot; have a worm? No!&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>Which looks like:</p>
+<pre lang="console"><code>$ a.out --help
+Usage: a.out [OPTIONS]
+
+Type of fruit:
+  -a            red fruit (default)
+  -o, --orange  oranges
+
+Other options:
+  --help        Show this message and exit.
+
+$ a.out
+Does the apple have a worm? No!
+$ a.out -o
+Does the orange have a worm? No!
+</code></pre>
+<p>You can use an inaccessible option (empty string for the keys) that doesn't
+show up in the interface (or the help text) to set an explicit default.</p>
+<pre lang="cpp"><code>cli.opt(&amp;fruit, &quot;o orange&quot;, &quot;orange&quot;).desc(&quot;oranges&quot;).flagValue();
+cli.opt(&amp;fruit, &quot;a&quot;, &quot;apple&quot;).desc(&quot;red fruit&quot;).flagValue();
+cli.opt(&amp;fruit, &quot;&quot;, &quot;fruit&quot;).flagValue(true);
+</code></pre>
+<p>Now instead of an apple there's a generic fruit default.</p>
+<pre lang="console"><code>$ a.out
+Does the fruit have a worm? No!
+</code></pre>
+<h2 id="choice">Choice</h2>
+<p>Sometimes you want an option to have a fixed set of possible values, such as
+for an enum. You use opt.choice() to add legal choices, one at a time, to an
+option.</p>
+<p>Choices are similar to <a href="#feature-switches">feature switches</a> but instead of
+multiple boolean options populating a single variable it is a single
+non-boolean option setting its variable to one of multiple values.</p>
+<pre lang="cpp"><code>enum class State { go, wait, stop };
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; state = cli.opt&lt;State&gt;(&quot;streetlight&quot;, State::wait)
+        .desc(&quot;Color of street light.&quot;).valueDesc(&quot;COLOR&quot;)
+        .choice(State::go, &quot;green&quot;, &quot;Means go!&quot;)
+        .choice(State::wait, &quot;yellow&quot;, &quot;Means wait, even if you're late.&quot;)
+        .choice(State::stop, &quot;red&quot;, &quot;Means stop.&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    switch (*state) {
+        case State::stop: cout &lt;&lt; &quot;STOP!&quot;; break;
+        case State::go: cout &lt;&lt; &quot;Go!&quot;; break;
+        case State::wait: cout &lt;&lt; &quot;Wait&quot;; break;
+    }
+    return EX_OK;
+}
+</code></pre>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --streetlight=COLOR  Color of street light.
+      green   Means go!
+      yellow  Means wait, even if you're late. (default)
+      red     Means stop.
+
+  --help               Show this message and exit.
+
+$ a.out
+Wait
+$ a.out --streetlight
+Error: Option requires value: --streetlight
+$ a.out --streetlight=purple
+Error: Invalid &quot;--streetlight&quot; value: purple
+Error: Must be &quot;green&quot;, &quot;red&quot;, or &quot;yellow&quot;
+$ a.out --streetlight=green
+Go!
+</code></pre>
+<h2 id="require">Require</h2>
+<p>A simple way to make sure an option is specified is to mark it required with
+opt.require(). This adds an after action that fails if no explicit value was
+set for the option.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; file = cli.opt&lt;string&gt;(&quot;file f&quot;).require();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Selected file: &quot; &lt;&lt; *file &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<p>What you get:</p>
+<pre lang="console"><code>$ a.out
+Error: No value given for --file
+$ a.out -ffile.txt
+Selected file: file.txt
+</code></pre>
+<p>The error message references the first name in the list so if you flip it
+around...</p>
+<pre lang="cpp"><code>auto &amp; file = cli.opt&lt;string&gt;(&quot;f file&quot;).require();
+</code></pre>
+<p>... it will complain about '-f' instead of '--file'.</p>
+<pre lang="console"><code>$ a.out
+Error: No value given for -f
+</code></pre>
+<h2 id="range-and-clamp">Range and Clamp</h2>
+<p>When you want to limit a value to be within a range (inclusive) you can use
+opt.range() to error out or opt.clamp() to convert values outside the range to
+be equal to the nearest of the two edges.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; count = cli.opt&lt;int&gt;(&quot;&lt;count&gt;&quot;).clamp(1, 10);
+    auto &amp; letter = cli.opt&lt;char&gt;(&quot;&lt;letter&gt;&quot;).range('a','z');
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; string(*count, *letter) &lt;&lt; endl;
+    return EX_OK;
+}
+</code></pre>
+<pre lang="console"><code>$ a.out 1000 b
+bbbbbbbbbb
+$ a.out 1000 1
+Error: Out of range 'letter' value: 1
+Must be between 'a' and 'z'.
+</code></pre>
+<h2 id="units-of-measure">Units of Measure</h2>
+<p>The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
+parser actions and provide a simple way to support unit suffixes on numerical
+values. The value has the units are removed, is parsed as a double, multiplied
+by the associated factor, rounded to an integer (unless the target is a
+floating point type), converted back to a string, and then finally passed to
+opt.fromString&lt;T&gt;().</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fUnitBinaryPrefix</td>
+<td>Only for opt.siUnits(), makes k,M,G,T,P factors of 1024 (just like ki,Mi,Gi,Ti,Pi), and excludes fractional unit prefixes (milli, micro, etc).</td>
+</tr>
+<tr>
+<td>fUnitInsensitive</td>
+<td>Makes units case insensitive. For opt.siUnits(), unit prefixes are also case insensitive and fractional unit prefixes are excluded. So 'M' and 'm' are both mega.</td>
+</tr>
+<tr>
+<td>fUnitRequire</td>
+<td>Values without units are rejected, even if they have unit prefixes (k,M,G,etc).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="si-units">SI Units</h3>
+<p>SI units are considered to be anything that uses the SI prefixes. The
+supported prefixes range from 1e+15 to 1e-15 and are: P, Pi, T, Ti, G, Gi, M,
+Mi, k, ki, m, u, n, p, f.</p>
+<p>The following table shows the effects of the above flags (BP, I, R) and
+whether a symbol (such as &quot;m&quot;) is specified on the parsing of some
+representative inputs:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>-</th>
+<th>+I</th>
+<th>+BP</th>
+<th>+BP,I</th>
+<th>&quot;m&quot;</th>
+<th>&quot;m&quot; +I</th>
+<th>&quot;m&quot; +BP</th>
+<th>&quot;m&quot; +BP,I</th>
+<th>&quot;m&quot; +R</th>
+<th>&quot;m&quot; +I,R</th>
+<th>&quot;m&quot; +BP,R</th>
+<th>&quot;m&quot; +BP,I,R</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;1M&quot;</td>
+<td>1e+6</td>
+<td>1e+6</td>
+<td>1,048,576</td>
+<td>1,048,576</td>
+<td>1e+6</td>
+<td>1</td>
+<td>1,048,576</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+<td>-</td>
+<td>1</td>
+</tr>
+<tr>
+<td>&quot;1k&quot;</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>&quot;1ki&quot;</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>&quot;k&quot;</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>&quot;1&quot;</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>&quot;1m&quot;</td>
+<td>0.001</td>
+<td>1e+6</td>
+<td>-</td>
+<td>1,048,576</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>&quot;1u&quot;</td>
+<td>0.000001</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>&quot;1Mm&quot;</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>1e+6</td>
+<td>1e+6</td>
+<td>1,048,576</td>
+<td>1,048,576</td>
+<td>1e+6</td>
+<td>1e+6</td>
+<td>1,048,576</td>
+<td>1,048,576</td>
+</tr>
+<tr>
+<td>&quot;1km&quot;</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,000</td>
+<td>1,000</td>
+<td>1,024</td>
+<td>1,024</td>
+</tr>
+<tr>
+<td>&quot;1kim&quot;</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+<td>1,024</td>
+</tr>
+<tr>
+<td>&quot;km&quot;</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>&quot;1mm&quot;</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>0.001</td>
+<td>1e+6</td>
+<td>-</td>
+<td>-</td>
+<td>0.001</td>
+<td>1e+6</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>An example with binary prefixes that is case insensitive:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; bytes = cli.opt&lt;uint64_t&gt;(&quot;b bytes&quot;)
+        .siUnits(&quot;b&quot;, cli.fUnitBinaryPrefix | cli.fUnitInsensitive)
+        .desc(&quot;Number of bytes to process.&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (bytes)
+        cout &lt;&lt; *bytes &lt;&lt; &quot; bytes\n&quot;;
+    return EX_OK;
+}
+</code></pre>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -b NUM[&lt;units&gt;]
+$ a.out -b 32768
+32768 bytes
+$ a.out -b 32k
+32768 bytes
+$ a.out -b 32KB
+32768 bytes
+$ a.out -b 32kib
+32768 bytes
+$ a.out -b 32bk
+Error: Invalid '-b' value: 32bk
+</code></pre>
+<h3 id="time-units">Time Units</h3>
+<p>Adjusts the value to seconds when time units are present. The following units are supported:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Factor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>y</td>
+<td>31,536,000 (365 days, leap years not considered)</td>
+</tr>
+<tr>
+<td>w</td>
+<td>604,800 (7 days)</td>
+</tr>
+<tr>
+<td>d</td>
+<td>86,400 (24 hours)</td>
+</tr>
+<tr>
+<td>h</td>
+<td>3,600</td>
+</tr>
+<tr>
+<td>m</td>
+<td>60</td>
+</tr>
+<tr>
+<td>min</td>
+<td>60</td>
+</tr>
+<tr>
+<td>s</td>
+<td>1</td>
+</tr>
+<tr>
+<td>ms</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>us</td>
+<td>0.000001</td>
+</tr>
+<tr>
+<td>ns</td>
+<td>0.000000001</td>
+</tr>
+</tbody>
+</table>
+<p>Interval in seconds where units are required:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; interval = cli.opt&lt;uint32_t&gt;(&quot;i interval&quot;)
+        .timeUnits(cli.fUnitRequire)
+        .desc(&quot;Time interval&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (interval)
+        cout &lt;&lt; *interval &lt;&lt; &quot; seconds\n&quot;;
+    return EX_OK;
+}
+</code></pre>
+<pre lang="console"><code>$ # Rounded to integer value so it can be stored in uint32_t
+$ a.out -i 2100ms
+2 seconds
+$ # One year
+$ a.out -i 1y
+31536000 seconds
+$ # You can only fit 136.2 years worth of seconds into uint32_t
+$ a.out -i 137y
+Error: Out of range '-i' value: 137y
+Must be between '0' and '4,294,967,296'.
+$ # We set fUnitRequire, so units are required...
+$ a.out -i 60
+Error: Invalid '-i' value: 60
+</code></pre>
+<h3 id="any-units">Any Units</h3>
+<p>Allows any arbitrary set of unit+factor pairs, used by both opt.siUnits() and
+opt.timeUnits().</p>
+<p>Accept length in Imperial Units:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; length = cli.opt&lt;double&gt;(&quot;l length&quot;)
+        .anyUnits({{&quot;yd&quot;, 36}, {&quot;ft&quot;, 12}, {&quot;in&quot;, 1}, {&quot;mil&quot;, 0.001})
+        .desc(&quot;Length, in inches&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    if (length)
+        cout &lt;&lt; *length &lt;&lt; &quot; inches\n&quot;;
+    return EX_OK;
+}
+</code></pre>
+<pre lang="console"><code>$ a.out
+$ a.out -l 1yd
+36 inches
+$ a.out -l 3ft
+36 inches
+$ a.out -l 36
+36 inches
+</code></pre>
+<h2 id="counting">Counting</h2>
+<p>In very rare circumstances, it might be useful to use repetition to increase
+an integer. There is no special handling for it, but counting can be done
+easily enough with a vector. This can be used for verbosity flags, for
+instance:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; v = cli.optVec&lt;bool&gt;(&quot;v verbose&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Verbosity: &quot; &lt;&lt; v.size();
+    return EX_OK;
+}
+</code></pre>
+<p>And on the command line:</p>
+<pre lang="console"><code>$ a.out -vvv
+Verbosity: 3
+</code></pre>
+<p>This could also be done with a <a href="#parse-actions">parse action</a>, but that seems
+like more work.</p>
+<h2 id="prompting">Prompting</h2>
+<p>You can have an option prompt the user for the value when it's left off of
+the command line.</p>
+<p>In addition to simple prompting, there are some flags that modify the behavior.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fPromptHide</td>
+<td>Hide the input from the console</td>
+</tr>
+<tr>
+<td>fPromptConfirm</td>
+<td>Require the value be entered twice</td>
+</tr>
+<tr>
+<td>fPromptNoDefault</td>
+<td>Don't show the default</td>
+</tr>
+</tbody>
+</table>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; cookies = cli.opt&lt;int&gt;(&quot;cookies c&quot;).prompt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;There are &quot; &lt;&lt; *cookies &lt;&lt; &quot; cookies.&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>By default the prompt is a capitalized version of the first option name.
+Which is why this example uses &quot;cookies c&quot; instead of &quot;c cookies&quot;.</p>
+<pre lang="console"><code>$ a.out -c5
+There are 5 cookies.
+$ a.out
+Cookies [0]: 3
+There are 3 cookies.
+</code></pre>
+<p>The first option name is also used in errors where no name is available from
+the command line, such as when the value is from a prompt. The following
+fails because &quot;nine&quot; isn't an int.</p>
+<pre lang="console"><code>$ a.out
+Cookies: nine
+Error: Invalid '--cookies' value: nine
+</code></pre>
+<p>You can change the prompt to something more appropriate and hide the default:</p>
+<pre lang="cpp"><code>auto &amp; cookies = cli.opt&lt;int&gt;(&quot;cookies c&quot;)
+    .prompt(&quot;How many cookies did you buy?&quot;, cli.fPromptNoDefault);
+</code></pre>
+<p>Which gives you:</p>
+<pre lang="console"><code>$ a.out
+How many cookies did you buy? 9
+There are 9 cookies.
+</code></pre>
+<h2 id="password-prompting">Password Prompting</h2>
+<p>The fPromptHide and fPromptConfirm options are especially handy when asking
+for passwords.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto &amp; pass = cli.opt&lt;string&gt;(&quot;password&quot;)
+        .prompt(cli.fPromptHide | cli.fPromptConfirm);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;Password was: &quot; &lt;&lt; *pass;
+    return EX_OK;
+}
+</code></pre>
+<p>Results in:</p>
+<pre lang="console"><code>$ a.out
+Password:
+Enter again to confirm:
+Password was: secret
+</code></pre>
+<p>For passwords you can use opt.passwordOpt() instead of spelling it out.</p>
+<pre lang="cpp"><code>auto &amp; pass = cli.passwordOpt(/*confirm=*/true);
+</code></pre>
+<p>Which gives you:</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  --password=STRING  Password required for access.
+
+  --help             Show this message and exit.
+</code></pre>
+<h2 id="confirm-option">Confirm Option</h2>
+<p>There is a short cut for a &quot;-y, --yes&quot; option, called cli.confirmOpt(), that
+only lets the program run if the option is set or the user responds with 'y'
+or 'Y' when asked if they are sure. Otherwise it sets cli.exitCode() to EX_OK
+and causes cli.parse() to return false.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.confirmOpt();
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    cout &lt;&lt; &quot;HELLO!!!&quot;;
+    return EX_OK;
+}
+</code></pre>
+<p>Cover your ears...</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+Options:
+  -y, --yes  Suppress prompting to allow execution.
+
+  --help     Show this message and exit.
+
+$ a.out -y
+HELLO!!!
+$ a.out
+Are you sure? [y/N]: n
+$ a.out
+Are you sure? [y/N]: y
+HELLO!!!
+</code></pre>
+<p>You can change the prompt:</p>
+<pre lang="cpp"><code>cli.confirmOpt(&quot;Are loud noises okay?&quot;);
+</code></pre>
+<p>Now it asks:</p>
+<pre lang="console"><code>$ a.out
+Are loud noises okay? [y/N]: y
+HELLO!!!
+</code></pre>
+<h1 id="help-text">Help Text</h1>
+<h2 id="page-layout">Page Layout</h2>
+<p>The main help page, and the help pages for subcommands, are built the same
+way and made up of the same six (not counting <a href="#option-groups">option groups</a>)
+sections.</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Changed by</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Header</td>
+<td>cli.header()</td>
+<td>Generally a one line synopsis of the purpose of the command.</td>
+</tr>
+<tr>
+<td>Usage</td>
+<td>cli.opt()</td>
+<td>Generated text list the defined positional arguments.</td>
+</tr>
+<tr>
+<td>Description</td>
+<td>cli.desc()</td>
+<td>Text describing how to use the command and what it does. Sometimes used instead of the positionals list.</td>
+</tr>
+<tr>
+<td>Commands</td>
+<td>cli.command(), cli.desc(), opt.command()</td>
+<td>List of commands and first line of their description, included if there are any git style subcommands.</td>
+</tr>
+<tr>
+<td>Positionals</td>
+<td>cli.opt(), opt.desc()</td>
+<td>List of positional arguments and their descriptions, omitted if none have descriptions.</td>
+</tr>
+<tr>
+<td>Options</td>
+<td>cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show()</td>
+<td>List of named options and descriptions, included if there are any visible options.</td>
+</tr>
+<tr>
+<td>Footer</td>
+<td>cli.footer()</td>
+<td>Shown at the end, often contains references to further information.</td>
+</tr>
+</tbody>
+</table>
+<p>Within text, consecutive spaces are collapsed and words are wrapped at 80
+columns. Newlines should be reserved for paragraph breaks.</p>
+<pre lang="cpp"><code>Dim::Cli cli;
+cli.header(&quot;Heading before usage&quot;);
+cli.desc(&quot;Desciption of what the command does, including any general &quot;
+    &quot;discussion of the various aspects of its use.&quot;);
+cli.opt&lt;bool&gt;(&quot;[positional]&quot;);
+cli.opt&lt;string&gt;(&quot;option&quot;).valueDesc(&quot;OPT_VAL&quot;).desc(&quot;About this option.&quot;);
+cli.opt&lt;int&gt;(&quot;p&quot;, 1).desc(&quot;Option p.&quot;);
+cli.opt&lt;int&gt;(&quot;q&quot;, 2).desc(&quot;Option q.&quot;).defaultDesc(&quot;two, yes TWO!&quot;);
+cli.opt&lt;int&gt;(&quot;r&quot;, 3).desc(&quot;Option r.&quot;).defaultDesc(&quot;&quot;);
+cli.footer(
+    &quot;Footer at end, usually with where to find more info.\n&quot;
+    &quot;- first reference\n&quot;
+    &quot;- second reference\n&quot;
+);
+</code></pre>
+<p>In this example the positionals section is omitted because the positional
+doesn't have a description.</p>
+<pre lang="console"><code>$ a.out --help
+Heading before usage
+usage: a.out [OPTIONS] positional
+
+Description of what the command does, including any general discussion of the
+various aspects of its use.
+
+Options:
+  --option=OPT_VAL  About this options.
+  -p NUM            Option p. (default: 1)
+  -q NUM            Option q. (default: two, yes TWO!)
+  -r NUM            Option r.
+
+  --help            Show this message and exit.
+
+Footer at end, usually with where to find more info.
+- first reference
+- second reference
+</code></pre>
+<h2 id="option-groups">Option Groups</h2>
+<p>Option groups are used to collect related options together in the help text.
+In addition to name, groups have a title and sort key that determine section
+heading and the order groups are rendered. Groups are created on reference,
+with the title and sort key equal to the name.</p>
+<p>Additionally there are two predefined option groups:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Sort</th>
+<th>Title</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;&quot;</td>
+<td>&quot;&quot;</td>
+<td>&quot;Options&quot;</td>
+<td>Default group options are created</td>
+</tr>
+<tr>
+<td>&quot;~&quot;</td>
+<td>&quot;~&quot;</td>
+<td>&quot;&quot;</td>
+<td>Footer group, default location for &quot;--help&quot; and &quot;--version&quot;</td>
+</tr>
+</tbody>
+</table>
+<p>In order to generate the help text the visible options are collected into
+groups, the groups are sorted by sort key and the options within each group
+are sorted by name.</p>
+<p>The group title followed by the options is then output for each group that
+has options. A group without a title is still separate from the previous group
+by a single blank line.</p>
+<p>To group options you either use opt.group() to set the group name or create
+the option using cli.opt&lt;T&gt;() after changing the context with cli.group().</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt(&quot;1.0&quot;);
+    // move 1b into 'First' group after creation
+    cli.opt&lt;bool&gt;(&quot;1b&quot;).group(&quot;First&quot;).desc(&quot;boolean 1b&quot;);
+    // set context to 'First' group, update its key and add 1a directly to it
+    cli.group(&quot;First&quot;).sortKey(&quot;a&quot;).title(
+        &quot;First has a really long title that wraps around to more than &quot;
+        &quot;a single line, quite a lot of text for so few options&quot;
+    );
+    cli.opt&lt;bool&gt;(&quot;1a&quot;);
+    // add 2a to 'Second'
+    cli.group(&quot;Second&quot;).sortKey(&quot;b&quot;).opt&lt;bool&gt;(&quot;2a&quot;);
+    cli.group(&quot;Third&quot;).sortKey(&quot;c&quot;).opt&lt;bool&gt;(&quot;3a&quot;);
+    // give the footer group a title
+    cli.group(&quot;~&quot;).title(&quot;Internally Generated&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}
+</code></pre>
+<p>Let's see the groupings...</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+First has a really long title that wraps around to more than a single line,
+quite a lot of text for so few options:
+  --1a
+  --1b       boolean 1b
+
+Second:
+  --2a
+
+Third:
+  --3a
+
+Internally Generated:
+  --help     Show this message and exit.
+  --version  Show version and exit.
+</code></pre>
+<h2 id="command-groups">Command Groups</h2>
+<p>Command groups collect related commands together in the help text, in the same
+way that option groups do with options.</p>
+<p>There are two predefined command groups:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Sort</th>
+<th>Title</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;&quot;</td>
+<td>&quot;&quot;</td>
+<td>&quot;Commands&quot;</td>
+<td>Default command group</td>
+</tr>
+<tr>
+<td>&quot;~&quot;</td>
+<td>&quot;~&quot;</td>
+<td>&quot;&quot;</td>
+<td>Footer group, default location for &quot;help&quot;</td>
+</tr>
+</tbody>
+</table>
+<p>To group commands you either use cli.cmdGroup() to set the group name or create
+the command using cli.command() from the context of another command that is
+already in the command group that you want for the new command.</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+
+    // move 1a into 'First' group after creation
+    cli.command(&quot;1a&quot;).cmdGroup(&quot;First&quot;).cmdSortKey(&quot;1&quot;);
+    // create 1b in current 'First' group.
+    cli.command(&quot;1b&quot;);
+    // create 2a and move it into 'Second'
+    cli.command(&quot;2a&quot;).cmdGroup(&quot;Second&quot;).cmdSortKey(&quot;2&quot;);
+    // create 3a and move to 'Third'
+    cli.command(&quot;3a&quot;).cmdGroup(&quot;Third&quot;).cmdSortKey(&quot;3&quot;);
+    if (!cli.parse(cerr, argc, argv))
+        return cli.exitCode();
+    return EX_OK;
+}
+</code></pre>
+<p>Let's see the command groupings...</p>
+<pre lang="console"><code>$ a.out --help
+usage: a.out [OPTIONS]
+
+First:
+  1a
+  1b
+
+Second:
+  2a
+
+Third:
+  3a
+
+Options:
+  --help     Show this message and exit.
+</code></pre>
+<h2 id="help-subcommand">Help Subcommand</h2>
+<p>A simple help command can be added via cli.helpCmd(). Having a help command
+allows users to run the more natural &quot;a.out help command&quot; to get help with a
+subcommand instead of the more annoying &quot;a.out command --help&quot;.</p>
+<p>How to add it:</p>
+<pre lang="cpp"><code>int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.helpCmd();
+    cli.exec(cerr, argc, argv);
+    return cli.exitCode();
+}
+</code></pre>
+<p>Programs that only have a simple help command aren't very helpful, but it
+should give you an idea. If you have more commands they will show up as you'd
+expect.</p>
+<pre lang="console"><code>$ a.out help
+usage: a.out [OPTIONS] command [args...]
+
+Commands:
+  help      Show help for individual commands and exit.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out help help
+usage: a.out help [OPTIONS] [command]
+
+Show help for individual commands and exit. If no command is given the list of
+commands and general options are shown.
+  command    Command to show help information about.
+
+Options:
+  -u, --usage / --no-usage  Only show condensed usage.
+
+  --help                    Show this message and exit.
+
+$ a.out help -u
+usage: a.out [--help] command [args..]
+$ a.out help help -u
+usage: a.out help [-u, --usage] [--help] [command]
+</code></pre>
+<h2 id="going-your-own-way">Going Your Own Way</h2>
+<p>If generated help doesn't work for you, you can override the built-in help
+with your own.</p>
+<pre lang="cpp"><code>auto &amp; help = cli.opt&lt;bool&gt;(&quot;help&quot;); // or maybe &quot;help.&quot; to suppress --no-help
+if (!cli.parse(cerr, argv, argc))
+    return cli.exitCode();
+if (*help)
+    return printMyHelp();
+</code></pre>
+<p>This works because the last definition for named options overrides any
+previous ones.</p>
+<p>Within your help printer you can use the existing functions to do some of the
+work:</p>
+<ul>
+<li>cli.printHelp</li>
+<li>cli.printUsage / cli.printUsageEx</li>
+<li>cli.printPositionals</li>
+<li>cli.printOptions</li>
+<li>cli.printCommands</li>
+</ul>
+</div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+</html>
