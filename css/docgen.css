@@ -20,7 +20,7 @@ nav.navbar .dropdown-menu {
 nav#toc {
     top: 4rem;
     height: calc(100vh - 4rem);
-    overflow-y: visible;
+    overflow-y: auto;
 }
 nav#toc .nav-link {
     padding-top: 0;
