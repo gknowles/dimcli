@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2019.
+// Copyright Glen Knowles 2016 - 2020.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.h - dimcli
@@ -624,7 +624,7 @@ private:
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
 
-    std::string descStr(const Cli::OptBase & opt) const;
+    std::string descStr(const OptBase & opt) const;
     int writeUsageImpl(
         std::ostream & os,
         const std::string & arg0,
@@ -851,7 +851,7 @@ protected:
     virtual std::string defaultValueDesc() const = 0;
 
     virtual bool doParseAction(Cli & cli, const std::string & value) = 0;
-    virtual bool doCheckAction(Cli & cli, const std::string & value) = 0;
+    virtual bool doCheckActions(Cli & cli, const std::string & value) = 0;
     virtual bool doAfterActions(Cli & cli) = 0;
     virtual bool assign(const std::string & name, size_t pos) = 0;
     virtual bool assigned() const = 0;
@@ -867,6 +867,7 @@ protected:
 
     bool withUnits(
         long double & out,
+        Cli & cli,
         const std::string & val,
         std::unordered_map<std::string, long double> const & units,
         int flags
@@ -1221,7 +1222,7 @@ public:
 protected:
     std::string defaultValueDesc() const final;
     bool doParseAction(Cli & cli, const std::string & value) final;
-    bool doCheckAction(Cli & cli, const std::string & value) final;
+    bool doCheckActions(Cli & cli, const std::string & value) final;
     bool doAfterActions(Cli & cli) final;
     bool inverted() const final;
     bool exec(
@@ -1274,7 +1275,7 @@ inline bool Cli::OptShim<A, T>::doParseAction(
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::doCheckAction(
+inline bool Cli::OptShim<A, T>::doCheckActions(
     Cli & cli,
     const std::string & val
 ) {
@@ -1538,8 +1539,8 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
     return parse([units, flags](auto & cli, auto & opt, auto & val) {
         long double dval;
         bool success = true;
-        if (!opt.withUnits(dval, val, units, flags))
-            return cli.badUsage(opt, val);
+        if (!opt.withUnits(dval, cli, val, units, flags))
+            return false;
         if (!opt.checkLimits(cli, val, dval, 0))
             return false;
         std::string sval;

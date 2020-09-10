@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2019.
+// Copyright Glen Knowles 2016 - 2020.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.cpp - dimcli
@@ -427,6 +427,7 @@ void Cli::OptBase::setNameIfEmpty(const string & name) {
 //===========================================================================
 bool Cli::OptBase::withUnits(
     long double & out,
+    Cli & cli,
     const string & val,
     unordered_map<string, long double> const & units,
     int flags
@@ -436,7 +437,7 @@ bool Cli::OptBase::withUnits(
     auto pos = val.size();
     for (;;) {
         if (!pos--)
-            return false;
+            return cli.badUsage(*this, val);
         if (f.is(f.digit, val[pos]) || val[pos] == '.') {
             pos += 1;
             break;
@@ -446,9 +447,16 @@ bool Cli::OptBase::withUnits(
     auto unit = val.substr(pos);
 
     if (!fromString(out, num))
-        return false;
-    if (unit.empty())
-        return (~flags & fUnitRequire);
+        return cli.badUsage(*this, val);
+    if (unit.empty()) {
+        if (~flags & fUnitRequire)
+            return true;
+        return cli.badUsage(
+            *this,
+            val,
+            "Value requires suffix specifying the units."
+        );
+    }
 
     if (flags & fUnitInsensitive)
         f.tolower((char *) unit.data(), unit.data() + unit.size());
@@ -457,7 +465,11 @@ bool Cli::OptBase::withUnits(
         out *= i->second;
         return true;
     } else {
-        return false;
+        return cli.badUsage(
+            *this,
+            val,
+            "Units symbol '" + unit + "' not recognized."
+        );
     }
 }
 
@@ -1895,7 +1907,7 @@ bool Cli::parseValue(
     } else {
         opt.unspecifiedValue();
     }
-    return opt.doCheckAction(*this, val);
+    return opt.doCheckActions(*this, val);
 }
 
 //===========================================================================

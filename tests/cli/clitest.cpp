@@ -1445,13 +1445,19 @@ void unitsTests() {
         EXPECT_PARSE(cli, "b", false);
         EXPECT_ERR(cli, "Error: Invalid 'v' value: b\n");
         EXPECT_PARSE(cli, "1B", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1B\n");
+        EXPECT_ERR(cli,
+            "Error: Invalid 'v' value: 1B\n"
+            "Units symbol 'B' not recognized.\n"
+        );
 
         dbls.siUnits("b", cli.fUnitBinaryPrefix);
         EXPECT_PARSE(cli, "1k 1ki");
         EXPECT(dbls[0] == 1024 && dbls[1] == 1024);
         EXPECT_PARSE(cli, "1000m", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1000m\n");
+        EXPECT_ERR(cli,
+            "Error: Invalid 'v' value: 1000m\n"
+            "Units symbol 'm' not recognized.\n"
+        );
 
         dbls.siUnits("b", cli.fUnitInsensitive);
         EXPECT_PARSE(cli, "1 1b 1B 1kB 1Kb");
@@ -1462,16 +1468,25 @@ void unitsTests() {
             && dbls[4] == 1000
         );
         EXPECT_PARSE(cli, "1000u", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1000u\n");
+        EXPECT_ERR(cli,
+            "Error: Invalid 'v' value: 1000u\n"
+            "Units symbol 'u' not recognized.\n"
+        );
 
         // with fUnitRequire
         dbls.siUnits("b", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1b 1kb");
         EXPECT(dbls[0] == 1 && dbls[1] == 1000);
         EXPECT_PARSE(cli, "1", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1\n");
+        EXPECT_ERR(cli,
+            "Error: Invalid 'v' value: 1\n"
+            "Value requires suffix specifying the units.\n"
+        );
         EXPECT_PARSE(cli, "1k", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1k\n");
+        EXPECT_ERR(cli,
+            "Error: Invalid 'v' value: 1k\n"
+            "Units symbol 'k' not recognized.\n"
+        );
         EXPECT_PARSE(cli, "b", false);
         EXPECT_ERR(cli, "Error: Invalid 'v' value: b\n");
         EXPECT_PARSE(cli, "k", false);
