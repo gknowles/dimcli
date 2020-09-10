@@ -182,8 +182,8 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; count = cli.opt&lt;int&gt;("c n count", 1).desc("times to say hello");
     auto &amp; name = cli.opt&lt;string&gt;("name", "Unknown").desc("who to greet");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr); // prints error and returns cli.exitCode()
     if (!name)
         cout &lt;&lt; "Greeting the unknown." &lt;&lt; endl;
     for (unsigned i = 0; i &lt; *count; ++i)
@@ -242,8 +242,8 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr); // prints error and returns cli.exitCode()
     cout &lt;&lt; "Does the apple have a worm? No!";
     return EX_OK;
 }</code></pre>
@@ -274,9 +274,9 @@ on Windows where <code>&lt;sysexits.h&gt;</code> doesn&#8217;t exist.</p>
 <div class="sect2">
 <h3 id="options">Options</h3>
 <div class="paragraph">
-<p>Dim::Cli is used by declaring options to receive arguments. Either via
-pointer to a predefined external variable or by implicitly creating the
-variable when the option is declared.</p>
+<p>Dim::Cli is used by declaring options to receive arguments. The variable that
+receives the value is specified when the option is declared, either as a
+pointer to an existing external variable or implicitly created.</p>
 </div>
 <div class="paragraph">
 <p>Use cli.opt&lt;T&gt;(names, defaultValue) to link positional or named arguments to
@@ -288,8 +288,8 @@ to access the value.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; fruit = cli.opt&lt;string&gt;("fruit", "apple");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Does the " &lt;&lt; *fruit &lt;&lt; " have a worm? No!";
     return EX_OK;
 }</code></pre>
@@ -343,8 +343,8 @@ Options:
 <h3 id="external-variables">External Variables</h3>
 <div class="paragraph">
 <p>In addition to using the option proxies you can bind options directly to
-predefined variables. This can be used to set a global flag, or populate a
-struct that you access later.</p>
+existing variables. This can be used to set a global flag or populate a struct
+that you access later.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>
@@ -356,8 +356,8 @@ struct that you access later.</p>
     Dim::Cli cli;
     cli.opt(&amp;worm, "w worm").desc("make it icky");
     auto &amp; fruit = cli.opt&lt;string&gt;("fruit", "apple").desc("type of fruit");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Does the " &lt;&lt; *fruit &lt;&lt; " have a worm? "
         &lt;&lt; worm ? "Yes :(" : "No!";
     return EX_OK;
@@ -385,7 +385,7 @@ Does the apple have a worm? Yes :(</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>You can also point multiple "options" at the same variable, as is common with
+<p>You can also point multiple options at the same variable, as is common with
 <a href="#feature-switches">feature switches</a>.</p>
 </div>
 </div>
@@ -474,7 +474,7 @@ created for them.</p>
     cli.opt&lt;string&gt;("a apple [apple]").desc("apples are red");
     cli.opt&lt;bool&gt;("!o orange apricot.").desc("oranges are orange");
     cli.opt&lt;string&gt;("&lt;pear&gt;").desc("pears are yellow");
-    cli.parse(cerr, argc, argv);
+    cli.parse(argc, argv);
     return EX_OK;
 }</code></pre>
 </div>
@@ -500,7 +500,7 @@ Options:
 </div>
 <div class="paragraph">
 <p>When named options are added they replace any previous rule with the same
-name, therefore this option declares '-n' an inverted bool:</p>
+name, therefore this option declares '&#8209;n' an inverted bool:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -575,8 +575,8 @@ ways:</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; shout = cli.opt&lt;bool&gt;("shout !whisper").desc("I can't hear you!");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     string prog = argv[0];
     if (*shout) {
         auto &amp; f = use_facet&lt;ctype&lt;char&gt;&gt;(cout.getloc());
@@ -625,7 +625,7 @@ std::vector&lt;T&gt;.</p>
 <div class="content">
 <pre lang="C++"><code>// printing a comma separated list is annoying...
 template&lt;typename T&gt;
-ostream &amp; operator&lt;&lt; (ostream &amp; os, vector&lt;T&gt; const &amp; v) {
+ostream &amp; operator&lt;&lt; (ostream &amp; os, const vector&lt;T&gt; &amp; v) {
     auto i = v.begin(), e = v.end();
     if (i != e) {
         os &lt;&lt; *i++;
@@ -640,11 +640,11 @@ int main(int argc, char * argv[]) {
     // the maximum number to 2.
     vector&lt;string&gt; oranges;
     cli.optVec(&amp;oranges, "o orange", 2).desc("oranges");
-    // for apples demonstrate just using the proxy object.
+    // for apples demonstrate using just the proxy object.
     auto &amp; apples = cli.optVec&lt;string&gt;("[apple]").desc("red fruit");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    cout &lt;&lt; "Comparing (" &lt;&lt; *apples &lt;&lt; ") and (" &lt;&lt; *oranges &lt;&lt; ").";
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout &lt;&lt; "Comparing (" &lt;&lt; *apples &lt;&lt; ") and (" &lt;&lt; oranges &lt;&lt; ").";
     return EX_OK;
 }</code></pre>
 </div>
@@ -671,7 +671,7 @@ The maximum number of values is: 2</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>While the * and &#8594; operators get you full access to the underlying vector,
+<p>While the * and -&gt; operators get you full access to the underlying vector,
 size() and [] are also available directly on the OptVec&lt;T&gt;. Which may
 occasionally save a little bit of typing.</p>
 </div>
@@ -695,15 +695,15 @@ cli.parse() to populate them.</p>
 <p>If you use the proxy object returned from cli.opt&lt;T&gt;() you can dereference
 it like a smart pointer to get at the value. In addition, you can test whether
 it was explicitly set, find the argument name that populated it, and get the
-position in argv\[] it came from.</p>
+position in argv[] it came from.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; name = cli.opt&lt;string&gt;("n name", "Unknown");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     if (!name) {
         cout &lt;&lt; "Using the unknown name." &lt;&lt; endl;
     } else {
@@ -733,14 +733,13 @@ Hello Mary!</code></pre>
 </div>
 <div class="paragraph">
 <p>If you want a little more control over error output you can use the two
-argument version of cli.parse() and then either print the results with
-cli.printError() or inspect it manually using cli.exitCode(), cli.errMsg(),
-and cli.errDetail().</p>
+argument version of cli.parse() and then inspect the results with
+cli.exitCode(), cli.errMsg(), and cli.errDetail().</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre lang="C++"><code>if (!cli.parse(argc, argv))
-    return cli.printError(cerr);</code></pre>
+    return cli.exitCode();</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -831,8 +830,8 @@ opt.implicitValue().</p>
     auto &amp; v2 = cli.opt&lt;string&gt;("?i ?with-implicit", "default");
     v2.implicitValue("implicit");
     auto &amp; p = cli.opt&lt;string&gt;("[positional]", "default");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "v1 = " &lt;&lt; *v1 &lt;&lt; ", v2 = " &lt;&lt; *v2 &lt;&lt; ", p = " &lt;&lt; *p;
     return EX_OK;
 }</code></pre>
@@ -891,8 +890,8 @@ they are added.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; val = cli.opt&lt;string&gt;("&lt;value&gt;").desc("It's required!");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "The value: " &lt;&lt; *val;
     return EX_OK;
 }</code></pre>
@@ -982,8 +981,9 @@ stop due to error or just to early out like "--version" and "--help".</p>
 <p>Options only have one parse action, changing it <strong>replaces</strong> the default.</p>
 </li>
 <li>
-<p>You can use opt.from() and opt.pos() to get the argument name that the value
-was attached to on the command line and its position in argv\[].</p>
+<p>You can use opt.from() and opt.pos() from within the action to get the
+argument name that the value was attached to on the command line and its
+position in argv[].</p>
 </li>
 <li>
 <p>For bool options the source value string will always be either "0" or "1".</p>
@@ -997,18 +997,18 @@ was attached to on the command line and its position in argv\[].</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto &amp; sum = cli.opt&lt;int&gt;("n number", 1)
+    auto &amp; product = cli.opt&lt;int&gt;("n number", 1)
         .desc("numbers to multiply")
-        .parse([](auto &amp; cli, auto &amp; opt, string const &amp; val) {
+        .parse([](auto &amp; cli, auto &amp; opt, const string &amp; val) {
             int tmp = *opt; // save the old value
             if (!opt.parseValue(val)) // parse the new value into opt
                 return cli.badUsage(opt, val);
             *opt *= tmp; // multiply old and new together
             return true;
         });
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    cout &lt;&lt; "The product is: " &lt;&lt; *sum &lt;&lt; endl;
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout &lt;&lt; "The product is: " &lt;&lt; *product &lt;&lt; endl;
     return EX_OK;
 }</code></pre>
 </div>
@@ -1049,13 +1049,23 @@ string as parameters and returns bool.</p>
 order they were added.</p>
 </div>
 <div class="paragraph">
-<p>The function should:
-* Check the options new value. Beware that options are process in the order
-  they appear on the command line, so comparing with another option is
-  usually better done in an <a href="#after-actions">after action</a>.
-* Call cli.badUsage() with an error message if there&#8217;s a problem.
-* Return false if the program should stop, otherwise true to let processing
-  continue.</p>
+<p>The function should:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Check the options new value. Beware that options are process in the order
+they appear on the command line, so comparing with another option is
+usually better done in an <a href="#after-actions">after action</a>.</p>
+</li>
+<li>
+<p>Call cli.badUsage() with an error message if there&#8217;s a problem.</p>
+</li>
+<li>
+<p>Return false if the program should stop, otherwise true to let processing
+continue.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>The opt is fully populated, so *opt, opt.from(), etc are all available.</p>
@@ -1073,8 +1083,8 @@ order they were added.</p>
             *opt += *opt % 2;
             return true;
         });
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; *socks &lt;&lt; " socks";
     if (*socks) cout &lt;&lt; ", where are the people?";
     cout &lt;&lt; endl;
@@ -1120,10 +1130,20 @@ selected command are executed. After actions on the options of all other
 commands are, like the options themselves, ignored.</p>
 </div>
 <div class="paragraph">
-<p>The function should:
-* Do something interesting.
-* Call cli.badUsage() and return false on error.
-* Return true if processing should continue.</p>
+<p>The function should:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Do something interesting.</p>
+</li>
+<li>
+<p>Call cli.badUsage() and return false on error.</p>
+</li>
+<li>
+<p>Return true if processing should continue.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>Action to make sure the high is not less than the low:</p>
@@ -1134,13 +1154,13 @@ commands are, like the options themselves, ignored.</p>
     Dim::Cli cli;
     auto &amp; low = cli.opt&lt;int&gt;("l").desc("Low value.");
     auto &amp; high = cli.opt&lt;int&gt;("h")
-        .desc("High value, must be greater than the low.")
+        .desc("High value, must be greater than or equal to the low.")
         .after([&amp;](auto &amp; cli, auto &amp; opt, auto &amp;) {
             return (*opt &gt;= *low)
                 || cli.badUsage("High must not be less than the low.");
         });
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Range is from " &lt;&lt; *low &lt;&lt; " to " &lt;&lt; *high &lt;&lt; endl;
     return EX_OK;
 }</code></pre>
@@ -1155,8 +1175,8 @@ commands are, like the options themselves, ignored.</p>
 usage: a.out [OPTIONS]
 
 Options:
-  -h=NUM    High value, must be greater than the low.
-  -l=NUM    Low value.
+  -h NUM    High value, must be greater than or equal to the low.
+  -l NUM    Low value.
 
   --help    Show this message and exit.
 
@@ -1208,8 +1228,8 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.").action(apple);
     cli.command("orange").desc("Show orange.").action(orange);
-    cli.exec(cerr, argc, argv);
-    return cli.exitCode();
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
 }</code></pre>
 </div>
 </div>
@@ -1236,11 +1256,11 @@ exec() call can be separate from parse():</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre lang="C++"><code>    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+<pre lang="C++"><code>    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     // any additional validation...
-    cli.exec(cerr);
-    return cli.exitCode();</code></pre>
+    cli.exec();
+    return cli.printError(cerr);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1294,7 +1314,7 @@ Options:
 <div class="sect2">
 <h3 id="multiple-source-files">Multiple Source Files</h3>
 <div class="paragraph">
-<p>Options don&#8217;t have to be defined all in one source file, separate source
+<p>Options don&#8217;t have to be defined all in one source file. Separate source
 files can each define options of interest to that file and get them populated
 when the command line is processed.</p>
 </div>
@@ -1313,9 +1333,9 @@ option while main.cpp registers "--version":</p>
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.versionOpt("1.0");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
-    // do stuff that might call logMsg...
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    // do stuff that might call logMsg()...
     return EX_OK;
 }</code></pre>
 </div>
@@ -1416,8 +1436,8 @@ command line when referenced.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; words = cli.optVec&lt;string&gt;("[words]").desc("Things you say.");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Words:";
     for (auto &amp; w : words)
         cout &lt;&lt; " " &lt;&lt; w;
@@ -1499,8 +1519,8 @@ and any before actions.</p>
     Dim::Cli cli;
     auto &amp; words = cli.optVec&lt;string&gt;("[words]");
     cli.envOpts("AOUT_OPTS");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Words:";
     for (auto &amp;&amp; word : *words)
         cout &lt;&lt; " '" &lt;&lt; word &lt;&lt; "'";
@@ -1515,14 +1535,14 @@ point if you need something slightly different:</p>
 <div class="listingblock">
 <div class="content">
 <pre lang="C++"><code>vector&lt;string&gt; args = cli.toArgv(argc, argv);
-if (char const * eopts = getenv("AOUT_OPTS")) {
+if (const char * eopts = getenv("AOUT_OPTS")) {
     vector&lt;string&gt; eargs = cli.toArgv(eopts);
     // Insert the environment args after arg0 (program name) but before
     // the rest of the command line.
     args.insert(args.begin() + 1, eargs.begin(), eargs.end());
 }
-if (!cli.parse(cerr, args))
-    return cli.exitCode();</code></pre>
+if (!cli.parse(args))
+    return cli.printError(cerr);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1531,13 +1551,13 @@ if (!cli.parse(cerr, args))
 <div class="listingblock">
 <div class="content">
 <pre lang="C++"><code>cli.before([](Cli &amp;, vector&lt;string&gt; &amp; args) {
-    if (char const * eopts = getenv("AOUT_OPTS")) {
+    if (const char * eopts = getenv("AOUT_OPTS")) {
         vector&lt;string&gt; eargs = cli.toArgv(eopts);
         args.insert(args.begin() + 1, eargs.begin(), eargs.end());
     }
 });
-if (!cli.parse(cerr, args))
-    return cli.exitCode();</code></pre>
+if (!cli.parse(args))
+    return cli.printError(cerr);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1549,7 +1569,7 @@ if (!cli.parse(cerr, args))
 $ a.out c d
 Words: 'c' 'd'
 $ export AOUT_OPTS=a b
-$ a.out 'c' 'd'
+$ a.out c d
 Words: 'a' 'b' 'c' 'd'</code></pre>
 </div>
 </div>
@@ -1591,8 +1611,8 @@ cli.errMsg() and cli.errDetail() if it fails.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.versionOpt("1.0");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Hello world!" &lt;&lt; endl;
     return EX_OK;
 }</code></pre>
@@ -1620,7 +1640,7 @@ Hello world!</code></pre>
 <div class="sect2">
 <h3 id="help-option">Help Option</h3>
 <div class="paragraph">
-<p>You can modify the implicitly create --help option. Use cli.helpOpt() to get a
+<p>You can modify the implicitly created --help option. Use cli.helpOpt() to get a
 reference and then go to town. The most likely thing would be to change the
 description or option group, but since you get back an Opt&lt;T&gt; you can use
 any of the standard functions.</p>
@@ -1630,8 +1650,8 @@ any of the standard functions.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.helpOpt();
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     return EX_OK;
 }</code></pre>
 </div>
@@ -1701,6 +1721,10 @@ Options:
   --help    What you see is what you get.</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>cli.helpOpt() writes to cli.conout(), which defaults to cout, but can be
+changed via cli.iostreams().</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="feature-switches">Feature Switches</h3>
@@ -1724,8 +1748,8 @@ the option that should be the default.</p>
     cli.group("Type of fruit");
     cli.opt(&amp;fruit, "o orange", "orange").desc("oranges").flagValue();
     cli.opt(&amp;fruit, "a", "apple").desc("red fruit").flagValue(true);
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Does the " &lt;&lt; fruit &lt;&lt; " have a worm? No!";
     return EX_OK;
 }</code></pre>
@@ -1796,8 +1820,8 @@ int main(int argc, char * argv[]) {
         .choice(State::go, "green", "Means go!")
         .choice(State::wait, "yellow", "Means wait, even if you're late.")
         .choice(State::stop, "red", "Means stop.");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     switch (*state) {
         case State::stop: cout &lt;&lt; "STOP!"; break;
         case State::go: cout &lt;&lt; "Go!"; break;
@@ -1844,8 +1868,8 @@ set for the option.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; file = cli.opt&lt;string&gt;("file f").require();
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Selected file: " &lt;&lt; *file &lt;&lt; endl;
     return EX_OK;
 }</code></pre>
@@ -1898,8 +1922,8 @@ be equal to the nearest of the two edges.</p>
     Dim::Cli cli;
     auto &amp; count = cli.opt&lt;int&gt;("&lt;count&gt;").clamp(1, 10);
     auto &amp; letter = cli.opt&lt;char&gt;("&lt;letter&gt;").range('a','z');
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; string(*count, *letter) &lt;&lt; endl;
     return EX_OK;
 }</code></pre>
@@ -1919,11 +1943,14 @@ Must be between 'a' and 'z'.</code></pre>
 <h3 id="units-of-measure">Units of Measure</h3>
 <div class="paragraph">
 <p>The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
-parser actions and provide a simple way to support unit suffixes on numerical
+parser actions and provide a way to support unit suffixes on numerical
 values. The value has the units are removed, is parsed as a double, multiplied
 by the associated factor, rounded to an integer (unless the target is a
 floating point type), converted back to a string, and then finally passed to
 opt.fromString&lt;T&gt;().</p>
+</div>
+<div class="paragraph">
+<p>The behavior can be customized with the following flags:</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -2191,8 +2218,8 @@ representative inputs:</p>
     auto &amp; bytes = cli.opt&lt;uint64_t&gt;("b bytes")
         .siUnits("b", cli.fUnitBinaryPrefix | cli.fUnitInsensitive)
         .desc("Number of bytes to process.");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     if (bytes)
         cout &lt;&lt; *bytes &lt;&lt; " bytes\n";
     return EX_OK;
@@ -2215,7 +2242,8 @@ $ a.out -b 32KB
 $ a.out -b 32kib
 32768 bytes
 $ a.out -b 32bk
-Error: Invalid '-b' value: 32bk</code></pre>
+Error: Invalid '-b' value: 32bk
+Units symbol 'bk' not recognized.</code></pre>
 </div>
 </div>
 </div>
@@ -2289,8 +2317,8 @@ are supported:</p>
     auto &amp; interval = cli.opt&lt;uint32_t&gt;("i interval")
         .timeUnits(cli.fUnitRequire)
         .desc("Time interval");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     if (interval)
         cout &lt;&lt; *interval &lt;&lt; " seconds\n";
     return EX_OK;
@@ -2311,7 +2339,8 @@ Error: Out of range '-i' value: 137y
 Must be between '0' and '4,294,967,296'.
 $ # We set fUnitRequire, so units are required...
 $ a.out -i 60
-Error: Invalid '-i' value: 60</code></pre>
+Error: Invalid '-i' value: 60
+Value requires suffix specifying the units.</code></pre>
 </div>
 </div>
 </div>
@@ -2331,8 +2360,8 @@ opt.timeUnits().</p>
     auto &amp; length = cli.opt&lt;double&gt;("l length")
         .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001}})
         .desc("Length, in inches");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     if (length)
         cout &lt;&lt; *length &lt;&lt; " inches\n";
     return EX_OK;
@@ -2365,8 +2394,8 @@ instance:</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; v = cli.optVec&lt;bool&gt;("v verbose");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Verbosity: " &lt;&lt; v.size();
     return EX_OK;
 }</code></pre>
@@ -2426,8 +2455,8 @@ the command line.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; cookies = cli.opt&lt;int&gt;("cookies c").prompt();
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "There are " &lt;&lt; *cookies &lt;&lt; " cookies.";
     return EX_OK;
 }</code></pre>
@@ -2490,8 +2519,8 @@ for passwords.</p>
     Dim::Cli cli;
     auto &amp; pass = cli.opt&lt;string&gt;("password")
         .prompt(cli.fPromptHide | cli.fPromptConfirm);
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "Password was: " &lt;&lt; *pass;
     return EX_OK;
 }</code></pre>
@@ -2544,8 +2573,8 @@ and causes cli.parse() to return false.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.confirmOpt();
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     cout &lt;&lt; "HELLO!!!";
     return EX_OK;
 }</code></pre>
@@ -2626,7 +2655,7 @@ sections.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Usage</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.opt()</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Generated text list the defined positional arguments.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generated text listing the defined positional arguments.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
@@ -2711,10 +2740,11 @@ Footer at end, usually with where to find more info.
 <div class="sect2">
 <h3 id="option-groups">Option Groups</h3>
 <div class="paragraph">
-<p>Option groups are used to collect related options together in the help text.
-In addition to name, groups have a title and sort key that determine section
-heading and the order groups are rendered. Groups are created on reference,
-with the title and sort key equal to the name.</p>
+<p>Option groups are used to collect related options together in the help text. In
+addition to name, groups have a title and sort key that determine section
+heading and the order groups are rendered. Groups are created on first
+reference, with the title and sort key initialized to the same value as the
+name.</p>
 </div>
 <div class="paragraph">
 <p>Additionally there are two predefined option groups:</p>
@@ -2739,19 +2769,19 @@ with the title and sort key equal to the name.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">"Options"</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default group options are created</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default group when options are created.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">"~"</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">"~"</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">""</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Footer group, default location for "--help" and "--version"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Footer group, default location for "--help" and "--version".</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>In order to generate the help text the visible options are collected into
-groups, the groups are sorted by sort key and the options within each group
+<p>In order to generate the help text, the visible options are collected into
+groups, the groups are sorted by sort key, and the options within each group
 are sorted by name.</p>
 </div>
 <div class="paragraph">
@@ -2776,13 +2806,13 @@ the option using cli.opt&lt;T&gt;() after changing the context with cli.group().
         "a single line, quite a lot of text for so few options"
     );
     cli.opt&lt;bool&gt;("1a");
-    // add 2a to 'Second'
+    // add 2a to 'Second' and 3a to 'Third'
     cli.group("Second").sortKey("b").opt&lt;bool&gt;("2a");
     cli.group("Third").sortKey("c").opt&lt;bool&gt;("3a");
     // give the footer group a title
     cli.group("~").title("Internally Generated");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     return EX_OK;
 }</code></pre>
 </div>
@@ -2869,8 +2899,8 @@ already in the command group that you want for the new command.</p>
     cli.command("2a").cmdGroup("Second").cmdSortKey("2");
     // create 3a and move to 'Third'
     cli.command("3a").cmdGroup("Third").cmdSortKey("3");
-    if (!cli.parse(cerr, argc, argv))
-        return cli.exitCode();
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
     return EX_OK;
 }</code></pre>
 </div>
@@ -2906,6 +2936,10 @@ allows users to run the more natural "a.out help command" to get help with a
 subcommand instead of the more annoying "a.out command --help".</p>
 </div>
 <div class="paragraph">
+<p>Like cli.<a href="#help-option">helpOpt</a>(), cli.helpCmd() writes to cli.conout(),
+which defaults to cout and can be changed via cli.iostreams().</p>
+</div>
+<div class="paragraph">
 <p>How to add it:</p>
 </div>
 <div class="listingblock">
@@ -2913,8 +2947,8 @@ subcommand instead of the more annoying "a.out command --help".</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.helpCmd();
-    cli.exec(cerr, argc, argv);
-    return cli.exitCode();
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
 }</code></pre>
 </div>
 </div>
@@ -2962,8 +2996,8 @@ with your own.</p>
 <div class="listingblock">
 <div class="content">
 <pre lang="C++"><code>auto &amp; help = cli.opt&lt;bool&gt;("help"); // or maybe "help." to suppress --no-help
-if (!cli.parse(cerr, argv, argc))
-    return cli.exitCode();
+if (!cli.parse(argc, argv))
+    return cli.printError(cerr);
 if (*help)
     return printMyHelp();</code></pre>
 </div>
