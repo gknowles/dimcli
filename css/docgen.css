@@ -73,3 +73,6 @@ table {
 table p {
     margin-bottom: 0;
 }
+div.scrollable-x {
+    overflow-x: auto;
+}
