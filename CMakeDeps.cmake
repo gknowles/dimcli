@@ -2,7 +2,7 @@
 # .travis.yml
 # CHANGELOG.adoc
 # LICENSE
-# README.adoc
+# README.md
 # appveyor.yml
 # configure.bat
 # docs/build.bat
