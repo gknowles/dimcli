@@ -142,7 +142,7 @@ present, multiplies by the corresponding factor.
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
 |===
 
-== Parsing and execution
+== Parsing and Execution
 
 [%autowidth]
 |===

@@ -22,7 +22,7 @@ and this project adheres to http://semver.org/[Semantic Versioning].
 - Added - Support and automated testing for VS2019
 
 == dimcli 5.0.0 (2019-07-11)
-- Added - Configuration option to unconditionally exclude \<filesystem>
+- Added - Configuration option to unconditionally exclude &lt;filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
 - Changed - Rename cli.runCommand() to cli.commandMatched()
 - Added - Optional error detail argument to cli.badUsage()
@@ -50,8 +50,9 @@ and this project adheres to http://semver.org/[Semantic Versioning].
 - Changed - Default to user's preferred (instead of global) locale for parsing
 - Changed - Rename kPrompt* flags to fPrompt*
 - Added - Allow showing non-bool defaults in prompts
-- Added - Conditionally use \<filesystem> instead of \<experimental/filesystem>
-- Added - Allow limited operation when \<filesystem> not available
+- Added - Conditionally use &lt;filesystem> instead of
+          &lt;experimental/filesystem>
+- Added - Allow limited operation when &lt;filesystem> not available
 - Fixed - "--opt=" should use "" as value instead of the next arg
 - Added - Word wrap list of choices in error detail
 - Fixed - Parse errors for optVec report an empty string for the opt name
