@@ -26,7 +26,7 @@ nav.navbar .dropdown-menu .dropdown-item:hover {
 
 nav#toc {
     top: 4rem;
-    height: calc(100vh - 4rem);
+    height: calc(100vh - 5rem);
     overflow-y: auto;
 }
 nav#toc div {

@@ -71,8 +71,8 @@
 </div>
 </nav>
 <div class="container">
-<div class="row">
-<div class="col-lg-auto">
+<div class="row flex-nowrap">
+<div class="d-none d-lg-block col-lg-auto" style="margin-top: 1.25rem;">
 <nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
 <div>
 <a class="nav-link toc-1" href="#unreleased">Unreleased</a>
@@ -88,7 +88,7 @@
 </div>
 </nav>
 </div>
-<div class="col col-md-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><h1 id="change-log">Change Log</h1>
+<div class="col col-lg-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><h1 id="change-log">Change Log</h1>
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
@@ -145,7 +145,7 @@ and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>
 <div class="ulist">
 <ul>
 <li>
-<p>Added - Configuration option to unconditionally exclude \&lt;filesystem&gt;</p>
+<p>Added - Configuration option to unconditionally exclude &lt;filesystem&gt;</p>
 </li>
 <li>
 <p>Added - Default valueDesc for floating point values ("FLOAT")</p>
@@ -235,10 +235,11 @@ and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>
 <p>Added - Allow showing non-bool defaults in prompts</p>
 </li>
 <li>
-<p>Added - Conditionally use \&lt;filesystem&gt; instead of \&lt;experimental/filesystem&gt;</p>
+<p>Added - Conditionally use &lt;filesystem&gt; instead of
+&lt;experimental/filesystem&gt;</p>
 </li>
 <li>
-<p>Added - Allow limited operation when \&lt;filesystem&gt; not available</p>
+<p>Added - Allow limited operation when &lt;filesystem&gt; not available</p>
 </li>
 <li>
 <p>Fixed - "--opt=" should use "" as value instead of the next arg</p>
