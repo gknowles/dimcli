@@ -1506,10 +1506,10 @@ The following table shows the effects of the above flags (BP, I, R) and
 whether a symbol (such as "m") is specified on the parsing of some
 representative inputs:
 
-[role="scrollable-x"]
+[role=scrollable-x]
 --
 
-[%autowidth, cols=13*]
+[cols=13*, role=smaller-td-font]
 |===
 h| Input
 h| -       h| +I       h| +BP       h| +BP,I
