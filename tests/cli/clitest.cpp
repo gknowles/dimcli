@@ -915,6 +915,7 @@ c\d)", {"ab$c\\d"});
     wchar_t const * wargs[] = { L"a", L"b", L"c", NULL };
     a1 = cli.toArgv(sizeof wargs / sizeof *wargs - 1, (wchar_t **) wargs);
     EXPECT(cli.toCmdline(a1) == cmdline);
+    EXPECT(cli.toCmdline("a", 'b', "c"s) == cmdline);
 }
 
 

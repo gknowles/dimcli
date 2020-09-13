@@ -16,7 +16,7 @@ Distributed under the Boost Software License, Version 1.0.
 allows options to be statically registered from multiple source files.
 
 | <<guide.adoc#dimclilocal, CliLocal>>
-| Stand-alone cli instance independent of the shared configuration. Mainly for
+| Standalone cli instance independent of the shared configuration. Mainly for
 testing.
 
 | Cli::Opt&lt;T>
@@ -24,6 +24,10 @@ testing.
 
 | Cli::OptVec&lt;T>
 | Reference to vector of values and metadata for multivalued option.
+
+| Cli::Convert
+| Class for converting between strings and values, provides toString<T>() and
+fromString<T>() members. Is a base class of Cli::Opt and Cli::OptVec.
 |===
 
 == Subcommands
@@ -399,7 +403,8 @@ cout respectively.
 | Cli::toWindowsArgv(string)
 | Parse using Windows rules.
 
-| Cli::toCmdline
+| Cli::toCmdline(argc, argv)
+Cli::toCmdline(arg0, ...)
 | Join arguments into a single command line, escaping as needed, that will
 parse back into those same arguments. Uses the default conventions (Gnu or
 Windows).
@@ -416,8 +421,10 @@ Windows).
 2+h| Value
 
 | opt.fromString<T>
+cvt.fromString<T>
 | Parses string into any supported type.
 
 | opt.toString<T>
+cvt.toString<T>
 | Converts value of any supported type into a string.
 |===

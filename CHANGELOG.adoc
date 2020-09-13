@@ -13,7 +13,9 @@ and this project adheres to http://semver.org/[Semantic Versioning].
 
 == Unreleased
 - Cosmetic - Converted docs from Markdown to AsciiDoc
-- Added - Add detail to errors parsing values with units
+- Added - Detail to errors parsing values with units
+- Added - Variable argument version of cli.toCmdline()
+- Changed - Moved fromString() & toString() to new Convert class
 
 == dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean

@@ -16,7 +16,7 @@ C++ command line parser toolkit for kids of all ages.
   - default constructible
   - copyable
   - assignable from string, has an istream extraction operator, or has a
-    specialization of Cli&#58;:OptBase::fromString\<T>()
+    specialization of Cli&#58;:Convert::fromString\<T>()
 - help generation
 - option definitions can be scattered across multiple files
 - git style subcommands

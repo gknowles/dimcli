@@ -181,6 +181,7 @@ enum {
 class DIMCLI_LIB_DECL Cli {
 public:
     struct Config;
+    class Convert;
 
     class OptBase;
     template <typename A, typename T> class OptShim;
@@ -463,6 +464,10 @@ public:
     // Join array of pointers into command line, escaping as needed.
     static std::string toCmdline(size_t argc, char * argv[]);
     static std::string toCmdline(size_t argc, const char * argv[]);
+    // Join arguments into command line, escaping as needed. Arguments must be
+    // convertible to string.
+    template <typename ...Args>
+    static std::string toCmdline(Args... args);
 
     // Join according to glib conventions, based on the UNIX98 shell spec.
     static std::string toGlibCmdline(size_t argc, char * argv[]);
@@ -707,6 +712,32 @@ Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 }
 
 //===========================================================================
+template <typename ...Args>
+std::string Cli::toCmdline(Args... args) {
+    std::string tmp;
+    Convert cvt;
+    std::vector<std::string> vargs = {
+        ((void) cvt.toString(tmp, args), tmp)...
+    };
+    return toCmdline(vargs);
+}
+
+//===========================================================================
+template <typename A, typename T>
+bool Cli::badRange(
+    A & opt,
+    const std::string & val,
+    const T & low,
+    const T & high
+) {
+    auto prefix = "Out of range '" + opt.from() + "' value";
+    std::string detail, lstr, hstr;
+    if (opt.toString(lstr, low) && opt.toString(hstr, high))
+        detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
+    return badUsage(prefix, val, detail);
+}
+
+//===========================================================================
 template <typename A>
 A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
@@ -727,21 +758,6 @@ std::shared_ptr<V> Cli::getProxy(T * ptr) {
     return std::make_shared<V>(ptr);
 }
 
-//===========================================================================
-template <typename A, typename T>
-bool Cli::badRange(
-    A & opt,
-    const std::string & val,
-    const T & low,
-    const T & high
-) {
-    auto prefix = "Out of range '" + opt.from() + "' value";
-    std::string detail, lstr, hstr;
-    if (opt.toString(lstr, low) && opt.toString(hstr, high))
-        detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
-    return badUsage(prefix, val, detail);
-}
-
 
 /****************************************************************************
 *
@@ -760,6 +776,151 @@ public:
 
 /****************************************************************************
 *
+*   Cli::Convert
+*
+*   Class for converting between values and strings
+*
+***/
+
+class DIMCLI_LIB_DECL Cli::Convert {
+public:
+    // Converts from string to T.
+    template <typename T>
+    [[nodiscard]] bool fromString(T & out, const std::string & value) const;
+
+    // Converts to string from T. Sets to empty string and returns false if
+    // conversion fails or no conversion available.
+    template <typename T>
+    [[nodiscard]] bool toString(std::string & out, const T & src) const;
+
+protected:
+    mutable std::stringstream m_interpreter;
+
+private:
+    template <typename T>
+    auto fromString_impl(T & out, const std::string & src, int, int) const
+        -> decltype(out = src, bool());
+    template <typename T>
+    auto fromString_impl(T & out, const std::string & src, int, long) const
+        -> decltype(std::declval<std::istream &>() >> out, bool());
+    template <typename T>
+    bool fromString_impl(T & out, const std::string & src, long, long) const;
+
+    template <typename T>
+    auto toString_impl(std::string & out, const T & src, int) const
+        -> decltype(std::declval<std::ostream &>() << src, bool());
+    template <typename T>
+    bool toString_impl(std::string & out, const T & src, long) const;
+};
+
+//===========================================================================
+template <typename T>
+[[nodiscard]] bool Cli::Convert::fromString(
+    T & out,
+    const std::string & src
+) const {
+    // Versions of fromString_impl taking ints as extra parameters are
+    // preferred by the compiler (better conversion from 0), if they don't
+    // exist for T (because no out=src assignment operator exists) then the
+    // versions taking longs are considered.
+    return fromString_impl(out, src, 0, 0);
+}
+
+//===========================================================================
+template <typename T>
+auto Cli::Convert::fromString_impl(
+    T & out,
+    const std::string & src,
+    int,
+    int
+) const
+    -> decltype(out = src, bool())
+{
+    out = src;
+    return true;
+}
+
+//===========================================================================
+template <typename T>
+auto Cli::Convert::fromString_impl(
+    T & out,
+    const std::string & src,
+    int,
+    long
+) const
+    -> decltype(std::declval<std::istream &>() >> out, bool())
+{
+    m_interpreter.clear();
+    m_interpreter.str(src);
+    if (!(m_interpreter >> out) || !(m_interpreter >> std::ws).eof()) {
+        out = {};
+        return false;
+    }
+    return true;
+}
+
+//===========================================================================
+template <typename T>
+bool Cli::Convert::fromString_impl(
+    T &, // out
+    const std::string &, // src
+    long,
+    long
+) const {
+    // In order to parse an argument one of the following must exist:
+    //  - assignment operator from std::string to T
+    //  - std::istream extraction operator for T
+    //  - specialization of Cli::Convert::fromString template for T, such as:
+    //      template<> bool Cli::Convert::fromString<MyType>::(
+    //          MyType & out, const std::string & src) const { ... }
+    //  - parse action attached to the Opt<T> instance that doesn't call
+    //    opt.parseValue(), such as opt.choice().
+    assert(!"no assignment from string or stream extraction operator");
+    return false;
+}
+
+//===========================================================================
+template <typename T>
+[[nodiscard]] bool Cli::Convert::toString(
+    std::string & out,
+    const T & src
+) const {
+    return toString_impl(out, src, 0);
+}
+
+//===========================================================================
+template <typename T>
+auto Cli::Convert::toString_impl(
+    std::string & out,
+    const T & src,
+    int
+) const
+    -> decltype(std::declval<std::ostream &>() << src, bool())
+{
+    m_interpreter.clear();
+    m_interpreter.str("");
+    if (!(m_interpreter << src)) {
+        out.clear();
+        return false;
+    }
+    out = m_interpreter.str();
+    return true;
+}
+
+//===========================================================================
+template <typename T>
+bool Cli::Convert::toString_impl(
+    std::string & out,
+    const T &,
+    long
+) const {
+    out.clear();
+    return false;
+}
+
+
+/****************************************************************************
+*
 *   Cli::OptBase
 *
 *   Common base class for all options, has no information about the derived
@@ -767,7 +928,7 @@ public:
 *
 ***/
 
-class DIMCLI_LIB_DECL Cli::OptBase {
+class DIMCLI_LIB_DECL Cli::OptBase : public Cli::Convert {
 public:
     struct ChoiceDesc {
         std::string desc;
@@ -837,11 +998,6 @@ public:
     //-----------------------------------------------------------------------
     // HELPERS
 
-    template <typename T>
-    [[nodiscard]] bool fromString(T & out, const std::string & value) const;
-    template <typename T>
-    [[nodiscard]] bool toString(std::string & out, const T & src) const;
-
     // Friendly name for type, used in help text.
     template <typename T>
     std::string toValueDesc() const;
@@ -899,131 +1055,9 @@ protected:
 private:
     friend class Cli;
 
-    template <typename T>
-    auto fromString_impl(T & out, const std::string & src, int, int) const
-        -> decltype(out = src, bool());
-    template <typename T>
-    auto fromString_impl(T & out, const std::string & src, int, long) const
-        -> decltype(std::declval<std::istream &>() >> out, bool());
-    template <typename T>
-    bool fromString_impl(T & out, const std::string & src, long, long) const;
-
-    template <typename T>
-    auto toString_impl(std::string & out, const T & src, int) const
-        -> decltype(std::declval<std::ostream &>() << src, bool());
-    template <typename T>
-    bool toString_impl(std::string & out, const T & src, long) const;
-
     std::string m_names;
     std::string m_fromName;
-    mutable std::stringstream m_interpreter;
 };
-
-//===========================================================================
-// fromString - converts from string to T
-//===========================================================================
-template <typename T>
-[[nodiscard]] bool Cli::OptBase::fromString(
-    T & out,
-    const std::string & src
-) const {
-    // Versions of fromString_impl taking ints as extra parameters are
-    // preferred by the compiler (better conversion from 0), if they don't
-    // exist for T (because no out=src assignment operator exists) then the
-    // versions taking longs are considered.
-    return fromString_impl(out, src, 0, 0);
-}
-
-//===========================================================================
-template <typename T>
-auto Cli::OptBase::fromString_impl(
-    T & out,
-    const std::string & src,
-    int,
-    int
-) const
-    -> decltype(out = src, bool())
-{
-    out = src;
-    return true;
-}
-
-//===========================================================================
-template <typename T>
-auto Cli::OptBase::fromString_impl(
-    T & out,
-    const std::string & src,
-    int,
-    long
-) const
-    -> decltype(std::declval<std::istream &>() >> out, bool())
-{
-    m_interpreter.clear();
-    m_interpreter.str(src);
-    if (!(m_interpreter >> out) || !(m_interpreter >> std::ws).eof()) {
-        out = {};
-        return false;
-    }
-    return true;
-}
-
-//===========================================================================
-template <typename T>
-bool Cli::OptBase::fromString_impl(
-    T &, // out
-    const std::string &, // src
-    long,
-    long
-) const {
-    // In order to parse an argument one of the following must exist:
-    //  - assignment operator for std::string to T
-    //  - std::istream extraction operator for T
-    //  - specialization of Cli::OptBase::fromString template for T, such as:
-    //      template<> bool Cli::OptBase::fromString<MyType>::(
-    //          MyType & out, const std::string & src) const { ... }
-    //  - parse action attached to the Opt<T> instance that doesn't call
-    //    opt.parseValue(), such as opt.choice().
-    assert(!"no assignment from string or stream extraction operator");
-    return false;
-}
-
-//===========================================================================
-// toString - converts to string from T, sets to empty string and returns
-// false if conversion fails or no conversion available.
-//===========================================================================
-template <typename T>
-[[nodiscard]] bool Cli::OptBase::toString(
-    std::string & out,
-    const T & src
-) const {
-    return toString_impl(out, src, 0);
-}
-
-//===========================================================================
-template <typename T>
-[[nodiscard]] auto Cli::OptBase::toString_impl(
-    std::string & out,
-    const T & src,
-    int
-) const
-    -> decltype(std::declval<std::ostream &>() << src, bool())
-{
-    m_interpreter.clear();
-    m_interpreter.str("");
-    if (!(m_interpreter << src)) {
-        out.clear();
-        return false;
-    }
-    out = m_interpreter.str();
-    return true;
-}
-
-//===========================================================================
-template <typename T>
-bool Cli::OptBase::toString_impl(std::string & out, const T &, long) const {
-    out.clear();
-    return false;
-}
 
 //===========================================================================
 // toValueDesc - descriptive name for values of type T
