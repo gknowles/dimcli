@@ -20,7 +20,7 @@ Distributed under the Boost Software License, Version 1.0.
   <Layout name="default">
     <Page name="User's Guide" file="guide.adoc" default="true"/>
     <Page name="Reference" file="reference.adoc"/>
-    <Page name="Change Log" file="../CHANGELOG.adoc" url="changelog"/>
+    <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
   </Layout>
   <Layout name="md +ref">
     <Page name="User's Guide" file="src/guide.md" xrefFile="guide.md"
