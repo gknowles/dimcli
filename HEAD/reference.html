@@ -102,7 +102,7 @@ allows options to be statically registered from multiple source files.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="guide.html#dimclilocal">CliLocal</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Stand-alone cli instance independent of the shared configuration. Mainly for
+<td class="tableblock halign-left valign-top"><p class="tableblock">Standalone cli instance independent of the shared configuration. Mainly for
 testing.</p></td>
 </tr>
 <tr>
@@ -112,6 +112,11 @@ testing.</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cli::OptVec&lt;T&gt;</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Reference to vector of values and metadata for multivalued option.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::Convert</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Class for converting between strings and values, provides toString&lt;T&gt;() and
+fromString&lt;T&gt;() members. Is a base class of Cli::Opt and Cli::OptVec.</p></td>
 </tr>
 </tbody>
 </table>
@@ -648,7 +653,8 @@ cout respectively.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parse using Windows rules.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toCmdline</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toCmdline(argc, argv)
+Cli::toCmdline(arg0, &#8230;&#8203;)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Join arguments into a single command line, escaping as needed, that will
 parse back into those same arguments. Uses the default conventions (Gnu or
 Windows).</p></td>
@@ -669,11 +675,13 @@ Windows).</p></td>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Value</p></th>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.fromString&lt;T&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.fromString&lt;T&gt;
+cvt.fromString&lt;T&gt;</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parses string into any supported type.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.toString&lt;T&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.toString&lt;T&gt;
+cvt.toString&lt;T&gt;</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Converts value of any supported type into a string.</p></td>
 </tr>
 </tbody>

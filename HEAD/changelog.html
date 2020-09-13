@@ -76,303 +76,117 @@
 <nav class="nav sticky-top d-print-none d-none d-lg-flex flex-column" id="toc">
 <div>
 <a class="nav-link toc-1" href="#unreleased">Unreleased</a>
-<a class="nav-link toc-1" href="#dimcli-5-0-2-2020-01-14">dimcli 5.0.2 (2020-01-14)</a>
-<a class="nav-link toc-1" href="#dimcli-5-0-1-2019-08-26">dimcli 5.0.1 (2019-08-26)</a>
-<a class="nav-link toc-1" href="#dimcli-5-0-0-2019-07-11">dimcli 5.0.0 (2019-07-11)</a>
-<a class="nav-link toc-1" href="#dimcli-4-1-0-2018-12-05">dimcli 4.1.0 (2018-12-05)</a>
-<a class="nav-link toc-1" href="#dimcli-4-0-1-2018-10-22">dimcli 4.0.1 (2018-10-22)</a>
-<a class="nav-link toc-1" href="#dimcli-3-1-1-2017-11-10">dimcli 3.1.1 (2017-11-10)</a>
-<a class="nav-link toc-1" href="#dimcli-3-0-0-2017-10-17">dimcli 3.0.0 (2017-10-17)</a>
-<a class="nav-link toc-1" href="#dimcli-2-0-0-2017-02-25">dimcli 2.0.0 (2017-02-25)</a>
-<a class="nav-link toc-1" href="#dimcli-1-0-3-2016-12-03">dimcli 1.0.3 (2016-12-03)</a>
+<a class="nav-link toc-1" href="#dimcli-5-0-2-2020-01-14-">dimcli 5.0.2 (2020-01-14)</a>
+<a class="nav-link toc-1" href="#dimcli-5-0-1-2019-08-26-">dimcli 5.0.1 (2019-08-26)</a>
+<a class="nav-link toc-1" href="#dimcli-5-0-0-2019-07-11-">dimcli 5.0.0 (2019-07-11)</a>
+<a class="nav-link toc-1" href="#dimcli-4-1-0-2018-12-05-">dimcli 4.1.0 (2018-12-05)</a>
+<a class="nav-link toc-1" href="#dimcli-4-0-1-2018-10-22-">dimcli 4.0.1 (2018-10-22)</a>
+<a class="nav-link toc-1" href="#dimcli-3-1-1-2017-11-10-">dimcli 3.1.1 (2017-11-10)</a>
+<a class="nav-link toc-1" href="#dimcli-3-0-0-2017-10-17-">dimcli 3.0.0 (2017-10-17)</a>
+<a class="nav-link toc-1" href="#dimcli-2-0-0-2017-02-25-">dimcli 2.0.0 (2017-02-25)</a>
+<a class="nav-link toc-1" href="#dimcli-1-0-3-2016-12-03-">dimcli 1.0.3 (2016-12-03)</a>
 </div>
 </nav>
 </div>
-<div class="col col-lg-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><h1 id="change-log">Change Log</h1>
-<div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
+<div class="col col-lg-9 table table-sm table-striped table-hover" role="main" style="margin-top: 1rem;"><!-- raw HTML omitted -->
+<h1 id="change-log">Change Log</h1>
 <p>All notable changes to this project will be documented in this file.</p>
-</div>
-<div class="paragraph">
-<p>The format is based on <a href="http://keepachangelog.com/">Keep a Changelog</a>
-and this project adheres to <a href="http://semver.org/">Semantic Versioning</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
+<p>The format is based on <a href="http://keepachangelog.com">Keep a Changelog</a>
+and this project adheres to <a href="http://semver.org">Semantic Versioning</a>.</p>
 <h2 id="unreleased">Unreleased</h2>
-<div class="sectionbody">
-<div class="ulist">
 <ul>
-<li>
-<p>Cosmetic - Converted docs from Markdown to AsciiDoc</p>
-</li>
-<li>
-<p>Added - Add detail to errors parsing values with units</p>
-</li>
+<li>Cosmetic - Converted docs from Markdown to AsciiDoc</li>
+<li>Added - Detail to errors parsing values with units</li>
+<li>Added - Variable argument version of cli.toCmdline()</li>
+<li>Changed - Moved fromString() &amp; toString() to new Convert class</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-5-0-2-2020-01-14">dimcli 5.0.2 (2020-01-14)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-5-0-2-2020-01-14-">dimcli 5.0.2 (2020-01-14)</h2>
 <ul>
-<li>
-<p>Fixed - Name conflict with c++20 std::boolean</p>
-</li>
+<li>Fixed - Name conflict with c++20 std::boolean</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-5-0-1-2019-08-26">dimcli 5.0.1 (2019-08-26)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-5-0-1-2019-08-26-">dimcli 5.0.1 (2019-08-26)</h2>
 <ul>
-<li>
-<p>Added - Support and automated testing for VS2019</p>
-</li>
+<li>Added - Support and automated testing for VS2019</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-5-0-0-2019-07-11">dimcli 5.0.0 (2019-07-11)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-5-0-0-2019-07-11-">dimcli 5.0.0 (2019-07-11)</h2>
 <ul>
-<li>
-<p>Added - Configuration option to unconditionally exclude &lt;filesystem&gt;</p>
-</li>
-<li>
-<p>Added - Default valueDesc for floating point values ("FLOAT")</p>
-</li>
-<li>
-<p>Changed - Rename cli.runCommand() to cli.commandMatched()</p>
-</li>
-<li>
-<p>Added - Optional error detail argument to cli.badUsage()</p>
-</li>
-<li>
-<p>Changed - Replaced opt.setValueDesc() with opt.toValueDesc()</p>
-</li>
-<li>
-<p>Fixed - Invalid array access using optVec.from() from parse action</p>
-</li>
-<li>
-<p>Changed - Default constructed T added to optVec&lt;T&gt; before parse action</p>
-</li>
-<li>
-<p>Added - cli.badRange() helper</p>
-</li>
-<li>
-<p>Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()</p>
-</li>
-<li>
-<p>Added - Allow limiting the number of values for vector options</p>
-</li>
-<li>
-<p>Changed - Moved fromString() &amp; toString() from Cli to OptBase</p>
-</li>
-<li>
-<p>Changed - locale now set per option instead of for entire cli</p>
-</li>
+<li>Added - Configuration option to unconditionally exclude &lt;filesystem&gt;</li>
+<li>Added - Default valueDesc for floating point values (&quot;FLOAT&quot;)</li>
+<li>Changed - Rename cli.runCommand() to cli.commandMatched()</li>
+<li>Added - Optional error detail argument to cli.badUsage()</li>
+<li>Changed - Replaced opt.setValueDesc() with opt.toValueDesc()</li>
+<li>Fixed - Invalid array access using optVec.from() from parse action</li>
+<li>Changed - Default constructed T added to optVec&lt;T&gt; before parse action</li>
+<li>Added - cli.badRange() helper</li>
+<li>Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()</li>
+<li>Added - Allow limiting the number of values for vector options</li>
+<li>Changed - Moved fromString() &amp; toString() from Cli to OptBase</li>
+<li>Changed - locale now set per option instead of for entire cli</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-4-1-0-2018-12-05">dimcli 4.1.0 (2018-12-05)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-4-1-0-2018-12-05-">dimcli 4.1.0 (2018-12-05)</h2>
 <ul>
-<li>
-<p>Fixed - Order of keys in help text of multi-keyed options non-deterministic</p>
-</li>
-<li>
-<p>Fixed - optVec flag values with inverted keys aren&#8217;t ignored</p>
-</li>
-<li>
-<p>Fixed - Nested response files not resolved relative to parent</p>
-</li>
-<li>
-<p>Fixed - Not all response files expanded when multiple appear</p>
-</li>
-<li>
-<p>Added - Trim spaces around positional argument names</p>
-</li>
-<li>
-<p>Fixed - Error detail for options with two choices missing "or"</p>
-</li>
-<li>
-<p>Fixed - Subcommand help summary terminated by '.' instead of "[.!?] "</p>
-</li>
-<li>
-<p>Added - Allow non-bool options to be inverted ('!' name prefix)</p>
-</li>
-<li>
-<p>Fixed - Failure loading wchar_t response files on linux</p>
-</li>
+<li>Fixed - Order of keys in help text of multi-keyed options non-deterministic</li>
+<li>Fixed - optVec flag values with inverted keys aren't ignored</li>
+<li>Fixed - Nested response files not resolved relative to parent</li>
+<li>Fixed - Not all response files expanded when multiple appear</li>
+<li>Added - Trim spaces around positional argument names</li>
+<li>Fixed - Error detail for options with two choices missing &quot;or&quot;</li>
+<li>Fixed - Subcommand help summary terminated by '.' instead of &quot;[.!?] &quot;</li>
+<li>Added - Allow non-bool options to be inverted ('!' name prefix)</li>
+<li>Fixed - Failure loading wchar_t response files on linux</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-4-0-1-2018-10-22">dimcli 4.0.1 (2018-10-22)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-4-0-1-2018-10-22-">dimcli 4.0.1 (2018-10-22)</h2>
 <ul>
-<li>
-<p>Changed - Default to user&#8217;s preferred (instead of global) locale for parsing</p>
-</li>
-<li>
-<p>Changed - Rename kPrompt* flags to fPrompt*</p>
-</li>
-<li>
-<p>Added - Allow showing non-bool defaults in prompts</p>
-</li>
-<li>
-<p>Added - Conditionally use &lt;filesystem&gt; instead of
-&lt;experimental/filesystem&gt;</p>
-</li>
-<li>
-<p>Added - Allow limited operation when &lt;filesystem&gt; not available</p>
-</li>
-<li>
-<p>Fixed - "--opt=" should use "" as value instead of the next arg</p>
-</li>
-<li>
-<p>Added - Word wrap list of choices in error detail</p>
-</li>
-<li>
-<p>Fixed - Parse errors for optVec report an empty string for the opt name</p>
-</li>
-<li>
-<p>Added - Command groups for grouping subcommands in help text</p>
-</li>
-<li>
-<p>Added - cli.toCmdline() static method</p>
-</li>
+<li>Changed - Default to user's preferred (instead of global) locale for parsing</li>
+<li>Changed - Rename kPrompt* flags to fPrompt*</li>
+<li>Added - Allow showing non-bool defaults in prompts</li>
+<li>Added - Conditionally use &lt;filesystem&gt; instead of
+&lt;experimental/filesystem&gt;</li>
+<li>Added - Allow limited operation when &lt;filesystem&gt; not available</li>
+<li>Fixed - &quot;--opt=&quot; should use &quot;&quot; as value instead of the next arg</li>
+<li>Added - Word wrap list of choices in error detail</li>
+<li>Fixed - Parse errors for optVec report an empty string for the opt name</li>
+<li>Added - Command groups for grouping subcommands in help text</li>
+<li>Added - cli.toCmdline() static method</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-3-1-1-2017-11-10">dimcli 3.1.1 (2017-11-10)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-3-1-1-2017-11-10-">dimcli 3.1.1 (2017-11-10)</h2>
 <ul>
-<li>
-<p>Added - cli.exec() overloads that both parse() and exec()</p>
-</li>
-<li>
-<p>Added - Before actions to adjust expanded args list before option assignment</p>
-</li>
-<li>
-<p>Added - cli.helpNoArgs() to print help when command line is empty</p>
-</li>
-<li>
-<p>Added - opt.command() and opt.group() access methods</p>
-</li>
-<li>
-<p>Added - Relax clamp and range to allow the low and high to be equal</p>
-</li>
+<li>Added - cli.exec() overloads that both parse() and exec()</li>
+<li>Added - Before actions to adjust expanded args list before option assignment</li>
+<li>Added - cli.helpNoArgs() to print help when command line is empty</li>
+<li>Added - opt.command() and opt.group() access methods</li>
+<li>Added - Relax clamp and range to allow the low and high to be equal</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-3-0-0-2017-10-17">dimcli 3.0.0 (2017-10-17)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-3-0-0-2017-10-17-">dimcli 3.0.0 (2017-10-17)</h2>
 <ul>
-<li>
-<p>Added - Support for clang &gt;= 3.6</p>
-</li>
-<li>
-<p>Added - Support for gcc &gt;= 6.2</p>
-</li>
-<li>
-<p>Added - Show default option values in help text</p>
-</li>
-<li>
-<p>Added - Cli() copy constructor</p>
-</li>
-<li>
-<p>Fixed - cli.toPtrArgv() trailing nullptr improperly added</p>
-</li>
-<li>
-<p>Changed - Rename cli.run() to cli.exec() and invert the return value</p>
-</li>
-<li>
-<p>Fixed - Internal group name relies on static init order</p>
-</li>
-<li>
-<p>Added - opt.require()</p>
-</li>
-<li>
-<p>Fixed - After actions of unselected commands should not be run</p>
-</li>
-<li>
-<p>Added - opt.defaultDesc() to modify "(default: )" clause</p>
-</li>
-<li>
-<p>Fixed - "No command given." should return kExitUsage</p>
-</li>
-<li>
-<p>Changed - Command header and footer default to the top level values</p>
-</li>
-<li>
-<p>Changed - cli.print*() functions now non-const</p>
-</li>
-<li>
-<p>Added - cli.helpCmd()</p>
-</li>
+<li>Added - Support for clang &gt;= 3.6</li>
+<li>Added - Support for gcc &gt;= 6.2</li>
+<li>Added - Show default option values in help text</li>
+<li>Added - Cli() copy constructor</li>
+<li>Fixed - cli.toPtrArgv() trailing nullptr improperly added</li>
+<li>Changed - Rename cli.run() to cli.exec() and invert the return value</li>
+<li>Fixed - Internal group name relies on static init order</li>
+<li>Added - opt.require()</li>
+<li>Fixed - After actions of unselected commands should not be run</li>
+<li>Added - opt.defaultDesc() to modify &quot;(default: )&quot; clause</li>
+<li>Fixed - &quot;No command given.&quot; should return kExitUsage</li>
+<li>Changed - Command header and footer default to the top level values</li>
+<li>Changed - cli.print*() functions now non-const</li>
+<li>Added - cli.helpCmd()</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-2-0-0-2017-02-25">dimcli 2.0.0 (2017-02-25)</h2>
-<div class="sectionbody">
-<div class="ulist">
+<h2 id="dimcli-2-0-0-2017-02-25-">dimcli 2.0.0 (2017-02-25)</h2>
 <ul>
-<li>
-<p>Added - optVec.operator[]</p>
-</li>
-<li>
-<p>Changed - Rename opt.write*() functions to opt.print*()</p>
-</li>
-<li>
-<p>Added - Reduce footprint to just two files (cli.h &amp; cli.cpp)</p>
-</li>
-<li>
-<p>Added - opt.writeUsageEx() includes option names in usage text</p>
-</li>
-<li>
-<p>Fixed - opt.choice() should be usable when no string conversion exists</p>
-</li>
-<li>
-<p>Fixed - Help text for choices not aligned</p>
-</li>
-<li>
-<p>Fixed - Option groups sorted by name instead of sort key</p>
-</li>
+<li>Added - optVec.operator[]</li>
+<li>Changed - Rename opt.write*() functions to opt.print*()</li>
+<li>Added - Reduce footprint to just two files (cli.h &amp; cli.cpp)</li>
+<li>Added - opt.writeUsageEx() includes option names in usage text</li>
+<li>Fixed - opt.choice() should be usable when no string conversion exists</li>
+<li>Fixed - Help text for choices not aligned</li>
+<li>Fixed - Option groups sorted by name instead of sort key</li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="dimcli-1-0-3-2016-12-03">dimcli 1.0.3 (2016-12-03)</h2>
-<div class="sectionbody">
-<div class="paragraph">
+<h2 id="dimcli-1-0-3-2016-12-03-">dimcli 1.0.3 (2016-12-03)</h2>
 <p>First public release</p>
 </div>
-</div>
-</div></div>
 </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
