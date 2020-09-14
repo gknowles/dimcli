@@ -6,6 +6,10 @@
 version: 0.1.{build}
 environment:
   matrix:
+    - CXX: g++-9
+      CC: gcc-9
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      BUILD_COVERAGE: ON
     - CXX: clang++-6.0
       CC: clang-6.0
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -25,10 +29,6 @@ environment:
     - CXX: g++-9
       CC: gcc-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: g++-9
-      CC: gcc-9
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      BUILD_COVERAGE: ON
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
