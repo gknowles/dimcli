@@ -88,7 +88,7 @@
 #ifndef DIMCLI_LIB_KEEP_MACROS
 #pragma GCC diagnostic push
 #endif
-#pragma GCC diagnostic ignored "-Wlogical-op-parantheses"
+#pragma GCC diagnostic ignored "-Wlogical-op-parentheses"
 #endif
 
 #ifdef DIMCLI_LIB_DYN_LINK
