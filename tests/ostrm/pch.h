@@ -13,9 +13,8 @@
 
 #if defined(_MSC_VER)
 #include <strstream>
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
+#elif defined(__DEPRECATED)
+#undef __DEPRECATED
 #include <strstream>
-#pragma GCC diagnostic pop
+#define __DEPRECATED 1
 #endif
