@@ -609,7 +609,8 @@ public:
     // HELPERS
 
     static void consoleEnableEcho(bool enable = true);
-    static unsigned consoleWidth();
+    // Returns the default when queryWidth is false.
+    static unsigned consoleWidth(bool queryWidth = true);
 
 protected:
     Cli(std::shared_ptr<Config> cfg);

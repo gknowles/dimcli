@@ -1758,7 +1758,8 @@ void envTests() {
 
 //===========================================================================
 static int runTests(bool prompt) {
-    unsigned width = Dim::Cli::consoleWidth();
+    unsigned width = Dim::Cli::consoleWidth(false);
+    width = Dim::Cli::consoleWidth();
     (void) width;
 
     unitsTests();

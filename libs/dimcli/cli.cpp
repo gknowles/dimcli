@@ -2733,7 +2733,7 @@ void Cli::consoleEnableEcho(bool enable) {
 }
 
 //===========================================================================
-unsigned Cli::consoleWidth() {
+unsigned Cli::consoleWidth(bool /* queryWidth */) {
     return kDefaultConsoleWidth;
 }
 
@@ -2761,12 +2761,12 @@ void Cli::consoleEnableEcho(bool enable) {
 }
 
 //===========================================================================
-unsigned Cli::consoleWidth() {
+unsigned Cli::consoleWidth(bool queryWidth) {
     HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO info;
-    if (!GetConsoleScreenBufferInfo(hOutput, &info))
-        return kDefaultConsoleWidth;
-    return info.dwSize.X;
+    if (queryWidth && !GetConsoleScreenBufferInfo(hOutput, &info))
+        return info.dwSize.X;
+    return kDefaultConsoleWidth;
 }
 
 #else
@@ -2788,11 +2788,11 @@ void Cli::consoleEnableEcho(bool enable) {
 }
 
 //===========================================================================
-unsigned Cli::consoleWidth() {
+unsigned Cli::consoleWidth(bool queryWidth) {
     winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
-        return kDefaultConsoleWidth;
-    return w.ws_col;
+    if (queryWidth && ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
+        return w.ws_col;
+    return kDefaultConsoleWidth;
 }
 
 #endif
