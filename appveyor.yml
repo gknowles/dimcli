@@ -77,6 +77,9 @@ for:
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get install -y ${CC}
             fi
+            if [ "$BUILD_COVERAGE" = "ON" ]; then
+                sudo apt-get install -y lcov
+            fi
     build_script:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
