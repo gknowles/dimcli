@@ -2181,7 +2181,7 @@ bool Cli::exec() {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"command found by parse no longer defined");
         return fail(
-            Dim::kExitSoftware,
+            kExitSoftware,
             "Command '" + name + "' found by parse no longer defined."
         );
     }
@@ -2194,7 +2194,7 @@ bool Cli::exec() {
         // handling in your main function to wait for it to complete.
         assert(!"command failed without setting exit code");
         return fail(
-            Dim::kExitSoftware,
+            kExitSoftware,
             "Command '" + name + "' failed without setting exit code."
         );
     }
@@ -2730,6 +2730,11 @@ int Cli::printError(ostream & os) {
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {
     assert(enable && "disabling echo requires console support enabled");
+}
+
+//===========================================================================
+unsigned Cli::consoleWidth() {
+    return kDefaultConsoleWidth;
 }
 
 #elif defined(_WIN32)
