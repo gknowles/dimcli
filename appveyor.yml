@@ -84,7 +84,7 @@ for:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-      - cmake --build . --config ${CONFIGURATION}
+      - cmake --build . --config ${CONFIGURATION} -v
       - ../bin/cli --test
     after_build:
       - sh: |
