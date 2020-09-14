@@ -394,6 +394,9 @@ cout respectively.
 | Cli::toArgv(argc, argv)
 | Copy array of pointers into argument vector of strings.
 
+| Cli::toArgvL(arg0, ...)
+| Copy arguments vector of strings. Uses cvt.toString to convert arguments.
+
 | Cli::toGlibArgv(string)
 | Parse according to glib conventions, based on the UNIX98 shell spec.
 
@@ -404,10 +407,12 @@ cout respectively.
 | Parse using Windows rules.
 
 | Cli::toCmdline(argc, argv)
-Cli::toCmdline(arg0, ...)
-| Join arguments into a single command line, escaping as needed, that will
-parse back into those same arguments. Uses the default conventions (Gnu or
+| Join array of arguments into a single command line, escaping as needed, that
+will parse back into those same arguments. Uses the default conventions (Gnu or
 Windows).
+
+| Cli::toCmdlineL(arg0, ...)
+| Join discrete arguments into a single command line.
 
 | Cli::toGlibCmdline
 | Join according to glib conventions, based on UNIX98 shell spec.

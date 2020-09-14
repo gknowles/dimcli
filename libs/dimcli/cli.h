@@ -441,6 +441,9 @@ public:
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
+    // Copy args into vector of args. Arguments must be convertible to string.
+    template <typename ...Args>
+    static std::vector<std::string> toArgvL(Args... args);
 
     // Create vector of pointers suitable for use with argc/argv APIs, has a
     // trailing null that is not included in size(). The return values point
@@ -467,7 +470,7 @@ public:
     // Join arguments into command line, escaping as needed. Arguments must be
     // convertible to string.
     template <typename ...Args>
-    static std::string toCmdline(Args... args);
+    static std::string toCmdlineL(Args... args);
 
     // Join according to glib conventions, based on the UNIX98 shell spec.
     static std::string toGlibCmdline(size_t argc, char * argv[]);
@@ -712,17 +715,6 @@ Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
 }
 
 //===========================================================================
-template <typename ...Args>
-std::string Cli::toCmdline(Args... args) {
-    std::string tmp;
-    Convert cvt;
-    std::vector<std::string> vargs = {
-        ((void) cvt.toString(tmp, args), tmp)...
-    };
-    return toCmdline(vargs);
-}
-
-//===========================================================================
 template <typename A, typename T>
 bool Cli::badRange(
     A & opt,
@@ -916,6 +908,32 @@ bool Cli::Convert::toString_impl(
 ) const {
     out.clear();
     return false;
+}
+
+
+/****************************************************************************
+*
+*   Cli
+*
+*   Additional members that must come after Cli::Convert is fully declared.
+*
+***/
+
+//===========================================================================
+template <typename ...Args>
+std::vector<std::string> Cli::toArgvL(Args... args) {
+    std::string tmp;
+    Convert cvt;
+    std::vector<std::string> vargs = {
+        ((void) cvt.toString(tmp, args), tmp)...
+    };
+    return vargs;
+}
+
+//===========================================================================
+template <typename ...Args>
+std::string Cli::toCmdlineL(Args... args) {
+    return toCmdline(toArgvL(args...));
 }
 
 

@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## Unreleased
 - Cosmetic - Converted docs from Markdown to AsciiDoc
 - Added - Detail to errors parsing values with units
-- Added - Variable argument version of cli.toCmdline()
+- Added - Variable argument cli.toArgvL() & cli.toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
 
 ## dimcli 5.0.2 (2020-01-14)
