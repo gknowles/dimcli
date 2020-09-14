@@ -641,6 +641,10 @@ cout respectively.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Copy array of pointers into argument vector of strings.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toArgvL(arg0, &#8230;&#8203;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Copy arguments vector of strings. Uses cvt.toString to convert arguments.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toGlibArgv(string)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parse according to glib conventions, based on the UNIX98 shell spec.</p></td>
 </tr>
@@ -653,11 +657,14 @@ cout respectively.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Parse using Windows rules.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toCmdline(argc, argv)
-Cli::toCmdline(arg0, &#8230;&#8203;)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Join arguments into a single command line, escaping as needed, that will
-parse back into those same arguments. Uses the default conventions (Gnu or
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toCmdline(argc, argv)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Join array of arguments into a single command line, escaping as needed, that
+will parse back into those same arguments. Uses the default conventions (Gnu or
 Windows).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toCmdlineL(arg0, &#8230;&#8203;)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Join discrete arguments into a single command line.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cli::toGlibCmdline</p></td>
