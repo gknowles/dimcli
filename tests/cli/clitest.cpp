@@ -1758,6 +1758,9 @@ void envTests() {
 
 //===========================================================================
 static int runTests(bool prompt) {
+    unsigned width = Dim::Cli::consoleWidth();
+    (void) width;
+
     unitsTests();
     parseTests();
     basicTests();

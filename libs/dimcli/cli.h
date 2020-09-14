@@ -605,13 +605,16 @@ public:
     // and had a chance to update the internal data structures.
     bool commandExists(const std::string & name) const;
 
+    //-----------------------------------------------------------------------
+    // HELPERS
+
+    static void consoleEnableEcho(bool enable = true);
+    static unsigned consoleWidth();
+
 protected:
     Cli(std::shared_ptr<Config> cfg);
 
 private:
-    static void consoleEnableEcho(bool enable = true);
-    static unsigned consoleWidth();
-
     static bool defParseAction(
         Cli & cli,
         OptBase & opt,
