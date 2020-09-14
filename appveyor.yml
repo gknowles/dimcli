@@ -72,17 +72,24 @@ for:
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+        - INSTALL_COMPILER: ON
     install:
-      - sh: |
-            if [ "$INSTALL_COMPILER" = "ON" ]; then
-                sudo apt-get install -y ${CC}
-            fi
+      - sudo apt-get install -y ${CC}
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     build_script:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
       - cmake --build . --config ${CONFIGURATION}
       - ../bin/cli --test
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+        - BUILD_COVERAGE: ON
+    after_build:
+      - bash <(curl -s https://codecov.io/bash)
 
 artifacts:
   - path: build\publish\dimcli-latest.zip
