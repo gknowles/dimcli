@@ -15,7 +15,7 @@
 #include <strstream>
 #else
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic warning "-Wno-deprecated"
 #include <strstream>
 #pragma GCC diagnostic pop
 #endif
