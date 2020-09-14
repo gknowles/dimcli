@@ -9,7 +9,7 @@
 using namespace std;
 
 #if defined(_MSC_VER)
-#elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#elif defined(__clang__)
 #pragma clang diagnotic ignored "-Wstring-plus-int"
 #endif
 
