@@ -10,7 +10,7 @@ using namespace std;
 
 #if defined(_MSC_VER)
 #elif defined(__clang__)
-#pragma clang diagnotic ignored "-Wstring-plus-int"
+#pragma clang diagnostic ignored "-Wstring-plus-int"
 #endif
 
 
