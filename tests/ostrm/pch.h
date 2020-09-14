@@ -10,4 +10,12 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+
+#if defined(_MSC_VER)
 #include <strstream>
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+#include <strstream>
+#pragma GCC diagnostic pop
+#endif

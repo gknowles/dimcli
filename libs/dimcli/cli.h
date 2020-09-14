@@ -78,12 +78,17 @@
 #define DIMCLI_LIB_NO_CONSOLE
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #ifndef DIMCLI_LIB_KEEP_MACROS
 #pragma warning(push)
 #endif
 // attribute 'identifier' is not recognized
 #pragma warning(disable : 5030)
+#elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#ifndef DIMCLI_LIB_KEEP_MACROS
+#pragma GCC diagnostic push
+#endif
+#pragma GCC diagnostic ignored "-Wlogical-op-parantheses"
 #endif
 
 #ifdef DIMCLI_LIB_DYN_LINK
@@ -1980,8 +1985,10 @@ inline int Cli::OptVec<T>::pos(size_t index) const {
 #undef DIMCLI_LIB_NO_CONSOLE
 #undef DIMCLI_LIB_SOURCE
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic pop
 #endif
 
 #undef DIMCLI_LIB_FILESYSTEM

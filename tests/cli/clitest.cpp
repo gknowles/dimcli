@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2019.
+// Copyright Glen Knowles 2016 - 2020.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // clitest.cpp - dimcli test cli
@@ -7,6 +7,11 @@
 #pragma hdrstop
 
 using namespace std;
+
+#if defined(_MSC_VER)
+#elif defined(__clang__)
+#pragma clang diagnotic ignore "-Wstring-plus-int"
+#endif
 
 
 /****************************************************************************
