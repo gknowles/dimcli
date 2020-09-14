@@ -84,11 +84,15 @@
 #endif
 // attribute 'identifier' is not recognized
 #pragma warning(disable : 5030)
-#elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#elif defined(__clang__)
+#ifndef DIMCLI_LIB_KEEP_MACROS
+#pragma clang diagnostic push
+#endif
+#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+#elif defined(__GNUC__) || defined(__GNUG__)
 #ifndef DIMCLI_LIB_KEEP_MACROS
 #pragma GCC diagnostic push
 #endif
-#pragma GCC diagnostic ignored "-Wlogical-op-parentheses"
 #endif
 
 #ifdef DIMCLI_LIB_DYN_LINK
