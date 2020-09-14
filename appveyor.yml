@@ -6,8 +6,8 @@
 version: 0.1.{build}
 environment:
   matrix:
-    - CXX: g++-9
-      CC: gcc-9
+    - CXX: g++-7
+      CC: gcc-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       BUILD_COVERAGE: ON
     - CXX: clang++-6.0
@@ -77,20 +77,16 @@ for:
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get install -y ${CC}
             fi
-            if [ "$BUILD_COVERAGE" = "ON" ]; then
-                sudo apt-get install -y lcov
-            fi
     build_script:
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-      - cmake --build . --config ${CONFIGURATION} -v
+      - cmake --build . --config ${CONFIGURATION}
       - ../bin/cli --test
     after_build:
       - sh: |
             if [ "$BUILD_COVERAGE" = "ON" ]; then
-                find ..
-                bash <(curl -s https://codecov.io/bash) -v
+                bash <(curl -s https://codecov.io/bash)
             fi
 
 artifacts:
