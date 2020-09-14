@@ -89,6 +89,7 @@ for:
     after_build:
       - sh: |
             if [ "$BUILD_COVERAGE" = "ON" ]; then
+                find ..
                 bash <(curl -s https://codecov.io/bash) -v
             fi
 
