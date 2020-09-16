@@ -670,7 +670,7 @@ Multiline footer:
             *opt = false;
             return true;
         });
-        EXPECT_PARSE(cli, "--help");
+        EXPECT_PARSE(cli, "--help=1");
     }
 
     // group sortKey
