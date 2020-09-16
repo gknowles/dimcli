@@ -215,38 +215,38 @@ public:
     // CONFIGURATION
 
     template <typename T>
-    Opt<T> & opt(const std::string & keys, const T & def = {});
+    Opt<T> & opt(const std::string & names, const T & def = {});
 
     template <typename T>
-    Opt<T> & opt(T * value, const std::string & keys);
+    Opt<T> & opt(T * value, const std::string & names);
 
     template <typename T, typename U, typename =
         typename std::enable_if<std::is_convertible<U, T>::value>::type
     >
-    Opt<T> & opt(T * value, const std::string & keys, const U & def);
+    Opt<T> & opt(T * value, const std::string & names, const U & def);
 
     template <typename T>
-    Opt<T> & opt(Opt<T> & value, const std::string & keys);
+    Opt<T> & opt(Opt<T> & value, const std::string & names);
 
     template <typename T, typename U, typename =
         typename std::enable_if<std::is_convertible<U, T>::value>::type
     >
-    Opt<T> & opt(Opt<T> & value, const std::string & keys, const U & def);
+    Opt<T> & opt(Opt<T> & value, const std::string & names, const U & def);
 
     template <typename T>
-    OptVec<T> & optVec(const std::string & keys, int nargs = -1);
+    OptVec<T> & optVec(const std::string & names, int nargs = -1);
 
     template <typename T>
     OptVec<T> & optVec(
         std::vector<T> * values,
-        const std::string & keys,
+        const std::string & names,
         int nargs = -1
     );
 
     template <typename T>
     OptVec<T> & optVec(
         OptVec<T> & values,
-        const std::string & keys,
+        const std::string & names,
         int nargs = -1
     );
 
@@ -450,7 +450,8 @@ public:
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
-    // Copy args into vector of args. Arguments must be convertible to string.
+    // Copy args into vector of args. Arguments must be convertible to string
+    // via Convert::toString().
     template <typename ...Args>
     static std::vector<std::string> toArgvL(Args... args);
 
@@ -477,7 +478,7 @@ public:
     static std::string toCmdline(size_t argc, char * argv[]);
     static std::string toCmdline(size_t argc, const char * argv[]);
     // Join arguments into command line, escaping as needed. Arguments must be
-    // convertible to string.
+    // convertible to string via Convert::toString().
     template <typename ...Args>
     static std::string toCmdlineL(Args... args);
 
@@ -662,30 +663,30 @@ private:
 template <typename T, typename U, typename>
 Cli::Opt<T> & Cli::opt(
     T * value,
-    const std::string & keys,
+    const std::string & names,
     const U & def
 ) {
     auto proxy = getProxy<Opt<T>, Value<T>>(value);
-    auto ptr = std::make_unique<Opt<T>>(proxy, keys);
+    auto ptr = std::make_unique<Opt<T>>(proxy, names);
     ptr->defaultValue(def);
     return addOpt(std::move(ptr));
 }
 
 //===========================================================================
 template <typename T>
-Cli::Opt<T> & Cli::opt(T * value, const std::string & keys) {
-    return opt(value, keys, T{});
+Cli::Opt<T> & Cli::opt(T * value, const std::string & names) {
+    return opt(value, names, T{});
 }
 
 //===========================================================================
 template <typename T>
 Cli::OptVec<T> & Cli::optVec(
     std::vector<T> * values,
-    const std::string & keys,
+    const std::string & names,
     int nargs
 ) {
     auto proxy = getProxy<OptVec<T>, ValueVec<T>>(values);
-    auto ptr = std::make_unique<OptVec<T>>(proxy, keys, nargs);
+    auto ptr = std::make_unique<OptVec<T>>(proxy, names, nargs);
     return addOpt(std::move(ptr));
 }
 
@@ -693,38 +694,38 @@ Cli::OptVec<T> & Cli::optVec(
 template <typename T, typename U, typename>
 Cli::Opt<T> & Cli::opt(
     Opt<T> & alias,
-    const std::string & keys,
+    const std::string & names,
    U  const & def
 ) {
-    return opt(&*alias, keys, def);
+    return opt(&*alias, names, def);
 }
 
 //===========================================================================
 template <typename T>
-Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & keys) {
-    return opt(&*alias, keys, T{});
+Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & names) {
+    return opt(&*alias, names, T{});
 }
 
 //===========================================================================
 template <typename T>
 Cli::OptVec<T> & Cli::optVec(
     OptVec<T> & alias,
-    const std::string & keys,
+    const std::string & names,
     int nargs
 ) {
-    return optVec(&*alias, keys, nargs);
+    return optVec(&*alias, names, nargs);
 }
 
 //===========================================================================
 template <typename T>
-Cli::Opt<T> & Cli::opt(const std::string & keys, const T & def) {
-    return opt<T>(nullptr, keys, def);
+Cli::Opt<T> & Cli::opt(const std::string & names, const T & def) {
+    return opt<T>(nullptr, names, def);
 }
 
 //===========================================================================
 template <typename T>
-Cli::OptVec<T> & Cli::optVec(const std::string & keys, int nargs) {
-    return optVec<T>(nullptr, keys, nargs);
+Cli::OptVec<T> & Cli::optVec(const std::string & names, int nargs) {
+    return optVec<T>(nullptr, names, nargs);
 }
 
 //===========================================================================
@@ -969,7 +970,7 @@ public:
     };
 
 public:
-    OptBase(const std::string & keys, bool flag);
+    OptBase(const std::string & names, bool flag);
     virtual ~OptBase() {}
 
     //-----------------------------------------------------------------------
@@ -1128,7 +1129,7 @@ std::string Cli::OptBase::toValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() const {
 template <typename A, typename T>
 class Cli::OptShim : public OptBase {
 public:
-    OptShim(const std::string & keys, bool flag);
+    OptShim(const std::string & names, bool flag);
     OptShim(const OptShim &) = delete;
     OptShim & operator=(const OptShim &) = delete;
 
@@ -1315,8 +1316,8 @@ protected:
 
 //===========================================================================
 template <typename A, typename T>
-Cli::OptShim<A, T>::OptShim(const std::string & keys, bool flag)
-    : OptBase(keys, flag)
+Cli::OptShim<A, T>::OptShim(const std::string & names, bool flag)
+    : OptBase(names, flag)
 {
     if (std::is_arithmetic<T>::value)
         this->imbue(std::locale(""));
@@ -1716,7 +1717,7 @@ struct Cli::Value {
 template <typename T>
 class Cli::Opt : public OptShim<Opt<T>, T> {
 public:
-    Opt(std::shared_ptr<Value<T>> value, const std::string & keys);
+    Opt(std::shared_ptr<Value<T>> value, const std::string & names);
 
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
@@ -1745,9 +1746,9 @@ private:
 template <typename T>
 Cli::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
-    const std::string & keys
+    const std::string & names
 )
-    : OptShim<Opt, T>{keys, std::is_same<T, bool>::value}
+    : OptShim<Opt, T>{names, std::is_same<T, bool>::value}
     , m_proxy{value}
 {}
 
@@ -1841,7 +1842,7 @@ class Cli::OptVec : public OptShim<OptVec<T>, T> {
 public:
     OptVec(
         std::shared_ptr<ValueVec<T>> values,
-        const std::string & keys,
+        const std::string & names,
         int nargs
     );
 
@@ -1881,10 +1882,10 @@ private:
 template <typename T>
 Cli::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
-    const std::string & keys,
+    const std::string & names,
     int nargs
 )
-    : OptShim<OptVec, T>{keys, std::is_same<T, bool>::value}
+    : OptShim<OptVec, T>{names, std::is_same<T, bool>::value}
     , m_proxy(values)
 {
     assert(nargs >= -1
