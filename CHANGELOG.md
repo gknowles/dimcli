@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Detail to errors parsing values with units
 - Added - Variable argument cli.toArgvL() & cli.toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
+- Changed - Allowed long named booleans an optional value (e.g. "=true")
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean

@@ -417,8 +417,8 @@ void parseTests() {
     EXPECT_ERR(cli, "Error: Unknown option: -x\n");
     EXPECT_PARSE(cli, "--x", false);
     EXPECT_ERR(cli, "Error: Unknown option: --x\n");
-    EXPECT_PARSE(cli, "--help=1", false);
-    EXPECT_ERR(cli, "Error: Unknown option: --help=\n");
+    EXPECT_PARSE(cli, "--help=x", false);
+    EXPECT_ERR(cli, "Error: Invalid '--help' value: x\n");
 
     cli.helpCmd();
     EXPECT_PARSE(cli, "x", false);

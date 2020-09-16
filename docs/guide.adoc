@@ -122,8 +122,8 @@ receives the value is specified when the option is declared, either as a
 pointer to an existing external variable or implicitly created.
 
 Use cli.opt&lt;T>(names, defaultValue) to link positional or named arguments to
-an option. It returns a proxy object that can be used like a pointer (* and ->)
-to access the value.
+an option. It returns a proxy object that can be used like a pointer (* and
+\->) to access the value.
 
 [source, C++]
 ----
@@ -375,7 +375,7 @@ Example:
 
 [source, C++]
 ----
-// printing a comma separated list is annoying...
+// Printing a comma separated list is annoying...
 template<typename T>
 ostream & operator<< (ostream & os, const vector<T> & v) {
     auto i = v.begin(), e = v.end();
@@ -388,11 +388,11 @@ ostream & operator<< (ostream & os, const vector<T> & v) {
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    // for oranges demonstrate using an external vector, and limit
-    // the maximum number to 2.
+    // For oranges demonstrate using an external vector, and limit the
+    // maximum number to 2.
     vector<string> oranges;
     cli.optVec(&oranges, "o orange", 2).desc("oranges");
-    // for apples demonstrate using just the proxy object.
+    // For apples demonstrate using just the proxy object.
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -523,9 +523,9 @@ int main(int argc, char * argv[]) {
 
 === Optional Values
 You use the '?' <<#option-names, flag>> on an argument name to indicate that
-its value is optional. Only non-booleans can have optional values, booleans
-are evaluated just on their presence or absence and don't otherwise have
-values.
+its value is optional. Long named booleans are generally evaluated on their
+presence or absence, but also allow optional values such as "true", "false",
+"yes", or "1".
 
 For a user to set a value on the command line when it is optional the value
 must be connected (no space) to the argument name, otherwise it is interpreted
@@ -616,8 +616,10 @@ Now add the before action:
 [source, C++]
 ----
 cli.before([](Cli &, vector<string> & args) {
-    if (args.size() == 1) // it's just the program name?
+    if (args.size() == 1) {
+        // It's just the program name, add the help option.
         args.push_back("--help");
+    }
     return true;
 });
 ----
@@ -1328,7 +1330,7 @@ Does the apple have a worm? No!
 $ a.out -o
 Does the orange have a worm? No!
 ----
-You can use an inaccessible option (empty string for the keys) that doesn't
+You can use an inaccessible option (empty string for the names) that doesn't
 show up in the interface (or the help text) to set an explicit default.
 
 [source, C++]
@@ -2022,18 +2024,18 @@ the option using cli.opt&lt;T>() after changing the context with cli.group().
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.versionOpt("1.0");
-    // move 1b into 'First' group after creation
+    // Move 1b into 'First' group after creation.
     cli.opt<bool>("1b").group("First").desc("boolean 1b");
-    // set context to 'First' group, update its key and add 1a directly to it
+    // Set context to 'First' group, update its key and add 1a directly to it.
     cli.group("First").sortKey("a").title(
         "First has a really long title that wraps around to more than "
         "a single line, quite a lot of text for so few options"
     );
     cli.opt<bool>("1a");
-    // add 2a to 'Second' and 3a to 'Third'
+    // Add 2a to 'Second' and 3a to 'Third'.
     cli.group("Second").sortKey("b").opt<bool>("2a");
     cli.group("Third").sortKey("c").opt<bool>("3a");
-    // give the footer group a title
+    // Give the footer group a title.
     cli.group("~").title("Internally Generated");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -2091,13 +2093,13 @@ already in the command group that you want for the new command.
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
 
-    // move 1a into 'First' group after creation
+    // Move 1a into 'First' group after creation.
     cli.command("1a").cmdGroup("First").cmdSortKey("1");
-    // create 1b in current 'First' group.
+    // Create 1b in current 'First' group.
     cli.command("1b");
-    // create 2a and move it into 'Second'
+    // Create 2a and move it into 'Second'.
     cli.command("2a").cmdGroup("Second").cmdSortKey("2");
-    // create 3a and move to 'Third'
+    // Create 3a and move to 'Third'.
     cli.command("3a").cmdGroup("Third").cmdSortKey("3");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);

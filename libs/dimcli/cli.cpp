@@ -459,7 +459,7 @@ bool Cli::OptBase::withUnits(
     }
 
     if (flags & fUnitInsensitive)
-        f.tolower((char *) unit.data(), unit.data() + unit.size());
+        f.tolower(unit.data(), unit.data() + unit.size());
     auto i = units.find(unit);
     if (i != units.end()) {
         out *= i->second;
@@ -1947,6 +1947,40 @@ bool Cli::fail(int code, const string & msg, const string & detail) {
 }
 
 //===========================================================================
+static bool parseBool(bool & out, const string & val) {
+    static const unordered_map<string, bool> allowed = {
+        { "1", true },
+        { "t", true },
+        { "y", true },
+        { "+", true },
+        { "true", true },
+        { "yes", true },
+        { "on", true },
+        { "enable", true },
+
+        { "0", false },
+        { "f", false },
+        { "n", false },
+        { "-", false },
+        { "false", false },
+        { "no", false },
+        { "off", false },
+        { "disable", false },
+    };
+
+    string tmp = val;
+    auto & f = use_facet<ctype<char>>(locale());
+    f.tolower(tmp.data(), tmp.data() + tmp.size());
+    auto i = allowed.find(tmp);
+    if (i == allowed.end()) {
+        out = false;
+        return false;
+    }
+    out = i->second;
+    return true;
+}
+
+//===========================================================================
 bool Cli::parse(vector<string> & args) {
     // the 0th (name of this program) opt must always be present
     assert(!args.empty() && "at least one (program name) argument required");
@@ -2048,13 +2082,14 @@ bool Cli::parse(vector<string> & args) {
                 return badUsage("Unknown option", name);
             argName = it->second;
             if (argName.opt->m_bool) {
-                if (equal)
-                    return badUsage("Unknown option", name + "=");
+                auto val = true;
+                if (equal && !parseBool(val, ptr))
+                    return badUsage("Invalid '" + name + "' value", ptr);
                 if (!parseValue(
                     *argName.opt,
                     name,
                     argPos,
-                    argName.invert ? "0" : "1"
+                    argName.invert == val ? "0" : "1"
                 )) {
                     return false;
                 }
