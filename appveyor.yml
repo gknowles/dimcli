@@ -79,7 +79,7 @@ for:
     install:
       - sh: |
             if [ "$INSTALL_COMPILER" = "ON" ]; then
-                sudo apt-get install -y ${CC}
+                sudo apt-get install -y ${CC} ${CXX}
             fi
     build_script:
       - export LANG=en_US.UTF-8
