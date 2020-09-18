@@ -23,9 +23,6 @@ environment:
     - CXX: g++-7
       CC: gcc-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: g++-8
-      CC: gcc-8
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: g++-9
       CC: gcc-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
