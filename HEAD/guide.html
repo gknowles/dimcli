@@ -281,8 +281,8 @@ pointer to an existing external variable or implicitly created.</p>
 </div>
 <div class="paragraph">
 <p>Use cli.opt&lt;T&gt;(names, defaultValue) to link positional or named arguments to
-an option. It returns a proxy object that can be used like a pointer (* and &#8594;)
-to access the value.</p>
+an option. It returns a proxy object that can be used like a pointer (* and
+-&gt;) to access the value.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -624,7 +624,7 @@ std::vector&lt;T&gt;.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre lang="C++"><code>// printing a comma separated list is annoying...
+<pre lang="C++"><code>// Printing a comma separated list is annoying...
 template&lt;typename T&gt;
 ostream &amp; operator&lt;&lt; (ostream &amp; os, const vector&lt;T&gt; &amp; v) {
     auto i = v.begin(), e = v.end();
@@ -637,11 +637,11 @@ ostream &amp; operator&lt;&lt; (ostream &amp; os, const vector&lt;T&gt; &amp; v)
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    // for oranges demonstrate using an external vector, and limit
-    // the maximum number to 2.
+    // For oranges demonstrate using an external vector, and limit the
+    // maximum number to 2.
     vector&lt;string&gt; oranges;
     cli.optVec(&amp;oranges, "o orange", 2).desc("oranges");
-    // for apples demonstrate using just the proxy object.
+    // For apples demonstrate using just the proxy object.
     auto &amp; apples = cli.optVec&lt;string&gt;("[apple]").desc("red fruit");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -805,9 +805,9 @@ int main(int argc, char * argv[]) {
 <h3 id="optional-values">Optional Values</h3>
 <div class="paragraph">
 <p>You use the '?' <a href="#option-names">flag</a> on an argument name to indicate that
-its value is optional. Only non-booleans can have optional values, booleans
-are evaluated just on their presence or absence and don&#8217;t otherwise have
-values.</p>
+its value is optional. Long named booleans are generally evaluated on their
+presence or absence, but also allow optional values such as "true", "false",
+"yes", or "1".</p>
 </div>
 <div class="paragraph">
 <p>For a user to set a value on the command line when it is optional the value
@@ -921,8 +921,10 @@ Error: Missing argument: value</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre lang="C++"><code>cli.before([](Cli &amp;, vector&lt;string&gt; &amp; args) {
-    if (args.size() == 1) // it's just the program name?
+    if (args.size() == 1) {
+        // It's just the program name, add the help option.
         args.push_back("--help");
+    }
     return true;
 });</code></pre>
 </div>
@@ -1778,7 +1780,7 @@ Does the orange have a worm? No!</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>You can use an inaccessible option (empty string for the keys) that doesn&#8217;t
+<p>You can use an inaccessible option (empty string for the names) that doesn&#8217;t
 show up in the interface (or the help text) to set an explicit default.</p>
 </div>
 <div class="listingblock">
@@ -2803,18 +2805,18 @@ the option using cli.opt&lt;T&gt;() after changing the context with cli.group().
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.versionOpt("1.0");
-    // move 1b into 'First' group after creation
+    // Move 1b into 'First' group after creation.
     cli.opt&lt;bool&gt;("1b").group("First").desc("boolean 1b");
-    // set context to 'First' group, update its key and add 1a directly to it
+    // Set context to 'First' group, update its key and add 1a directly to it.
     cli.group("First").sortKey("a").title(
         "First has a really long title that wraps around to more than "
         "a single line, quite a lot of text for so few options"
     );
     cli.opt&lt;bool&gt;("1a");
-    // add 2a to 'Second' and 3a to 'Third'
+    // Add 2a to 'Second' and 3a to 'Third'.
     cli.group("Second").sortKey("b").opt&lt;bool&gt;("2a");
     cli.group("Third").sortKey("c").opt&lt;bool&gt;("3a");
-    // give the footer group a title
+    // Give the footer group a title.
     cli.group("~").title("Internally Generated");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -2896,13 +2898,13 @@ already in the command group that you want for the new command.</p>
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
 
-    // move 1a into 'First' group after creation
+    // Move 1a into 'First' group after creation.
     cli.command("1a").cmdGroup("First").cmdSortKey("1");
-    // create 1b in current 'First' group.
+    // Create 1b in current 'First' group.
     cli.command("1b");
-    // create 2a and move it into 'Second'
+    // Create 2a and move it into 'Second'.
     cli.command("2a").cmdGroup("Second").cmdSortKey("2");
-    // create 3a and move to 'Third'
+    // Create 3a and move to 'Third'.
     cli.command("3a").cmdGroup("Third").cmdSortKey("3");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
