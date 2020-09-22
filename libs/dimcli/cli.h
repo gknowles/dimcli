@@ -804,13 +804,16 @@ protected:
 
 private:
     template <typename T>
-    auto fromString_impl(T & out, const std::string & src, int, int) const
+    auto fromString_impl(T & out, const std::string & src, int, int, int) const
         -> decltype(out = src, bool());
     template <typename T>
-    auto fromString_impl(T & out, const std::string & src, int, long) const
+    auto fromString_impl(T & out, const std::string & src, int, int, long) const
+        -> decltype(out = T{src}, bool());
+    template <typename T>
+    auto fromString_impl(T & out, const std::string & src, int, long, long) const
         -> decltype(std::declval<std::istream &>() >> out, bool());
     template <typename T>
-    bool fromString_impl(T & out, const std::string & src, long, long) const;
+    bool fromString_impl(T & out, const std::string & src, long, long, long) const;
 
     template <typename T>
     auto toString_impl(std::string & out, const T & src, int) const
@@ -829,7 +832,7 @@ template <typename T>
     // preferred by the compiler (better conversion from 0), if they don't
     // exist for T (because no out=src assignment operator exists) then the
     // versions taking longs are considered.
-    return fromString_impl(out, src, 0, 0);
+    return fromString_impl(out, src, 0, 0, 0);
 }
 
 //===========================================================================
@@ -837,6 +840,7 @@ template <typename T>
 auto Cli::Convert::fromString_impl(
     T & out,
     const std::string & src,
+    int,
     int,
     int
 ) const
@@ -852,6 +856,22 @@ auto Cli::Convert::fromString_impl(
     T & out,
     const std::string & src,
     int,
+    int,
+    long
+) const
+    -> decltype(out = T{src}, bool())
+{
+    out = T{src};
+    return true;
+}
+
+//===========================================================================
+template <typename T>
+auto Cli::Convert::fromString_impl(
+    T & out,
+    const std::string & src,
+    int,
+    long,
     long
 ) const
     -> decltype(std::declval<std::istream &>() >> out, bool())
@@ -871,10 +891,12 @@ bool Cli::Convert::fromString_impl(
     T &, // out
     const std::string &, // src
     long,
+    long,
     long
 ) const {
     // In order to parse an argument one of the following must exist:
-    //  - assignment operator from std::string to T
+    //  - assignment operator to T accepting const std::string&
+    //  - constructor of T accepting const std::string&
     //  - std::istream extraction operator for T
     //  - specialization of Cli::Convert::fromString template for T, such as:
     //      template<> bool Cli::Convert::fromString<MyType>::(

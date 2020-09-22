@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Moved fromString() & toString() to new Convert class
 - Changed - Allowed long named booleans an optional value (e.g. "=true")
 - Changed - Rename opt.unspecifiedValue() to opt.useImplicit()
+- Added - fromString() now also supports types constructible from string
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean
