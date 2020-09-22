@@ -958,6 +958,13 @@ std::string Cli::toCmdlineL(Args... args) {
 *   Common base class for all options, has no information about the derived
 *   options value type, and handles all services required by the parser.
 *
+*   Hierarchy:
+*                     OptBase
+*                    /       \
+*     OptShim<Opt<T>, T>    OptShim<OptVec<T>, T>
+*            |                        |
+*          Opt<T>                  OptVec<T>
+*
 ***/
 
 class DIMCLI_LIB_DECL Cli::OptBase : public Cli::Convert {
@@ -1022,10 +1029,10 @@ public:
     // Parse the string into the value, return false on error.
     [[nodiscard]] virtual bool parseValue(const std::string & value) = 0;
 
-    // Store the unspecified value. Used when an option with an optional value
-    // is specified without it. The unspecified value is normally equal to
-    // the default value, but can be overridden.
-    virtual void unspecifiedValue() = 0;
+    // Set to the implicit value. Used when an option, with an optional value,
+    // is specified without it. The default implicit value is T{}, but can be
+    // changed with implicitValue().
+    virtual void useImplicit() = 0;
 
     //-----------------------------------------------------------------------
     // HELPERS
@@ -1728,7 +1735,7 @@ public:
     size_t size() const final { return 1; }
     void reset() final;
     bool parseValue(const std::string & value) final;
-    void unspecifiedValue() final;
+    void useImplicit() final;
 
 private:
     friend class Cli;
@@ -1803,7 +1810,7 @@ inline void Cli::Opt<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::unspecifiedValue() {
+inline void Cli::Opt<T>::useImplicit() {
     *m_proxy->m_value = this->implicitValue();
 }
 
@@ -1863,7 +1870,7 @@ public:
     size_t size() const final { return m_proxy->m_values->size(); }
     void reset() final;
     bool parseValue(const std::string & value) final;
-    void unspecifiedValue() final;
+    void useImplicit() final;
 
 private:
     friend class Cli;
@@ -1954,7 +1961,7 @@ inline void Cli::OptVec<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::unspecifiedValue() {
+inline void Cli::OptVec<T>::useImplicit() {
     m_proxy->m_values->back() = this->implicitValue();
 }
 

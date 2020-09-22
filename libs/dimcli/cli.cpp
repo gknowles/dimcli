@@ -1905,7 +1905,7 @@ bool Cli::parseValue(
         if (!opt.doParseAction(*this, val))
             return false;
     } else {
-        opt.unspecifiedValue();
+        opt.useImplicit();
     }
     return opt.doCheckActions(*this, val);
 }

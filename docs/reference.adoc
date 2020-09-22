@@ -120,7 +120,7 @@ locale for everything else.
 
 | opt.<<guide.adoc#optional-values, implicitValue>>
 | The implicit value is used for arguments with optional values when the
-argument was specified in the command line without a value.
+argument was specified in the command line without a value, defaults to T{}.
 
 | opt.<<guide.adoc#parse-actions, parse>>
 | Change the action to take when parsing this argument.
@@ -199,8 +199,8 @@ tied to a command line argument.
 | opt.reset
 | Set option to its default value.
 
-| opt.unspecifiedValue
-| Set option (or add to option vector) to value for missing optionals.
+| opt.useImplicit
+| Set option to (or add to option vector) the value for missing optionals.
 
 2+h| Commands
 
