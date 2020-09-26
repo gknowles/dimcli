@@ -808,7 +808,7 @@ private:
         -> decltype(out = src, bool());
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int, long) const
-        -> decltype(out = T{src}, bool());
+        -> decltype(T{src}, bool());
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, long, long) const
         -> decltype(std::declval<std::istream &>() >> out, bool());
@@ -859,7 +859,7 @@ auto Cli::Convert::fromString_impl(
     int,
     long
 ) const
-    -> decltype(out = T{src}, bool())
+    -> decltype(T{src}, bool())
 {
     out = T{src};
     return true;
