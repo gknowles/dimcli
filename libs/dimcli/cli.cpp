@@ -2075,7 +2075,7 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option", name);
                 argName = it->second;
                 if (argName.opt->m_bool) {
-                    rawValues.push_back({
+                    rawValues.emplace_back(RawValue{
                         RawValue::kNamed,
                         argName.opt,
                         name,
@@ -2115,7 +2115,7 @@ bool Cli::parse(vector<string> & args) {
                 auto val = true;
                 if (equal && !parseBool(val, ptr))
                     return badUsage("Invalid '" + name + "' value", ptr);
-                rawValues.push_back({
+                rawValues.push_back(RawValue{
                     RawValue::kNamed,
                     argName.opt,
                     name,
@@ -2132,7 +2132,7 @@ bool Cli::parse(vector<string> & args) {
             auto cmd = (string) ptr;
             if (!commandExists(cmd))
                 return badUsage("Unknown command", cmd);
-            rawValues.push_back({RawValue::kCommand, nullptr, cmd});
+            rawValues.push_back(RawValue{RawValue::kCommand, nullptr, cmd});
             needCmd = false;
             m_cfg->command = cmd;
             ndx.index(*this, cmd, false);
@@ -2140,7 +2140,7 @@ bool Cli::parse(vector<string> & args) {
         }
 
         numPos += 1;
-        rawValues.push_back({
+        rawValues.push_back(RawValue{
             RawValue::kPositional,
             nullptr,
             {},
@@ -2151,7 +2151,7 @@ bool Cli::parse(vector<string> & args) {
 
     OPTION_VALUE:
         if (*ptr || equal) {
-            rawValues.push_back({
+            rawValues.push_back(RawValue{
                 RawValue::kNamed,
                 argName.opt,
                 name,
@@ -2161,7 +2161,7 @@ bool Cli::parse(vector<string> & args) {
             continue;
         }
         if (argName.optional) {
-            rawValues.push_back({
+            rawValues.push_back(RawValue{
                 RawValue::kNamed,
                 argName.opt,
                 name,
@@ -2174,7 +2174,7 @@ bool Cli::parse(vector<string> & args) {
         arg += 1;
         if (argPos == argc)
             return badUsage("Option requires value", name);
-        rawValues.push_back({
+        rawValues.push_back(RawValue{
             RawValue::kNamed,
             argName.opt,
             name,
