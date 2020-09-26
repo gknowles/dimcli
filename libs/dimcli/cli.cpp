@@ -2043,11 +2043,25 @@ bool Cli::parse(vector<string> & args) {
 
     // extract values
     struct RawValue {
-        enum { kPositional, kNamed, kCommand } type = kNamed;
-        OptBase * opt = nullptr;
+        enum Type { kPositional, kNamed, kCommand } type;
+        OptBase * opt;
         string name;
-        size_t pos = 0;
-        const char * ptr = nullptr;
+        size_t pos;
+        const char * ptr;
+
+        RawValue(
+            Type type,
+            OptBase * opt,
+            string name,
+            size_t pos = 0,
+            const char * ptr = nullptr
+        )
+            : type(type)
+            , opt(opt)
+            , name(name)
+            , pos(pos)
+            , ptr(ptr)
+        {}
     };
     vector<RawValue> rawValues;
 
@@ -2075,13 +2089,13 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option", name);
                 argName = it->second;
                 if (argName.opt->m_bool) {
-                    rawValues.emplace_back(RawValue{
+                    rawValues.emplace_back(
                         RawValue::kNamed,
                         argName.opt,
                         name,
                         argPos,
                         argName.invert ? "0" : "1"
-                    });
+                    );
                     continue;
                 }
                 ptr += 1;
@@ -2115,13 +2129,13 @@ bool Cli::parse(vector<string> & args) {
                 auto val = true;
                 if (equal && !parseBool(val, ptr))
                     return badUsage("Invalid '" + name + "' value", ptr);
-                rawValues.push_back(RawValue{
+                rawValues.emplace_back(
                     RawValue::kNamed,
                     argName.opt,
                     name,
                     argPos,
                     argName.invert == val ? "0" : "1"
-                });
+                );
                 continue;
             }
             goto OPTION_VALUE;
@@ -2132,7 +2146,7 @@ bool Cli::parse(vector<string> & args) {
             auto cmd = (string) ptr;
             if (!commandExists(cmd))
                 return badUsage("Unknown command", cmd);
-            rawValues.push_back(RawValue{RawValue::kCommand, nullptr, cmd});
+            rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
             needCmd = false;
             m_cfg->command = cmd;
             ndx.index(*this, cmd, false);
@@ -2140,47 +2154,47 @@ bool Cli::parse(vector<string> & args) {
         }
 
         numPos += 1;
-        rawValues.push_back(RawValue{
+        rawValues.emplace_back(
             RawValue::kPositional,
             nullptr,
-            {},
+            string{},
             argPos,
             ptr
-        });
+        );
         continue;
 
     OPTION_VALUE:
         if (*ptr || equal) {
-            rawValues.push_back(RawValue{
+            rawValues.emplace_back(
                 RawValue::kNamed,
                 argName.opt,
                 name,
                 argPos,
                 ptr
-            });
+            );
             continue;
         }
         if (argName.optional) {
-            rawValues.push_back(RawValue{
+            rawValues.emplace_back(
                 RawValue::kNamed,
                 argName.opt,
                 name,
                 argPos,
                 nullptr
-            });
+            );
             continue;
         }
         argPos += 1;
         arg += 1;
         if (argPos == argc)
             return badUsage("Option requires value", name);
-        rawValues.push_back(RawValue{
+        rawValues.emplace_back(
             RawValue::kNamed,
             argName.opt,
             name,
             argPos,
             arg->c_str()
-        });
+        );
     }
 
     // Match positional values.
