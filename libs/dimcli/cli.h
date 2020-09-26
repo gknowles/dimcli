@@ -806,9 +806,10 @@ private:
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int, int) const
         -> decltype(out = src, bool());
-    template <typename T>
-    auto fromString_impl(T & out, const std::string & src, int, int, long) const
-        -> decltype(T{src}, bool());
+    template <typename T, typename =
+        typename std::enable_if<std::is_constructible<T, std::string>::value>::type
+    >
+    bool fromString_impl(T & out, const std::string & src, int, int, long) const;
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, long, long) const
         -> decltype(std::declval<std::istream &>() >> out, bool());
@@ -851,16 +852,14 @@ auto Cli::Convert::fromString_impl(
 }
 
 //===========================================================================
-template <typename T>
-auto Cli::Convert::fromString_impl(
+template <typename T, typename>
+bool Cli::Convert::fromString_impl(
     T & out,
     const std::string & src,
     int,
     int,
     long
-) const
-    -> decltype(T{src}, bool())
-{
+) const {
     out = T{src};
     return true;
 }
