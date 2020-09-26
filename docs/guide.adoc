@@ -122,8 +122,8 @@ receives the value is specified when the option is declared, either as a
 pointer to an existing external variable or implicitly created.
 
 Use cli.opt&lt;T>(names, defaultValue) to link positional or named arguments to
-an option. It returns a proxy object that can be used like a pointer (* and
-\->) to access the value.
+an option. It returns a proxy object that can be used like a smart pointer (*
+and \->) to access the value.
 
 [source, C++]
 ----
@@ -268,15 +268,15 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ----
-Ends up looking like this (note: required positionals are **always** placed
-before any optional ones):
+Ends up looking like this (note: required positionals have priority, so [apple]
+won't be set unless there are at least two arguments):
 
 [source, shell session]
 ----
 $ a.out --help
-Usage: a.out [OPTIONS] pear [apple]
-  pear      pears are yellow
+Usage: a.out [OPTIONS] [apple] pear
   apple     apples are red
+  pear      pears are yellow
 
 Options:
   -a, --apple=STRING          apples are red
@@ -305,14 +305,15 @@ cli.opt<string>("n");
 === Positional Arguments
 A few things to keep in mind about positional arguments:
 
-* Positional arguments are mapped by the order they are added, except that
-  required ones appear before optional ones.
+* Positional arguments are mapped in the order they were added.
+* Optional positionals are populated only if there are enough other
+  arguments to satisfy all required positionals.
 * If there are multiple vector positionals with unlimited (nargs = -1) arity
   all but the first will be treated as if they had nargs = 1. Or to put it
   another way, the first unlimited positional is greedy.
-* If the unlimited one is required it will prevent any optional positionals
-  from getting populated, since it eats up all the arguments before they get
-  a turn.
+* If there is a required positional with unlimited arity it will prevent any
+  optional positionals from getting populated, since it eats up all the
+  arguments before they get a turn.
 
 
 === Flag Options

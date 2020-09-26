@@ -1148,6 +1148,43 @@ void responseTests() {
 
 /****************************************************************************
 *
+*   std::filesystem tests
+*
+***/
+
+//===========================================================================
+void filesystemTests() {
+#ifdef FILESYSTEM
+    int line = 0;
+    Dim::CliLocal cli;
+    namespace fs = FILESYSTEM;
+
+    {
+        cli = {};
+        fs::path path = "path";
+        ostringstream os;
+        os << path;
+        cli.opt(&path, "path", path)
+            .desc("std::filesystem::path");
+        EXPECT_PARSE(cli, "--path one");
+        EXPECT(path == "one");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --path=FILE  std::filesystem::path (default: )"
+        + os.str()
+        + R"()
+
+  --help       Show this message and exit.
+)");
+    }
+#endif
+}
+
+
+/****************************************************************************
+*
 *   Parse and exec variations
 *
 ***/
@@ -1194,6 +1231,121 @@ void execTests() {
         rc = cli.exec(out, vargsNone);
         EXPECT(!rc && cli.exitCode() == Dim::kExitUsage);
         EXPECT(out.str() == "Error: No command given.\n");
+    }
+}
+
+
+/****************************************************************************
+*
+*   Vector options
+*
+***/
+
+//===========================================================================
+void vectorTests() {
+    int line = 0;
+    Dim::CliLocal cli;
+
+    // optVec
+    {
+        cli = {};
+        auto & strs = cli.optVec<string>("r ?s").implicitValue("a")
+            .desc("String array.");
+        EXPECT_PARSE(cli, "-s1 -s -r 2 -s3");
+        EXPECT(strs.size() == 4);
+        EXPECT(strs.pos(2) == 4);
+        EXPECT(strs.pos() == 5);
+        EXPECT(*strs == vector<string>({"1"s, "a"s, "2"s, "3"s}));
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  -r, -s [STRING]  String array.
+
+  --help           Show this message and exit.
+)");
+
+        cli.optVec(strs, "string").desc("Alternate for string array.");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  -r, -s [STRING]  String array.
+  --string=STRING  Alternate for string array.
+
+  --help           Show this message and exit.
+)");
+        EXPECT_PARSE(cli, "--string=a -sb");
+        EXPECT(*strs == vector<string>({"a"s, "b"s}));
+    }
+
+    // optVec with nargs
+    {
+        cli = {};
+        auto & v0 = cli.optVec<int>("0", 0).desc("None allowed.");
+        EXPECT_PARSE(cli, "");
+        EXPECT(v0.size() == 0);
+        EXPECT_PARSE(cli, "-00", false);
+        EXPECT_ERR(cli,
+            "Error: Too many '-0' values: 0\n"
+            "The maximum number of values is 0.\n"
+        );
+        auto & v1 = cli.optVec<int>("1", 1).desc("Not more than one.");
+        auto & vn = cli.optVec<int>("N", -1).desc("Unlimited.");
+        EXPECT_PARSE(cli, "-11");
+        EXPECT(v1.size() == 1 && v1[0] == 1);
+        EXPECT(vn.size() == 0);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  -0 NUM    None allowed. (limit: 0)
+  -1 NUM    Not more than one. (limit: 1)
+  -N NUM    Unlimited.
+
+  --help    Show this message and exit.
+)");
+    }
+
+    {
+        cli = {};
+        auto & v1 = cli.optVec<int>("<one>");
+        auto & v2 = cli.optVec<int>("<two>");
+        EXPECT_PARSE(cli, "1 2 3");
+        EXPECT(*v1 == vector<int>{1, 2});
+        EXPECT(*v2 == vector<int>{3});
+    }
+
+    {
+        cli = {};
+        auto & v0 = cli.optVec<int>("[zero]", 2);
+        auto & v1 = cli.optVec<int>("[one]");
+        auto & v2 = cli.optVec<int>("<two>", 1);
+        auto & v3 = cli.optVec<int>("<three>", 2);
+        EXPECT_PARSE(cli, "1 2 3");
+        EXPECT(v0->empty());
+        EXPECT(v1->empty());
+        EXPECT(*v2 == vector<int>{1});
+        EXPECT(*v3 == vector<int>{2, 3});
+
+        EXPECT_PARSE(cli, "1 2", false);
+        EXPECT_ERR(cli, "Error: Missing argument: three\n");
+        EXPECT(v0->empty());
+        EXPECT(*v1 == vector<int>{1});
+        EXPECT(*v2 == vector<int>{2});
+        EXPECT(v3->empty());
+
+        EXPECT_PARSE(cli, "1 2 3 4");
+        EXPECT(v0->empty());
+        EXPECT(*v1 == vector<int>{1});
+        EXPECT(*v2 == vector<int>{2});
+        EXPECT(*v3 == vector<int>{3, 4});
+
+        EXPECT_PARSE(cli, "1 2 3 4 5");
+        EXPECT(*v0 == vector<int>{1, 2});
+        EXPECT(*v1 == vector<int>{});
+        EXPECT(*v2 == vector<int>{3});
+        EXPECT(*v3 == vector<int>{4, 5});
     }
 }
 
@@ -1328,91 +1480,6 @@ Options:
 )");
     }
 
-    // optVec
-    {
-        cli = {};
-        auto & strs = cli.optVec<string>("r ?s").implicitValue("a")
-            .desc("String array.");
-        EXPECT_PARSE(cli, "-s1 -s -r 2 -s3");
-        EXPECT(strs.size() == 4);
-        EXPECT(strs.pos(2) == 4);
-        EXPECT(strs.pos() == 5);
-        EXPECT(*strs == vector<string>({"1"s, "a"s, "2"s, "3"s}));
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
-
-Options:
-  -r, -s [STRING]  String array.
-
-  --help           Show this message and exit.
-)");
-
-        cli.optVec(strs, "string").desc("Alternate for string array.");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
-
-Options:
-  -r, -s [STRING]  String array.
-  --string=STRING  Alternate for string array.
-
-  --help           Show this message and exit.
-)");
-        EXPECT_PARSE(cli, "--string=a -sb");
-        EXPECT(*strs == vector<string>({"a"s, "b"s}));
-    }
-
-    // optVec with nargs
-    {
-        cli = {};
-        auto & v0 = cli.optVec<int>("0", 0).desc("None allowed.");
-        EXPECT_PARSE(cli, "");
-        EXPECT(v0.size() == 0);
-        EXPECT_PARSE(cli, "-00", false);
-        EXPECT_ERR(cli,
-            "Error: Too many '-0' values: 0\n"
-            "The maximum number of values is 0.\n"
-        );
-        auto & v1 = cli.optVec<int>("1", 1).desc("Not more than one.");
-        auto & vn = cli.optVec<int>("N", -1).desc("Unlimited.");
-        EXPECT_PARSE(cli, "-11");
-        EXPECT(v1.size() == 1 && v1[0] == 1);
-        EXPECT(vn.size() == 0);
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
-
-Options:
-  -0 NUM    None allowed. (limit: 0)
-  -1 NUM    Not more than one. (limit: 1)
-  -N NUM    Unlimited.
-
-  --help    Show this message and exit.
-)");
-    }
-
-    // filesystem
-#ifdef FILESYSTEM
-    {
-        namespace fs = FILESYSTEM;
-        cli = {};
-        fs::path path = "path";
-        ostringstream os;
-        os << path;
-        cli.opt(&path, "path", path)
-            .desc("std::filesystem::path");
-        EXPECT_PARSE(cli, "--path one");
-        EXPECT(path == "one");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
-
-Options:
-  --path=FILE  std::filesystem::path (default: )"
-        + os.str()
-        + R"()
-
-  --help       Show this message and exit.
-)");
-    }
-#endif
 }
 
 
@@ -1758,6 +1825,7 @@ void envTests() {
 
 //===========================================================================
 static int runTests(bool prompt) {
+    // consoleWidth() calls for code coverage.
     unsigned width = Dim::Cli::consoleWidth(false);
     width = Dim::Cli::consoleWidth();
     (void) width;
@@ -1765,6 +1833,7 @@ static int runTests(bool prompt) {
     unitsTests();
     parseTests();
     basicTests();
+    vectorTests();
     execTests();
     flagTests();
     valueTests();
@@ -1775,6 +1844,7 @@ static int runTests(bool prompt) {
     envTests();
     argvTests();
     optCheckTests();
+    filesystemTests();
     responseTests();
     promptTests(prompt);
 

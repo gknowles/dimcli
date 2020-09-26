@@ -77,15 +77,15 @@ struct CommandConfig {
 
 struct OptName {
     Cli::OptBase * opt;
-    bool invert;        // set to false instead of true (only for bools)
-    bool optional;      // value need not be present? (non-bools only)
-    string name;        // name of argument (only for positionals)
-    int pos;
+    bool invert;    // set to false instead of true (only for bools)
+    bool optional;  // value need not be present? (non-bools only)
+    string name;    // name of argument (only for positionals)
+    int pos;        // used to sort an option's names in declaration order
 };
 
-struct ArgKey {
-    string sort; // sort key
-    string list;
+struct OptKey {
+    string sort;    // sort key
+    string list;    // name list
     Cli::OptBase * opt{};
 };
 
@@ -115,8 +115,8 @@ struct Cli::OptIndex {
         const string & cmd,
         bool requireVisible
     );
-    bool findNamedArgs(
-        vector<ArgKey> & namedArgs,
+    bool findNamedOpts(
+        vector<OptKey> & namedOpts,
         size_t & colWidth,
         const Cli & cli,
         CommandConfig & cmd,
@@ -502,20 +502,20 @@ void Cli::OptIndex::index(
 }
 
 //===========================================================================
-bool Cli::OptIndex::findNamedArgs(
-    vector<ArgKey> & namedArgs,
+bool Cli::OptIndex::findNamedOpts(
+    vector<OptKey> & namedOpts,
     size_t & colWidth,
     const Cli & cli,
     CommandConfig & cmd,
     NameListType type,
     bool flatten
 ) const {
-    namedArgs.clear();
+    namedOpts.clear();
     for (auto && opt : cli.m_cfg->opts) {
         auto list = nameList(cli, *opt, type);
         if (auto width = list.size()) {
             colWidth = max(colWidth, width);
-            ArgKey key;
+            OptKey key;
             key.opt = opt.get();
             key.list = list;
 
@@ -526,13 +526,13 @@ bool Cli::OptIndex::findNamedArgs(
                 key.sort.clear();
             key.sort += '\0';
             key.sort += list.substr(list.find_first_not_of('-'));
-            namedArgs.push_back(key);
+            namedOpts.push_back(key);
         }
     }
-    sort(namedArgs.begin(), namedArgs.end(), [](auto & a, auto & b) {
+    sort(namedOpts.begin(), namedOpts.end(), [](auto & a, auto & b) {
         return a.sort < b.sort;
     });
-    return !namedArgs.empty();
+    return !namedOpts.empty();
 }
 
 //===========================================================================
@@ -675,8 +675,8 @@ void Cli::OptIndex::index(OptBase & opt) {
 
 //===========================================================================
 void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
-    const bool kInvert = true;
-    const bool kOptional = true;
+    bool invert = false;
+    bool optional = false;
 
     auto where = m_argNames.end();
     switch (name[0]) {
@@ -684,27 +684,18 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
         assert(!"bad argument name, contains '-'");
         return;
     case '[':
-        m_argNames.push_back({&opt, !kInvert, kOptional, name.data() + 1});
-        where = m_argNames.end() - 1;
-        goto INDEX_POS_NAME;
+        optional = true;
     case '<':
-        where = find_if(
-            m_argNames.begin(),
-            m_argNames.end(),
-            [](auto && key) { return key.optional; }
-        );
-        where = m_argNames.insert(
-            where,
-            {&opt, !kInvert, !kOptional, name.data() + 1}
-        );
-    INDEX_POS_NAME:
-        opt.setNameIfEmpty(where->name);
         if (opt.m_command.empty())
             m_allowCommands = false;
+        if (!opt.m_vector || opt.m_nargs) {
+            OptName oname = {&opt, invert, optional, name.data() + 1, pos};
+            m_argNames.push_back(oname);
+            opt.setNameIfEmpty(m_argNames.back().name);
+        }
         return;
     }
-    bool invert = false;
-    bool optional = false;
+
     auto prefix = 0;
     if (name.size() > 1) {
         switch (name[0]) {
@@ -1981,8 +1972,39 @@ static bool parseBool(bool & out, const string & val) {
 }
 
 //===========================================================================
+static int numMatches(int cat, int avail, bool op, bool vec, int nargs) {
+    if (cat == 0 && !op && vec && nargs != -1
+        || cat == 2 && op && vec && nargs != -1
+    ) {
+        // Vector of specific length that is:
+        //  - in category 0 (min required) and required, or
+        //  - in category 2 (all optional) and optional
+        return nargs <= avail ? nargs : 0;
+    }
+    if (cat == 1 && !op && vec && nargs == -1
+        || cat == 2 && op && vec && nargs == -1
+    ) {
+        // Vector of unlimited length that is:
+        //  - in category 1 (max required) and required, or
+        //  - in category 2 (all optional) and optional
+        return avail;
+    }
+    if (cat == 0 && !op
+        || cat == 2 && op
+    ) {
+        // Non-vector or unlimited vector in category 0 (min required) that is
+        // required; or non-vector in category 2 (all optional) that is
+        // optional.
+        return 1;
+    }
+
+    // Fall through for unmatched combinations.
+    return 0;
+}
+
+//===========================================================================
 bool Cli::parse(vector<string> & args) {
-    // the 0th (name of this program) opt must always be present
+    // The 0th (name of this program) opt must always be present.
     assert(!args.empty() && "at least one (program name) argument required");
 
     Config::touchAllCmds(*this);
@@ -2019,13 +2041,22 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    // populate options
+    // extract values
+    struct RawValue {
+        enum { kPositional, kNamed, kCommand } type = kNamed;
+        OptBase * opt = nullptr;
+        string name;
+        size_t pos = 0;
+        const char * ptr = nullptr;
+    };
+    vector<RawValue> rawValues;
+
     auto arg = args.data();
     auto argc = args.size();
 
     string name;
-    unsigned pos = 0;
     bool moreOpts = true;
+    int numPos = 0;
     m_cfg->progName = *arg;
     size_t argPos = 1;
     arg += 1;
@@ -2044,14 +2075,13 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Unknown option", name);
                 argName = it->second;
                 if (argName.opt->m_bool) {
-                    if (!parseValue(
-                        *argName.opt,
+                    rawValues.push_back({
+                        RawValue::kNamed,
+                        argName.opt,
                         name,
                         argPos,
                         argName.invert ? "0" : "1"
-                    )) {
-                        return false;
-                    }
+                    });
                     continue;
                 }
                 ptr += 1;
@@ -2085,14 +2115,13 @@ bool Cli::parse(vector<string> & args) {
                 auto val = true;
                 if (equal && !parseBool(val, ptr))
                     return badUsage("Invalid '" + name + "' value", ptr);
-                if (!parseValue(
-                    *argName.opt,
+                rawValues.push_back({
+                    RawValue::kNamed,
+                    argName.opt,
                     name,
                     argPos,
                     argName.invert == val ? "0" : "1"
-                )) {
-                    return false;
-                }
+                });
                 continue;
             }
             goto OPTION_VALUE;
@@ -2103,46 +2132,126 @@ bool Cli::parse(vector<string> & args) {
             auto cmd = (string) ptr;
             if (!commandExists(cmd))
                 return badUsage("Unknown command", cmd);
+            rawValues.push_back({RawValue::kCommand, nullptr, cmd});
             needCmd = false;
             m_cfg->command = cmd;
             ndx.index(*this, cmd, false);
             continue;
         }
 
-        if (pos >= ndx.m_argNames.size())
-            return badUsage("Unexpected argument", ptr);
-        argName = ndx.m_argNames[pos];
-        name = argName.name;
-        if (!parseValue(*argName.opt, name, argPos, ptr))
-            return false;
-        if (!argName.opt->m_vector)
-            pos += 1;
+        numPos += 1;
+        rawValues.push_back({
+            RawValue::kPositional,
+            nullptr,
+            {},
+            argPos,
+            ptr
+        });
         continue;
 
     OPTION_VALUE:
         if (*ptr || equal) {
-            if (!parseValue(*argName.opt, name, argPos, ptr))
-                return false;
+            rawValues.push_back({
+                RawValue::kNamed,
+                argName.opt,
+                name,
+                argPos,
+                ptr
+            });
             continue;
         }
         if (argName.optional) {
-            if (!parseValue(*argName.opt, name, argPos, nullptr))
-                return false;
+            rawValues.push_back({
+                RawValue::kNamed,
+                argName.opt,
+                name,
+                argPos,
+                nullptr
+            });
             continue;
         }
         argPos += 1;
         arg += 1;
         if (argPos == argc)
             return badUsage("Option requires value", name);
-        if (!parseValue(*argName.opt, name, argPos, arg->c_str()))
+        rawValues.push_back({
+            RawValue::kNamed,
+            argName.opt,
+            name,
+            argPos,
+            arg->c_str()
+        });
+    }
+
+    // Match positional values.
+    // Determine the eligible opts, there must be enough values for all opts
+    // of a category for any of the next category to be eligible.
+    //      0. Minimum expected for all required opts (vectors may be >1)
+    //      1. Max expected for all required opts
+    //      2. All optionals
+    vector<int> matched(ndx.m_argNames.size());
+    int usedPos = 0;
+
+    for (unsigned category = 0; category < 3; ++category) {
+        for (unsigned i = 0; i < matched.size() && usedPos < numPos; ++i) {
+            auto & argName = ndx.m_argNames[i];
+            int num = numMatches(
+                category,
+                numPos - usedPos,
+                argName.optional,
+                argName.opt->m_vector,
+                argName.opt->m_nargs
+            );
+            matched[i] += num;
+            usedPos += num;
+        }
+    }
+
+    if (usedPos < numPos)
+        return badUsage("Unexpected argument", rawValues[usedPos].ptr);
+    assert(usedPos == numPos);
+
+    int ipos    = 0;    // positional opt being matched
+    int imatch  = 0;    // values already been matched to this opt
+    for (auto&& val : rawValues) {
+        if (val.type != RawValue::kPositional)
+            continue;
+        if (matched[ipos] <= imatch) {
+            imatch = 0;
+            for (;;) {
+                ipos += 1;
+                if (matched[ipos])
+                    break;
+            }
+        }
+        auto & argName = ndx.m_argNames[ipos];
+        val.opt = argName.opt;
+        val.name = argName.name;
+        imatch += 1;
+    }
+
+    // parse values
+    m_cfg->command = "";
+    for (auto&& val : rawValues) {
+        switch (val.type) {
+        case RawValue::kCommand:
+            m_cfg->command = val.name;
+            continue;
+        default:
+            break;
+        }
+        if (!parseValue(*val.opt, val.name, val.pos, val.ptr))
             return false;
     }
 
-    if (!needCmd
-        && pos < ndx.m_argNames.size()
-        && !ndx.m_argNames[pos].optional
-    ) {
-        return badUsage("Missing argument", ndx.m_argNames[pos].name);
+    // report required positional arguments that are missing
+    for (unsigned i = 0; i < matched.size(); ++i) {
+        auto & argName = ndx.m_argNames[i];
+        int num = argName.opt->m_vector
+            ? argName.opt->m_nargs == -1 ? 1 : argName.opt->m_nargs
+            : 1;
+        if (!argName.optional && matched[i] < num)
+            return badUsage("Missing argument", argName.name);
     }
 
     // after actions
@@ -2536,16 +2645,16 @@ int Cli::writeUsageImpl(
             writeToken(os, wp, "[OPTIONS]");
         } else {
             size_t colWidth = 0;
-            vector<ArgKey> namedArgs;
-            ndx.findNamedArgs(
-                namedArgs,
+            vector<OptKey> namedOpts;
+            ndx.findNamedOpts(
+                namedOpts,
                 colWidth,
                 *this,
                 cmd,
                 kNameNonDefault,
                 true
             );
-            for (auto && key : namedArgs)
+            for (auto && key : namedOpts)
                 writeToken(os, wp, "[" + key.list + "]");
         }
     }
@@ -2631,14 +2740,14 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
 
     // find named args and the longest name list
     size_t colWidth = 0;
-    vector<ArgKey> namedArgs;
-    if (!ndx.findNamedArgs(namedArgs, colWidth, *this, cmd, kNameAll, false))
+    vector<OptKey> namedOpts;
+    if (!ndx.findNamedOpts(namedOpts, colWidth, *this, cmd, kNameAll, false))
         return;
     colWidth = clampDescWidth(colWidth + 3);
 
     WrapPos wp;
     const char * gname = nullptr;
-    for (auto && key : namedArgs) {
+    for (auto && key : namedOpts) {
         if (!gname || key.opt->m_group != gname) {
             gname = key.opt->m_group.c_str();
             writeNewline(os, wp);
@@ -2646,7 +2755,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
             auto title = grp.title;
             if (title.empty()
                 && strcmp(gname, kInternalOptionGroup) == 0
-                && &key == namedArgs.data()
+                && &key == namedOpts.data()
             ) {
                 // First group and it's the internal group, give it a title
                 // so it's not just left hanging.
