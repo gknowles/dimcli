@@ -65,7 +65,7 @@
 </div>
 </div>
 <a class="nav-link py-0 px-3" href="https://github.com/gknowles/dimcli/" style="font-size: 24px;">
-<i class="fa fa-github" title="View Source"></i>
+<i style="width: 24px" class="fa fa-github" title="View Source"></i>
 </a>
 </div>
 </div>
@@ -253,7 +253,7 @@ locale for everything else.</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#optional-values">implicitValue</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The implicit value is used for arguments with optional values when the
-argument was specified in the command line without a value.</p></td>
+argument was specified in the command line without a value, defaults to T{}.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#parse-actions">parse</a></p></td>
@@ -362,8 +362,8 @@ tied to a command line argument.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set option to its default value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.unspecifiedValue</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set option (or add to option vector) to value for missing optionals.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.useImplicit</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set option to (or add to option vector) the value for missing optionals.</p></td>
 </tr>
 <tr>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Commands</p></th>

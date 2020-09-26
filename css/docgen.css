@@ -3,7 +3,7 @@ body {
 }
 
 nav.navbar {
-    padding: .125rem 1rem;
+    padding: 0rem 1rem;
 }
 nav.navbar-dark .navbar-nav .nav-link {
     color: white;
