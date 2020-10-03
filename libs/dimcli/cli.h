@@ -221,34 +221,24 @@ public:
     Opt<T> & opt(T * value, const std::string & names);
 
     template <typename T, typename U, typename =
-        typename std::enable_if<std::is_convertible<U, T>::value>::type
-    >
+        typename std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(T * value, const std::string & names, const U & def);
 
     template <typename T>
     Opt<T> & opt(Opt<T> & value, const std::string & names);
 
     template <typename T, typename U, typename =
-        typename std::enable_if<std::is_convertible<U, T>::value>::type
-    >
+        typename std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(Opt<T> & value, const std::string & names, const U & def);
 
     template <typename T>
-    OptVec<T> & optVec(const std::string & names, int nargs = -1);
+    OptVec<T> & optVec(const std::string & names);
 
     template <typename T>
-    OptVec<T> & optVec(
-        std::vector<T> * values,
-        const std::string & names,
-        int nargs = -1
-    );
+    OptVec<T> & optVec(std::vector<T> * values, const std::string & names);
 
     template <typename T>
-    OptVec<T> & optVec(
-        OptVec<T> & values,
-        const std::string & names,
-        int nargs = -1
-    );
+    OptVec<T> & optVec(OptVec<T> & values, const std::string & names);
 
     // Add -y, --yes option that exits early when false and has an "are you
     // sure?" style prompt when it's not present.
@@ -682,11 +672,10 @@ Cli::Opt<T> & Cli::opt(T * value, const std::string & names) {
 template <typename T>
 Cli::OptVec<T> & Cli::optVec(
     std::vector<T> * values,
-    const std::string & names,
-    int nargs
+    const std::string & names
 ) {
     auto proxy = getProxy<OptVec<T>, ValueVec<T>>(values);
-    auto ptr = std::make_unique<OptVec<T>>(proxy, names, nargs);
+    auto ptr = std::make_unique<OptVec<T>>(proxy, names);
     return addOpt(std::move(ptr));
 }
 
@@ -708,12 +697,8 @@ Cli::Opt<T> & Cli::opt(Opt<T> & alias, const std::string & names) {
 
 //===========================================================================
 template <typename T>
-Cli::OptVec<T> & Cli::optVec(
-    OptVec<T> & alias,
-    const std::string & names,
-    int nargs
-) {
-    return optVec(&*alias, names, nargs);
+Cli::OptVec<T> & Cli::optVec(OptVec<T> & alias, const std::string & names) {
+    return optVec(&*alias, names);
 }
 
 //===========================================================================
@@ -724,8 +709,8 @@ Cli::Opt<T> & Cli::opt(const std::string & names, const T & def) {
 
 //===========================================================================
 template <typename T>
-Cli::OptVec<T> & Cli::optVec(const std::string & names, int nargs) {
-    return optVec<T>(nullptr, names, nargs);
+Cli::OptVec<T> & Cli::optVec(const std::string & names) {
+    return optVec<T>(nullptr, names);
 }
 
 //===========================================================================
@@ -806,19 +791,33 @@ private:
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int, int) const
         -> decltype(out = src, bool());
-    template <typename T, typename =
-        typename std::enable_if<std::is_constructible<T, std::string>::value>::type
-    >
-    bool fromString_impl(T & out, const std::string & src, int, int, long) const;
+
+    template <typename T, typename = typename
+        std::enable_if<std::is_constructible<T, std::string>::value>::type>
+    bool fromString_impl(
+        T & out,
+        const std::string & src,
+        int, int, long
+    ) const;
+
     template <typename T>
-    auto fromString_impl(T & out, const std::string & src, int, long, long) const
-        -> decltype(std::declval<std::istream &>() >> out, bool());
+    auto fromString_impl(
+        T & out,
+        const std::string & src,
+        int, long, long
+    ) const -> decltype(std::declval<std::istream &>() >> out, bool());
+
     template <typename T>
-    bool fromString_impl(T & out, const std::string & src, long, long, long) const;
+    bool fromString_impl(
+        T & out,
+        const std::string & src,
+        long, long, long
+    ) const;
 
     template <typename T>
     auto toString_impl(std::string & out, const T & src, int) const
         -> decltype(std::declval<std::ostream &>() << src, bool());
+
     template <typename T>
     bool toString_impl(std::string & out, const T & src, long) const;
 };
@@ -831,8 +830,8 @@ template <typename T>
 ) const {
     // Versions of fromString_impl taking ints as extra parameters are
     // preferred by the compiler (better conversion from 0), if they don't
-    // exist for T (because no out=src assignment operator exists) then the
-    // versions taking longs are considered.
+    // exist for T (because, for example, no out=src assignment operator
+    // exists) then the versions taking longs are considered.
     return fromString_impl(out, src, 0, 0, 0);
 }
 
@@ -841,9 +840,7 @@ template <typename T>
 auto Cli::Convert::fromString_impl(
     T & out,
     const std::string & src,
-    int,
-    int,
-    int
+    int, int, int
 ) const
     -> decltype(out = src, bool())
 {
@@ -856,9 +853,7 @@ template <typename T, typename>
 bool Cli::Convert::fromString_impl(
     T & out,
     const std::string & src,
-    int,
-    int,
-    long
+    int, int, long
 ) const {
     out = T{src};
     return true;
@@ -869,9 +864,7 @@ template <typename T>
 auto Cli::Convert::fromString_impl(
     T & out,
     const std::string & src,
-    int,
-    long,
-    long
+    int, long, long
 ) const
     -> decltype(std::declval<std::istream &>() >> out, bool())
 {
@@ -889,9 +882,7 @@ template <typename T>
 bool Cli::Convert::fromString_impl(
     T &, // out
     const std::string &, // src
-    long,
-    long,
-    long
+    long, long, long
 ) const {
     // In order to parse an argument one of the following must exist:
     //  - assignment operator to T accepting const std::string&
@@ -1102,9 +1093,10 @@ protected:
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
     // Whether this option has one value or a vector of values.
-    bool m_vector{};
-    // Maximum allowed values, only for vectors (-1 for unlimited).
-    int m_nargs{1};
+    bool m_vector {};
+    // Minimum and maximum allowed values, only for vectors.
+    int m_minVec {1};
+    int m_maxVec {1};
 
     // Whether the value is a bool on the command line (no separate value).
     bool m_bool{};
@@ -1747,6 +1739,9 @@ class Cli::Opt : public OptShim<Opt<T>, T> {
 public:
     Opt(std::shared_ptr<Value<T>> value, const std::string & names);
 
+    //-----------------------------------------------------------------------
+    // QUERIES
+
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
 
@@ -1868,16 +1863,29 @@ struct Cli::ValueVec {
 template <typename T>
 class Cli::OptVec : public OptShim<OptVec<T>, T> {
 public:
-    OptVec(
-        std::shared_ptr<ValueVec<T>> values,
-        const std::string & names,
-        int nargs
-    );
+    OptVec(std::shared_ptr<ValueVec<T>> values, const std::string & names);
+
+    //-----------------------------------------------------------------------
+    // CONFIGURATION
+
+    // Set the number of values that can be assigned to a vector option.
+    // Defaults to a min/max of 1/-1 where -1 means unlimited.
+    OptVec & size(int exact);
+    OptVec & size(int min, int max);
+
+    int minSize() const { return this->m_minVec; }
+    int maxSize() const { return this->m_maxVec; }
+
+    //-----------------------------------------------------------------------
+    // QUERIES
 
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
     T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
+    const T & operator[](size_t index) const {
+        return (*m_proxy->m_values)[index];
+    }
 
     // Information about a specific member of the vector of values at the
     // time it was parsed. If the value vector has been changed (sort, erase,
@@ -1910,16 +1918,41 @@ private:
 template <typename T>
 Cli::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
-    const std::string & names,
-    int nargs
+    const std::string & names
 )
     : OptShim<OptVec, T>{names, std::is_same<T, bool>::value}
     , m_proxy(values)
 {
-    assert(nargs >= -1
-        && "max values in a vector option must be >= 0, or -1 (unlimited)");
     this->m_vector = true;
-    this->m_nargs = nargs;
+    this->m_minVec = 1;
+    this->m_maxVec = -1;
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::OptVec<T> & Cli::OptVec<T>::size(int exact) {
+    if (exact < 0) {
+        assert(!"bad optVec size, minimum must be >= 0");
+    } else {
+        this->m_minVec = this->m_maxVec = exact;
+    }
+    return *this;
+}
+
+//===========================================================================
+template <typename T>
+inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
+    if (min < 0) {
+        assert(!"bad optVec size, minimum must be >= 0");
+    } else if (max < -1) {
+        assert(!"bad optVec size, maximum must be >= 0 or -1 (unlimited)");
+    } else if (max != -1 && min > max) {
+        assert(!"bad optVec size, min greater than max");
+    } else {
+        this->m_minVec = min;
+        this->m_maxVec = max;
+    }
+    return *this;
 }
 
 //===========================================================================
@@ -1959,8 +1992,8 @@ inline bool Cli::OptVec<T>::defaultValueToString(std::string & out) const {
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
-    if (this->m_nargs != -1
-        && (size_t) this->m_nargs == m_proxy->m_matches.size()
+    if (this->m_maxVec != -1
+        && (size_t) this->m_maxVec == m_proxy->m_matches.size()
     ) {
         return false;
     }

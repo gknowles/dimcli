@@ -245,6 +245,13 @@ static string trim(const string & val) {
     return string(first, last - first + 1);
 }
 
+//===========================================================================
+static string intToString(const Cli::Convert & cvt, int val) {
+    string tmp;
+    (void) cvt.toString(tmp, val);
+    return tmp;
+}
+
 
 /****************************************************************************
 *
@@ -688,7 +695,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
     case '<':
         if (opt.m_command.empty())
             m_allowCommands = false;
-        if (!opt.m_vector || opt.m_nargs) {
+        if (!opt.m_vector || opt.m_maxVec) {
             OptName oname = {&opt, invert, optional, name.data() + 1, pos};
             m_argNames.push_back(oname);
             opt.setNameIfEmpty(m_argNames.back().name);
@@ -1887,7 +1894,7 @@ bool Cli::parseValue(
     if (!opt.assign(name, pos)) {
         string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
-            + to_string(opt.m_nargs) + ".";
+            + intToString(opt, opt.m_maxVec) + ".";
         return badUsage(prefix, ptr, detail);
     }
     string val;
@@ -1972,29 +1979,33 @@ static bool parseBool(bool & out, const string & val) {
 }
 
 //===========================================================================
-static int numMatches(int cat, int avail, bool op, bool vec, int nargs) {
-    if (cat == 0 && !op && vec && nargs != -1
-        || cat == 2 && op && vec && nargs != -1
-    ) {
-        // Vector of specific length that is:
-        //  - in category 0 (min required) and required, or
-        //  - in category 2 (all optional) and optional
-        return nargs <= avail ? nargs : 0;
+static int numMatches(
+    int cat,
+    int avail,
+    bool op,    // is optional?
+    bool vec,   // is vector option?
+    int minVec,
+    int maxVec
+) {
+    if (cat == 0 && !op && vec && avail >= minVec) {
+        // Category 0 (min required) with required vector not requiring too
+        // many arguments.
+        return minVec;
     }
-    if (cat == 1 && !op && vec && nargs == -1
-        || cat == 2 && op && vec && nargs == -1
-    ) {
-        // Vector of unlimited length that is:
-        //  - in category 1 (max required) and required, or
-        //  - in category 2 (all optional) and optional
-        return avail;
+    if (cat == 1 && !op && vec) {
+        // Category 0 (max required) with required vector.
+        return maxVec == -1 ? avail : min(avail, maxVec - minVec);
     }
-    if (cat == 0 && !op
-        || cat == 2 && op
+    if (cat == 2 && op && vec && avail >= minVec) {
+        // Category 2 (all optional) with optional vector not requiring too
+        // many arguments.
+        return maxVec == -1 ? avail : min(avail, maxVec);
+    }
+    if (cat == 0 && !op && !vec
+        || cat == 2 && op && !vec
     ) {
-        // Non-vector or unlimited vector in category 0 (min required) that is
-        // required; or non-vector in category 2 (all optional) that is
-        // optional.
+        // Category 0 (min required) with required non-vector; or
+        // Category 1 (all optional) with optional non-vector.
         return 1;
     }
 
@@ -2214,7 +2225,8 @@ bool Cli::parse(vector<string> & args) {
                 numPos - usedPos,
                 argName.optional,
                 argName.opt->m_vector,
-                argName.opt->m_nargs
+                argName.opt->m_minVec,
+                argName.opt->m_maxVec
             );
             matched[i] += num;
             usedPos += num;
@@ -2261,11 +2273,26 @@ bool Cli::parse(vector<string> & args) {
     // report required positional arguments that are missing
     for (unsigned i = 0; i < matched.size(); ++i) {
         auto & argName = ndx.m_argNames[i];
-        int num = argName.opt->m_vector
-            ? argName.opt->m_nargs == -1 ? 1 : argName.opt->m_nargs
-            : 1;
-        if (!argName.optional && matched[i] < num)
-            return badUsage("Missing argument", argName.name);
+        int min = argName.opt->m_minVec;
+        if (!argName.optional && matched[i] < min) {
+            int max = argName.opt->m_maxVec;
+            string detail;
+            if (min != 1 && min == max) {
+                detail = "Must have " + intToString(*argName.opt, min)
+                    + " values.";
+            } else if (max == -1) {
+                detail = "Must have " + intToString(*argName.opt, min)
+                    + " or more values.";
+            } else if (min != max) {
+                detail = "Must have between " + intToString(*argName.opt, min)
+                    + " and " + intToString(*argName.opt, max) + " values.";
+            }
+            return badUsage(
+                "Option '" + argName.name + "' missing value.",
+                {},
+                detail
+            );
+        }
     }
 
     // after actions
@@ -2490,17 +2517,22 @@ static void writeDescCol(
 //===========================================================================
 string Cli::descStr(const Cli::OptBase & opt) const {
     string desc = opt.m_desc;
-    string tmp;
     if (!opt.m_choiceDescs.empty()) {
         // "default" tag is added to individual choices later
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         desc += " (default)";
     } else if (opt.m_vector) {
-        if (opt.m_nargs != -1) {
-            (void) opt.toString(tmp, opt.m_nargs);
-            desc += " (limit: " + tmp + ")";
+        if (opt.m_minVec != 1 || opt.m_maxVec != -1) {
+            desc += " (limit: " + intToString(opt, opt.m_minVec);
+            if (opt.m_maxVec == -1) {
+                desc += "+";
+            } else if (opt.m_minVec != opt.m_maxVec) {
+                desc += " to " + intToString(opt, opt.m_maxVec);
+            }
+            desc += ")";
         }
     } else if (!opt.m_bool) {
+        string tmp;
         if (opt.m_defaultDesc.empty()) {
             if (!opt.defaultValueToString(tmp))
                 tmp.clear();

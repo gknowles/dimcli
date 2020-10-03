@@ -444,7 +444,7 @@ void parseTests() {
     cli = {};
     cli.opt<int>("<n>", 1);
     EXPECT_PARSE(cli, "", false);
-    EXPECT_ERR(cli, "Error: Missing argument: n\n");
+    EXPECT_ERR(cli, "Error: Option 'n' missing value.\n");
 }
 
 
@@ -970,7 +970,7 @@ void optCheckTests() {
         );
         EXPECT_PARSE(cli, "-- -5", false);
         EXPECT(*count == 1);
-        EXPECT_ERR(cli, "Error: Missing argument: letter\n");
+        EXPECT_ERR(cli, "Error: Option 'letter' missing value.\n");
     }
 }
 
@@ -1279,10 +1279,10 @@ Options:
         EXPECT(*strs == vector<string>({"a"s, "b"s}));
     }
 
-    // optVec with nargs
+    // optVec with size
     {
         cli = {};
-        auto & v0 = cli.optVec<int>("0", 0).desc("None allowed.");
+        auto & v0 = cli.optVec<int>("0").size(0).desc("None allowed.");
         EXPECT_PARSE(cli, "");
         EXPECT(v0.size() == 0);
         EXPECT_PARSE(cli, "-00", false);
@@ -1290,8 +1290,8 @@ Options:
             "Error: Too many '-0' values: 0\n"
             "The maximum number of values is 0.\n"
         );
-        auto & v1 = cli.optVec<int>("1", 1).desc("Not more than one.");
-        auto & vn = cli.optVec<int>("N", -1).desc("Unlimited.");
+        auto & v1 = cli.optVec<int>("1").size(1).desc("Not more than one.");
+        auto & vn = cli.optVec<int>("N").desc("Unlimited.");
         EXPECT_PARSE(cli, "-11");
         EXPECT(v1.size() == 1 && v1[0] == 1);
         EXPECT(vn.size() == 0);
@@ -1307,6 +1307,36 @@ Options:
 )");
     }
 
+    // optional optVec with size
+    {
+        cli = {};
+        auto & v0 = cli.optVec<int>("[one]").size(1, 2);
+        EXPECT_PARSE(cli, "1 2 3", false);
+        EXPECT_ERR(cli, "Error: Unexpected argument: 3\n");
+        EXPECT(v0.size() == 0);
+    }
+
+    // required optVec with size
+    {
+        cli = {};
+        auto & v0 = cli.optVec<int>("<one>").size(1, 2)
+            .desc("The one and only?");
+        EXPECT_PARSE(cli, "", false);
+        EXPECT_ERR(cli,
+            "Error: Option 'one' missing value.\n"
+            "Must have between 1 and 2 values.\n"
+        );
+        EXPECT(v0.size() == 0);
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] one...
+  one       The one and only? (limit: 1 to 2)
+
+Options:
+  --help    Show this message and exit.
+)");
+    }
+
+    // positional argument matching
     {
         cli = {};
         auto & v1 = cli.optVec<int>("<one>");
@@ -1315,13 +1345,12 @@ Options:
         EXPECT(*v1 == vector<int>{1, 2});
         EXPECT(*v2 == vector<int>{3});
     }
-
     {
         cli = {};
-        auto & v0 = cli.optVec<int>("[zero]", 2);
+        auto & v0 = cli.optVec<int>("[zero]").size(2);
         auto & v1 = cli.optVec<int>("[one]");
-        auto & v2 = cli.optVec<int>("<two>", 1);
-        auto & v3 = cli.optVec<int>("<three>", 2);
+        auto & v2 = cli.optVec<int>("<two>").size(1);
+        auto & v3 = cli.optVec<int>("<three>").size(2);
         EXPECT_PARSE(cli, "1 2 3");
         EXPECT(v0->empty());
         EXPECT(v1->empty());
@@ -1329,7 +1358,10 @@ Options:
         EXPECT(*v3 == vector<int>{2, 3});
 
         EXPECT_PARSE(cli, "1 2", false);
-        EXPECT_ERR(cli, "Error: Missing argument: three\n");
+        EXPECT_ERR(cli,
+            "Error: Option 'three' missing value.\n"
+            "Must have 2 values.\n"
+        );
         EXPECT(v0->empty());
         EXPECT(*v1 == vector<int>{1});
         EXPECT(*v2 == vector<int>{2});
