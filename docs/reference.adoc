@@ -15,7 +15,7 @@ Distributed under the Boost Software License, Version 1.0.
 | Handle to the shared command line configuration, this shared configuration
 allows options to be statically registered from multiple source files.
 
-| <<guide.adoc#dimclilocal, CliLocal>>
+| <<guide.adoc#clilocal, CliLocal>>
 | Standalone cli instance independent of the shared configuration. Mainly for
 testing.
 
@@ -140,6 +140,10 @@ badUsage() if it wasn't.
 | opt.<<guide.adoc#si-units, siUnits>>
 | Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are
 present, multiplies by the corresponding factor.
+
+| optVec.size
+| Change the number of values that can be assigned to a vector option. Defaults
+to a minimum of 1 and a maximum of -1 (unlimited).
 
 | opt.<<guide.adoc#time-units, timeUnits>>
 | Adjusts the value to seconds when time units are present: removes the units

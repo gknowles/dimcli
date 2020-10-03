@@ -11,19 +11,19 @@ Distributed under the Boost Software License, Version 1.0.
 
 C++ command line parser toolkit for kids of all ages.
 
-- GNU style command lines (-o, --output=FILE, etc.)
-- parses directly to any supplied (or implicitly created) variable that is:
-  - default constructible
-  - copyable
-  - assignable from string, constructible from string, has an istream
+- GNU style command lines, such as (-o, --output=FILE, etc.)
+- Parses directly to any supplied (or implicitly created) variable that is:
+  - Default constructible
+  - Copyable
+  - Either assignable from string, constructible from string, has an istream
     extraction operator, or has a specialization of
-    Cli&#58;:Convert::fromString&lt;T>()
-- help generation
-- option definitions can be scattered across multiple files
-- git style subcommands
-- response files (requires `<filesystem>` support)
-- works whether exceptions and RTTI are enabled or disabled
-- distributed under the Boost Software License, Version 1.0.
+    Cli&#58;:Convert::fromString&lt;T>().
+- Help generation.
+- Option definitions can be scattered across multiple files.
+- Git style subcommands.
+- Response files (requires `<filesystem>` support).
+- Works whether or not exceptions and RTTI are disabled.
+- Distributed under the Boost Software License, Version 1.0.
 
 ## Documentation
 Check out the [documentation](https://gknowles.github.io/dimcli/), you'll be glad
@@ -83,10 +83,10 @@ Sources of inspiration:
 
 Things that were harder than expected:
 
-- parsing command lines with bash style quoting
-- response files - because of the need to transcode UTF-16 on windows
-- password prompting - there's no standard way to disable console echo :(
-- build system - you can do a lot with cmake, but it's not always easy
+- Parsing command lines with bash style quoting
+- Response files - because of the need to transcode UTF-16 on Windows
+- Password prompting - there's no standard way to disable console echo :(
+- Build system - you can do a lot with CMake, but it's not always easy
 
 Other interesting c++ command line parsers:
 

@@ -11,17 +11,18 @@ Distributed under the Boost Software License, Version 1.0.
 C++ command line parser toolkit for kids of all ages.
 
 * GNU style command lines (-o, --output=FILE, etc.)
-* parses directly to any supplied (or implicitly created) variable that is:
-** default constructible
-** copyable
-** assignable from string, constructible from string, has an istream extraction
-   operator, or has a specialization of Cli&#58;:Convert::fromString&lt;T>()
-* help generation
-* option definitions can be scattered across multiple files
-* git style subcommands
-* response files (requires `<filesystem>` support)
-* works whether exceptions and RTTI are enabled or disabled
-* distributed under the Boost Software License, Version 1.0.
+* Parses directly to any supplied (or implicitly created) variable that is:
+** Default constructible
+** Copyable
+** Either assignable from string, constructible from string, has an istream
+   extraction operator, or has a specialization of
+   Cli&#58;:Convert::fromString&lt;T>()
+* Help generation.
+* Option definitions can be scattered across multiple files.
+* Git style subcommands.
+* Response files (requires `<filesystem>` support).
+* Works whether or not exceptions and RTTI are disabled.
+* Distributed under the Boost Software License, Version 1.0.
 
 How does it feel?
 
@@ -306,14 +307,50 @@ cli.opt<string>("n");
 A few things to keep in mind about positional arguments:
 
 * Positional arguments are mapped in the order they were added.
-* Optional positionals are populated only if there are enough other
+* Except that optional positionals are populated only if there are enough other
   arguments to satisfy all required positionals.
-* If there are multiple vector positionals with unlimited (nargs = -1) arity
-  all but the first will be treated as if they had nargs = 1. Or to put it
-  another way, the first unlimited positional is greedy.
+* If there are multiple vector positionals with unlimited (max size = -1) arity
+  the first will get all the extras.
 * If there is a required positional with unlimited arity it will prevent any
   optional positionals from getting populated, since it eats up all the
   arguments before they get a turn.
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & a = cli.opt<int>("[a]");
+    auto & b = cli.optVec<int>("<b>").size(1, 2); // take 1 to 2 values
+    auto & c = cli.opt<int>("<c>");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    if (a) cout << "a:" << *a;
+    for (int val : *b) cout << " b:" << val;
+    if (c) cout << " c:" << *c;
+    return EX_OK;
+}
+----
+
+A few combinations to show how this plays out:
+
+[source, shell session]
+----
+$ a.out
+Error: Missing argument: b
+$ a.out 1
+Error: Missing argument: c
+$ # With two args 'a' is not populated as it's optional whlie 'b' & 'c'
+$ # are required.
+$ a.out 1 2
+b:1 c:2
+$ a.out 1 2 3
+b:1 b:2 c:3
+$ # With four args we have enough left for 'a' after populating 'b' & 'c'.
+$ a.out 1 2 3 4
+a:1 b:2 b:3 c:4
+$ a.out 1 2 3 4 5
+Error: Unexpected argument: 5
+----
 
 
 === Flag Options
@@ -322,10 +359,10 @@ to a predefined value. This is the default when you create a option of type
 bool. Normally flags set the option to true, but this can be changed in two
 ways:
 
-* make it an inverted bool, which will set it to false
-** explicitly using the "!" modifier
-** define a long name and use the implicitly created "no-" prefix version
-* use opt.flagValue() to set the value, see
+* Make it an inverted bool, which will set it to false
+** Explicitly using the "!" modifier
+** Define a long name and use the implicitly created "no-" prefix version
+* Use opt.flagValue() to set the value, see
   <<#feature-switches, feature switches>>.
 
 [source, C++]
@@ -392,7 +429,7 @@ int main(int argc, char * argv[]) {
     // For oranges demonstrate using an external vector, and limit the
     // maximum number to 2.
     vector<string> oranges;
-    cli.optVec(&oranges, "o orange", 2).desc("oranges");
+    cli.optVec(&oranges, "o orange").size(1, 2).desc("oranges");
     // For apples demonstrate using just the proxy object.
     auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
     if (!cli.parse(argc, argv))
@@ -410,7 +447,7 @@ Usage: a.out [OPTIONS] [apple...]
   apple     red fruit
 
 Options:
-  -o, --orange=STRING  oranges (limit: 2)
+  -o, --orange=STRING  oranges (limit: 1 to 2)
 
   --help               Show this message and exit.
 
@@ -418,7 +455,7 @@ $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
 $ a.out -omandarin -onavel -ohamlin
 Error: Too many '-o' values: hamlin
-The maximum number of values is: 2
+The maximum number of values is 2.
 ----
 
 While the * and \-> operators get you full access to the underlying vector,
@@ -434,6 +471,40 @@ if (apples)
     cout << "The first was " << apples[0] << endl;
 ----
 
+By default a vector option will accept any number of values, this can be
+changed using optVec.size(N) or .size(MIN, MAX).
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.optVec<int>("v").size(2, 3).desc("Test value.");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Success";
+    return EX_OK;
+}
+----
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -v NUM    Test value. (limit: 2 to 3)
+
+  --help    Show this message and exit.
+
+$ a.out -v1
+Error: Missing '-v' value.
+Must have between 2 and 3 values.
+$ a.out -v1 -v1
+Success
+$ a.out -v1 -v1 -v1 -v1
+Error: Too many '-v' values: 1
+The maximum number of values is 3.
+----
 
 === Life After Parsing
 If you are using external variables you just access them directly after using
@@ -1027,10 +1098,10 @@ Options:
   --help     Show this message and exit.
 ----
 
-===== Dim::CliLocal
+===== CliLocal
 You can also use Dim::CliLocal, a completely self-contained parser, if you
 need to redefine options, have results from multiple parses at once, or
-otherwise avoid the shared configuration.
+otherwise avoid the shared configuration referenced by Dim::Cli.
 
 
 === Response Files
