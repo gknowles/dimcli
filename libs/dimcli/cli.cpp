@@ -2198,7 +2198,7 @@ bool Cli::parse(vector<string> & args) {
         argPos += 1;
         arg += 1;
         if (argPos == argc)
-            return badUsage("Option requires value", name);
+            return badUsage("No value given for " + name);
         rawValues.emplace_back(
             RawValue::kNamed,
             argName.opt,

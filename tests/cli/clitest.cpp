@@ -437,7 +437,7 @@ void parseTests() {
     EXPECT_PARSE(cli, "-o", false);
     EXPECT_ERR(cli, "Error: Malformed '-o' value: \n");
     EXPECT_PARSE(cli, "-n", false);
-    EXPECT_ERR(cli, "Error: Option requires value: -n\n");
+    EXPECT_ERR(cli, "Error: No value given for -n\n");
     EXPECT_PARSE(cli, "-n a", false);
     EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
 
@@ -730,7 +730,7 @@ void cmdTests() {
         EXPECT_PARSE(c1, "-a", false);
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);
-        EXPECT_ERR(c2, "Error: Command 'two': Option requires value: -a\n");
+        EXPECT_ERR(c2, "Error: Command 'two': No value given for -a\n");
         EXPECT(c1.resetValues().exec() == false);
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
