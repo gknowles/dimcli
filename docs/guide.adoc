@@ -336,9 +336,9 @@ A few combinations to show how this plays out:
 [source, shell session]
 ----
 $ a.out
-Error: Missing argument: b
+Error: Option 'b' missing value.
 $ a.out 1
-Error: Missing argument: c
+Error: Option 'c' missing value.
 $ # With two args 'a' is not populated as it's optional whlie 'b' & 'c'
 $ # are required.
 $ a.out 1 2
@@ -497,8 +497,8 @@ Options:
   --help    Show this message and exit.
 
 $ a.out -v1
-Error: Missing '-v' value.
-Must have between 2 and 3 values.
+Error: Option '-v' missing value.
+Must have 2 to 3 values.
 $ a.out -v1 -v1
 Success
 $ a.out -v1 -v1 -v1 -v1
@@ -681,7 +681,7 @@ usage: a.out [OPTIONS]
 Options:
   --help    Show this message and exit.
 $ a.out
-Error: Missing argument: value
+Error: Option 'value' missing value.
 ----
 
 Now add the before action:
