@@ -1021,7 +1021,12 @@ public:
     virtual int pos() const = 0;
 
     // Number of values, non-vectors are always 1.
-    virtual size_t size() const = 0;
+    virtual size_t size() const { return 1; }
+
+    // Number of allowed values, non-vectors are always 1, maxSize of -1 for
+    // unlimited.
+    virtual int minSize() const { return 1; }
+    virtual int maxSize() const { return 1; }
 
     // Defaults to use when populating the option from an action that's not
     // tied to a command line argument.
@@ -1094,9 +1099,6 @@ protected:
 
     // Whether this option has one value or a vector of values.
     bool m_vector {};
-    // Minimum and maximum allowed values, only for vectors.
-    int m_minVec {1};
-    int m_maxVec {1};
 
     // Whether the value is a bool on the command line (no separate value).
     bool m_bool{};
@@ -1748,7 +1750,6 @@ public:
     // Inherited via OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
     int pos() const final { return m_proxy->m_match.pos; }
-    size_t size() const final { return 1; }
     void reset() final;
     bool parseValue(const std::string & value) final;
     void useImplicit() final;
@@ -1873,9 +1874,6 @@ public:
     OptVec & size(int exact);
     OptVec & size(int min, int max);
 
-    int minSize() const { return this->m_minVec; }
-    int maxSize() const { return this->m_maxVec; }
-
     //-----------------------------------------------------------------------
     // QUERIES
 
@@ -1897,6 +1895,8 @@ public:
     const std::string & from() const final { return from(size() - 1); }
     int pos() const final { return pos(size() - 1); }
     size_t size() const final { return m_proxy->m_values->size(); }
+    int minSize() const final { return m_minVec; }
+    int maxSize() const final { return m_maxVec; }
     void reset() final;
     bool parseValue(const std::string & value) final;
     void useImplicit() final;
@@ -1912,6 +1912,10 @@ private:
 
     std::shared_ptr<ValueVec<T>> m_proxy;
     std::string m_empty;
+
+    // Minimum and maximum number of values allowed in vector.
+    int m_minVec {1};
+    int m_maxVec {1};
 };
 
 //===========================================================================
