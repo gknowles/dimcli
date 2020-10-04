@@ -16,18 +16,17 @@ Distributed under the Boost Software License, Version 1.0.
 allows options to be statically registered from multiple source files.
 
 | <<guide.adoc#clilocal, CliLocal>>
-| Standalone cli instance independent of the shared configuration. Mainly for
-testing.
+| Standalone cli instance independent of the shared configuration.
+
+| Cli::Convert
+| Class for converting between strings and values, provides toString<T>() and
+fromString<T>() members. Is a base class of Cli::Opt and Cli::OptVec.
 
 | Cli::Opt&lt;T>
 | Reference to single value option and it's metadata.
 
 | Cli::OptVec&lt;T>
 | Reference to vector of values and metadata for multivalued option.
-
-| Cli::Convert
-| Class for converting between strings and values, provides toString<T>() and
-fromString<T>() members. Is a base class of Cli::Opt and Cli::OptVec.
 |===
 
 == Subcommands
@@ -44,7 +43,8 @@ it will be created in the command group of the current context.
 | cli.<<guide.adoc#help-subcommand, helpCmd>>
 | Add "help" command that shows the help text for other commands. Allows users
 to run "prog help command" instead of the more awkward "prog command --help".
-h| Configuration |
+
+2+h| Configuration
 
 | cli.<<guide.adoc#subcommands, action>>
 | Action that should be taken when the currently selected command is run.
@@ -141,7 +141,7 @@ badUsage() if it wasn't.
 | Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are
 present, multiplies by the corresponding factor.
 
-| optVec.size
+| optVec.<<guide.adoc#vector-options, size>>
 | Change the number of values that can be assigned to a vector option. Defaults
 to a minimum of 1 and a maximum of -1 (unlimited).
 
@@ -214,8 +214,9 @@ command actions, parsing related failures normally use cli.badUsage() instead.
 
 2+h| After parsing
 
-| cli.<<guide.adoc#basic-usage, exitCode>>
-| EX_OK (0), EX_USAGE, or any value set by user defined actions.
+| cli.commandMatched
+| Command to run, as selected by the arguments, empty string if there are no
+commands defined or none were selected.
 
 | cli.errMsg
 | Error message, only meaningful when exitCode() != EX_OK
@@ -224,12 +225,11 @@ command actions, parsing related failures normally use cli.badUsage() instead.
 | Additional information that may help the user correct their mistake, may be
 empty.
 
+| cli.<<guide.adoc#basic-usage, exitCode>>
+| EX_OK (0), EX_USAGE, or any value set by user defined actions.
+
 | cli.progName
 | Program name received in argv[0]
-
-| cli.commandMatched
-| Command to run, as selected by the arguments, empty string if there are no
-commands defined or none were selected.
 
 | opt.<<guide.adoc#life-after-parsing, operator bool>>
 | True if the value was populated from the command line, whether the resulting
@@ -248,13 +248,21 @@ value is the same as the default is immaterial.
 | Name of the last argument to populated the value, or an empty string if it
 wasn't populated. For vectors, it's what populated the last value.
 
+| opt.maxSize
+| Maximum values required for option, non-vectors are always 1. Vectors default
+to -1 (for unlimited).
+
+| opt.minSize
+| Minimum values required for option, non-vectors are always 1. Vectors default
+to 1.
+
 | opt.<<guide.adoc#life-after-parsing, pos>>
 | Absolute position in argv[] of last the argument that populated the value.
 For vectors, it refers to where the value on the back came from. If pos() is 0
 the value wasn't populated from the command line or wasn't populated at all,
 check from() to tell the difference.
 
-| opt.<<guide.adoc#life-after-parsing, size>>
+| opt.size
 | Number of values, non-vectors are always 1.
 |===
 
@@ -304,9 +312,6 @@ previous one.
 
 2+h| Options
 
-| opt.show
-| Controls whether or not the option appears in help pages.
-
 | opt.<<guide.adoc#subcommands,command>>
 | Set subcommand for which this is an option.
 
@@ -324,6 +329,9 @@ used to change "NUM" to something else.
 | Set text to appear in the default clause of this options the help text. Can
 change the "0" in "(default: 0)" to something else, or use an empty string to
 suppress the entire clause.
+
+| opt.show
+| Controls whether or not the option appears in help pages.
 
 2+h| Rendering
 
