@@ -201,8 +201,18 @@ static void printChoices(
 #if defined(_WIN32)
 static string displayName(const string & file) {
     char fname[_MAX_FNAME];
-    _splitpath(file.c_str(), nullptr, nullptr, fname, nullptr);
-    return fname;
+    if (!_splitpath_s(
+        file.c_str(),
+        nullptr, 0,
+        nullptr, 0,
+        fname, sizeof(fname),
+        nullptr, 0
+    )) {
+        return fname;
+    }
+
+    // Split failed, return full source path.
+    return file;
 }
 #else
 #include <libgen.h>
