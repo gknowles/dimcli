@@ -284,10 +284,10 @@ CliLocal::CliLocal()
 //===========================================================================
 // static
 void Cli::Config::touchAllCmds(Cli & cli) {
-    // Make sure all opts have a backing command config
+    // Make sure all opts have a backing command config.
     for (auto && opt : cli.m_cfg->opts)
         Config::findCmdAlways(cli, opt->m_command);
-    // Make sure all commands have a backing command group
+    // Make sure all commands have a backing command group.
     for (auto && cmd : cli.m_cfg->cmds)
         Config::findCmdGrpAlways(cli, cmd.second.cmdGroup);
 }
@@ -415,7 +415,7 @@ Cli::OptBase::OptBase(const string & names, bool flag)
     : m_bool{flag}
     , m_names{names}
 {
-    // set m_fromName and assert if names is malformed
+    // Set m_fromName and assert if names is malformed.
     OptIndex ndx;
     ndx.index(*this);
 }
@@ -536,8 +536,8 @@ bool Cli::OptIndex::findNamedOpts(
             key.opt = opt.get();
             key.list = list;
 
-            // sort by group sort key followed by name list with leading
-            // dashes removed
+            // Sort by group sort key followed by name list with leading
+            // dashes removed.
             key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
             if (flatten && key.sort != kInternalOptionGroup)
                 key.sort.clear();
@@ -568,7 +568,7 @@ static bool includeName(
         if (type == kNameDisable)
             return name.invert;
 
-        // includeName is always called with a filter (i.e. not kNameAll)
+        // includeName is always called with a filter (i.e. not kNameAll).
         assert(type == kNameNonDefault
             && "internal dimcli error: unknown NameListType");
         return inverted == name.invert;
@@ -599,7 +599,7 @@ string Cli::OptIndex::nameList(
     bool foundLong = false;
     bool optional = false;
 
-    // names
+    // Names
     vector<const decltype(m_shortNames)::value_type *> snames;
     for (auto & sn : m_shortNames)
         snames.push_back(&sn);
@@ -634,7 +634,7 @@ string Cli::OptIndex::nameList(
     if (opt.m_bool || list.empty())
         return list;
 
-    // value
+    // Value
     auto valDesc = opt.m_valueDesc.empty()
         ? opt.defaultValueDesc()
         : opt.m_valueDesc;
@@ -705,7 +705,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
     case '<':
         if (opt.m_command.empty())
             m_allowCommands = false;
-        if (!opt.m_vector || opt.m_maxVec) {
+        if (opt.maxSize()) {
             OptName oname = {&opt, invert, optional, name.data() + 1, pos};
             m_argNames.push_back(oname);
             opt.setNameIfEmpty(m_argNames.back().name);
@@ -1424,14 +1424,6 @@ IN_QUOTED:
 //     pair, the last one is tossed, and the quote is added to the argument.
 //   - any number not followed by a double quote are literals.
 //===========================================================================
-static void appendBackslashes(string & arg, int & backslashes) {
-    if (backslashes) {
-        arg.append(backslashes, '\\');
-        backslashes = 0;
-    }
-}
-
-//===========================================================================
 // static
 vector<string> Cli::toWindowsArgv(const string & cmdline) {
     vector<string> out;
@@ -1440,6 +1432,13 @@ vector<string> Cli::toWindowsArgv(const string & cmdline) {
 
     string arg;
     int backslashes = 0;
+
+    auto appendBackslashes = [&arg, &backslashes]() {
+        if (backslashes) {
+            arg.append(backslashes, '\\');
+            backslashes = 0;
+        }
+    };
 
 IN_GAP:
     while (cur < last) {
@@ -1475,17 +1474,17 @@ IN_UNQUOTED:
         case '\t':
         case '\r':
         case '\n':
-            appendBackslashes(arg, backslashes);
+            appendBackslashes();
             out.push_back(move(arg));
             arg.clear();
             goto IN_GAP;
         default:
-            appendBackslashes(arg, backslashes);
+            appendBackslashes();
             arg += ch;
             break;
         }
     }
-    appendBackslashes(arg, backslashes);
+    appendBackslashes();
     out.push_back(move(arg));
     return out;
 
@@ -1505,12 +1504,12 @@ IN_QUOTED:
             }
             goto IN_UNQUOTED;
         default:
-            appendBackslashes(arg, backslashes);
+            appendBackslashes();
             arg += ch;
             break;
         }
     }
-    appendBackslashes(arg, backslashes);
+    appendBackslashes();
     out.push_back(move(arg));
     return out;
 }
@@ -1866,14 +1865,14 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
         os << ':';
     os << ' ';
     if (flags & fPromptHide)
-        consoleEnableEcho(false); // disable if hide, must be re-enabled
+        consoleEnableEcho(false); // Disable if hide, must be re-enabled.
     string val;
     os.flush();
     getline(is, val);
     if (flags & fPromptHide) {
         os << endl;
         if (~flags & fPromptConfirm)
-            consoleEnableEcho(true); // re-enable when hide and !confirm
+            consoleEnableEcho(true); // Re-enable when hide and !confirm.
     }
     if (flags & fPromptConfirm) {
         string again;
@@ -1881,7 +1880,7 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
         getline(is, again);
         if (flags & fPromptHide) {
             os << endl;
-            consoleEnableEcho(true); // re-enable when hide and confirm
+            consoleEnableEcho(true); // Re-enable when hide and confirm.
         }
         if (val != again)
             return badUsage("Confirm failed, entries not the same.");
@@ -1904,7 +1903,7 @@ bool Cli::parseValue(
     if (!opt.assign(name, pos)) {
         string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
-            + intToString(opt, opt.m_maxVec) + ".";
+            + intToString(opt, opt.maxSize()) + ".";
         return badUsage(prefix, ptr, detail);
     }
     string val;
@@ -1992,11 +1991,13 @@ static bool parseBool(bool & out, const string & val) {
 static int numMatches(
     int cat,
     int avail,
-    bool op,    // is optional?
-    bool vec,   // is vector option?
-    int minVec,
-    int maxVec
+    const OptName & optn
 ) {
+    bool op = optn.optional;
+    auto minVec = optn.opt->minSize();
+    auto maxVec = optn.opt->maxSize();
+    bool vec = minVec != 1 || maxVec != 1;
+
     if (cat == 0 && !op && vec && avail >= minVec) {
         // Category 0 (min required) with required vector not requiring too
         // many arguments.
@@ -2024,6 +2025,32 @@ static int numMatches(
 }
 
 //===========================================================================
+static bool badMinMatched(
+    Cli & cli,
+    const Cli::OptBase & opt,
+    const string & name = {}
+) {
+    int min = opt.minSize();
+    int max = opt.maxSize();
+    string detail;
+    if (min != 1 && min == max) {
+        detail = "Must have " + intToString(opt, min)
+            + " values.";
+    } else if (max == -1) {
+        detail = "Must have " + intToString(opt, min)
+            + " or more values.";
+    } else if (min != max) {
+        detail = "Must have " + intToString(opt, min)
+            + " to " + intToString(opt, max) + " values.";
+    }
+    return cli.badUsage(
+        "Option '" + (name.empty() ? opt.from() : name) + "' missing value.",
+        {},
+        detail
+    );
+}
+
+//===========================================================================
 bool Cli::parse(vector<string> & args) {
     // The 0th (name of this program) opt must always be present.
     assert(!args.empty() && "at least one (program name) argument required");
@@ -2042,27 +2069,27 @@ bool Cli::parse(vector<string> & args) {
     resetValues();
 
 #if !defined(DIMCLI_LIB_NO_ENV)
-    // insert environment options
+    // Insert environment options
     if (m_cfg->envOpts.size()) {
         if (const char * val = getenv(m_cfg->envOpts.c_str()))
             replace(args, 1, 0, toArgv(val));
     }
 #endif
 
-    // expand response files
+    // Expand response files
 #ifdef DIMCLI_LIB_FILESYSTEM
     vector<string> ancestors;
     if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
         return false;
 #endif
 
-    // before actions
+    // Before actions
     for (auto && fn : m_cfg->befores) {
         if (!fn(*this, args))
             return false;
     }
 
-    // extract values
+    // Extract raw values and assign non-positional values to opts.
     struct RawValue {
         enum Type { kPositional, kNamed, kCommand } type;
         OptBase * opt;
@@ -2127,7 +2154,7 @@ bool Cli::parse(vector<string> & args) {
 
             ptr += 1;
             if (!*ptr) {
-                // bare "--" found, all remaining args are positional
+                // Bare "--" found, all remaining args are positional.
                 moreOpts = false;
                 continue;
             }
@@ -2162,7 +2189,7 @@ bool Cli::parse(vector<string> & args) {
             goto OPTION_VALUE;
         }
 
-        // positional value
+        // Positional value
         if (needCmd) {
             auto cmd = (string) ptr;
             if (!commandExists(cmd))
@@ -2218,9 +2245,10 @@ bool Cli::parse(vector<string> & args) {
         );
     }
 
-    // Match positional values.
-    // Determine the eligible opts, there must be enough values for all opts
-    // of a category for any of the next category to be eligible.
+    // Assign positional values to options. There must be enough values for all
+    // opts of a category for any of the next category to be eligible.
+    //
+    // Categories:
     //      0. Minimum expected for all required opts (vectors may be >1)
     //      1. Max expected for all required opts
     //      2. All optionals
@@ -2230,14 +2258,7 @@ bool Cli::parse(vector<string> & args) {
     for (unsigned category = 0; category < 3; ++category) {
         for (unsigned i = 0; i < matched.size() && usedPos < numPos; ++i) {
             auto & argName = ndx.m_argNames[i];
-            int num = numMatches(
-                category,
-                numPos - usedPos,
-                argName.optional,
-                argName.opt->m_vector,
-                argName.opt->m_minVec,
-                argName.opt->m_maxVec
-            );
+            int num = numMatches(category, numPos - usedPos, argName);
             matched[i] += num;
             usedPos += num;
         }
@@ -2247,8 +2268,8 @@ bool Cli::parse(vector<string> & args) {
         return badUsage("Unexpected argument", rawValues[usedPos].ptr);
     assert(usedPos == numPos);
 
-    int ipos    = 0;    // positional opt being matched
-    int imatch  = 0;    // values already been matched to this opt
+    int ipos = 0;       // Positional opt being matched.
+    int imatch = 0;     // Values already been matched to this opt.
     for (auto&& val : rawValues) {
         if (val.type != RawValue::kPositional)
             continue;
@@ -2266,7 +2287,7 @@ bool Cli::parse(vector<string> & args) {
         imatch += 1;
     }
 
-    // parse values
+    // Parse values and assign them to arguments.
     m_cfg->command = "";
     for (auto&& val : rawValues) {
         switch (val.type) {
@@ -2280,32 +2301,30 @@ bool Cli::parse(vector<string> & args) {
             return false;
     }
 
-    // report required positional arguments that are missing
-    for (unsigned i = 0; i < matched.size(); ++i) {
-        auto & argName = ndx.m_argNames[i];
-        int min = argName.opt->m_minVec;
-        if (!argName.optional && matched[i] < min) {
-            int max = argName.opt->m_maxVec;
-            string detail;
-            if (min != 1 && min == max) {
-                detail = "Must have " + intToString(*argName.opt, min)
-                    + " values.";
-            } else if (max == -1) {
-                detail = "Must have " + intToString(*argName.opt, min)
-                    + " or more values.";
-            } else if (min != max) {
-                detail = "Must have between " + intToString(*argName.opt, min)
-                    + " and " + intToString(*argName.opt, max) + " values.";
-            }
-            return badUsage(
-                "Option '" + argName.name + "' missing value.",
-                {},
-                detail
-            );
+    // Report options with too few values.
+    for (auto&& argName : ndx.m_argNames) {
+        auto & opt = *argName.opt;
+        if (!argName.optional) {
+            // Report required positional arguments that are missing.
+            if (!opt || opt.size() < opt.minSize())
+                return badMinMatched(*this, opt, argName.name);
+        } else {
+            if (!argName.pos && opt && opt.size() < opt.minSize())
+                return badMinMatched(*this, opt, argName.name);
         }
     }
+    for (auto&& nv : ndx.m_shortNames) {
+        auto & opt = *nv.second.opt;
+        if (!nv.second.pos && opt && opt.size() < opt.minSize())
+            return badMinMatched(*this, opt);
+    }
+    for (auto && nv : ndx.m_longNames) {
+        auto & opt = *nv.second.opt;
+        if (!nv.second.pos && opt && opt.size() < opt.minSize())
+            return badMinMatched(*this, opt);
+    }
 
-    // after actions
+    // After actions
     for (auto && opt : m_cfg->opts) {
         if (!opt->m_command.empty() && opt->m_command != commandMatched())
             continue;
@@ -2528,16 +2547,18 @@ static void writeDescCol(
 string Cli::descStr(const Cli::OptBase & opt) const {
     string desc = opt.m_desc;
     if (!opt.m_choiceDescs.empty()) {
-        // "default" tag is added to individual choices later
+        // "default" tag is added to individual choices later.
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         desc += " (default)";
     } else if (opt.m_vector) {
-        if (opt.m_minVec != 1 || opt.m_maxVec != -1) {
-            desc += " (limit: " + intToString(opt, opt.m_minVec);
-            if (opt.m_maxVec == -1) {
+        auto minVec = opt.minSize();
+        auto maxVec = opt.maxSize();
+        if (minVec != 1 || maxVec != -1) {
+            desc += " (limit: " + intToString(opt, minVec);
+            if (maxVec == -1) {
                 desc += "+";
-            } else if (opt.m_minVec != opt.m_maxVec) {
-                desc += " to " + intToString(opt, opt.m_maxVec);
+            } else if (minVec != maxVec) {
+                desc += " to " + intToString(opt, maxVec);
             }
             desc += ")";
         }
@@ -2769,7 +2790,7 @@ void Cli::printPositionals(ostream & os, const string & cmd) {
     size_t colWidth = 0;
     bool hasDesc = false;
     for (auto && pa : ndx.m_argNames) {
-        // find widest positional argument name
+        // Find widest positional argument name.
         colWidth = max(colWidth, pa.name.size());
         hasDesc = hasDesc || pa.opt->m_desc.size();
     }
@@ -2794,7 +2815,7 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
     ndx.index(*this, cmdName, true);
     auto & cmd = Config::findCmdAlways(*this, cmdName);
 
-    // find named args and the longest name list
+    // Find named args and the longest name list.
     size_t colWidth = 0;
     vector<OptKey> namedOpts;
     if (!ndx.findNamedOpts(namedOpts, colWidth, *this, cmd, kNameAll, false))

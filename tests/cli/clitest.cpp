@@ -1324,7 +1324,7 @@ Options:
         EXPECT_PARSE(cli, "", false);
         EXPECT_ERR(cli,
             "Error: Option 'one' missing value.\n"
-            "Must have between 1 and 2 values.\n"
+            "Must have 1 to 2 values.\n"
         );
         EXPECT(v0.size() == 0);
         EXPECT_HELP(cli, "", 1 + R"(
