@@ -2306,21 +2306,21 @@ bool Cli::parse(vector<string> & args) {
         auto & opt = *argName.opt;
         if (!argName.optional) {
             // Report required positional arguments that are missing.
-            if (!opt || opt.size() < opt.minSize())
+            if (!opt || opt.size() < (size_t) opt.minSize())
                 return badMinMatched(*this, opt, argName.name);
         } else {
-            if (!argName.pos && opt && opt.size() < opt.minSize())
+            if (!argName.pos && opt && opt.size() < (size_t) opt.minSize())
                 return badMinMatched(*this, opt, argName.name);
         }
     }
     for (auto&& nv : ndx.m_shortNames) {
         auto & opt = *nv.second.opt;
-        if (!nv.second.pos && opt && opt.size() < opt.minSize())
+        if (!nv.second.pos && opt && opt.size() < (size_t) opt.minSize())
             return badMinMatched(*this, opt);
     }
     for (auto && nv : ndx.m_longNames) {
         auto & opt = *nv.second.opt;
-        if (!nv.second.pos && opt && opt.size() < opt.minSize())
+        if (!nv.second.pos && opt && opt.size() < (size_t) opt.minSize())
             return badMinMatched(*this, opt);
     }
 
