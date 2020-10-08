@@ -102,13 +102,36 @@ struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
     ~CodecvtWchar() {}
 };
 
+struct RawValue {
+    enum Type { kPositional, kNamed, kCommand } type;
+    Cli::OptBase * opt;
+    string name;
+    size_t pos;
+    const char * ptr;
+
+    RawValue(
+        Type type,
+        Cli::OptBase * opt,
+        string name,
+        size_t pos = 0,
+        const char * ptr = nullptr
+    )
+        : type(type)
+        , opt(opt)
+        , name(name)
+        , pos(pos)
+        , ptr(ptr)
+    {}
+};
+
 } // namespace
 
 struct Cli::OptIndex {
     unordered_map<char, OptName> m_shortNames;
     unordered_map<string, OptName> m_longNames;
     vector<OptName> m_argNames;
-    bool m_allowCommands{};
+    bool m_allowCommands {};
+    int m_requiredPos {0};
 
     void index(
         const Cli & cli,
@@ -149,6 +172,7 @@ struct Cli::OptIndex {
 
 struct Cli::Config {
     vector<function<BeforeFn>> befores;
+    function<BeforeFn> unknownCmd;
     unordered_map<string, CommandConfig> cmds;
     unordered_map<string, GroupConfig> cmdGroups;
     list<unique_ptr<OptBase>> opts;
@@ -507,6 +531,7 @@ void Cli::OptIndex::index(
     m_longNames.clear();
     m_shortNames.clear();
     m_allowCommands = cmd.empty();
+    m_requiredPos = 0;
     for (auto && opt : cli.m_cfg->opts) {
         if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
             index(*opt);
@@ -702,14 +727,22 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
         return;
     case '[':
         optional = true;
+        // fallthrough
     case '<':
-        if (opt.m_command.empty())
+        if (!opt.maxSize())
+            return;
+        if (!optional)
+            m_requiredPos += opt.minSize();
+        if (opt.m_command.empty()
+            && (optional || opt.minSize() != opt.maxSize())
+        ) {
+            // Positional arguments that cause potential subcommand names
+            // to be ambiguous are not allowed to be combined with them.
             m_allowCommands = false;
-        if (opt.maxSize()) {
-            OptName oname = {&opt, invert, optional, name.data() + 1, pos};
-            m_argNames.push_back(oname);
-            opt.setNameIfEmpty(m_argNames.back().name);
         }
+        OptName oname = {&opt, invert, optional, name.data() + 1, pos};
+        m_argNames.push_back(oname);
+        opt.setNameIfEmpty(m_argNames.back().name);
         return;
     }
 
@@ -2025,6 +2058,58 @@ static int numMatches(
 }
 
 //===========================================================================
+static bool assignPositionals(
+    RawValue * rawValues,
+    size_t numRawValues,
+    Cli & cli,
+    const Cli::OptIndex & ndx,
+    int numPos
+) {
+    // Assign positional values to options. There must be enough values for all
+    // opts of a category for any of the next category to be eligible.
+    //
+    // Categories:
+    //      0. Minimum expected for all required opts (vectors may be >1)
+    //      1. Max expected for all required opts
+    //      2. All optionals
+    vector<int> matched(ndx.m_argNames.size());
+    int usedPos = 0;
+
+    for (unsigned category = 0; category < 3; ++category) {
+        for (unsigned i = 0; i < matched.size() && usedPos < numPos; ++i) {
+            auto & argName = ndx.m_argNames[i];
+            int num = numMatches(category, numPos - usedPos, argName);
+            matched[i] += num;
+            usedPos += num;
+        }
+    }
+
+    if (usedPos < numPos)
+        return cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
+    assert(usedPos == numPos);
+
+    int ipos = 0;       // Positional opt being matched.
+    int imatch = 0;     // Values already been matched to this opt.
+    for (auto val = rawValues; val < rawValues + numRawValues; ++val) {
+        if (val->opt || val->type != RawValue::kPositional)
+            continue;
+        if (matched[ipos] <= imatch) {
+            imatch = 0;
+            for (;;) {
+                ipos += 1;
+                if (matched[ipos])
+                    break;
+            }
+        }
+        auto & argName = ndx.m_argNames[ipos];
+        val->opt = argName.opt;
+        val->name = argName.name;
+        imatch += 1;
+    }
+    return true;
+}
+
+//===========================================================================
 static bool badMinMatched(
     Cli & cli,
     const Cli::OptBase & opt,
@@ -2061,8 +2146,8 @@ bool Cli::parse(vector<string> & args) {
     bool needCmd = m_cfg->cmds.size() > 1;
 
     // Commands can't be added when the top level command has a positional
-    // argument, command processing requires that the first positional is
-    // available to identify the command.
+    // argument that may conflict with it, command processing requires that
+    // that the command be unambiguously identifiable.
     assert((ndx.m_allowCommands || !needCmd)
         && "mixing top level positionals with commands");
 
@@ -2092,27 +2177,6 @@ bool Cli::parse(vector<string> & args) {
     }
 
     // Extract raw values and assign non-positional values to opts.
-    struct RawValue {
-        enum Type { kPositional, kNamed, kCommand } type;
-        OptBase * opt;
-        string name;
-        size_t pos;
-        const char * ptr;
-
-        RawValue(
-            Type type,
-            OptBase * opt,
-            string name,
-            size_t pos = 0,
-            const char * ptr = nullptr
-        )
-            : type(type)
-            , opt(opt)
-            , name(name)
-            , pos(pos)
-            , ptr(ptr)
-        {}
-    };
     vector<RawValue> rawValues;
 
     auto arg = args.data();
@@ -2121,6 +2185,7 @@ bool Cli::parse(vector<string> & args) {
     string name;
     bool moreOpts = true;
     int numPos = 0;
+    size_t precmdValues = 0;
     m_cfg->progName = *arg;
     size_t argPos = 1;
     arg += 1;
@@ -2192,11 +2257,23 @@ bool Cli::parse(vector<string> & args) {
         }
 
         // Positional value
-        if (needCmd) {
+        if (needCmd && numPos == ndx.m_requiredPos) {
             auto cmd = (string) ptr;
             if (!commandExists(cmd))
                 return badUsage("Unknown command", cmd);
+            if (!assignPositionals(
+                rawValues.data(),
+                rawValues.size(),
+                *this,
+                ndx,
+                numPos
+            )) {
+                return false;
+            }
             rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
+            precmdValues = rawValues.size();
+            numPos = 0;
+
             needCmd = false;
             m_cfg->command = cmd;
             ndx.index(*this, cmd, false);
@@ -2247,46 +2324,14 @@ bool Cli::parse(vector<string> & args) {
         );
     }
 
-    // Assign positional values to options. There must be enough values for all
-    // opts of a category for any of the next category to be eligible.
-    //
-    // Categories:
-    //      0. Minimum expected for all required opts (vectors may be >1)
-    //      1. Max expected for all required opts
-    //      2. All optionals
-    vector<int> matched(ndx.m_argNames.size());
-    int usedPos = 0;
-
-    for (unsigned category = 0; category < 3; ++category) {
-        for (unsigned i = 0; i < matched.size() && usedPos < numPos; ++i) {
-            auto & argName = ndx.m_argNames[i];
-            int num = numMatches(category, numPos - usedPos, argName);
-            matched[i] += num;
-            usedPos += num;
-        }
-    }
-
-    if (usedPos < numPos)
-        return badUsage("Unexpected argument", rawValues[usedPos].ptr);
-    assert(usedPos == numPos);
-
-    int ipos = 0;       // Positional opt being matched.
-    int imatch = 0;     // Values already been matched to this opt.
-    for (auto&& val : rawValues) {
-        if (val.type != RawValue::kPositional)
-            continue;
-        if (matched[ipos] <= imatch) {
-            imatch = 0;
-            for (;;) {
-                ipos += 1;
-                if (matched[ipos])
-                    break;
-            }
-        }
-        auto & argName = ndx.m_argNames[ipos];
-        val.opt = argName.opt;
-        val.name = argName.name;
-        imatch += 1;
+    if (!assignPositionals(
+        rawValues.data() + precmdValues,
+        rawValues.size() - precmdValues,
+        *this,
+        ndx,
+        numPos
+    )) {
+        return false;
     }
 
     // Parse values and assign them to arguments.

@@ -796,6 +796,16 @@ Options:
 )");
     }
 
+    // allowed top level positional
+    {
+        cli = {};
+        auto & p1 = cli.opt<int>("<1>");
+        cli.command("one");
+        EXPECT_PARSE(cli, "5 one");
+        EXPECT(*p1 == 5);
+        EXPECT(cli.commandMatched() == "one");
+    }
+
     // helpCmd
     {
         cli = {};

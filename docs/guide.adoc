@@ -313,7 +313,7 @@ A few things to keep in mind about positional arguments:
   the first will get all the extras.
 * If there is a required positional with unlimited arity it will prevent any
   optional positionals from getting populated, since it eats up all the
-  arguments before they get a turn.
+  arguments before the optionals get a turn.
 
 [source, C++]
 ----
@@ -904,11 +904,13 @@ command. Exactly the same as when working with a simple command line. If you
 pass an empty string to cli.command() or opt.command() it represents the top
 level processing that takes place before a command has been found.
 
-Options are processed on the top level up to the first positional. The first
-positional is the command, and the rest of the arguments are processed in the
-context of that command. Since the top level doesn't process positionals when
-commands are present, it will assert in debug builds and ignore them in
-release if positionals are defined.
+Options are processed on the top level along with the minimum number of
+positional arguments needed to satisfy its required positionals. The next
+following positional is the command, and the rest of the arguments are
+processed in the context of that command. Since the top level doesn't process
+optional or variable length positionals when commands are present, it will
+assert in debug builds and ignore them in release if they are defined.
+
 [source, C++]
 ----
 static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
