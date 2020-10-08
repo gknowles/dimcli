@@ -2078,9 +2078,11 @@ bool Cli::parse(vector<string> & args) {
 
     // Expand response files
 #ifdef DIMCLI_LIB_FILESYSTEM
-    vector<string> ancestors;
-    if (m_cfg->responseFiles && !expandResponseFiles(*this, args, ancestors))
-        return false;
+    if (m_cfg->responseFiles) {
+        vector<string> ancestors;
+        if (!expandResponseFiles(*this, args, ancestors))
+            return false;
+    }
 #endif
 
     // Before actions
