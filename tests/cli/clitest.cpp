@@ -236,10 +236,10 @@ usage: test [--help] [b]
         (void) cli.exec();
         EXPECT_ERR(
             cli,
-            "Error: Command 'empty' found by parse no longer defined.\n"
+            "Error: Command 'empty' found by parse not defined.\n"
         );
         EXPECT_ASSERT(1 + R"(
-!"command found by parse no longer defined"
+!"command found by parse not defined"
 )");
         cli.action([](auto &) { return false; });
         EXPECT_PARSE(cli, "empty");
@@ -804,6 +804,40 @@ Options:
         EXPECT_PARSE(cli, "5 one");
         EXPECT(*p1 == 5);
         EXPECT(cli.commandMatched() == "one");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] command [args...]
+
+Commands:
+  one
+
+Options:
+  --help    Show this message and exit.
+)");
+        EXPECT_HELP(cli, "one", 1 + R"(
+usage: test one [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+)");
+    }
+
+    // unknownCommand
+    {
+        cli = {};
+        cli.unknownCmd();
+        cli.unknownCmd([](auto &) {
+            return true;
+        });
+        EXPECT_PARSE(cli, "unknown a b c");
+        EXPECT(cli.commandMatched() == "unknown");
+        EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
+        EXPECT_PARSE(cli, "");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS]
+
+Options:
+  --help    Show this message and exit.
+)");
     }
 
     // helpCmd

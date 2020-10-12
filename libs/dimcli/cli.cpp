@@ -172,22 +172,24 @@ struct Cli::OptIndex {
 
 struct Cli::Config {
     vector<function<BeforeFn>> befores;
-    function<BeforeFn> unknownCmd;
+    bool allowUnknown {false};
+    function<ActionFn> unknownCmd;
     unordered_map<string, CommandConfig> cmds;
     unordered_map<string, GroupConfig> cmdGroups;
     list<unique_ptr<OptBase>> opts;
-    bool responseFiles{true};
+    bool responseFiles {true};
     string envOpts;
-    istream * conin{&cin};
-    ostream * conout{&cout};
+    istream * conin {&cin};
+    ostream * conout {&cout};
     shared_ptr<locale> defLoc = make_shared<locale>();
     shared_ptr<locale> numLoc = make_shared<locale>("");
 
-    int exitCode{kExitOk};
+    int exitCode {kExitOk};
     string errMsg;
     string errDetail;
     string progName;
     string command;
+    vector<string> unknownArgs;
 
     static void touchAllCmds(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli);
@@ -1148,6 +1150,13 @@ Cli & Cli::before(function<BeforeFn> fn) {
 }
 
 //===========================================================================
+Cli & Cli::unknownCmd(function<ActionFn> fn) {
+    m_cfg->allowUnknown = true;
+    m_cfg->unknownCmd = move(fn);
+    return *this;
+}
+
+//===========================================================================
 Cli & Cli::iostreams(istream * in, ostream * out) {
     m_cfg->conin = in ? in : &cin;
     m_cfg->conout = out ? out : &cout;
@@ -1862,6 +1871,7 @@ Cli & Cli::resetValues() {
     m_cfg->errDetail.clear();
     m_cfg->progName.clear();
     m_cfg->command.clear();
+    m_cfg->unknownArgs.clear();
     return *this;
 }
 
@@ -2143,12 +2153,19 @@ bool Cli::parse(vector<string> & args) {
     Config::touchAllCmds(*this);
     OptIndex ndx;
     ndx.index(*this, "", false);
-    bool needCmd = m_cfg->cmds.size() > 1;
+    enum {
+        kNone,
+        kPending,
+        kFound,
+        kUnknown
+    } cmdMode = m_cfg->allowUnknown || m_cfg->cmds.size() > 1
+        ? kPending
+        : kNone;
 
     // Commands can't be added when the top level command has a positional
     // argument that may conflict with it, command processing requires that
     // that the command be unambiguously identifiable.
-    assert((ndx.m_allowCommands || !needCmd)
+    assert((ndx.m_allowCommands || !cmdMode)
         && "mixing top level positionals with commands");
 
     resetValues();
@@ -2257,10 +2274,8 @@ bool Cli::parse(vector<string> & args) {
         }
 
         // Positional value
-        if (needCmd && numPos == ndx.m_requiredPos) {
+        if (cmdMode == kPending && numPos == ndx.m_requiredPos) {
             auto cmd = (string) ptr;
-            if (!commandExists(cmd))
-                return badUsage("Unknown command", cmd);
             if (!assignPositionals(
                 rawValues.data(),
                 rawValues.size(),
@@ -2274,9 +2289,20 @@ bool Cli::parse(vector<string> & args) {
             precmdValues = rawValues.size();
             numPos = 0;
 
-            needCmd = false;
+            if (commandExists(cmd)) {
+                cmdMode = kFound;
+                ndx.index(*this, cmd, false);
+            } else if (m_cfg->allowUnknown) {
+                cmdMode = kUnknown;
+                moreOpts = false;
+            } else {
+                return badUsage("Unknown command", cmd);
+            }
             m_cfg->command = cmd;
-            ndx.index(*this, cmd, false);
+            continue;
+        }
+        if (cmdMode == kUnknown) {
+            m_cfg->unknownArgs.push_back(ptr);
             continue;
         }
 
@@ -2324,14 +2350,16 @@ bool Cli::parse(vector<string> & args) {
         );
     }
 
-    if (!assignPositionals(
-        rawValues.data() + precmdValues,
-        rawValues.size() - precmdValues,
-        *this,
-        ndx,
-        numPos
-    )) {
-        return false;
+    if (cmdMode != kUnknown) {
+        if (!assignPositionals(
+            rawValues.data() + precmdValues,
+            rawValues.size() - precmdValues,
+            *this,
+            ndx,
+            numPos
+        )) {
+            return false;
+        }
     }
 
     // Parse values and assign them to arguments.
@@ -2435,18 +2463,26 @@ const string & Cli::commandMatched() const {
 }
 
 //===========================================================================
+const vector<string> & Cli::unknownArgs() const {
+    return m_cfg->unknownArgs;
+}
+
+//===========================================================================
 bool Cli::exec() {
     auto & name = commandMatched();
-    auto & cmd = m_cfg->cmds[name];
-    if (!cmd.action) {
+    auto action = commandExists(name)
+        ? m_cfg->cmds[name].action
+        : m_cfg->unknownCmd;
+
+    if (!action) {
         // Most likely parse failed, was never run, or "this" was reset.
-        assert(!"command found by parse no longer defined");
+        assert(!"command found by parse not defined");
         return fail(
             kExitSoftware,
-            "Command '" + name + "' found by parse no longer defined."
+            "Command '" + name + "' found by parse not defined."
         );
     }
-    if (!cmd.action(*this)) {
+    if (!action(*this)) {
         if (exitCode())
             return false;
 

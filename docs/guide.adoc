@@ -908,8 +908,8 @@ Options are processed on the top level along with the minimum number of
 positional arguments needed to satisfy its required positionals. The next
 following positional is the command, and the rest of the arguments are
 processed in the context of that command. Since the top level doesn't process
-optional or variable length positionals when commands are present, it will
-assert in debug builds and ignore them in release if they are defined.
+optional or variable length positionals when commands are present, their
+definitions will assert in debug builds and be ignored in release.
 
 [source, C++]
 ----
@@ -1005,6 +1005,44 @@ Options:
   --color=STRING  Change color of the apple. (default: red)
 
   --help          Show this message and exit.
+----
+
+==== External Commands
+In order to support an external command that processes its own command line you
+set an unknown command action. That action will be called by cli.exec() just
+like any other command action. Or, after parsing, instead of calling cli.exec()
+you can use cli.commandMatched() and cli.unknownArgs() to see what happened.
+
+When the matched command is unknown, the unknownArgs vector is populated with
+the all arguments that follow the command. Including any that started with "-",
+as if "--" had been given.
+
+[source, C++]
+----
+int unknown(Dim::Cli & cli) {
+    cout << "Command: " << cli.commandMatched() << endl;
+    for (auto&& arg : cli.unknownArgs())
+        cout << "Arg: " << arg << endl;
+    return EX_OK;
+}
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.unknownCmd(unknown);
+    cli.exec(argc, argv))
+    return cli.printError(cerr);
+}
+----
+
+[source, shell session]
+----
+$ a.out
+Error: No command given.
+$ a.out test 1 2 3
+Command: test
+Arg: 1
+Arg: 2
+Arg: 3
 ----
 
 

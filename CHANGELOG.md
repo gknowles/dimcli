@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - optVec.size(exact) and optVec.size(min, max)
 - Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead
 - Added - Allow unambiguous positionals before subcommands.
+- Added - Optionally capture arbitrary arguments of unknown subcommands.
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean

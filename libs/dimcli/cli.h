@@ -282,10 +282,10 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Changes config context to reference the options of the selected
-    // command. Use an empty string to specify the top level context. If a
-    // new command is selected it will be created in the command group of the
-    // current context.
+    // Changes config context to reference an option group of the selected
+    // command. Use an empty string to specify the top level context. If a new
+    // command is selected it is created in the command group of the current
+    // context.
     Cli & command(const std::string & name, const std::string & group = {});
 
     // Function signature of actions that are tied to commands.
@@ -368,6 +368,12 @@ public:
     //  - inspect and possibly modify the raw arguments coming in
     //  - return false if parsing should stop, via badUsage() for errors
     Cli & before(std::function<BeforeFn> fn);
+
+    // Allows unknown subcommands, and sets either a default action, which
+    // errors out, or a custom action to run when there is an unknown command.
+    // Use cli.commandMatched() and cli.unknownArgs() to determine the command
+    // and it's arguments.
+    Cli & unknownCmd(std::function<ActionFn> fn = {});
 
     // Changes the streams used for prompting, printing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults
@@ -566,13 +572,19 @@ public:
     // Program name received in argv[0]
     const std::string & progName() const;
 
-    // Command to run, as selected by the arguments, empty string if there are
-    // no commands defined or none were selected.
+    // Command to run, as determined by the arguments, empty string if there
+    // are no commands defined or none were matched.
     const std::string & commandMatched() const;
 
-    // Executes the action of the selected command; returns true if it worked.
+    // If commands are defined, or unknownCmd() was set, and the matched
+    // command is unknown, the unknownArgs vector is populated with the all
+    // arguments that follow the command. Including any that started with "-",
+    // as if "--" had been given.
+    const std::vector<std::string> & unknownArgs() const;
+
+    // Executes the action of the matched command; returns true if it worked.
     // On failure it's expected to have set exitCode, errMsg, and optionally
-    // errDetail via fail(). If no command was selected it runs the action of
+    // errDetail via fail(). If no command was matched it runs the action of
     // the empty "" command, which defaults to failing with "No command given."
     // but can be set via cli.action() just like any other command.
     [[nodiscard]] bool exec();
@@ -1295,7 +1307,7 @@ public:
     // Action to run after all arguments have been parsed, any number of
     // after actions can be added and will, for each option, be called in the
     // order they're added. When using subcommands, the after actions bound
-    // to unselected subcommands are not executed. The function should:
+    // to unmatched subcommands are not executed. The function should:
     //  - Do something interesting.
     //  - Call cli.badUsage() and return false on error.
     //  - Return true if processing should continue.
