@@ -37,14 +37,16 @@ namespace fs = DIMCLI_LIB_FILESYSTEM;
 *
 ***/
 
+const size_t kDefaultConsoleWidth = 80;
+const size_t kMinConsoleWidth = 50;
+const size_t kMaxConsoleWidth = 80;
+
 // column where description text starts
-const size_t kMinDescCol = 11;
-const size_t kMaxDescCol = 28;
+const size_t kDefaultMinDescCol = 11;
+const size_t kDefaultMaxDescCol = 28;
 
 // maximum help text line length
-const size_t kMaxLineWidth = 79;
-
-const size_t kDefaultConsoleWidth = 80;
+const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
 
 
 /****************************************************************************
@@ -191,6 +193,11 @@ struct Cli::Config {
     string command;
     vector<string> unknownArgs;
 
+    size_t maxWidth {kDefaultConsoleWidth};
+    size_t minDescCol {kDefaultMinDescCol};
+    size_t maxDescCol {kDefaultMaxDescCol};
+    size_t maxLineWidth {kDefaultMaxLineWidth};
+
     static void touchAllCmds(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli, const string & name);
@@ -206,6 +213,9 @@ struct Cli::Config {
         const string & name
     );
     static const GroupConfig & findGrpOrDie(const Cli & cli);
+
+    Config();
+    void updateWidth(size_t width);
 };
 
 
@@ -218,8 +228,9 @@ struct Cli::Config {
 // forward declarations
 static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static bool defCmdAction(Cli & cli);
-static void printChoices(
+static void printChoicesDetail(
     ostream & os,
+    const Cli::Config & cfg,
     unordered_map<string, Cli::OptBase::ChoiceDesc> const & choices
 );
 
@@ -429,6 +440,28 @@ const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     return i->second;
 }
 
+//===========================================================================
+Cli::Config::Config() {
+    static size_t width = clamp<size_t>(
+        Cli::consoleWidth(),
+        kMinConsoleWidth,
+        kMaxConsoleWidth
+    );
+    updateWidth(width);
+}
+
+//===========================================================================
+void Cli::Config::updateWidth(size_t width) {
+    this->maxWidth = width;
+    this->maxLineWidth = width - 1;
+    this->minDescCol = kDefaultMinDescCol
+        * (kDefaultConsoleWidth + width) / 2
+        / kDefaultConsoleWidth;
+    this->maxDescCol = kDefaultMaxDescCol
+        * width
+        / kDefaultConsoleWidth;
+}
+
 
 /****************************************************************************
 *
@@ -558,7 +591,8 @@ bool Cli::OptIndex::findNamedOpts(
     for (auto && opt : cli.m_cfg->opts) {
         auto list = nameList(cli, *opt, type);
         if (auto width = list.size()) {
-            colWidth = max(colWidth, width);
+            if (width < cli.m_cfg->maxDescCol)
+                colWidth = max(colWidth, width);
             OptKey key;
             key.opt = opt.get();
             key.list = list;
@@ -833,7 +867,7 @@ bool Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
         return true;
 
     ostringstream os;
-    printChoices(os, opt.m_choiceDescs);
+    printChoicesDetail(os, *cli.m_cfg, opt.m_choiceDescs);
     return cli.badUsage(opt, val, os.str());
 }
 
@@ -1132,8 +1166,9 @@ const string & Cli::cmdSortKey() const {
 }
 
 //===========================================================================
-void Cli::responseFiles(bool enable) {
-    m_cfg->responseFiles = enable;
+Cli & Cli::before(function<BeforeFn> fn) {
+    m_cfg->befores.push_back(move(fn));
+    return *this;
 }
 
 #if !defined(DIMCLI_LIB_NO_ENV)
@@ -1144,16 +1179,8 @@ void Cli::envOpts(const string & var) {
 #endif
 
 //===========================================================================
-Cli & Cli::before(function<BeforeFn> fn) {
-    m_cfg->befores.push_back(move(fn));
-    return *this;
-}
-
-//===========================================================================
-Cli & Cli::unknownCmd(function<ActionFn> fn) {
-    m_cfg->allowUnknown = true;
-    m_cfg->unknownCmd = move(fn);
-    return *this;
+void Cli::responseFiles(bool enable) {
+    m_cfg->responseFiles = enable;
 }
 
 //===========================================================================
@@ -1171,6 +1198,22 @@ istream & Cli::conin() {
 //===========================================================================
 ostream & Cli::conout() {
     return *m_cfg->conout;
+}
+
+//===========================================================================
+void Cli::maxWidth(int maxWidth, int minDescCol, int maxDescCol) {
+    m_cfg->updateWidth(maxWidth);
+    if (minDescCol)
+        m_cfg->minDescCol = minDescCol;
+    if (maxDescCol)
+        m_cfg->maxDescCol = maxDescCol;
+}
+
+//===========================================================================
+Cli & Cli::unknownCmd(function<ActionFn> fn) {
+    m_cfg->allowUnknown = true;
+    m_cfg->unknownCmd = move(fn);
+    return *this;
 }
 
 //===========================================================================
@@ -2543,8 +2586,19 @@ namespace {
 
 struct WrapPos {
     size_t pos{0};
-    size_t maxWidth{kMaxLineWidth};
     string prefix;
+    size_t minDescCol {11};
+    size_t maxDescCol {28};
+    size_t maxWidth {79};
+
+    WrapPos(const Cli::Config & cfg)
+        : minDescCol{cfg.minDescCol}
+        , maxDescCol{cfg.maxDescCol}
+        , maxWidth{cfg.maxLineWidth}
+    {}
+    size_t clampDescWidth(size_t colWidth) const {
+        return clamp(colWidth, minDescCol, maxDescCol);
+    }
 };
 
 struct ChoiceKey {
@@ -2698,7 +2752,7 @@ static void writeChoices(
     vector<ChoiceKey> keys;
     getChoiceKeys(keys, colWidth, choices);
     const size_t indent = 6;
-    colWidth = max(min(colWidth + indent + 1, kMaxDescCol), kMinDescCol);
+    colWidth = wp.clampDescWidth(colWidth + indent + 1);
 
     string desc;
     for (auto && k : keys) {
@@ -2714,13 +2768,14 @@ static void writeChoices(
 }
 
 //===========================================================================
-static void printChoices(
+static void printChoicesDetail(
     ostream & os,
+    const Cli::Config & cfg,
     unordered_map<string, Cli::OptBase::ChoiceDesc> const & choices
 ) {
     if (choices.empty())
         return;
-    WrapPos wp;
+    WrapPos wp{cfg};
     writeText(os, wp, "Must be ");
     size_t colWidth = 0;
     vector<ChoiceKey> keys;
@@ -2758,13 +2813,13 @@ int Cli::printHelp(
     auto & top = Config::findCmdAlways(*this, "");
     auto & hdr = cmd.header.empty() ? top.header : cmd.header;
     if (*hdr.data()) {
-        WrapPos wp;
+        WrapPos wp{*m_cfg};
         writeText(os, wp, hdr);
         writeNewline(os, wp);
     }
     printUsage(os, progName, cmdName);
     if (!cmd.desc.empty()) {
-        WrapPos wp;
+        WrapPos wp{*m_cfg};
         writeNewline(os, wp);
         writeText(os, wp, cmd.desc);
         writeNewline(os, wp);
@@ -2775,7 +2830,7 @@ int Cli::printHelp(
     printOptions(os, cmdName);
     auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
     if (*ftr.data()) {
-        WrapPos wp;
+        WrapPos wp{*m_cfg};
         writeNewline(os, wp);
         writeText(os, wp, ftr);
     }
@@ -2795,7 +2850,7 @@ int Cli::writeUsageImpl(
     auto prog = displayName(arg0.empty() ? progName() : arg0);
     const string usageStr{"usage: "};
     os << usageStr << prog;
-    WrapPos wp;
+    WrapPos wp{*m_cfg};
     wp.pos = prog.size() + usageStr.size();
     wp.prefix = string(wp.pos, ' ');
     if (cmdName.size())
@@ -2858,15 +2913,6 @@ int Cli::printUsageEx(
 }
 
 //===========================================================================
-static size_t clampDescWidth(size_t colWidth) {
-    if (colWidth < kMinDescCol)
-        return kMinDescCol;
-    if (colWidth > kMaxDescCol)
-        return kMaxDescCol;
-    return colWidth;
-}
-
-//===========================================================================
 void Cli::printPositionals(ostream & os, const string & cmd) {
     OptIndex ndx;
     ndx.index(*this, cmd, true);
@@ -2874,14 +2920,15 @@ void Cli::printPositionals(ostream & os, const string & cmd) {
     bool hasDesc = false;
     for (auto && pa : ndx.m_argNames) {
         // Find widest positional argument name.
-        colWidth = max(colWidth, pa.name.size());
+        if (pa.name.size() < m_cfg->maxDescCol)
+            colWidth = max(colWidth, pa.name.size());
         hasDesc = hasDesc || pa.opt->m_desc.size();
     }
-    colWidth = clampDescWidth(colWidth + 3);
     if (!hasDesc)
         return;
 
-    WrapPos wp;
+    WrapPos wp{*m_cfg};
+    colWidth = wp.clampDescWidth(colWidth + 3);
     for (auto && pa : ndx.m_argNames) {
         wp.prefix.assign(4, ' ');
         writeToken(os, wp, "  " + pa.name);
@@ -2903,9 +2950,9 @@ void Cli::printOptions(ostream & os, const string & cmdName) {
     vector<OptKey> namedOpts;
     if (!ndx.findNamedOpts(namedOpts, colWidth, *this, cmd, kNameAll, false))
         return;
-    colWidth = clampDescWidth(colWidth + 3);
 
-    WrapPos wp;
+    WrapPos wp{*m_cfg};
+    colWidth = wp.clampDescWidth(colWidth + 3);
     const char * gname = nullptr;
     for (auto && key : namedOpts) {
         if (!gname || key.opt->m_group != gname) {
@@ -2951,7 +2998,8 @@ void Cli::printCommands(ostream & os) {
     vector<CmdKey> keys;
     for (auto && cmd : m_cfg->cmds) {
         if (auto width = cmd.first.size()) {
-            colWidth = max(colWidth, width);
+            if (width < m_cfg->maxDescCol)
+                colWidth = max(colWidth, width);
             CmdKey key = {
                 cmd.first.c_str(),
                 &cmd.second,
@@ -2962,14 +3010,14 @@ void Cli::printCommands(ostream & os) {
     }
     if (keys.empty())
         return;
-    colWidth = max(min(colWidth + 3, kMaxDescCol), kMinDescCol);
     sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
         if (int rc = a.grp->sortKey.compare(b.grp->sortKey))
             return rc < 0;
         return strcmp(a.name, b.name) < 0;
     });
 
-    WrapPos wp;
+    WrapPos wp{*m_cfg};
+    colWidth = wp.clampDescWidth(colWidth + 3);
     const char * gname = nullptr;
     for (auto && key : keys) {
         if (!gname || key.grp->name != gname) {

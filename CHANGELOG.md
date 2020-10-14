@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead
 - Added - Allow unambiguous positionals before subcommands.
 - Added - Optionally capture arbitrary arguments of unknown subcommands.
+- Added - Option to change column at which errors and help text wraps.
+- Changed - Default text columns reduced on narrow console windows
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean

@@ -145,6 +145,15 @@ void toCmdlineTest(
 
 }
 
+namespace {
+
+class CliTest : public Dim::CliLocal {
+public:
+    CliTest() { maxWidth(80); }
+};
+
+}
+
 
 /****************************************************************************
 *
@@ -180,7 +189,7 @@ void assertTest(int line, const char text[]) {
 
 //===========================================================================
 void assertTests() {
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // bad usage
     enum MyType {} mval;
@@ -313,7 +322,7 @@ ostream & operator<<(ostream & os, const ExtractWithInsert & in) {
 //===========================================================================
 void valueTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // parse action
     {
@@ -411,7 +420,7 @@ Options:
 //===========================================================================
 void parseTests() {
     //int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     EXPECT_PARSE(cli, "-x", false);
     EXPECT_ERR(cli, "Error: Unknown option: -x\n");
@@ -457,7 +466,7 @@ void parseTests() {
 //===========================================================================
 void choiceTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     enum class State { go, wait, stop };
 
     cli = {};
@@ -565,9 +574,155 @@ Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
 //===========================================================================
 void helpTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     istringstream in;
     ostringstream out;
+
+    // no options
+    {
+        cli = {};
+        cli.helpOpt().show(false);
+        EXPECT_PARSE(cli);
+        EXPECT_HELP(cli, {}, 1 + R"(
+usage: test
+)");
+    }
+
+    {
+        cli = {};
+        auto & num = cli.opt<int>("n quantity", 1).desc("quantity is an int");
+        cli.opt(num, "c").desc("alias for quantity").valueDesc("COUNT");
+        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc({});
+        cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
+        cli.opt<bool>("does-not-quite-fit-into-col.")
+            .desc("slightly too long option name that also has a long "
+                  "description");
+        cli.opt<bool>("s special !S", false).desc("snowflake");
+        cli.group("name").title("Name options")
+            .optVec<string>("name");
+        EXPECT(cli.title() == "Name options");
+        cli.group({}).optVec<string>("[key]").desc(
+            "it's the key arguments with a very long description that "
+            "wraps the line at least once, maybe more.");
+        cli.title(
+            "Long explanation of this very short set of options, it's so "
+            "long that it even wraps around to the next line");
+        EXPECT_HELP(cli, {}, 1 + R"(
+usage: test [OPTIONS] [key...]
+  key       it's the key arguments with a very long description that wraps the
+            line at least once, maybe more.
+
+Long explanation of this very short set of options, it's so long that it even
+wraps around to the next line:
+  -c COUNT            alias for quantity (default: 0)
+  --does-not-quite-fit-into-col
+                      slightly too long option name that also has a long
+                      description
+  -n, --quantity=NUM  quantity is an int (default: 1)
+  --n2=NUM            no defaultDesc
+  --n3=NUM            custom defaultDesc (default: three)
+  -s, --special / -S, --no-special
+                      snowflake
+
+Name options:
+  --name=STRING
+
+  --help              Show this message and exit.
+)");
+        EXPECT_USAGE(cli, {}, 1 + R"(
+usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --quantity=NUM]
+            [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
+            [key...]
+)");
+
+        // with maxWidth of 70
+        cli.maxWidth(70);
+        EXPECT_HELP(cli, {}, 1 + R"(
+usage: test [OPTIONS] [key...]
+  key      it's the key arguments with a very long description that
+           wraps the line at least once, maybe more.
+
+Long explanation of this very short set of options, it's so long that
+it even wraps around to the next line:
+  -c COUNT            alias for quantity (default: 0)
+  --does-not-quite-fit-into-col
+                      slightly too long option name that also has a
+                      long description
+  -n, --quantity=NUM  quantity is an int (default: 1)
+  --n2=NUM            no defaultDesc
+  --n3=NUM            custom defaultDesc (default: three)
+  -s, --special / -S, --no-special
+                      snowflake
+
+Name options:
+  --name=STRING
+
+  --help              Show this message and exit.
+)");
+        EXPECT_USAGE(cli, {}, 1 + R"(
+usage: test [-c COUNT] [--does-not-quite-fit-into-col]
+            [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
+            [--name=STRING] [-s, --special] [--help] [key...]
+)");
+
+        // with maxWidth of 50
+        cli.maxWidth(50);
+        EXPECT_HELP(cli, {}, 1 + R"(
+usage: test [OPTIONS] [key...]
+  key    it's the key arguments with a very long
+         description that wraps the line at least
+         once, maybe more.
+
+Long explanation of this very short set of
+options, it's so long that it even wraps around
+to the next line:
+  -c COUNT       alias for quantity (default: 0)
+  --does-not-quite-fit-into-col
+                 slightly too long option name
+                 that also has a long description
+  -n, --quantity=NUM
+                 quantity is an int (default: 1)
+  --n2=NUM       no defaultDesc
+  --n3=NUM       custom defaultDesc (default:
+                 three)
+  -s, --special / -S, --no-special
+                 snowflake
+
+Name options:
+  --name=STRING
+
+  --help         Show this message and exit.
+)");
+        EXPECT_USAGE(cli, {}, 1 + R"(
+usage: test [-c COUNT]
+            [--does-not-quite-fit-into-col]
+            [-n, --quantity=NUM] [--n2=NUM]
+            [--n3=NUM] [--name=STRING]
+            [-s, --special] [--help] [key...]
+)");
+
+    }
+
+    // option with enough names to wrap
+    {
+        cli = {};
+        cli.opt<bool>("option with excessively long list of key names")
+            .desc("Why so many?");
+        cli.opt<string>("< equal '=' in name >")
+            .desc("Equals are sometimes reserved.");
+        EXPECT_HELP(cli, "", 1 + R"(
+usage: test [OPTIONS] <equal '=' in name>
+  equal '=' in name  Equals are sometimes reserved.
+
+Options:
+  --option, --with, --excessively, --long, --list, --of, --key, --names /
+     --no-option, --no-with, --no-excessively, --no-long, --no-list, --no-of,
+     --no-key, --no-names
+            Why so many?
+
+  --help    Show this message and exit.
+)");
+    }
 
     // version option
     {
@@ -707,7 +862,7 @@ Three:
 //===========================================================================
 void cmdTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     istringstream in;
     ostringstream out;
 
@@ -904,7 +1059,7 @@ usage: test help [-u, --usage] [--help] [command]
 //===========================================================================
 void argvTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // windows style argument parsing
     {
@@ -977,7 +1132,7 @@ c\d)", {"ab$c\\d"});
 //===========================================================================
 void optCheckTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // require
     {
@@ -1028,7 +1183,7 @@ void optCheckTests() {
 //===========================================================================
 void flagTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // flagValue
     {
@@ -1127,7 +1282,7 @@ void responseTests() {
 #ifdef FILESYSTEM
     namespace fs = FILESYSTEM;
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     if (!fs::is_directory("test"))
         fs::create_directories("test");
@@ -1200,7 +1355,7 @@ void responseTests() {
 void filesystemTests() {
 #ifdef FILESYSTEM
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     namespace fs = FILESYSTEM;
 
     {
@@ -1236,7 +1391,7 @@ Options:
 //===========================================================================
 void execTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     ostringstream out;
 
     const char * argsNone[] = { "test", nullptr };
@@ -1288,7 +1443,7 @@ void execTests() {
 //===========================================================================
 void vectorTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // optVec
     {
@@ -1435,7 +1590,7 @@ Options:
 //===========================================================================
 void basicTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // assignment operator
     {
@@ -1445,57 +1600,15 @@ void basicTests() {
 
     {
         cli = {};
-        cli.helpOpt().show(false);
-        EXPECT_PARSE(cli);
-        EXPECT_HELP(cli, {}, 1 + R"(
-usage: test
-)");
-    }
-
-    {
-        cli = {};
-        auto & num = cli.opt<int>(" n number ", 1).desc("number is an int");
-        cli.opt(num, "c").desc("alias for number").valueDesc("COUNT");
-        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc({});
-        cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
-        cli.opt<bool>("does-not-quite-fit-into-col.")
-            .desc("slightly too long option name");
+        auto & num = cli.opt<int>(" n number ", 1);
+        cli.opt(num, "c");
+        cli.opt<int>("n2", 2);
+        cli.opt<int>("n3", 3);
         auto & special = cli.opt<bool>("s special !S", false).desc("snowflake");
         auto & name = cli.group("name").title("Name options")
             .optVec<string>("name");
         EXPECT(cli.title() == "Name options");
-        auto & keys = cli.group({})
-            .optVec<string>("[key]").desc(
-                "it's the key arguments with a very long description that "
-                "wraps the line at least once, maybe more.");
-        cli.title(
-            "Long explanation of this very short set of options, it's so "
-            "long that it even wraps around to the next line");
-        EXPECT_HELP(cli, {}, 1 + R"(
-usage: test [OPTIONS] [key...]
-  key       it's the key arguments with a very long description that wraps the
-            line at least once, maybe more.
-
-Long explanation of this very short set of options, it's so long that it even
-wraps around to the next line:
-  -c COUNT                   alias for number (default: 0)
-  --does-not-quite-fit-into-col  slightly too long option name
-  -n, --number=NUM           number is an int (default: 1)
-  --n2=NUM                   no defaultDesc
-  --n3=NUM                   custom defaultDesc (default: three)
-  -s, --special / -S, --no-special
-                             snowflake
-
-Name options:
-  --name=STRING
-
-  --help                     Show this message and exit.
-)");
-        EXPECT_USAGE(cli, {}, 1 + R"(
-usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --number=NUM]
-            [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
-            [key...]
-)");
+        auto & keys = cli.group({}).optVec<string>("[key]");
         EXPECT_PARSE(cli, "-n3");
         EXPECT(*num == 3);
         EXPECT(!*special);
@@ -1536,26 +1649,6 @@ usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --number=NUM]
 usage: test [--help] [arg1]
 )");
     }
-
-    {
-        cli = {};
-        cli.opt<bool>("option with excessively long list of key names")
-            .desc("Why so many?");
-        cli.opt<string>("< equal '=' in name >")
-            .desc("Equals are sometimes reserved.");
-        EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] <equal '=' in name>
-  equal '=' in name  Equals are sometimes reserved.
-
-Options:
-  --option, --with, --excessively, --long, --list, --of, --key, --names /
-     --no-option, --no-with, --no-excessively, --no-long, --no-list, --no-of,
-     --no-key, --no-names    Why so many?
-
-  --help                     Show this message and exit.
-)");
-    }
-
 }
 
 
@@ -1576,7 +1669,7 @@ istream & operator>>(istream & is, EnumAB & val) {
 //===========================================================================
 void unitsTests() {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
 
     // si units
     {
@@ -1754,7 +1847,7 @@ Options:
 //===========================================================================
 void promptTests(bool prompt) {
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     istringstream in;
     ostringstream out;
 
@@ -1854,7 +1947,7 @@ Options:
 
 //===========================================================================
 void beforeTests() {
-    Dim::CliLocal cli;
+    CliTest cli;
     cli.before([](auto & cli, auto & args) {
         if (args.size() > 1)
             return cli.fail(Dim::kExitUsage, "Too many args");
@@ -1875,7 +1968,7 @@ void beforeTests() {
 void envTests() {
 #if !defined(DIMCLI_LIB_NO_ENV)
     int line = 0;
-    Dim::CliLocal cli;
+    CliTest cli;
     int result;
 
     cli = {};
@@ -1901,10 +1994,11 @@ void envTests() {
 
 //===========================================================================
 static int runTests(bool prompt) {
-    // consoleWidth() calls for code coverage.
+    // consoleWidth() call for code coverage.
     unsigned width = Dim::Cli::consoleWidth(false);
-    width = Dim::Cli::consoleWidth();
     (void) width;
+    Dim::Cli cli;
+    cli.maxWidth(80);
 
     unitsTests();
     parseTests();
@@ -1945,7 +2039,7 @@ int main(int argc, char * argv[]) {
     _set_error_mode(_OUT_TO_MSGBOX);
 #endif
 
-    Dim::CliLocal cli;
+    CliTest cli;
     cli.helpNoArgs();
     cli.opt<bool>("test").desc("Run tests.");
     auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting.");

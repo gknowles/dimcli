@@ -348,17 +348,6 @@ public:
     const std::string & cmdSortKey() const;
 
     //-----------------------------------------------------------------------
-    // Enabled by default, response file expansion replaces arguments of the
-    // form "@file" with the contents of the file.
-    void responseFiles(bool enable = true);
-
-#if !defined(DIMCLI_LIB_NO_ENV)
-    // Environment variable to get initial options from. Defaults to the empty
-    // string, but when set the content of the named variable is parsed into
-    // args which are then inserted into the argument list right after arg0.
-    void envOpts(const std::string & envVar);
-#endif
-
     // Function signature of actions that run before options are populated.
     using BeforeFn = bool(Cli & cli, std::vector<std::string> & args);
 
@@ -368,6 +357,26 @@ public:
     //  - inspect and possibly modify the raw arguments coming in
     //  - return false if parsing should stop, via badUsage() for errors
     Cli & before(std::function<BeforeFn> fn);
+
+#if !defined(DIMCLI_LIB_NO_ENV)
+    // Environment variable to get initial options from. Defaults to the empty
+    // string, but when set the content of the named variable is parsed into
+    // args which are then inserted into the argument list right after arg0.
+    void envOpts(const std::string & envVar);
+#endif
+
+    // Change the column at which errors and help text wraps. When there is a
+    // second column for descriptions (the first being argument, command, or
+    // option names) it's position is equal to the length needed for the
+    // longest name clamped to within the given descCol min/max.
+    //
+    // By default min(max)DescCol are derived from maxWidth, and maxWidth
+    // defaults to console width clamped to within 50 to 80 columns.
+    void maxWidth(int maxWidth, int minDescCol = 0, int maxDescCol = 0);
+
+    // Enabled by default, response file expansion replaces arguments of the
+    // form "@file" with the contents of the file.
+    void responseFiles(bool enable = true);
 
     // Allows unknown subcommands, and sets either a default action, which
     // errors out, or a custom action to run when there is an unknown command.

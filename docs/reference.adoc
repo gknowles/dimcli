@@ -399,6 +399,9 @@ which are then inserted into the argument list right after arg0.
 intended for testing. Setting to null restores the defaults which are cin and
 cout respectively.
 
+| cli.maxWidth
+| Change the column at which errors and help text wraps.
+
 | cli.<<guide.adoc#response-files, responseFiles>>
 | Enabled by default, response file expansion replaces arguments of the form
 "@file" with the contents of the file.
