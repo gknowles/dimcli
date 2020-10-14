@@ -122,7 +122,7 @@ void toArgvTest(
     int line,
     function<vector<string>(const string &)> fn,
     const string & cmdline,
-    vector<string> const & argv
+    const vector<string> & argv
 ) {
     auto args = fn(cmdline);
     EXPECT(args == argv);
@@ -133,7 +133,7 @@ void toCmdlineTest(
     int line,
     function<string(size_t, char**)> fn,
     function<vector<string>(const string &)> fnv,
-    vector<string> const & argv,
+    const vector<string> & argv,
     const string & cmdline
 ) {
     auto pargs = Dim::Cli::toPtrArgv(argv);
@@ -1116,7 +1116,7 @@ c\d)", {"ab$c\\d"});
     EXPECT(cli.toCmdline(a1) == cmdline);
     auto p1 = cli.toPtrArgv(a1);
     EXPECT(cli.toCmdline(p1.size(), p1.data()) == cmdline);
-    wchar_t const * wargs[] = { L"a", L"b", L"c", NULL };
+    const wchar_t * wargs[] = { L"a", L"b", L"c", NULL };
     a1 = cli.toArgv(sizeof wargs / sizeof *wargs - 1, (wchar_t **) wargs);
     EXPECT(cli.toCmdline(a1) == cmdline);
     EXPECT(cli.toCmdlineL("a", 'b', "c"s) == cmdline);

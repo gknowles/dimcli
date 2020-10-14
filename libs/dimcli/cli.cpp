@@ -231,7 +231,7 @@ static bool defCmdAction(Cli & cli);
 static void printChoicesDetail(
     ostream & os,
     const Cli::Config & cfg,
-    unordered_map<string, Cli::OptBase::ChoiceDesc> const & choices
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 );
 
 //===========================================================================
@@ -505,7 +505,7 @@ bool Cli::OptBase::withUnits(
     long double & out,
     Cli & cli,
     const string & val,
-    unordered_map<string, long double> const & units,
+    const unordered_map<string, long double> & units,
     int flags
 ) const {
     auto & f = use_facet<ctype<char>>(m_interpreter.getloc());
@@ -1278,7 +1278,7 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
 
 //===========================================================================
 // static
-vector<const char *> Cli::toPtrArgv(vector<string> const & args) {
+vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
     vector<const char *> argv;
     argv.reserve(args.size() + 1);
     for (auto && arg : args)
@@ -1608,7 +1608,7 @@ IN_QUOTED:
 
 //===========================================================================
 // static
-string Cli::toCmdline(vector<string> const & args) {
+string Cli::toCmdline(const vector<string> & args) {
     auto ptrs = toPtrArgv(args);
     return toCmdline(ptrs.size(), ptrs.data());
 }
@@ -2719,7 +2719,7 @@ string Cli::descStr(const Cli::OptBase & opt) const {
 static void getChoiceKeys(
     vector<ChoiceKey> & keys,
     size_t & maxWidth,
-    unordered_map<string, Cli::OptBase::ChoiceDesc> const & choices
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
     keys.clear();
     maxWidth = 0;
@@ -2744,7 +2744,7 @@ static void getChoiceKeys(
 static void writeChoices(
     ostream & os,
     WrapPos & wp,
-    unordered_map<string, Cli::OptBase::ChoiceDesc> const & choices
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
     if (choices.empty())
         return;
@@ -2771,7 +2771,7 @@ static void writeChoices(
 static void printChoicesDetail(
     ostream & os,
     const Cli::Config & cfg,
-    unordered_map<string, Cli::OptBase::ChoiceDesc> const & choices
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
     if (choices.empty())
         return;

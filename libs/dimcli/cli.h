@@ -465,7 +465,7 @@ public:
     // into the source string vector and are only valid until that vector is
     // resized or destroyed.
     static std::vector<const char *> toPtrArgv(
-        std::vector<std::string> const & args
+        const std::vector<std::string> & args
     );
 
     // Parse according to glib conventions, based on the UNIX98 shell spec.
@@ -478,7 +478,7 @@ public:
     // Join args into a single command line, escaping as needed, that parses
     // back into those same args. Uses the default conventions (Gnu or Windows)
     // of the platform.
-    static std::string toCmdline(std::vector<std::string> const & args);
+    static std::string toCmdline(const std::vector<std::string> & args);
     // Join array of pointers into command line, escaping as needed.
     static std::string toCmdline(size_t argc, char * argv[]);
     static std::string toCmdline(size_t argc, const char * argv[]);
@@ -705,7 +705,7 @@ template <typename T, typename U, typename>
 Cli::Opt<T> & Cli::opt(
     Opt<T> & alias,
     const std::string & names,
-   U  const & def
+    const U & def
 ) {
     return opt(&*alias, names, def);
 }
@@ -1102,7 +1102,7 @@ protected:
         long double & out,
         Cli & cli,
         const std::string & val,
-        std::unordered_map<std::string, long double> const & units,
+        const std::unordered_map<std::string, long double> & units,
         int flags
     ) const;
 
@@ -1337,7 +1337,7 @@ protected:
     bool exec(
         Cli & cli,
         const std::string & value,
-        std::vector<std::function<ActionFn>> const & actions
+        const std::vector<std::function<ActionFn>> & actions
     );
 
     // If numeric_limits<T>::min & max are defined and 'x' is outside of
@@ -1418,7 +1418,7 @@ template <typename A, typename T>
 inline bool Cli::OptShim<A, T>::exec(
     Cli & cli,
     const std::string & val,
-    std::vector<std::function<ActionFn>> const & actions
+    const std::vector<std::function<ActionFn>> & actions
 ) {
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
