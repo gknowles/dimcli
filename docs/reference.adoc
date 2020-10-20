@@ -209,7 +209,7 @@ tied to a command line argument.
 | opt.reset
 | Set option to its default value.
 
-| opt.useImplicit
+| opt.implicitValue
 | Set option to (or add to option vector) the value for missing optionals.
 
 2+h| Commands

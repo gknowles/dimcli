@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Variable argument cli.toArgvL() & cli.toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
 - Changed - Allowed long named booleans an optional value (e.g. "=true")
-- Changed - Rename opt.unspecifiedValue() to opt.useImplicit()
+- Changed - Rename opt.unspecifiedValue() to opt.implicitValue()
 - Added - fromString() support for types constructible from string
 - Changed - Allow optional positionals before required ones.
 - Added - optVec.size(exact) and optVec.size(min, max)
