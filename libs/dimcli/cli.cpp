@@ -2809,6 +2809,16 @@ int Cli::printHelp(
     const string & progName,
     const string & cmdName
 ) {
+    if (!commandExists(cmdName)) {
+        WrapPos wp{*m_cfg};
+        writeToken(os, wp, "usage:");
+        writeToken(os, wp, displayName(progName));
+        writeToken(os, wp, cmdName);
+        writeToken(os, wp, "[args...]");
+        writeNewline(os, wp);
+        return exitCode();
+    }
+
     auto & cmd = Config::findCmdAlways(*this, cmdName);
     auto & top = Config::findCmdAlways(*this, "");
     auto & hdr = cmd.header.empty() ? top.header : cmd.header;
@@ -2875,6 +2885,9 @@ int Cli::writeUsageImpl(
     }
     if (cmdName.empty() && m_cfg->cmds.size() > 1) {
         writeToken(os, wp, "command");
+        writeToken(os, wp, "[args...]");
+    } else if (cmdName.empty() && m_cfg->allowUnknown) {
+        writeToken(os, wp, "[command]");
         writeToken(os, wp, "[args...]");
     } else {
         for (auto && pa : ndx.m_argNames) {

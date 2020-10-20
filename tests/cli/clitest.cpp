@@ -975,6 +975,9 @@ Options:
   --help    Show this message and exit.
 )");
     }
+        EXPECT_HELP(cli, "unknown", 1 + R"(
+usage: test unknown [args...]
+)");
 
     // unknownCommand
     {
@@ -988,10 +991,13 @@ Options:
         EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
         EXPECT_PARSE(cli, "");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+usage: test [OPTIONS] [command] [args...]
 
 Options:
   --help    Show this message and exit.
+)");
+        EXPECT_HELP(cli, "unknown", 1 + R"(
+usage: test unknown [args...]
 )");
     }
 
