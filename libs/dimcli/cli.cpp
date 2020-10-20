@@ -1127,6 +1127,13 @@ Cli & Cli::helpCmd() {
 }
 
 //===========================================================================
+Cli & Cli::unknownCmd(function<ActionFn> fn) {
+    m_cfg->allowUnknown = true;
+    m_cfg->unknownCmd = move(fn);
+    return *this;
+}
+
+//===========================================================================
 Cli & Cli::helpNoArgs() {
     return before(helpBeforeAction);
 }
@@ -1207,13 +1214,6 @@ void Cli::maxWidth(int maxWidth, int minDescCol, int maxDescCol) {
         m_cfg->minDescCol = minDescCol;
     if (maxDescCol)
         m_cfg->maxDescCol = maxDescCol;
-}
-
-//===========================================================================
-Cli & Cli::unknownCmd(function<ActionFn> fn) {
-    m_cfg->allowUnknown = true;
-    m_cfg->unknownCmd = move(fn);
-    return *this;
 }
 
 //===========================================================================
@@ -1998,7 +1998,7 @@ bool Cli::parseValue(
         if (!opt.doParseAction(*this, val))
             return false;
     } else {
-        opt.useImplicit();
+        opt.assignImplicit();
     }
     return opt.doCheckActions(*this, val);
 }

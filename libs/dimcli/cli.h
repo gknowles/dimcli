@@ -320,6 +320,12 @@ public:
     // "prog command --help".
     Cli & helpCmd();
 
+    // Allows unknown subcommands, and sets either a default action, which
+    // errors out, or a custom action to run when there is an unknown command.
+    // Use cli.commandMatched() and cli.unknownArgs() to determine the command
+    // and it's arguments.
+    Cli & unknownCmd(std::function<ActionFn> fn = {});
+
     // Adds before action that replaces the empty command line with "--help".
     Cli & helpNoArgs();
 
@@ -377,12 +383,6 @@ public:
     // Enabled by default, response file expansion replaces arguments of the
     // form "@file" with the contents of the file.
     void responseFiles(bool enable = true);
-
-    // Allows unknown subcommands, and sets either a default action, which
-    // errors out, or a custom action to run when there is an unknown command.
-    // Use cli.commandMatched() and cli.unknownArgs() to determine the command
-    // and it's arguments.
-    Cli & unknownCmd(std::function<ActionFn> fn = {});
 
     // Changes the streams used for prompting, printing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults
@@ -1067,10 +1067,10 @@ public:
     // Parse the string into the value, return false on error.
     [[nodiscard]] virtual bool parseValue(const std::string & value) = 0;
 
-    // Set to the implicit value. Used when an option, with an optional value,
-    // is specified without it. The default implicit value is T{}, but can be
-    // changed with implicitValue().
-    virtual void useImplicit() = 0;
+    // Assign the implicit value to the value. Used when an option, with an
+    // optional value, is specified without one. The default implicit value is
+    // T{}, but can be changed with implicitValue().
+    virtual void assignImplicit() = 0;
 
     //-----------------------------------------------------------------------
     // HELPERS
@@ -1773,7 +1773,7 @@ public:
     int pos() const final { return m_proxy->m_match.pos; }
     void reset() final;
     bool parseValue(const std::string & value) final;
-    void useImplicit() final;
+    void assignImplicit() final;
 
 private:
     friend class Cli;
@@ -1848,7 +1848,7 @@ inline void Cli::Opt<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline void Cli::Opt<T>::useImplicit() {
+inline void Cli::Opt<T>::assignImplicit() {
     *m_proxy->m_value = this->implicitValue();
 }
 
@@ -1920,7 +1920,7 @@ public:
     int maxSize() const final { return m_maxVec; }
     void reset() final;
     bool parseValue(const std::string & value) final;
-    void useImplicit() final;
+    void assignImplicit() final;
 
 private:
     friend class Cli;
@@ -2040,7 +2040,7 @@ inline void Cli::OptVec<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::useImplicit() {
+inline void Cli::OptVec<T>::assignImplicit() {
     m_proxy->m_values->back() = this->implicitValue();
 }
 
