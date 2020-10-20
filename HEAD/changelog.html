@@ -104,12 +104,15 @@ and this project adheres to <a href="http://semver.org">Semantic Versioning</a>.
 <li>Added - Variable argument cli.toArgvL() &amp; cli.toCmdlineL()</li>
 <li>Changed - Moved fromString() &amp; toString() to new Convert class</li>
 <li>Changed - Allowed long named booleans an optional value (e.g. &quot;=true&quot;)</li>
-<li>Changed - Rename opt.unspecifiedValue() to opt.useImplicit()</li>
+<li>Changed - Rename opt.unspecifiedValue() to opt.implicitValue()</li>
 <li>Added - fromString() support for types constructible from string</li>
 <li>Changed - Allow optional positionals before required ones.</li>
 <li>Added - optVec.size(exact) and optVec.size(min, max)</li>
 <li>Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead</li>
 <li>Added - Allow unambiguous positionals before subcommands.</li>
+<li>Added - Optionally capture arbitrary arguments of unknown subcommands.</li>
+<li>Added - Option to change column at which errors and help text wraps.</li>
+<li>Changed - Default text columns reduced on narrow console windows</li>
 </ul>
 <h2 id="dimcli-5-0-2-2020-01-14-">dimcli 5.0.2 (2020-01-14)</h2>
 <ul>
