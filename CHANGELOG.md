@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Optionally capture arbitrary arguments of unknown subcommands.
 - Added - Option to change column at which errors and help text wraps.
 - Changed - Default text columns reduced on narrow console windows
+- Changed - Moved opt.toValueDesc() to cli.valueDesc()
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean
@@ -36,7 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## dimcli 5.0.0 (2019-07-11)
 - Added - Configuration option to unconditionally exclude &lt;filesystem>
 - Added - Default valueDesc for floating point values ("FLOAT")
-- Changed - Rename cli.runCommand() to cli.commandMatched()
+- Changed - Renamed cli.runCommand() to cli.commandMatched()
 - Added - Optional error detail argument to cli.badUsage()
 - Changed - Replaced opt.setValueDesc() with opt.toValueDesc()
 - Fixed - Invalid array access using optVec.from() from parse action

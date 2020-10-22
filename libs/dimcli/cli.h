@@ -425,6 +425,10 @@ public:
     // after parsing has completed.
     int printError(std::ostream & os);
 
+    // Friendly name for type, used in help text.
+    template <typename T>
+    static std::string valueDesc();
+
     //-----------------------------------------------------------------------
     // PARSING
 
@@ -585,10 +589,10 @@ public:
     // are no commands defined or none were matched.
     const std::string & commandMatched() const;
 
-    // If commands are defined, or unknownCmd() was set, and the matched
-    // command is unknown, the unknownArgs vector is populated with the all
-    // arguments that follow the command. Including any that started with "-",
-    // as if "--" had been given.
+    // If commands are defined, even just unknownCmd(), and the matched command
+    // is unknown, the unknownArgs vector is populated with the all arguments
+    // that follow the command. Including any that started with "-", as if "--"
+    // had been given.
     const std::vector<std::string> & unknownArgs() const;
 
     // Executes the action of the matched command; returns true if it worked.
@@ -769,6 +773,32 @@ std::shared_ptr<V> Cli::getProxy(T * ptr) {
     // Since there was no existing proxy to the raw value, create one.
     return std::make_shared<V>(ptr);
 }
+
+//===========================================================================
+// valueDesc - descriptive name for values of type T
+//===========================================================================
+template <typename T>
+// static
+std::string Cli::valueDesc() {
+    if (std::is_integral<T>::value) {
+        return "NUM";
+    } else if (std::is_floating_point<T>::value) {
+        return "FLOAT";
+    } else if (std::is_convertible<T, std::string>::value) {
+        return "STRING";
+    } else {
+        return "VALUE";
+    }
+}
+
+#ifdef DIMCLI_LIB_FILESYSTEM
+//===========================================================================
+template <>
+inline // static
+std::string Cli::valueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
+    return "FILE";
+}
+#endif
 
 
 /****************************************************************************
@@ -1072,13 +1102,6 @@ public:
     // T{}, but can be changed with implicitValue().
     virtual void assignImplicit() = 0;
 
-    //-----------------------------------------------------------------------
-    // HELPERS
-
-    // Friendly name for type, used in help text.
-    template <typename T>
-    std::string toValueDesc() const;
-
 protected:
     virtual bool defaultValueToString(std::string & out) const = 0;
     virtual std::string defaultValueDesc() const = 0;
@@ -1133,31 +1156,6 @@ private:
     std::string m_names;
     std::string m_fromName;
 };
-
-//===========================================================================
-// toValueDesc - descriptive name for values of type T
-//===========================================================================
-template <typename T>
-std::string Cli::OptBase::toValueDesc() const {
-    if (std::is_integral<T>::value) {
-        return "NUM";
-    } else if (std::is_floating_point<T>::value) {
-        return "FLOAT";
-    } else if (std::is_convertible<T, std::string>::value) {
-        return "STRING";
-    } else {
-        return "VALUE";
-    }
-}
-
-#ifdef DIMCLI_LIB_FILESYSTEM
-//===========================================================================
-template <>
-inline
-std::string Cli::OptBase::toValueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() const {
-    return "FILE";
-}
-#endif
 
 
 /****************************************************************************
@@ -1369,7 +1367,7 @@ Cli::OptShim<A, T>::OptShim(const std::string & names, bool flag)
 //===========================================================================
 template <typename A, typename T>
 inline std::string Cli::OptShim<A, T>::defaultValueDesc() const {
-    return this->toValueDesc<T>();
+    return Cli::valueDesc<T>();
 }
 
 //===========================================================================
@@ -1771,6 +1769,11 @@ public:
     // Inherited via OptBase
     const std::string & from() const final { return m_proxy->m_match.name; }
     int pos() const final { return m_proxy->m_match.pos; }
+
+    //-----------------------------------------------------------------------
+    // UPDATE VALUE
+
+    // Inherited via OptBase
     void reset() final;
     bool parseValue(const std::string & value) final;
     void assignImplicit() final;
@@ -1918,6 +1921,11 @@ public:
     size_t size() const final { return m_proxy->m_values->size(); }
     int minSize() const final { return m_minVec; }
     int maxSize() const final { return m_maxVec; }
+
+    //-----------------------------------------------------------------------
+    // UPDATE VALUE
+
+    // Inherited via OptBase
     void reset() final;
     bool parseValue(const std::string & value) final;
     void assignImplicit() final;

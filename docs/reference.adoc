@@ -368,6 +368,9 @@ suppress the entire clause.
 | If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
 otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
 completed.
+
+| cli.valueDesc<T>
+| Default friendly name for options of type, used in help text.
 |===
 
 == Configuration
