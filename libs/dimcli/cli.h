@@ -1091,16 +1091,12 @@ public:
     //-----------------------------------------------------------------------
     // UPDATE VALUE
 
-    // Set option to its default value.
+    // Clears options argument reference (name and pos) and sets to its default
+    // value.
     virtual void reset() = 0;
 
     // Parse the string into the value, return false on error.
     [[nodiscard]] virtual bool parseValue(const std::string & value) = 0;
-
-    // Assign the implicit value to the value. Used when an option, with an
-    // optional value, is specified without one. The default implicit value is
-    // T{}, but can be changed with implicitValue().
-    virtual void assignImplicit() = 0;
 
 protected:
     virtual bool defaultValueToString(std::string & out) const = 0;
@@ -1111,6 +1107,11 @@ protected:
     virtual bool doAfterActions(Cli & cli) = 0;
     virtual bool assign(const std::string & name, size_t pos) = 0;
     virtual bool assigned() const = 0;
+
+    // Assign the implicit value to the value. Used when an option, with an
+    // optional value, is specified without one. The default implicit value is
+    // T{}, but can be changed with implicitValue().
+    virtual void assignImplicit() = 0;
 
     // True for flags (bool on command line) that default to true.
     virtual bool inverted() const = 0;
@@ -1776,13 +1777,13 @@ public:
     // Inherited via OptBase
     void reset() final;
     bool parseValue(const std::string & value) final;
-    void assignImplicit() final;
 
 private:
     friend class Cli;
     bool defaultValueToString(std::string & out) const final;
     bool assign(const std::string & name, size_t pos) final;
     bool assigned() const final { return m_proxy->m_explicit; }
+    void assignImplicit() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_value;
     }
@@ -1799,6 +1800,16 @@ Cli::Opt<T>::Opt(
     : OptShim<Opt, T>{names, std::is_same<T, bool>::value}
     , m_proxy{value}
 {}
+
+//===========================================================================
+template <typename T>
+inline void Cli::Opt<T>::reset() {
+    if (!this->m_flagValue || this->m_flagDefault)
+        *m_proxy->m_value = this->defaultValue();
+    m_proxy->m_match.name.clear();
+    m_proxy->m_match.pos = 0;
+    m_proxy->m_explicit = false;
+}
 
 //===========================================================================
 template <typename T>
@@ -1837,16 +1848,6 @@ inline bool Cli::Opt<T>::assign(const std::string & name, size_t pos) {
     m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
     return true;
-}
-
-//===========================================================================
-template <typename T>
-inline void Cli::Opt<T>::reset() {
-    if (!this->m_flagValue || this->m_flagDefault)
-        *m_proxy->m_value = this->defaultValue();
-    m_proxy->m_match.name.clear();
-    m_proxy->m_match.pos = 0;
-    m_proxy->m_explicit = false;
 }
 
 //===========================================================================
@@ -1906,7 +1907,7 @@ public:
 
     T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
     const T & operator[](size_t index) const {
-        return (*m_proxy->m_values)[index];
+        return const_cast<T *>(this)[index];
     }
 
     // Information about a specific member of the vector of values at the
@@ -1928,13 +1929,13 @@ public:
     // Inherited via OptBase
     void reset() final;
     bool parseValue(const std::string & value) final;
-    void assignImplicit() final;
 
 private:
     friend class Cli;
     bool defaultValueToString(std::string & out) const final;
     bool assign(const std::string & name, size_t pos) final;
     bool assigned() const final { return !m_proxy->m_values->empty(); }
+    void assignImplicit() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_values;
     }
@@ -2024,6 +2025,13 @@ inline bool Cli::OptVec<T>::defaultValueToString(std::string & out) const {
 
 //===========================================================================
 template <typename T>
+inline void Cli::OptVec<T>::reset() {
+    m_proxy->m_values->clear();
+    m_proxy->m_matches.clear();
+}
+
+//===========================================================================
+template <typename T>
 inline bool Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
     if (this->m_maxVec != -1
         && (size_t) this->m_maxVec == m_proxy->m_matches.size()
@@ -2037,13 +2045,6 @@ inline bool Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
     m_proxy->m_matches.push_back(match);
     m_proxy->m_values->resize(m_proxy->m_matches.size());
     return true;
-}
-
-//===========================================================================
-template <typename T>
-inline void Cli::OptVec<T>::reset() {
-    m_proxy->m_values->clear();
-    m_proxy->m_matches.clear();
 }
 
 //===========================================================================
