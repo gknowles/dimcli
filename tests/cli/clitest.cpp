@@ -1484,6 +1484,17 @@ Options:
         EXPECT(*strs == vector<string>({"a"s, "b"s}));
     }
 
+    // optVec<bool>
+    {
+        cli = {};
+        vector<bool> v0;
+        cli.optVec<bool>(&v0, "[zero]").desc("External bool");
+        auto & v1 = cli.optVec<bool>("[one]").desc("Internal bool.");
+        EXPECT_PARSE(cli, "0");
+        EXPECT(v0.size() == 1 && v0[0] == 0);
+        EXPECT(v1.size() == 0);
+    }
+
     // optVec with size
     {
         cli = {};

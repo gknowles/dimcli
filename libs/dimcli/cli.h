@@ -1280,8 +1280,8 @@ public:
 
     // Change the action to take when parsing this argument. The function
     // should:
-    //  - Parse the src string and use the result to set the value (or
-    //    push_back the new value for vectors).
+    //  - Parse the src string and use the result to set the value (or, for
+    //    vectors, push_back the new value).
     //  - Call cli.badUsage() with an error message if there's a problem.
     //  - Return false if the program should stop, otherwise true. This
     //    could be due to error or just to early out like "--version" and
@@ -1894,6 +1894,19 @@ public:
     //-----------------------------------------------------------------------
     // CONFIGURATION
 
+    // Used to capture arguments for processing by another parser, such as a
+    // child program. All arguments after the last positional are put into the
+    // vector, including any starting with '-', as if "--" had been used.
+    //
+    // There are several restrictions:
+    //  - Must be a positional option.
+    //  - Only one option can be marked passthru.
+    //  - Must be at least one other positional option.
+    //  - Must not be a positional with unlimited arity.
+    //  - Must not be on the top level if it has subcommands. A command
+    //    alternative is cli.unknownCmd.
+    OptVec & passthruArgs();
+
     // Set the number of values that can be assigned to a vector option.
     // Defaults to a min/max of 1/-1 where -1 means unlimited.
     OptVec & size(int exact);
@@ -1992,12 +2005,12 @@ inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
-    auto & tmp = m_proxy->m_values->back();
+    auto last = std::prev(m_proxy->m_values->end());
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
         // internally and will be 0 or 1.
         if (value == "1") {
-            tmp = this->defaultValue();
+            *last = this->defaultValue();
         } else {
             assert(value == "0" && "internal dimcli error");
             m_proxy->m_values->pop_back();
@@ -2009,11 +2022,16 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         auto i = this->m_choiceDescs.find(value);
         if (i == this->m_choiceDescs.end())
             return false;
-        tmp = this->m_choices[i->second.pos];
+        *last = this->m_choices[i->second.pos];
         return true;
     }
 
-    return this->fromString(tmp, value);
+    // Parsed indirectly through temporary for cases like vector<bool> where
+    // *last returns a proxy object instead of a reference to T.
+    T tmp;
+    bool result = this->fromString(tmp, value);
+    *last = std::move(tmp);
+    return result;
 }
 
 //===========================================================================

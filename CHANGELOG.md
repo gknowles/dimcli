@@ -19,14 +19,15 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Allowed long named booleans an optional value (e.g. "=true")
 - Changed - Rename opt.unspecifiedValue() to opt.implicitValue()
 - Added - fromString() support for types constructible from string
-- Changed - Allow optional positionals before required ones.
+- Changed - Allow optional positionals before required ones
 - Added - optVec.size(exact) and optVec.size(min, max)
 - Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead
-- Added - Allow unambiguous positionals before subcommands.
-- Added - Optionally capture arbitrary arguments of unknown subcommands.
-- Added - Option to change column at which errors and help text wraps.
+- Added - Allow unambiguous positionals before subcommands
+- Added - Optionally capture arbitrary arguments of unknown subcommands
+- Added - Option to change column at which errors and help text wraps
 - Changed - Default text columns reduced on narrow console windows
 - Changed - Moved opt.toValueDesc() to cli.valueDesc()
+- Fixed - Compile fails with OptVec<bool> due to vector<bool> weirdness
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean
