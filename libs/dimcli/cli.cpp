@@ -238,14 +238,22 @@ static void printChoicesDetail(
 #if defined(_WIN32)
 static string displayName(const string & file) {
     char fname[_MAX_FNAME];
+    char ext[_MAX_EXT];
     if (!_splitpath_s(
         file.c_str(),
         nullptr, 0,
         nullptr, 0,
-        fname, sizeof(fname),
-        nullptr, 0
+        fname, sizeof fname,
+        ext, sizeof ext
     )) {
-        return fname;
+        auto & f = use_facet<ctype<char>>(locale());
+        string out = fname;
+        auto flen = out.size();
+        out += ext;
+        f.tolower(ext, ext + out.size() - flen);
+        if (strcmp(ext, ".exe") == 0 || strcmp(ext, ".com") == 0)
+            out.resize(flen);
+        return out;
     }
 
     // Split failed, return full source path.
