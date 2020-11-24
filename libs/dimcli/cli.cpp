@@ -2819,7 +2819,7 @@ int Cli::printHelp(
 ) {
     if (!commandExists(cmdName)) {
         WrapPos wp{*m_cfg};
-        writeToken(os, wp, "usage:");
+        writeToken(os, wp, "Usage:");
         writeToken(os, wp, displayName(progName));
         writeToken(os, wp, cmdName);
         writeToken(os, wp, "[args...]");
@@ -2866,7 +2866,7 @@ int Cli::writeUsageImpl(
     ndx.index(*this, cmdName, true);
     auto & cmd = Config::findCmdAlways(*this, cmdName);
     auto prog = displayName(arg0.empty() ? progName() : arg0);
-    const string usageStr{"usage: "};
+    const string usageStr{"Usage: "};
     os << usageStr << prog;
     WrapPos wp{*m_cfg};
     wp.pos = prog.size() + usageStr.size();

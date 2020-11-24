@@ -227,7 +227,7 @@ void assertTests() {
 !"bad modifier '.' for short name"
 )");
     EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [--help] [b]
+Usage: test [--help] [b]
 )");
     EXPECT_ASSERT(1 + R"(
 !"bad argument name, contains '='"
@@ -351,7 +351,7 @@ void valueTests() {
         EXPECT_PARSE(cli, "b", false);
         EXPECT(*opt == ExtractNoInsert::kInvalid);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [value]
+Usage: test [OPTIONS] [value]
   value     Value to attempt to parse.
 
 Options:
@@ -369,7 +369,7 @@ Options:
         EXPECT_PARSE(cli, "b", false);
         EXPECT(*opt == ExtractWithInsert::kInvalid);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [value]
+Usage: test [OPTIONS] [value]
   value     Value to attempt to parse. (default: g)
 
 Options:
@@ -384,7 +384,7 @@ Options:
         EXPECT_PARSE(cli, "i");
         EXPECT(*opt == ExtractWithInsert::kInOnly);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [value]
+Usage: test [OPTIONS] [value]
   value     Value to attempt to parse.
 
 Options:
@@ -400,7 +400,7 @@ Options:
         EXPECT_PARSE(cli, "--complex=(1.0,2)");
         EXPECT(*opt == complex<double>{1.0,2.0});
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   --complex=VALUE  Complex number to parse. (default: (0,0))
@@ -477,7 +477,7 @@ void choiceTests() {
         .choice(State::wait, "yellow", "Means wait, even if you're late.")
         .choice(State::stop, "red", "Means stop.");
     EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   --streetlight=COLOR  Color of street light.
@@ -488,7 +488,7 @@ Options:
   --help               Show this message and exit.
 )");
     EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [--streetlight=COLOR] [--help]
+Usage: test [--streetlight=COLOR] [--help]
 )");
     EXPECT_PARSE(cli, "--streetlight red");
     EXPECT(*state == State::stop);
@@ -501,7 +501,7 @@ Must be "green", "yellow", or "red".
 
     state.defaultValue(State::go);
     EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   --streetlight=COLOR  Color of street light.
@@ -520,7 +520,7 @@ Options:
         .choice(State::wait, "yellow", "Means wait, even if you're late.", "2")
         .choice(State::go, "green", "Means go!", "1");
     EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [streetlights...]
+Usage: test [OPTIONS] [streetlights...]
   streetlights  Color of street lights.
       green   Means go!
       yellow  Means wait, even if you're late.
@@ -584,7 +584,7 @@ void helpTests() {
         cli.helpOpt().show(false);
         EXPECT_PARSE(cli);
         EXPECT_HELP(cli, {}, 1 + R"(
-usage: test
+Usage: test
 )");
     }
 
@@ -608,7 +608,7 @@ usage: test
             "Long explanation of this very short set of options, it's so "
             "long that it even wraps around to the next line");
         EXPECT_HELP(cli, {}, 1 + R"(
-usage: test [OPTIONS] [key...]
+Usage: test [OPTIONS] [key...]
   key       it's the key arguments with a very long description that wraps the
             line at least once, maybe more.
 
@@ -630,7 +630,7 @@ Name options:
   --help              Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --quantity=NUM]
+Usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --quantity=NUM]
             [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
             [key...]
 )");
@@ -638,7 +638,7 @@ usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --quantity=NUM]
         // with maxWidth of 70
         cli.maxWidth(70);
         EXPECT_HELP(cli, {}, 1 + R"(
-usage: test [OPTIONS] [key...]
+Usage: test [OPTIONS] [key...]
   key      it's the key arguments with a very long description that
            wraps the line at least once, maybe more.
 
@@ -660,7 +660,7 @@ Name options:
   --help              Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-usage: test [-c COUNT] [--does-not-quite-fit-into-col]
+Usage: test [-c COUNT] [--does-not-quite-fit-into-col]
             [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
             [--name=STRING] [-s, --special] [--help] [key...]
 )");
@@ -668,7 +668,7 @@ usage: test [-c COUNT] [--does-not-quite-fit-into-col]
         // with maxWidth of 50
         cli.maxWidth(50);
         EXPECT_HELP(cli, {}, 1 + R"(
-usage: test [OPTIONS] [key...]
+Usage: test [OPTIONS] [key...]
   key    it's the key arguments with a very long
          description that wraps the line at least
          once, maybe more.
@@ -694,7 +694,7 @@ Name options:
   --help         Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-usage: test [-c COUNT]
+Usage: test [-c COUNT]
             [--does-not-quite-fit-into-col]
             [-n, --quantity=NUM] [--n2=NUM]
             [--n3=NUM] [--name=STRING]
@@ -711,7 +711,7 @@ usage: test [-c COUNT]
         cli.opt<string>("< equal '=' in name >")
             .desc("Equals are sometimes reserved.");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] <equal '=' in name>
+Usage: test [OPTIONS] <equal '=' in name>
   equal '=' in name  Equals are sometimes reserved.
 
 Options:
@@ -749,7 +749,7 @@ Options:
         EXPECT_PARSE(cli, {}, false, Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   --help    Show this message and exit.
@@ -783,7 +783,7 @@ Options:
         cli.iostreams(nullptr, &out);
         EXPECT_PARSE(cli, "-?", false, Dim::kExitOk);
         EXPECT(out.str() == 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   -?, --help
@@ -809,7 +809,7 @@ Options:
 Multiline header:
 - second line
 
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Description.
 
@@ -836,7 +836,7 @@ Multiline footer:
         cli.group("Two").sortKey("2").opt("2", true).desc("Second option.");
         cli.group("Three").sortKey("3").opt("3", true).desc("Third option.");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 One:
   -1        First option.
@@ -893,7 +893,7 @@ void cmdTests() {
         EXPECT_ERR(c1, "Error: Command 'one' has not been implemented.\n");
 
         EXPECT_HELP(c1, "one", 1 + R"(
-usage: test one [OPTIONS]
+Usage: test one [OPTIONS]
 
 First sentence of description. Rest of one's description.
 
@@ -903,7 +903,7 @@ Options:
   --help    Show this message and exit.
 )");
         EXPECT_HELP(c1, "three", 1 + R"(
-usage: test three [OPTIONS]
+Usage: test three [OPTIONS]
 
 Options:
   -b NUM    (default: 99)
@@ -911,7 +911,7 @@ Options:
   --help    Show this message and exit.
 )");
         EXPECT_HELP(c1, "", 1 + R"(
-usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] command [args...]
 
 Primary:
   one       First sentence of description.
@@ -934,7 +934,7 @@ Options:
         cli.command("2a").cmdGroup("Second").cmdSortKey("2");
         cli.command("3a").cmdGroup("Third").cmdSortKey("3");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] command [args...]
 
 First:
   1a
@@ -960,7 +960,7 @@ Options:
         EXPECT(*p1 == 5);
         EXPECT(cli.commandMatched() == "one");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] command [args...]
 
 Commands:
   one
@@ -969,14 +969,14 @@ Options:
   --help    Show this message and exit.
 )");
         EXPECT_HELP(cli, "one", 1 + R"(
-usage: test one [OPTIONS]
+Usage: test one [OPTIONS]
 
 Options:
   --help    Show this message and exit.
 )");
     }
         EXPECT_HELP(cli, "unknown", 1 + R"(
-usage: test unknown [args...]
+Usage: test unknown [args...]
 )");
 
     // unknownCommand
@@ -991,13 +991,13 @@ usage: test unknown [args...]
         EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
         EXPECT_PARSE(cli, "");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [command] [args...]
+Usage: test [OPTIONS] [command] [args...]
 
 Options:
   --help    Show this message and exit.
 )");
         EXPECT_HELP(cli, "unknown", 1 + R"(
-usage: test unknown [args...]
+Usage: test unknown [args...]
 )");
     }
 
@@ -1006,7 +1006,7 @@ usage: test unknown [args...]
         cli = {};
         cli.helpCmd();
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] command [args...]
 
 Commands:
   help      Show help for individual commands and exit.
@@ -1015,7 +1015,7 @@ Options:
   --help    Show this message and exit.
 )");
         auto helpText = 1 + R"(
-usage: test help [OPTIONS] [command]
+Usage: test help [OPTIONS] [command]
 
 Show help for individual commands and exit. If no command is given the list of
 commands and general options are shown.
@@ -1034,10 +1034,10 @@ Options:
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == helpText);
         EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [--help] command [args...]
+Usage: test [--help] command [args...]
 )");
         EXPECT_USAGE(cli, "help", 1 + R"(
-usage: test help [-u, --usage] [--help] [command]
+Usage: test help [-u, --usage] [--help] [command]
 )");
         EXPECT_PARSE(cli, "help notACmd");
         EXPECT(!cli.exec());
@@ -1050,7 +1050,7 @@ Error: Command 'help': Help requested for unknown command: notACmd
         EXPECT(cli.exec());
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == 1 + R"(
-usage: test help [-u, --usage] [--help] [command]
+Usage: test help [-u, --usage] [--help] [command]
 )");
     }
 }
@@ -1201,10 +1201,10 @@ void flagTests() {
         cli.opt(orange, "p", "pear").flagValue();
         cli.group("~").title("Other");
         EXPECT_USAGE(cli, "", 1 + R"(
-usage: test [-o] [-p] [--help]
+Usage: test [-o] [-p] [--help]
 )");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Type of fruit:
   -a        (default)
@@ -1227,7 +1227,7 @@ Other:
         EXPECT_PARSE(cli, "--on");
         EXPECT(*notOn);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   / --notOn  (default)
@@ -1246,7 +1246,7 @@ Options:
         EXPECT_PARSE(cli, "-z");
         EXPECT(*opt == 1);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   -x        (default)
@@ -1374,7 +1374,7 @@ void filesystemTests() {
         EXPECT_PARSE(cli, "--path one");
         EXPECT(path == "one");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   --path=FILE  std::filesystem::path (default: )"
@@ -1462,7 +1462,7 @@ void vectorTests() {
         EXPECT(strs.pos() == 5);
         EXPECT(*strs == vector<string>({"1"s, "a"s, "2"s, "3"s}));
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   -r, -s [STRING]  String array.
@@ -1472,7 +1472,7 @@ Options:
 
         cli.optVec(strs, "string").desc("Alternate for string array.");
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   -r, -s [STRING]  String array.
@@ -1512,7 +1512,7 @@ Options:
         EXPECT(v1.size() == 1 && v1[0] == 1);
         EXPECT(vn.size() == 0);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   -0 NUM    None allowed. (limit: 0)
@@ -1544,7 +1544,7 @@ Options:
         );
         EXPECT(v0.size() == 0);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] one...
+Usage: test [OPTIONS] one...
   one       The one and only? (limit: 1 to 2)
 
 Options:
@@ -1663,7 +1663,7 @@ void basicTests() {
         cli = {};
         cli.opt<int>("[]", 1);
         EXPECT_USAGE(cli, {}, 1 + R"(
-usage: test [--help] [arg1]
+Usage: test [--help] [arg1]
 )");
     }
 }
@@ -1785,7 +1785,7 @@ void unitsTests() {
         EXPECT(se);
 
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS] [v...]
+Usage: test [OPTIONS] [v...]
 
 Options:
   -d FLOAT[<units>]   (default: 0)
@@ -1802,7 +1802,7 @@ Options:
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   -s NUM[<units>]  (default: 0)
@@ -1873,7 +1873,7 @@ void promptTests(bool prompt) {
         cli = {};
         auto & pass = cli.passwordOpt(true);
         EXPECT_HELP(cli, "", 1 + R"(
-usage: test [OPTIONS]
+Usage: test [OPTIONS]
 
 Options:
   --password=STRING  Password required for access.
