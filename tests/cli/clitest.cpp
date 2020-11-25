@@ -242,7 +242,7 @@ Usage: test [--help] [b]
         cli = {};
         cli.command("empty").action({});
         EXPECT_PARSE(cli, "empty");
-        (void) cli.exec();
+        cli.exec();
         EXPECT_ERR(
             cli,
             "Error: Command 'empty' found by parse not defined.\n"
@@ -252,7 +252,7 @@ Usage: test [--help] [b]
 )");
         cli.action([](auto &) { return false; });
         EXPECT_PARSE(cli, "empty");
-        (void) cli.exec();
+        cli.exec();
         EXPECT_ERR(
             cli,
             "Error: Command 'empty' failed without setting exit code.\n"
@@ -886,10 +886,10 @@ void cmdTests() {
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);
         EXPECT_ERR(c2, "Error: Command 'two': No value given for -a\n");
-        EXPECT(c1.resetValues().exec() == false);
+        EXPECT(c1.resetValues().exec() == Dim::kExitUsage);
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
-        EXPECT(c1.exec() == false);
+        EXPECT(c1.exec() == Dim::kExitSoftware);
         EXPECT_ERR(c1, "Error: Command 'one' has not been implemented.\n");
 
         EXPECT_HELP(c1, "one", 1 + R"(
@@ -1030,7 +1030,7 @@ Options:
         EXPECT_PARSE(cli, "help help");
         out.str("");
         cli.iostreams(nullptr, &out);
-        EXPECT(cli.exec());
+        EXPECT(cli.exec() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == helpText);
         EXPECT_USAGE(cli, "", 1 + R"(
@@ -1040,14 +1040,14 @@ Usage: test [--help] command [args...]
 Usage: test help [-u, --usage] [--help] [command]
 )");
         EXPECT_PARSE(cli, "help notACmd");
-        EXPECT(!cli.exec());
+        EXPECT(cli.exec() == Dim::kExitUsage);
         EXPECT_ERR(cli, 1 + R"(
 Error: Command 'help': Help requested for unknown command: notACmd
 )");
         EXPECT_PARSE(cli, "help help --usage");
         out.str("");
         cli.iostreams(nullptr, &out);
-        EXPECT(cli.exec());
+        EXPECT(cli.exec() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == 1 + R"(
 Usage: test help [-u, --usage] [--help] [command]
@@ -1421,20 +1421,20 @@ void execTests() {
 
     {
         cli = {};
-        cli.action([](auto &) { return true; });
+        cli.action([](auto &) {});
         auto rc = cli.exec(nargsNone, (char **) argsNone);
-        EXPECT(rc);
+        EXPECT(rc == Dim::kExitOk);
         out.clear();
         out.str({});
         rc = cli.exec(out, nargsNone, (char **) argsNone);
-        EXPECT(rc && out.str() == "");
+        EXPECT(rc == Dim::kExitOk && out.str() == "");
         rc = cli.exec(vargsNone);
-        EXPECT(rc);
+        EXPECT(rc == Dim::kExitOk);
         out.clear();
         out.str({});
         cli = {};
         rc = cli.exec(out, vargsNone);
-        EXPECT(!rc && cli.exitCode() == Dim::kExitUsage);
+        EXPECT(rc == Dim::kExitUsage);
         EXPECT(out.str() == "Error: No command given.\n");
     }
 }
@@ -2014,6 +2014,7 @@ static int runTests(bool prompt) {
     // consoleWidth() call for code coverage.
     unsigned width = Dim::Cli::consoleWidth(false);
     (void) width;
+
     Dim::Cli cli;
     cli.maxWidth(80);
 

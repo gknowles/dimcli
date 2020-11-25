@@ -289,22 +289,28 @@ public:
     Cli & command(const std::string & name, const std::string & group = {});
 
     // Function signature of actions that are tied to commands.
-    using ActionFn = bool(Cli & cli);
+    using ActionFn = void(Cli & cli);
 
     // Action that should be taken when the currently selected command is run.
     // Actions are executed when cli.exec() is called by the application. The
     // command's action function should:
     //  - do something useful
-    //  - return false on errors (and use fail() to set exitCode, et al)
+    //  - use badUsage() for parsing errors not caught by parse(), such as
+    //    complex interactions between arguments.
+    //  - use fail() on other errors to set exitCode, et al
+    //
+    // If the process should exit but there may still be asynchronous work
+    // going on, consider a custom "exit pending" exit code with special
+    // handling in main to wait for it to complete.
     Cli & action(std::function<ActionFn> fn);
 
-    // Arbitrary text can be added to the generated help for each command,
-    // this text can come before the usage (header), between the usage and
-    // the arguments / options (desc), or after the options (footer). Use
-    // line breaks for semantics, let the automatic line wrapping take care
-    // of the rest.
+    // Arbitrary text can be added to the help text for each command, this text
+    // can come before the usage (header), between the usage and the
+    // arguments/options (desc), or after the options (footer). Use line breaks
+    // only for paragraph breaks, let the automatic line wrapping take care of
+    // the rest.
     //
-    // Unless individually overridden commands default to using the header and
+    // Unless individually overridden, commands default to using the header and
     // footer (but not the desc) specified at the top level.
     Cli & header(const std::string & val);
     Cli & desc(const std::string & val);
@@ -595,25 +601,27 @@ public:
     // had been given.
     const std::vector<std::string> & unknownArgs() const;
 
-    // Executes the action of the matched command; returns true if it worked.
-    // On failure it's expected to have set exitCode, errMsg, and optionally
-    // errDetail via fail(). If no command was matched it runs the action of
-    // the empty "" command, which defaults to failing with "No command given."
-    // but can be set via cli.action() just like any other command.
-    [[nodiscard]] bool exec();
-    [[nodiscard]] bool exec(std::ostream & oerr);
+    // Executes the action of the matched command and returns exitCode(). On
+    // failure the action is expected to have set exitCode, errMsg, and
+    // optionally errDetail by calling fail(). If no command was matched the
+    // action of the empty "" command is run, which defaults to failing with
+    // "No command given." but can be set using cli.action() like any other
+    // command.
+    //
+    // It is assumed that a prior call to parse() has already been made to set
+    // the matched command.
+    int exec();
+    int exec(std::ostream & oerr);
 
     // Helpers to parse and, if successful, execute.
-    [[nodiscard]] bool exec(size_t argc, char * argv[]);
-    [[nodiscard]] bool exec(std::ostream & oerr, size_t argc, char * argv[]);
-    [[nodiscard]] bool exec(std::vector<std::string> & args);
-    [[nodiscard]] bool exec(
-        std::ostream & oerr,
-        std::vector<std::string> & args
-    );
+    int exec(size_t argc, char * argv[]);
+    int exec(std::ostream & oerr, size_t argc, char * argv[]);
+    int exec(std::vector<std::string> & args);
+    int exec(std::ostream & oerr, std::vector<std::string> & args);
 
-    // Sets exitCode(), errMsg(), and errDetail(), intended to be called from
-    // command actions, parsing related failures should use badUsage().
+    // Sets exitCode(), errMsg(), errDetail(), and returns false. Intended to
+    // be called from command actions, parsing related failures should use
+    // badUsage() instead.
     bool fail(
         int code,
         const std::string & msg,

@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Default text columns reduced on narrow console windows
 - Changed - Moved opt.toValueDesc() to cli.valueDesc()
 - Fixed - Compile fails with OptVec<bool> due to vector<bool> weirdness
+- Changed - cli.exec() returns exit code instead of just whether it's 0
+- Changed - Command handlers are now void return
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean

@@ -227,7 +227,7 @@ struct Cli::Config {
 
 // forward declarations
 static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static bool defCmdAction(Cli & cli);
+static void defCmdAction(Cli & cli);
 static void printChoicesDetail(
     ostream & os,
     const Cli::Config & cfg,
@@ -911,11 +911,11 @@ static bool helpOptAction(
 }
 
 //===========================================================================
-static bool defCmdAction(Cli & cli) {
+static void defCmdAction(Cli & cli) {
     if (cli.commandMatched().empty()) {
-        return cli.fail(kExitUsage, "No command given.");
+        cli.fail(kExitUsage, "No command given.");
     } else {
-        return cli.fail(
+        cli.fail(
             kExitSoftware,
             "Command '" + cli.commandMatched() + "' has not been implemented."
         );
@@ -923,19 +923,20 @@ static bool defCmdAction(Cli & cli) {
 }
 
 //===========================================================================
-static bool helpCmdAction(Cli & cli) {
+static void helpCmdAction(Cli & cli) {
     Cli::OptIndex ndx;
     ndx.index(cli, cli.commandMatched(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
-    if (!cli.commandExists(cmd))
-        return cli.badUsage("Help requested for unknown command", cmd);
+    if (!cli.commandExists(cmd)) {
+        cli.badUsage("Help requested for unknown command", cmd);
+        return;
+    }
     if (usage) {
         cli.printUsageEx(cli.conout(), {}, cmd);
     } else {
         cli.printHelp(cli.conout(), {}, cmd);
     }
-    return true;
 }
 
 
@@ -2519,62 +2520,52 @@ const vector<string> & Cli::unknownArgs() const {
 }
 
 //===========================================================================
-bool Cli::exec() {
+int Cli::exec() {
     auto & name = commandMatched();
-    auto action = commandExists(name)
+    auto cmdFn = commandExists(name)
         ? m_cfg->cmds[name].action
         : m_cfg->unknownCmd;
 
-    if (!action) {
+    if (cmdFn) {
+        fail(kExitOk, {});
+        cmdFn(*this);
+    } else {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"command found by parse not defined");
-        return fail(
+        fail(
             kExitSoftware,
             "Command '" + name + "' found by parse not defined."
         );
     }
-    if (!action(*this)) {
-        if (exitCode())
-            return false;
-
-        // If the process should exit but there is still asynchronous work
-        // going on, consider a custom "exit pending" exit code with special
-        // handling in your main function to wait for it to complete.
-        assert(!"command failed without setting exit code");
-        return fail(
-            kExitSoftware,
-            "Command '" + name + "' failed without setting exit code."
-        );
-    }
-    return true;
+    return exitCode();
 }
 
 //===========================================================================
-bool Cli::exec(ostream & os) {
-    if (exec())
-        return true;
-    printError(os);
-    return false;
+int Cli::exec(ostream & os) {
+    exec();
+    return printError(os);
 }
 
 //===========================================================================
-bool Cli::exec(size_t argc, char * argv[]) {
-    return parse(argc, argv) && exec();
+int Cli::exec(size_t argc, char * argv[]) {
+    return parse(argc, argv) ? exec() : exitCode();
 }
 
 //===========================================================================
-bool Cli::exec(ostream & os, size_t argc, char * argv[]) {
-    return parse(os, argc, argv) && exec(os);
+int Cli::exec(ostream & os, size_t argc, char * argv[]) {
+    exec(argc, argv);
+    return printError(os);
 }
 
 //===========================================================================
-bool Cli::exec(vector<string> & args) {
-    return parse(args) && exec();
+int Cli::exec(vector<string> & args) {
+    return parse(args) ? exec() : exitCode();
 }
 
 //===========================================================================
-bool Cli::exec(ostream & os, vector<string> & args) {
-    return parse(os, args) && exec(os);
+int Cli::exec(ostream & os, vector<string> & args) {
+    exec(args);
+    return printError(os);
 }
 
 //===========================================================================
