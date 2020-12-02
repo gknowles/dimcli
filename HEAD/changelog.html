@@ -100,19 +100,25 @@ and this project adheres to <a href="http://semver.org">Semantic Versioning</a>.
 <h2 id="unreleased">Unreleased</h2>
 <ul>
 <li>Cosmetic - Converted docs from Markdown to AsciiDoc</li>
+<li>Cosmetic - Testing support for samples embedded in docs</li>
 <li>Added - Detail to errors parsing values with units</li>
 <li>Added - Variable argument cli.toArgvL() &amp; cli.toCmdlineL()</li>
 <li>Changed - Moved fromString() &amp; toString() to new Convert class</li>
 <li>Changed - Allowed long named booleans an optional value (e.g. &quot;=true&quot;)</li>
 <li>Changed - Rename opt.unspecifiedValue() to opt.implicitValue()</li>
 <li>Added - fromString() support for types constructible from string</li>
-<li>Changed - Allow optional positionals before required ones.</li>
+<li>Changed - Allow optional positionals before required ones</li>
 <li>Added - optVec.size(exact) and optVec.size(min, max)</li>
 <li>Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead</li>
-<li>Added - Allow unambiguous positionals before subcommands.</li>
-<li>Added - Optionally capture arbitrary arguments of unknown subcommands.</li>
-<li>Added - Option to change column at which errors and help text wraps.</li>
+<li>Added - Allow unambiguous positionals before subcommands</li>
+<li>Added - Optionally capture arbitrary arguments of unknown subcommands</li>
+<li>Added - Option to change column at which errors and help text wraps</li>
 <li>Changed - Default text columns reduced on narrow console windows</li>
+<li>Changed - Moved opt.toValueDesc() to cli.valueDesc()</li>
+<li>Fixed - Compile fails with OptVec<!-- raw HTML omitted --> due to vector<!-- raw HTML omitted --> weirdness</li>
+<li>Changed - cli.exec() returns exit code instead of just whether it's 0</li>
+<li>Changed - Command handlers are now void return</li>
+<li>Fixed - Meaningless and ignored &quot;--no&quot; version for flag values</li>
 </ul>
 <h2 id="dimcli-5-0-2-2020-01-14-">dimcli 5.0.2 (2020-01-14)</h2>
 <ul>
@@ -126,7 +132,7 @@ and this project adheres to <a href="http://semver.org">Semantic Versioning</a>.
 <ul>
 <li>Added - Configuration option to unconditionally exclude &lt;filesystem&gt;</li>
 <li>Added - Default valueDesc for floating point values (&quot;FLOAT&quot;)</li>
-<li>Changed - Rename cli.runCommand() to cli.commandMatched()</li>
+<li>Changed - Renamed cli.runCommand() to cli.commandMatched()</li>
 <li>Added - Optional error detail argument to cli.badUsage()</li>
 <li>Changed - Replaced opt.setValueDesc() with opt.toValueDesc()</li>
 <li>Fixed - Invalid array access using optVec.from() from parse action</li>
