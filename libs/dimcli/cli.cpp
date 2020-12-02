@@ -2036,7 +2036,7 @@ bool Cli::badUsage(
     const string & value,
     const string & detail
 ) {
-    string prefix = "Invalid '" + opt.from() + "' value";
+    string prefix = "Invalid \"" + opt.from() + "\" value";
     return badUsage(prefix, value, detail);
 }
 
@@ -2312,7 +2312,7 @@ bool Cli::parse(vector<string> & args) {
             if (argName.opt->m_bool) {
                 auto val = true;
                 if (equal && !parseBool(val, ptr))
-                    return badUsage("Invalid '" + name + "' value", ptr);
+                    return badUsage("Invalid \"" + name + "\" value", ptr);
                 rawValues.emplace_back(
                     RawValue::kNamed,
                     argName.opt,
