@@ -9,6 +9,7 @@
 # docs/docgen.xml
 # docs/guide.adoc
 # docs/reference.adoc
+# docs/test.bat
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
 # tests/cli/clitest.cpp

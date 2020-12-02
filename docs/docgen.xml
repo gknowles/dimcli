@@ -5,18 +5,49 @@ Distributed under the Boost Software License, Version 1.0.
 <Docs>
   <Site name="DIMCLI" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
-    <Source tag="HEAD"/>
-    <Source tag="v5.0.2" layout="md +ref" default="true"/>
-    <Source tag="v5.0.1" layout="md +ref"/>
-    <Source tag="v5.0.0" layout="md +ref"/>
-    <Source tag="v4.1.0" layout="md"/>
-    <Source tag="v4.0.1" layout="md"/>
-    <Source tag="v3.1.1" layout="md"/>
-    <Source tag="v3.1.0" layout="md"/>
-    <Source tag="v3.0.0" layout="md"/>
-    <Source tag="v2.0.0" layout="md"/>
-    <Source tag="v1.0.3" layout="md"/>
+    <Version tag="HEAD"/>
+    <Version tag="v5.0.2" layout="md +ref" default="true"/>
+    <Version tag="v5.0.1" layout="md +ref"/>
+    <Version tag="v5.0.0" layout="md +ref"/>
+    <Version tag="v4.1.0" layout="md"/>
+    <Version tag="v4.0.1" layout="md"/>
+    <Version tag="v3.1.1" layout="md"/>
+    <Version tag="v3.1.0" layout="md"/>
+    <Version tag="v3.0.0" layout="md"/>
+    <Version tag="v2.0.0" layout="md"/>
+    <Version tag="v1.0.3" layout="md"/>
   </Site>
+  <Samples outDir="../bin/docgen">
+    <Code>
+      <Lang name="C++"/>
+      <Lang name="cpp"/>
+      <File extension="cpp"/>
+      <Compile>
+        <Arg value="cl"/>
+        <Arg value="/nologo"/>
+        <Arg value="/std:c++latest"/>
+        <Arg value="/permissive-"/>
+        <Arg value="/W4"/>
+        <Arg value="/wd4100"/> <!-- unreferenced formal parameter -->
+        <Arg value="/wd4459"/> <!-- declaration hides global declaration -->
+        <Arg value="/wd4996"/> <!-- function or variable may be unsafe -->
+        <Arg value="/WX"/>
+        <Arg value="/I../../../../libs"/>
+        <Arg value="/Fea.out"/>
+        <Arg value="../../../../libs/dimcli/cli.cpp"/>
+      </Compile>
+    </Code>
+    <Script>
+      <Lang name="shell session"/>
+      <ShellPrefix value="$ "/>
+      <CommentPrefix value="$ #"/>
+      <Shell>
+        <Arg value="cmd"/>
+        <Arg value="/D"/>
+        <Arg value="/C"/>
+      </Shell>
+    </Script>
+  </Samples>
   <Layout name="default">
     <Page name="User's Guide" file="guide.adoc" default="true"/>
     <Page name="Reference" file="reference.adoc"/>
@@ -36,5 +67,4 @@ Distributed under the Boost Software License, Version 1.0.
     <Column content="toc" maxWidth="25%"/>
     <Column content="body"/>
   </PageLayout>
-  <Source/>
 </Docs>

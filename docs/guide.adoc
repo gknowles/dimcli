@@ -16,7 +16,7 @@ C++ command line parser toolkit for kids of all ages.
 ** Copyable
 ** Either assignable from string, constructible from string, has an istream
    extraction operator, or has a specialization of
-   Cli&#58;:Convert::fromString&lt;T>()
+   Cli::Convert::fromString&lt;T>()
 * Help generation.
 * Option definitions can be scattered across multiple files.
 * Git style subcommands.
@@ -26,7 +26,19 @@ C++ command line parser toolkit for kids of all ages.
 
 How does it feel?
 
-[source, C++]
+[source, C++, test prefix 0]
+////
+#include "dimcli/cli.h"
+#include <iostream>
+using namespace std;
+
+constexpr unsigned EX_OK = Dim::kExitOk;
+constexpr unsigned EX_USAGE = Dim::kExitUsage;
+constexpr unsigned EX_SOFTWARE = Dim::kExitSoftware;
+
+////
+
+[source, C++, test subset 4]
 ----
 #include "dimcli/cli.h"
 #include <iostream>
@@ -40,7 +52,7 @@ int main(int argc, char * argv[]) {
         return cli.printError(cerr); // prints error and returns cli.exitCode()
     if (!name)
         cout << "Greeting the unknown." << endl;
-    for (unsigned i = 0; i < *count; ++i)
+    for (int i = 0; i < *count; ++i)
         cout << "Hello " << *name << "!" << endl;
     return 0;
 }
@@ -56,17 +68,16 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  -c, -n, --count=INTEGER  times to say hello (default: 1)
-  --name STRING            who to greet (default: Unknown)
+  -c, -n, --count=NUM  times to say hello (default: 1)
+  --name=STRING        who to greet (default: Unknown)
 
-  --help                   Show this message and exit.
+  --help               Show this message and exit.
 
 $ a.out --count=3
 Greeting the unknown.
 Hello Unknown!
 Hello Unknown!
 Hello Unknown!
-
 $ a.out --name John
 Hello John!
 ----
@@ -81,7 +92,7 @@ for early exit (like --help) or bad arguments respectively. Otherwise the
 command line was valid, arguments have been parsed, and cli.exitCode() is
 EX_OK.
 
-[source, C++]
+[source, C++, test subset 5]
 ----
 #include "dimcli/cli.h"
 #include <iostream>
@@ -113,8 +124,8 @@ Does the apple have a worm? No!
 
 The EX_* constants (along with standard values) are in `<sysexits.h>` on most
 unixes, although it may not be in any standard. Equivalent enum values
-Dim&#58;:kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful
-on Windows where `<sysexits.h>` doesn't exist.
+Dim::kExitOk (0) and Dim::kExitUsage (64) are defined, which can be useful on
+Windows where `<sysexits.h>` doesn't exist.
 
 
 === Options
@@ -158,7 +169,7 @@ Does the orange have a worm? No!
 
 Add a description and change the value's name in the description:
 
-[source, C++]
+[source, C++, test repl 2 1]
 ----
 auto & fruit = cli.opt<string>("fruit", "apple")
     .desc("type of fruit")
@@ -195,7 +206,7 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "Does the " << *fruit << " have a worm? "
-        << worm ? "Yes :(" : "No!";
+        << (worm ? "Yes :(" : "No!");
     return EX_OK;
 }
 ----
@@ -207,10 +218,10 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  --fruit=STRING  type of fruit (default: apple)
-  -w, --worm      make it icky
+  --fruit=STRING          type of fruit (default: apple)
+  -w, --worm / --no-worm  make it icky
 
-  --help          Show this message and exit.
+  --help                  Show this message and exit.
 
 $ a.out --fruit=orange
 Does the orange have a worm? No!
@@ -265,7 +276,7 @@ int main(int argc, char * argv[]) {
     cli.opt<string>("a apple [apple]").desc("apples are red");
     cli.opt<bool>("!o orange apricot.").desc("oranges are orange");
     cli.opt<string>("<pear>").desc("pears are yellow");
-    cli.parse(argc, argv);
+    (void) cli.parse(argc, argv);
     return EX_OK;
 }
 ----
@@ -280,11 +291,11 @@ Usage: a.out [OPTIONS] [apple] pear
   pear      pears are yellow
 
 Options:
-  -a, --apple=STRING          apples are red
-  --apricot, --orange / -o, --no-orange
-                              oranges are orange
+  -a, --apple=STRING  apples are red
+  --orange, --apricot / -o, --no-orange
+                      oranges are orange
 
-  --help                      Show this message and exit.
+  --help              Show this message and exit.
 ----
 
 When named options are added they replace any previous rule with the same
@@ -324,9 +335,9 @@ int main(int argc, char * argv[]) {
     auto & c = cli.opt<int>("<c>");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
-    if (a) cout << "a:" << *a;
-    for (int val : *b) cout << " b:" << val;
-    if (c) cout << " c:" << *c;
+    if (a) cout << "a:" << *a << ' ';
+    for (int val : *b) cout << "b:" << val << ' ';
+    if (c) cout << "c:" << *c << ' ';
     return EX_OK;
 }
 ----
@@ -336,9 +347,10 @@ A few combinations to show how this plays out:
 [source, shell session]
 ----
 $ a.out
-Error: Option 'b' missing value.
+Error: Option "b" missing value.
+Must have 1 to 2 values.
 $ a.out 1
-Error: Option 'c' missing value.
+Error: Option "c" missing value.
 $ # With two args 'a' is not populated as it's optional whlie 'b' & 'c'
 $ # are required.
 $ a.out 1 2
@@ -454,7 +466,7 @@ Options:
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
 $ a.out -omandarin -onavel -ohamlin
-Error: Too many '-o' values: hamlin
+Error: Too many "-o" values: hamlin
 The maximum number of values is 2.
 ----
 
@@ -497,12 +509,12 @@ Options:
   --help    Show this message and exit.
 
 $ a.out -v1
-Error: Option '-v' missing value.
+Error: Option "-v" missing value.
 Must have 2 to 3 values.
 $ a.out -v1 -v1
 Success
 $ a.out -v1 -v1 -v1 -v1
-Error: Too many '-v' values: 1
+Error: Too many "-v" values: 1
 The maximum number of values is 3.
 ----
 
@@ -540,7 +552,7 @@ $ a.out
 Using the unknown name.
 Hello Unknown!
 $ a.out -n John
-Name selected using -n
+Name selected using -n from argv[2]
 Hello John!
 $ a.out --name Mary
 Name selected using --name from argv[2]
@@ -633,11 +645,11 @@ v1 = default, v2 = default, p = default
 $ a.out -oone -i two
 v1 = one, v2 = implicit, p = two
 $ a.out -o one -itwo
-v1 =, v2 = two, p = one
+v1 = , v2 = two, p = one
 $ a.out --optional=one --with-implicit two
 v1 = one, v2 = implicit, p = two
 $ a.out --optional one --with-implicit=two
-v1 =, v2 = two, p = one
+v1 = , v2 = two, p = one
 ----
 
 
@@ -675,19 +687,20 @@ And it's output:
 $ a.out 99
 The value: 99
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS] value
   value     It's required!
 
 Options:
   --help    Show this message and exit.
+
 $ a.out
-Error: Option 'value' missing value.
+Error: Option "value" missing value.
 ----
 
 Now add the before action:
-[source, C++]
+[source, C++, test repl 2 0]
 ----
-cli.before([](Cli &, vector<string> & args) {
+cli.before([](Dim::Cli &, vector<string> & args) {
     if (args.size() == 1) {
         // It's just the program name, add the help option.
         args.push_back("--help");
@@ -700,7 +713,7 @@ And missing arguments are a thing of the past...
 [source, shell session]
 ----
 $ a.out
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS] value
   value     It's required!
 
 Options:
@@ -760,7 +773,7 @@ Let's do some math!
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   -n, --number=NUM  numbers to multiply (default: 1)
@@ -772,7 +785,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-Error: Invalid '-n' value: x
+Error: Invalid "-n" value: x
 ----
 
 
@@ -821,12 +834,12 @@ Let's... wash some socks?
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
-  -socks=NUM  Number of socks, rounded up to even number.
+  --socks=NUM  Number of socks, rounded up to even number. (default: 0)
 
-  --help      Show this message and exit.
+  --help       Show this message and exit.
 
 $ a.out
 0 socks
@@ -878,18 +891,18 @@ Set the range:
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
-  -h NUM    High value, must be greater than or equal to the low.
-  -l NUM    Low value.
+  -h NUM    High value, must be greater than or equal to the low. (default: 0)
+  -l NUM    Low value. (default: 0)
 
   --help    Show this message and exit.
 
 $ a.out
 Range is from 0 to 0
 $ a.out -l1
-High must not be less than the low.
+Error: High must not be less than the low.
 $ a.out -h5 -l2
 Range is from 2 to 5
 ----
@@ -913,14 +926,14 @@ definitions will assert in debug builds and be ignored in release.
 
 [source, C++]
 ----
-static auto & yell = Dim::Cli().opt<bool>("yell").desc("Say it loud.");
+static auto & yell = Dim::Cli().opt<bool>("yell.").desc("Say it loud.");
 static auto & color = Dim::Cli().opt<string>("color", "red")
     .command("apple")
     .desc("Change color of the apple.");
 
-int apple(Dim::Cli & cli) {
+bool apple(Dim::Cli & cli) {
     cout << "It's a " << *color << " apple" << (*yell ? "!!!" : ".");
-    return EX_OK;
+    return true;
 }
 
 int orange(Dim::Cli & cli) {
@@ -932,13 +945,20 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.").action(apple);
     cli.command("orange").desc("Show orange.").action(orange);
-    cli.exec(argc, argv);
-    return cli.printError(cerr);
+    return cli.exec(cerr, argc, argv);
 }
 ----
 
 The same thing could also be done with external variables:
-[source, C++]
+
+[source, C++, test alt, test repl 6 1 11 1]
+////
+    cout << "It's a " << color << " apple" << (yell ? "!!!" : ".");
+    ...
+    cout << "It's an orange" << (yell ? "!!!" : ".");
+////
+
+[source, C++, test repl 0 4 14 3]
 ----
 static bool yell;
 static string color;
@@ -946,7 +966,7 @@ static string color;
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.opt(&yell, "yell").desc("Say it loud.");
+    cli.opt(&yell, "yell.").desc("Say it loud.");
     cli.opt(&color, "color", "red").command("apple")
         .desc("Change color of the apple.");
     ...
@@ -954,13 +974,12 @@ int main(int argc, char * argv[]) {
 
 Or if there's some additional argument checks or setup you need to do, the
 exec() call can be separate from parse():
-[source, C++]
+[source, C++, test alt, test repl 20 1]
 ----
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     // any additional validation...
-    cli.exec();
-    return cli.printError(cerr);
+    return cli.exec(cerr);
 ----
 
 The end result at the console:
@@ -969,7 +988,7 @@ The end result at the console:
 $ a.out
 Error: No command given.
 $ a.out --help
-usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] command [args...]
 
 Commands:
   apple     Show apple.
@@ -997,7 +1016,7 @@ pages you see the whole thing:
 [source, shell session]
 ----
 $ a.out apple --help
-usage: a.out apple [OPTIONS]
+Usage: a.out apple [OPTIONS]
 
 Show apple. No other fruit.
 
@@ -1029,8 +1048,7 @@ int unknown(Dim::Cli & cli) {
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.unknownCmd(unknown);
-    cli.exec(argc, argv))
-    return cli.printError(cerr);
+    return cli.exec(cerr, argc, argv);
 }
 ----
 
@@ -1071,7 +1089,7 @@ int main(int argc, char * argv[]) {
 }
 ----
 
-[source, C++]
+[source, C++, test file log]
 ----
 // log.cpp
 static Dim::Cli cli;
@@ -1099,7 +1117,7 @@ Options:
 When you want to put a bundle of stuff in a separate source file, such as a
 <<#subcommands, command>> and its options, it can be convenient to group them
 into a single static struct.
-[source, C++]
+[source, C++, test file somefile]
 ----
 // somefile.cpp
 static int myCmd(Dim::Cli & cli);
@@ -1110,7 +1128,7 @@ static struct CmdOpts {
     string option3;
 
     CmdOpts() {
-        Cli cli;
+        Dim::Cli cli;
         cli.command("my").action(myCmd).desc("What my command does.");
         cli.opt(&option1, "1 one", 1).desc("First option.");
         cli.opt(&option2, "2", "two").desc("Second option.");
@@ -1119,6 +1137,16 @@ static struct CmdOpts {
 } s_opts;
 ----
 
+[source, C++, test file somefile, test repl 15 0]
+////
+
+static int myCmd(Dim::Cli &) {
+    return s_opts.option1;
+}
+////
+++++
+++++
+
 Then in myCmd() and throughout the rest of somefile.cpp you can reference the
 options as **s_opts.option1**, **s_opts.option2**, and **s_opts.option3**.
 
@@ -1126,16 +1154,16 @@ And the help text will be:
 [source, shell session]
 ----
 $ a.out my --help
-usage: a.out my [OPTIONS]
+Usage: a.out my [OPTIONS]
 
 What my command does.
 
 Options:
-  -1, --one  First option. (default: 1)
-  -2         Second option. (default: two)
-  --three    Third option. (default: three)
+  -1, --one=NUM   First option. (default: 1)
+  -2 STRING       Second option. (default: two)
+  --three=STRING  Third option. (default: three)
 
-  --help     Show this message and exit.
+  --help          Show this message and exit.
 ----
 
 ===== CliLocal
@@ -1159,7 +1187,7 @@ int main(int argc, char * argv[]) {
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "Words:";
-    for (auto & w : words)
+    for (auto & w : *words)
         cout << " " << w;
     return EX_OK;
 }
@@ -1197,10 +1225,9 @@ not to the working directory.
 
 [source, shell session]
 ----
-$ md rsp & cd rsp
-$ echo one @more.rsp >one.rsp
-$ echo two three >more.rsp
-$ cd ..
+$ md rsp
+$ echo one @more.rsp >rsp/one.rsp
+$ echo two three >rsp/more.rsp
 $ a.out @rsp/one.rsp
 Words: one two three
 ----
@@ -1239,7 +1266,7 @@ int main(int argc, char * argv[]) {
 The same can also be done manually, as shown below. This is a good starting
 point if you need something slightly different:
 
-[source, C++]
+[source, C++, test repl 3 3, test alt]
 ----
 vector<string> args = cli.toArgv(argc, argv);
 if (const char * eopts = getenv("AOUT_OPTS")) {
@@ -1253,21 +1280,22 @@ if (!cli.parse(args))
 ----
 
 Or as a before action (after response file expansion):
-[source, C++]
+[source, C++, test repl 3 9, test alt]
 ----
-cli.before([](Cli &, vector<string> & args) {
+cli.before([](Dim::Cli & cli, vector<string> & args) {
     if (const char * eopts = getenv("AOUT_OPTS")) {
         vector<string> eargs = cli.toArgv(eopts);
         args.insert(args.begin() + 1, eargs.begin(), eargs.end());
     }
+    return true;
 });
-if (!cli.parse(args))
+if (!cli.parse(argc, argv))
     return cli.printError(cerr);
 ----
 
 How this works:
 
-[source, shell session]
+[source, shell session, test noscript]
 ----
 $ export AOUT_OPTS=
 $ a.out c d
@@ -1310,7 +1338,7 @@ Is version 1.0 ready to ship?
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --help     Show this message and exit.
@@ -1344,18 +1372,18 @@ And when run...
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --help    Show this message and exit.
 ----
 
 It can be modified like any other bool option.
-[source, C++]
+[source, C++, test repl 2 1]
 ----
 cli.helpOpt().desc("What you see is what you get.");
 ----
-[source, C++]
+[source, C++, test alt, test repl 2 1]
 ----
 auto & help = cli.helpOpt();
 help.desc("What you see is what you get.");
@@ -1365,7 +1393,7 @@ Either of which gets you this:
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --help    What you see is what you get.
@@ -1373,7 +1401,7 @@ Options:
 
 Another related command is cli.helpNoArgs(), which internally adds "--help" to
 otherwise empty command lines.
-[source, C++]
+[source, C++, test repl 2 2]
 ----
 cli.helpNoArgs();
 cli.helpOpt().desc("What you see is what you get.");
@@ -1383,12 +1411,13 @@ Now all there is, is help:
 [source, shell session]
 ----
 $ a.out
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --help    What you see is what you get.
+
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --help    What you see is what you get.
@@ -1445,7 +1474,7 @@ Does the orange have a worm? No!
 You can use an inaccessible option (empty string for the names) that doesn't
 show up in the interface (or the help text) to set an explicit default.
 
-[source, C++]
+[source, C++, test repl 7 2]
 ----
 cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
 cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue();
@@ -1494,7 +1523,7 @@ int main(int argc, char * argv[]) {
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --streetlight=COLOR  Color of street light.
@@ -1507,10 +1536,10 @@ Options:
 $ a.out
 Wait
 $ a.out --streetlight
-Error: Option requires value: --streetlight
+Error: No value given for --streetlight
 $ a.out --streetlight=purple
 Error: Invalid "--streetlight" value: purple
-Error: Must be "green", "red", or "yellow"
+Must be "green", "yellow", or "red".
 $ a.out --streetlight=green
 Go!
 ----
@@ -1544,7 +1573,7 @@ Selected file: file.txt
 
 The error message references the first name in the list so if you flip it
 around...
-[source, C++]
+[source, C++, test repl 2 1]
 ----
 auto & file = cli.opt<string>("f file").require();
 ----
@@ -1580,8 +1609,8 @@ int main(int argc, char * argv[]) {
 $ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-Error: Out of range 'letter' value: 1
-Must be between 'a' and 'z'.
+Error: Out of range "letter" value: 1
+Must be between "a" and "z".
 ----
 
 
@@ -1713,10 +1742,13 @@ int main(int argc, char * argv[]) {
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
-  -b NUM[<units>]
+  -b, --bytes=NUM[<units>]  Number of bytes to process. (default: 0)
+
+  --help                    Show this message and exit.
+
 $ a.out -b 32768
 32768 bytes
 $ a.out -b 32k
@@ -1726,8 +1758,8 @@ $ a.out -b 32KB
 $ a.out -b 32kib
 32768 bytes
 $ a.out -b 32bk
-Error: Invalid '-b' value: 32bk
-Units symbol 'bk' not recognized.
+Error: Invalid "-b" value: 32bk
+Units symbol "bk" not recognized.
 ----
 
 ==== Time Units
@@ -1776,11 +1808,11 @@ $ a.out -i 1y
 31536000 seconds
 $ # You can only fit 136.2 years worth of seconds into uint32_t
 $ a.out -i 137y
-Error: Out of range '-i' value: 137y
-Must be between '0' and '4,294,967,296'.
+Error: Out of range "-i" value: 137y
+Must be between "0" and "4,294,967,295".
 $ # We set fUnitRequire, so units are required...
 $ a.out -i 60
-Error: Invalid '-i' value: 60
+Error: Invalid "-i" value: 60
 Value requires suffix specifying the units.
 ----
 
@@ -1874,7 +1906,7 @@ int main(int argc, char * argv[]) {
 By default the prompt is a capitalized version of the first option name.
 Which is why this example uses "cookies c" instead of "c cookies".
 
-[source, shell session]
+[source, shell session, test getline 3 -1]
 ----
 $ a.out -c5
 There are 5 cookies.
@@ -1886,22 +1918,22 @@ The first option name is also used in errors where no name is available from
 the command line, such as when the value is from a prompt. The following
 fails because "nine" isn't an int.
 
-[source, shell session]
+[source, shell session, test getline 1 -4]
 ----
 $ a.out
 Cookies [0]: nine
-Error: Invalid '--cookies' value: nine
+Error: Invalid "--cookies" value: nine
 ----
 You can change the prompt to something more appropriate and hide the default:
 
-[source, C++]
+[source, C++, test repl 2 1]
 ----
 auto & cookies = cli.opt<int>("cookies c")
     .prompt("How many cookies did you buy?", cli.fPromptNoDefault);
 ----
 Which gives you:
 
-[source, shell session]
+[source, shell session, test getline 1 -1]
 ----
 $ a.out
 How many cookies did you buy? 9
@@ -1929,14 +1961,14 @@ Results in:
 
 [source, shell session]
 ----
-$ a.out
+$ (echo secret & echo secret) | a.out
 Password:
 Enter again to confirm:
 Password was: secret
 ----
 For passwords you can use opt.passwordOpt() instead of spelling it out.
 
-[source, C++]
+[source, C++, test repl 2 2]
 ----
 auto & pass = cli.passwordOpt(/*confirm=*/true);
 ----
@@ -1945,7 +1977,7 @@ Which gives you:
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   --password=STRING  Password required for access.
@@ -1973,10 +2005,10 @@ int main(int argc, char * argv[]) {
 ----
 Cover your ears...
 
-[source, shell session]
+[source, shell session, test getline 11 -1, test getline 13 -1]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 Options:
   -y, --yes  Suppress prompting to allow execution.
@@ -1993,13 +2025,13 @@ HELLO!!!
 ----
 You can change the prompt:
 
-[source, C++]
+[source, C++, test repl 2 1]
 ----
 cli.confirmOpt("Are loud noises okay?");
 ----
 Now it asks:
 
-[source, shell session]
+[source, shell session, test getline 1 -1]
 ----
 $ a.out
 Are loud noises okay? [y/N]: y
@@ -2056,10 +2088,20 @@ Within text, consecutive spaces are collapsed and words are wrapped at 80
 columns. Newlines should be reserved for paragraph breaks.
 
 [source, C++]
+////
+int main(int argc, char * argv[]) {
+    #error <place holder>
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    return EX_OK;
+}
+////
+
+[source, C++, test repl 1 1]
 ----
 Dim::Cli cli;
 cli.header("Heading before usage");
-cli.desc("Desciption of what the command does, including any general "
+cli.desc("Description of what the command does, including any general "
     "discussion of the various aspects of its use.");
 cli.opt<bool>("[positional]");
 cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
@@ -2080,13 +2122,13 @@ doesn't have a description.
 ----
 $ a.out --help
 Heading before usage
-usage: a.out [OPTIONS] positional
+Usage: a.out [OPTIONS] [positional]
 
 Description of what the command does, including any general discussion of the
 various aspects of its use.
 
 Options:
-  --option=OPT_VAL  About this options.
+  --option=OPT_VAL  About this option.
   -p NUM            Option p. (default: 1)
   -q NUM            Option q. (default: two, yes TWO!)
   -r NUM            Option r.
@@ -2137,16 +2179,16 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.versionOpt("1.0");
     // Move 1b into 'First' group after creation.
-    cli.opt<bool>("1b").group("First").desc("boolean 1b");
+    cli.opt<bool>("1b.").group("First").desc("boolean 1b");
     // Set context to 'First' group, update its key and add 1a directly to it.
     cli.group("First").sortKey("a").title(
         "First has a really long title that wraps around to more than "
         "a single line, quite a lot of text for so few options"
     );
-    cli.opt<bool>("1a");
+    cli.opt<bool>("1a.");
     // Add 2a to 'Second' and 3a to 'Third'.
-    cli.group("Second").sortKey("b").opt<bool>("2a");
-    cli.group("Third").sortKey("c").opt<bool>("3a");
+    cli.group("Second").sortKey("b").opt<bool>("2a.");
+    cli.group("Third").sortKey("c").opt<bool>("3a.");
     // Give the footer group a title.
     cli.group("~").title("Internally Generated");
     if (!cli.parse(argc, argv))
@@ -2159,7 +2201,7 @@ Let's see the groupings...
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS]
 
 First has a really long title that wraps around to more than a single line,
 quite a lot of text for so few options:
@@ -2223,7 +2265,7 @@ Let's see the command groupings...
 [source, shell session]
 ----
 $ a.out --help
-usage: a.out [OPTIONS]
+Usage: a.out [OPTIONS] command [args...]
 
 First:
   1a
@@ -2236,7 +2278,7 @@ Third:
   3a
 
 Options:
-  --help     Show this message and exit.
+  --help    Show this message and exit.
 ----
 
 
@@ -2254,8 +2296,7 @@ How to add it:
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.helpCmd();
-    cli.exec(argc, argv);
-    return cli.printError(cerr);
+    return cli.exec(cerr, argc, argv);
 }
 ----
 
@@ -2265,7 +2306,7 @@ expect.
 [source, shell session]
 ----
 $ a.out help
-usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] command [args...]
 
 Commands:
   help      Show help for individual commands and exit.
@@ -2274,11 +2315,11 @@ Options:
   --help    Show this message and exit.
 
 $ a.out help help
-usage: a.out help [OPTIONS] [command]
+Usage: a.out help [OPTIONS] [command]
 
 Show help for individual commands and exit. If no command is given the list of
 commands and general options are shown.
-  command    Command to show help information about.
+  command   Command to show help information about.
 
 Options:
   -u, --usage / --no-usage  Only show condensed usage.
@@ -2286,9 +2327,10 @@ Options:
   --help                    Show this message and exit.
 
 $ a.out help -u
-usage: a.out [--help] command [args..]
+Usage: a.out [--help] command [args...]
+
 $ a.out help help -u
-usage: a.out help [-u, --usage] [--help] [command]
+Usage: a.out help [-u, --usage] [--help] [command]
 ----
 
 
