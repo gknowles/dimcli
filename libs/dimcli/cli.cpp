@@ -857,7 +857,7 @@ void Cli::OptIndex::indexLongName(
     }
     opt.setNameIfEmpty("--" + key);
     m_longNames[key] = {&opt, invert, optional, {}, pos};
-    if (opt.m_bool && allowNo)
+    if (allowNo && opt.m_bool && !opt.m_flagValue)
         m_longNames["no-" + key] = {&opt, !invert, optional, {}, pos + 1};
 }
 
