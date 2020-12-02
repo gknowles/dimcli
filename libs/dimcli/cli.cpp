@@ -552,7 +552,7 @@ bool Cli::OptBase::withUnits(
         return cli.badUsage(
             *this,
             val,
-            "Units symbol '" + unit + "' not recognized."
+            "Units symbol \"" + unit + "\" not recognized."
         );
     }
 }
@@ -917,7 +917,8 @@ static void defCmdAction(Cli & cli) {
     } else {
         cli.fail(
             kExitSoftware,
-            "Command '" + cli.commandMatched() + "' has not been implemented."
+            "Command \"" + cli.commandMatched() + '"'
+                + " has not been implemented."
         );
     }
 }
@@ -1996,7 +1997,7 @@ bool Cli::parseValue(
     const char ptr[]
 ) {
     if (!opt.assign(name, pos)) {
-        string prefix = "Too many '" + name + "' values";
+        string prefix = "Too many \"" + name + "\" values";
         string detail = "The maximum number of values is "
             + intToString(opt, opt.maxSize()) + ".";
         return badUsage(prefix, ptr, detail);
@@ -2021,7 +2022,7 @@ bool Cli::badUsage(
     string out;
     auto & cmd = commandMatched();
     if (cmd.size())
-        out = "Command '" + cmd + "': ";
+        out = "Command \"" + cmd + "\": ";
     out += prefix;
     if (!value.empty()) {
         out += ": ";
@@ -2191,7 +2192,7 @@ static bool badMinMatched(
             + " to " + intToString(opt, max) + " values.";
     }
     return cli.badUsage(
-        "Option '" + (name.empty() ? opt.from() : name) + "' missing value.",
+        "Option \"" + (name.empty() ? opt.from() : name) + "\" missing value.",
         {},
         detail
     );
@@ -2534,7 +2535,7 @@ int Cli::exec() {
         assert(!"command found by parse not defined");
         fail(
             kExitSoftware,
-            "Command '" + name + "' found by parse not defined."
+            "Command \"" + name + "\" found by parse not defined."
         );
     }
     return exitCode();

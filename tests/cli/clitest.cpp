@@ -195,7 +195,7 @@ void assertTests() {
     enum MyType {} mval;
     cli.opt(&mval, "v");
     EXPECT_PARSE(cli, "-v x", false);
-    EXPECT_ERR(cli, "Error: Invalid '-v' value: x\n");
+    EXPECT_ERR(cli, "Error: Invalid "-v' value: x\n");
     EXPECT_ASSERT(1 + R"(
 !"no assignment from string or stream extraction operator"
 )");
@@ -427,7 +427,7 @@ void parseTests() {
     EXPECT_PARSE(cli, "--x", false);
     EXPECT_ERR(cli, "Error: Unknown option: --x\n");
     EXPECT_PARSE(cli, "--help=x", false);
-    EXPECT_ERR(cli, "Error: Invalid '--help' value: x\n");
+    EXPECT_ERR(cli, "Error: Invalid \"--help\" value: x\n");
 
     cli.helpCmd();
     EXPECT_PARSE(cli, "x", false);
@@ -439,21 +439,21 @@ void parseTests() {
 
     cli.opt<int>("n", 1);
     cli.opt<int>("?o", 2).check([](auto & cli, auto & opt, auto & val) {
-        return cli.badUsage("Malformed '"s + opt.from() + "' value: " + val);
+        return cli.badUsage("Malformed \""s + opt.from() + "\" value: " + val);
     });
     EXPECT_PARSE(cli, "-na", false);
-    EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
+    EXPECT_ERR(cli, "Error: Invalid \"-n\" value: a\n");
     EXPECT_PARSE(cli, "-o", false);
-    EXPECT_ERR(cli, "Error: Malformed '-o' value: \n");
+    EXPECT_ERR(cli, "Error: Malformed \"-o\" value: \n");
     EXPECT_PARSE(cli, "-n", false);
     EXPECT_ERR(cli, "Error: No value given for -n\n");
     EXPECT_PARSE(cli, "-n a", false);
-    EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
+    EXPECT_ERR(cli, "Error: Invalid \"-n\" value: a\n");
 
     cli = {};
     cli.opt<int>("<n>", 1);
     EXPECT_PARSE(cli, "", false);
-    EXPECT_ERR(cli, "Error: Option 'n' missing value.\n");
+    EXPECT_ERR(cli, "Error: Option \"n\" missing value.\n");
 }
 
 
@@ -495,7 +495,7 @@ Usage: test [--streetlight=COLOR] [--help]
 
     EXPECT_PARSE(cli, "--streetlight white", false);
     EXPECT_ERR(cli, 1 + R"(
-Error: Invalid '--streetlight' value: white
+Error: Invalid "--streetlight" value: white
 Must be "green", "yellow", or "red".
 )");
 
@@ -533,7 +533,7 @@ Options:
     EXPECT(state2.size() == 1 && state2[0] == State::stop);
     EXPECT_PARSE(cli, "white", false);
     EXPECT_ERR(cli, 1 + R"(
-Error: Invalid 'streetlights' value: white
+Error: Invalid "streetlights" value: white
 Must be "green", "yellow", or "red".
 )");
 
@@ -548,7 +548,7 @@ Must be "green", "yellow", or "red".
         .choice(1, "one").choice(2, "two");
     EXPECT_PARSE(cli, "-n white", false);
     EXPECT_ERR(cli, 1 + R"(
-Error: Invalid '-n' value: white
+Error: Invalid "-n" value: white
 Must be "one" or "two".
 )");
 
@@ -558,7 +558,7 @@ Must be "one" or "two".
         .choice(12, "twelve");
     EXPECT_PARSE(cli, "-n white", false);
     EXPECT_ERR(cli, 1 + R"(
-Error: Invalid '-n' value: white
+Error: Invalid "-n" value: white
 Must be "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
 "ten", "eleven", or "twelve".
 )");
@@ -885,12 +885,12 @@ void cmdTests() {
         EXPECT_PARSE(c1, "-a", false);
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);
-        EXPECT_ERR(c2, "Error: Command 'two': No value given for -a\n");
+        EXPECT_ERR(c2, "Error: Command \"two\": No value given for -a\n");
         EXPECT(c1.resetValues().exec() == Dim::kExitUsage);
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
         EXPECT(c1.exec() == Dim::kExitSoftware);
-        EXPECT_ERR(c1, "Error: Command 'one' has not been implemented.\n");
+        EXPECT_ERR(c1, "Error: Command \"one\" has not been implemented.\n");
 
         EXPECT_HELP(c1, "one", 1 + R"(
 Usage: test one [OPTIONS]
@@ -1042,7 +1042,7 @@ Usage: test help [-u, --usage] [--help] [command]
         EXPECT_PARSE(cli, "help notACmd");
         EXPECT(cli.exec() == Dim::kExitUsage);
         EXPECT_ERR(cli, 1 + R"(
-Error: Command 'help': Help requested for unknown command: notACmd
+Error: Command "help": Help requested for unknown command: notACmd
 )");
         EXPECT_PARSE(cli, "help help --usage");
         out.str("");
@@ -1169,13 +1169,13 @@ void optCheckTests() {
         EXPECT(*letter == 'a');
         EXPECT_PARSE(cli, "5 0", false);
         EXPECT(*count == 5);
-        EXPECT_ERR(cli,
-            "Error: Out of range 'letter' value: 0\n"
-            "Must be between 'a' and 'z'.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Out of range "letter" value: 0
+Must be between "a" and "z".
+)");
         EXPECT_PARSE(cli, "-- -5", false);
         EXPECT(*count == 1);
-        EXPECT_ERR(cli, "Error: Option 'letter' missing value.\n");
+        EXPECT_ERR(cli, "Error: Option \"letter\" missing value.\n");
     }
 }
 
@@ -1196,23 +1196,23 @@ void flagTests() {
         cli = {};
         string fruit;
         cli.group("fruit").title("Type of fruit");
-        auto & orange = cli.opt(&fruit, "o", "orange").flagValue();
+        auto & orange = cli.opt(&fruit, "o orange", "orange").flagValue();
         cli.opt(&fruit, "a", "apple").flagValue(true);
         cli.opt(orange, "p", "pear").flagValue();
         cli.group("~").title("Other");
         EXPECT_USAGE(cli, "", 1 + R"(
-Usage: test [-o] [-p] [--help]
+Usage: test [-o, --orange] [-p] [--help]
 )");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
 Type of fruit:
-  -a        (default)
-  -o
+  -a            (default)
+  -o, --orange
   -p
 
 Other:
-  --help    Show this message and exit.
+  --help        Show this message and exit.
 )");
         EXPECT_PARSE(cli, "-o");
         EXPECT(*orange == "orange");
@@ -1502,10 +1502,10 @@ Options:
         EXPECT_PARSE(cli, "");
         EXPECT(v0.size() == 0);
         EXPECT_PARSE(cli, "-00", false);
-        EXPECT_ERR(cli,
-            "Error: Too many '-0' values: 0\n"
-            "The maximum number of values is 0.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Too many "-0" values: 0
+The maximum number of values is 0.
+)");
         auto & v1 = cli.optVec<int>("1").size(1).desc("Not more than one.");
         auto & vn = cli.optVec<int>("N").desc("Unlimited.");
         EXPECT_PARSE(cli, "-11");
@@ -1538,10 +1538,10 @@ Options:
         auto & v0 = cli.optVec<int>("<one>").size(1, 2)
             .desc("The one and only?");
         EXPECT_PARSE(cli, "", false);
-        EXPECT_ERR(cli,
-            "Error: Option 'one' missing value.\n"
-            "Must have 1 to 2 values.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option "one" missing value.
+Must have 1 to 2 values.
+)");
         EXPECT(v0.size() == 0);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] one...
@@ -1574,10 +1574,10 @@ Options:
         EXPECT(*v3 == vector<int>{2, 3});
 
         EXPECT_PARSE(cli, "1 2", false);
-        EXPECT_ERR(cli,
-            "Error: Option 'three' missing value.\n"
-            "Must have 2 values.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option "three" missing value.
+Must have 2 values.
+)");
         EXPECT(v0->empty());
         EXPECT(*v1 == vector<int>{1});
         EXPECT(*v2 == vector<int>{2});
@@ -1702,21 +1702,21 @@ void unitsTests() {
             && dbls[6] == 1
         );
         EXPECT_PARSE(cli, "b", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: b\n");
+        EXPECT_ERR(cli, "Error: Invalid \"v\" value: b\n");
         EXPECT_PARSE(cli, "1B", false);
         EXPECT_ERR(cli,
-            "Error: Invalid 'v' value: 1B\n"
-            "Units symbol 'B' not recognized.\n"
+            "Error: Invalid \"v\" value: 1B\n"
+            "Units symbol \"B\" not recognized.\n"
         );
 
         dbls.siUnits("b", cli.fUnitBinaryPrefix);
         EXPECT_PARSE(cli, "1k 1ki");
         EXPECT(dbls[0] == 1024 && dbls[1] == 1024);
         EXPECT_PARSE(cli, "1000m", false);
-        EXPECT_ERR(cli,
-            "Error: Invalid 'v' value: 1000m\n"
-            "Units symbol 'm' not recognized.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Invalid "v" value: 1000m
+Units symbol "m" not recognized.
+)");
 
         dbls.siUnits("b", cli.fUnitInsensitive);
         EXPECT_PARSE(cli, "1 1b 1B 1kB 1Kb");
@@ -1727,33 +1727,33 @@ void unitsTests() {
             && dbls[4] == 1000
         );
         EXPECT_PARSE(cli, "1000u", false);
-        EXPECT_ERR(cli,
-            "Error: Invalid 'v' value: 1000u\n"
-            "Units symbol 'u' not recognized.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Invalid "v" value: 1000u
+Units symbol "u" not recognized.
+)");
 
         // with fUnitRequire
         dbls.siUnits("b", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1b 1kb");
         EXPECT(dbls[0] == 1 && dbls[1] == 1000);
         EXPECT_PARSE(cli, "1", false);
-        EXPECT_ERR(cli,
-            "Error: Invalid 'v' value: 1\n"
-            "Value requires suffix specifying the units.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Invalid "v" value: 1
+Value requires suffix specifying the units.
+)");
         EXPECT_PARSE(cli, "1k", false);
-        EXPECT_ERR(cli,
-            "Error: Invalid 'v' value: 1k\n"
-            "Units symbol 'k' not recognized.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Invalid "v" value: 1k
+Units symbol "k" not recognized.
+)");
         EXPECT_PARSE(cli, "b", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: b\n");
+        EXPECT_ERR(cli, "Error: Invalid \"v\" value: b\n");
         EXPECT_PARSE(cli, "k", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: k\n");
+        EXPECT_ERR(cli, "Error: Invalid \"v\" value: k\n");
         EXPECT_PARSE(cli, "kb", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: kb\n");
+        EXPECT_ERR(cli, "Error: Invalid \"v\" value: kb\n");
         EXPECT_PARSE(cli, "1x23kb", false);
-        EXPECT_ERR(cli, "Error: Invalid 'v' value: 1x23kb\n");
+        EXPECT_ERR(cli, "Error: Invalid \"v\" value: 1x23kb\n");
         dbls.siUnits("", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1k");
         EXPECT(dbls[0] == 1000);
@@ -1767,12 +1767,12 @@ void unitsTests() {
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
         EXPECT_PARSE(cli, "-i6G", false);
-        EXPECT_ERR(cli,
-            "Error: Out of range '-i' value: 6G\n"
-            "Must be between '-2,147,483,648' and '2,147,483,647'.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Out of range "-i" value: 6G
+Must be between "-2,147,483,648" and "2,147,483,647".
+)");
         EXPECT_PARSE(cli, "-iNaN(1)k", false);
-        EXPECT_ERR(cli, "Error: Invalid '-i' value: NaN(1)k\n");
+        EXPECT_ERR(cli, "Error: Invalid \"-i\" value: NaN(1)k\n");
 
         auto & sd = cli.opt<double>("d").siUnits();
         EXPECT_PARSE(cli, "-d2.k");
@@ -1781,7 +1781,7 @@ void unitsTests() {
         EnumAB seRaw;
         auto & se = cli.opt(&seRaw, "e").siUnits();
         EXPECT_PARSE(cli, "-e500m", false);
-        EXPECT_ERR(cli, "Error: Invalid '-e' value: 500m\n");
+        EXPECT_ERR(cli, "Error: Invalid \"-e\" value: 500m\n");
         EXPECT(se);
 
         EXPECT_HELP(cli, "", 1 + R"(
@@ -1814,10 +1814,10 @@ Options:
         EXPECT_PARSE(cli, "-s100ms");
         EXPECT(*sht == 0);
         EXPECT_PARSE(cli, "-s1y", false);
-        EXPECT_ERR(cli,
-            "Error: Out of range '-s' value: 1y\n"
-            "Must be between '0' and '65,535'.\n"
-        );
+        EXPECT_ERR(cli, 1 + R"(
+Error: Out of range "-s" value: 1y
+Must be between "0" and "65,535".
+)");
         auto & lng = cli.opt<long>("l").timeUnits();
         EXPECT_PARSE(cli, "-l1y");
         EXPECT(*lng == 31'536'000);
