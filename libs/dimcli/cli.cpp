@@ -2312,8 +2312,11 @@ bool Cli::parse(vector<string> & args) {
             argName = it->second;
             if (argName.opt->m_bool) {
                 auto val = true;
-                if (equal && !parseBool(val, ptr))
+                if (equal
+                    && (argName.opt->m_flagValue || !parseBool(val, ptr))
+                ) {
                     return badUsage("Invalid \"" + name + "\" value", ptr);
+                }
                 rawValues.emplace_back(
                     RawValue::kNamed,
                     argName.opt,
