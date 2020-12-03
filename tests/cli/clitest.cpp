@@ -195,7 +195,7 @@ void assertTests() {
     enum MyType {} mval;
     cli.opt(&mval, "v");
     EXPECT_PARSE(cli, "-v x", false);
-    EXPECT_ERR(cli, "Error: Invalid "-v' value: x\n");
+    EXPECT_ERR(cli, "Error: Invalid \"-v\" value: x\n");
     EXPECT_ASSERT(1 + R"(
 !"no assignment from string or stream extraction operator"
 )");
@@ -245,7 +245,7 @@ Usage: test [--help] [b]
         cli.exec();
         EXPECT_ERR(
             cli,
-            "Error: Command 'empty' found by parse not defined.\n"
+            "Error: Command \"empty\" found by parse not defined.\n"
         );
         EXPECT_ASSERT(1 + R"(
 !"command found by parse not defined"
@@ -255,7 +255,7 @@ Usage: test [--help] [b]
         cli.exec();
         EXPECT_ERR(
             cli,
-            "Error: Command 'empty' failed without setting exit code.\n"
+            "Error: Command \"empty\" failed without setting exit code.\n"
         );
         EXPECT_ASSERT(1 + R"(
 !"command failed without setting exit code"
