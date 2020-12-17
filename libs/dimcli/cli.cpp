@@ -25,7 +25,7 @@ using namespace Dim;
 namespace fs = DIMCLI_LIB_FILESYSTEM;
 #endif
 
-// getenv triggers the visual c++ security warning
+// wstring_convert triggers the visual c++ security warning
 #if (_MSC_VER >= 1400)
 #pragma warning(disable : 4996) // this function or variable may be unsafe.
 #endif
@@ -2270,8 +2270,13 @@ bool Cli::parse(vector<string> & args) {
 #if !defined(DIMCLI_LIB_NO_ENV)
     // Insert environment options
     if (m_cfg->envOpts.size()) {
-        if (const char * val = getenv(m_cfg->envOpts.c_str()))
+        size_t len;
+        auto name = m_cfg->envOpts.c_str();
+        if (!getenv_s(&len, NULL, 0, name)) {
+            string val(len, '\0');
+            getenv_s(&len, val.data(), len + 1, name);
             replace(args, 1, 0, toArgv(val));
+        }
     }
 #endif
 
