@@ -133,7 +133,17 @@ struct Cli::OptIndex {
     unordered_map<string, OptName> m_longNames;
     vector<OptName> m_argNames;
     bool m_allowCommands {};
-    int m_requiredPos {0};
+
+    enum class Final {
+        // In order of priority
+        kUnset,     // nothing interesting found
+        kNonOpt,    // found an optional operand
+        kNonVar,    // found variable size operand
+        kOpt,       // found final on an optional operand
+        kReq,       // found final on required operand
+    } m_final {};
+    int m_minOprs {0};
+    int m_finalOpr {0};
 
     void index(
         const Cli & cli,
@@ -570,15 +580,17 @@ void Cli::OptIndex::index(
     const string & cmd,
     bool requireVisible
 ) {
-    m_argNames.clear();
-    m_longNames.clear();
-    m_shortNames.clear();
+    *this = {};
     m_allowCommands = cmd.empty();
-    m_requiredPos = 0;
+
     for (auto && opt : cli.m_cfg->opts) {
         if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
             index(*opt);
     }
+
+    if (m_final < Final::kOpt)
+        m_finalOpr = -1;
+
     for (unsigned i = 0; i < m_argNames.size(); ++i) {
         auto & key = m_argNames[i];
         if (key.name.empty())
@@ -776,14 +788,46 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
         if (!opt.maxSize())
             return;
         if (!optional)
-            m_requiredPos += opt.minSize();
+            m_minOprs += opt.minSize();
         if (opt.m_command.empty()
             && (optional || opt.minSize() != opt.maxSize())
         ) {
-            // Positional arguments that cause potential subcommand names
-            // to be ambiguous are not allowed to be combined with them.
+            // Operands that cause potential subcommand names to be ambiguous
+            // are not allowed to be combined with them.
             m_allowCommands = false;
         }
+
+        if (m_final == Final::kOpt && !optional) {
+            assert(!"optional operand with finalOpt followed by required "
+                "operand.");
+            return;
+        }
+        if (!opt.m_finalOpt) {
+            if (m_final < Final::kNonVar && opt.minSize() != opt.maxSize())
+                m_final = Final::kNonVar;
+            if (m_final < Final::kNonOpt && optional)
+                m_final = Final::kNonOpt;
+        } else {
+            if (m_final == Final::kNonVar) {
+                assert(!"operand with finalOpt preceded by variable size "
+                    "operand.");
+                return;
+            }
+            if (m_final == Final::kNonOpt) {
+                if (!optional) {
+                    assert(!"required operand with finalOpt preceded by "
+                        "optional operand.");
+                    return;
+                } else {
+                    m_final = Final::kOpt;
+                }
+            }
+            if (m_final == Final::kUnset)
+                m_final = optional ? Final::kOpt : Final::kReq;
+        }
+        if (m_final < Final::kOpt)
+            m_finalOpr += opt.minSize();
+
         OptName oname = {&opt, invert, optional, name.data() + 1, pos};
         m_argNames.push_back(oname);
         opt.setNameIfEmpty(m_argNames.back().name);
@@ -2215,9 +2259,9 @@ bool Cli::parse(vector<string> & args) {
         ? kPending
         : kNone;
 
-    // Commands can't be added when the top level command has a positional
-    // argument that may conflict with it, command processing requires that
-    // that the command be unambiguously identifiable.
+    // Commands can't be added when the top level has an operand that requires
+    // look ahead to match, command processing requires that the command be
+    // unambiguously identifiable.
     assert((ndx.m_allowCommands || !cmdMode)
         && "mixing top level positionals with commands");
 
@@ -2273,6 +2317,8 @@ bool Cli::parse(vector<string> & args) {
                 if (it == ndx.m_shortNames.end())
                     return badUsage("Unknown option", name);
                 argName = it->second;
+                if (argName.opt->m_finalOpt)
+                    moreOpts = false;
                 if (argName.opt->m_bool) {
                     rawValues.emplace_back(
                         RawValue::kNamed,
@@ -2310,6 +2356,8 @@ bool Cli::parse(vector<string> & args) {
             if (it == ndx.m_longNames.end())
                 return badUsage("Unknown option", name);
             argName = it->second;
+            if (argName.opt->m_finalOpt)
+                moreOpts = false;
             if (argName.opt->m_bool) {
                 auto val = true;
                 if (equal
@@ -2330,7 +2378,7 @@ bool Cli::parse(vector<string> & args) {
         }
 
         // Positional value
-        if (cmdMode == kPending && numPos == ndx.m_requiredPos) {
+        if (cmdMode == kPending && numPos == ndx.m_minOprs) {
             auto cmd = (string) ptr;
             if (!assignPositionals(
                 rawValues.data(),
@@ -2362,7 +2410,9 @@ bool Cli::parse(vector<string> & args) {
             continue;
         }
 
-        numPos += 1;
+        if (numPos == ndx.m_finalOpr)
+            moreOpts = false;
+
         rawValues.emplace_back(
             RawValue::kPositional,
             nullptr,
@@ -2370,6 +2420,8 @@ bool Cli::parse(vector<string> & args) {
             argPos,
             ptr
         );
+
+        numPos += 1;
         continue;
 
     OPTION_VALUE:

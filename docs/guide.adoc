@@ -85,6 +85,23 @@ Hello John!
 
 == Basics
 
+=== Terminology
+Following POSIX, this document uses the terms "*options*" to refer to named
+arguments, some times known as switches or flags. And "*operands*" for
+positional arguments that are distinguished only by the order they appear on
+the command line after the options have been removed.
+
+For example:
+
+`prog FILE1 -v --help -f FILE --file=FILE FILE2`
+
+Might (depending on how -f is defined) map to:
+[%autowidth]
+|===
+h| Options | -v, --help, -f FILE, --file=FILE
+h| Operands | FILE1, FILE2
+|===
+
 === Basic Usage
 After inspecting args cli.parse() returns false if it thinks the program
 should exit, in which case cli.exitCode() is either EX_OK (0) or EX_USAGE (64)
@@ -133,8 +150,8 @@ Dim::Cli is used by declaring options to receive arguments. The variable that
 receives the value is specified when the option is declared, either as a
 pointer to an existing external variable or implicitly created.
 
-Use cli.opt&lt;T>(names, defaultValue) to link positional or named arguments to
-an option. It returns a proxy object that can be used like a smart pointer (*
+Use cli.opt&lt;T>(names, defaultValue) to link options and operands to a
+variable. It returns a proxy object that can be used like a smart pointer (*
 and \->) to access the value.
 
 [source, C++]
@@ -243,29 +260,30 @@ like these:
 
 | short name (single character)       | f
 | long name (more than one character) | file
-| optional positional                 | [file name]
-| required positional                 | &lt;file>
+| optional operand                    | [file name]
+| required operand                    | &lt;file>
 |===
 
-Names for positionals (inside angled or square brackets) may contain spaces,
-and all names may have modifier flags:
+Names for operands (inside angled or square brackets) may contain spaces, and
+all names may have modifier flags:
 
-[%autowidth, cols="^,<,<"]
+[%autowidth, cols="^,^,<"]
 |===
 | Flag | Type   | Description
 
-| !    | prefix
-| for boolean values, when setting the value it is first inverted
+| !    | Prefix
+| For boolean options, when setting the value it is first inverted.
 
-| ?    | prefix
-| for non-boolean named options, makes the value <<#optional-values, optional>>
-| .    | suffix
-| for boolean values with long names, suppresses the implicit "no-" version
+| ?    | Prefix
+| For non-boolean options, makes the value <<#optional-values, optional>>.
+
+| .    | Suffix
+| For boolean options with long names, suppresses the implicit "no-" version.
 
 |===
 
-By default, long names for boolean values get a second "no-" version implicitly
-created for them.
+By default, long names for boolean options get a second "no-" version
+implicitly created for them.
 
 For example:
 
@@ -280,7 +298,7 @@ int main(int argc, char * argv[]) {
     return EX_OK;
 }
 ----
-Ends up looking like this (note: required positionals have priority, so [apple]
+Ends up looking like this (note: required operands have priority, so [apple]
 won't be set unless there are at least two arguments):
 
 [source, shell session]
@@ -314,17 +332,17 @@ cli.opt<string>("n");
 ----
 
 
-=== Positional Arguments
-A few things to keep in mind about positional arguments:
+=== Operands
+A few things to keep in mind about operands (positional arguments):
 
-* Positional arguments are mapped in the order they were added.
-* Except that optional positionals are populated only if there are enough other
-  arguments to satisfy all required positionals.
-* If there are multiple vector positionals with unlimited (max size = -1) arity
+* Operands are mapped in the order they were added.
+** Except that optional operands are populated only if there are enough other
+   arguments to satisfy all required operands.
+* If there are multiple vector operands with unlimited (max size = -1) arity
   the first will get all the extras.
-* If there is a required positional with unlimited arity it will prevent any
-  optional positionals from getting populated, since it eats up all the
-  arguments before the optionals get a turn.
+* If there is a required operand with unlimited arity it will prevent any
+  optional operands from getting populated, since it consumes all the arguments
+  before the optionals get a turn.
 
 [source, C++]
 ----
@@ -598,10 +616,11 @@ int main(int argc, char * argv[]) {
 |===
 | Value        | Description
 
-| "-"          | Passed in as a positional argument.
-| "--"         | Thrown away, but makes all remaining arguments positional
+| "-"          | Passed in as an operand.
+| "--"         | Thrown away, but all remaining arguments are treated as
+                 operands.
 | "@&lt;file>" | <<#response-files, Response file>> containing additional
-                 arguments
+                 arguments.
 |===
 
 
@@ -629,7 +648,7 @@ int main(int argc, char * argv[]) {
     auto & v1 = cli.opt<string>("?o ?optional", "default");
     auto & v2 = cli.opt<string>("?i ?with-implicit", "default");
     v2.implicitValue("implicit");
-    auto & p = cli.opt<string>("[positional]", "default");
+    auto & p = cli.opt<string>("[operand]", "default");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "v1 = " << *v1 << ", v2 = " << *v2 << ", p = " << *p;
@@ -918,11 +937,11 @@ pass an empty string to cli.command() or opt.command() it represents the top
 level processing that takes place before a command has been found.
 
 Options are processed on the top level along with the minimum number of
-positional arguments needed to satisfy its required positionals. The next
-following positional is the command, and the rest of the arguments are
-processed in the context of that command. Since the top level doesn't process
-optional or variable length positionals when commands are present, their
-definitions will assert in debug builds and be ignored in release.
+operands needed to satisfy its required operands. The next following operand is
+the command, and the rest of the arguments are processed in the context of that
+command. Since the top level doesn't process optional or variable length
+operands when commands are present, their definitions will assert in debug
+builds and be ignored in release.
 
 [source, C++]
 ----
@@ -1028,13 +1047,15 @@ Options:
 
 ==== External Commands
 In order to support an external command that processes its own command line you
-set an unknown command action. That action will be called by cli.exec() just
-like any other command action. Or, after parsing, instead of calling cli.exec()
-you can use cli.commandMatched() and cli.unknownArgs() to see what happened.
+can set an unknown command action. That action will be called by cli.exec(),
+like any other command action, but only for commands that don't match any of
+the defined commands. Alternatively, after parsing, instead of calling
+cli.exec() you can use cli.commandMatched() and cli.unknownArgs() to see what
+matched.
 
 When the matched command is unknown, the unknownArgs vector is populated with
 the all arguments that follow the command. Including any that started with "-",
-as if "--" had been given.
+as if <<#special-arguments, "--">> had been given.
 
 [source, C++]
 ----
@@ -1427,13 +1448,67 @@ cli.helpOpt() writes to cli.conout(), which defaults to cout, but can be
 changed via cli.iostreams().
 
 
-=== Feature Switches
-Using flag options, feature switches are implemented by creating multiple
-options that reference the same external variable and marking them as flag
-values.
+=== Final Option
+An option or operand can be marked so that all following arguments are treated
+as positional operands, the same as when <<#special-arguments, "--">> is used.
 
-To set the default, pass in a value of true to the flagValue() function of
-the option that should be the default.
+This can be used to forward raw arguments to such things as another program or
+an internal script language interpreter.
+
+This example conditionally launches a child copy of itself with arbitrary
+arguments.
+
+[source, C++]
+----
+#include <cstdlib>  // system(...)
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & say = cli.optVec<string>("say").desc("Something to say.");
+    auto & sys = cli.opt<bool>("do").finalOpt().desc("Do something.");
+    auto & args = cli.optVec<string>("[program and arguments]")
+        .desc("Complicated thing to do.");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    for (auto&& val : *say)
+        cout << val << ' ';
+    if (*sys) {
+        cout.flush();
+        system(cli.toCmdline(*args).c_str());
+    }
+    return EX_OK;
+}
+----
+
+Let's try it out.
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS] [<program and arguments>...]
+  program and arguments  Complicated thing to do.
+
+Options:
+  --do / --no-do  Do something.
+  --say=STRING    Something to say.
+
+  --help          Show this message and exit.
+
+$ # Say "1" and "2" and launch child to say "three".
+$ a.out --say 1 --say 2 --do a.out --say three
+1 2 three
+----
+
+
+=== Feature Switches
+Feature switches are implemented by creating multiple options that reference
+the same external variable and marking them as flag values. These flag options
+are then processed on the command line as if they were boolean. But when
+matched, instead of true, they set the variable to default the option was
+created with.
+
+To set one of the flag values as the default, pass in a value of true to the
+flagValue() function called for that option.
 
 [source, C++]
 ----
@@ -2042,8 +2117,8 @@ HELLO!!!
 == Help Text
 
 === Page Layout
-The main help page, and the help pages for subcommands, are built the same
-way and made up of the same six (not counting <<#option-groups, option groups>>)
+The main help page, and the help pages for subcommands, are built the same way
+and made up of the same seven (not counting <<#option-groups, option groups>>)
 sections.
 
 [%autowidth]
@@ -2056,21 +2131,21 @@ sections.
 
 | Usage
 | cli.opt()
-| Generated text listing the defined positional arguments.
+| Generated text listing the defined operands.
 
 | Description
 | cli.desc()
 | Text describing how to use the command and what it does. Sometimes used
-instead of the positionals list.
+instead of the operands list.
 
 | Commands
 | cli.command(), cli.desc(), opt.command()
 | List of commands and first line of their description, included if there are
 any git style subcommands.
 
-| Positionals
+| Operands
 | cli.opt(), opt.desc()
-| List of positional arguments and their descriptions, omitted if none have
+| List of operands and their descriptions, omitted if none have
 descriptions.
 
 | Options
@@ -2103,7 +2178,7 @@ Dim::Cli cli;
 cli.header("Heading before usage");
 cli.desc("Description of what the command does, including any general "
     "discussion of the various aspects of its use.");
-cli.opt<bool>("[positional]");
+cli.opt<bool>("[operand]");
 cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
 cli.opt<int>("p", 1).desc("Option p.");
 cli.opt<int>("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
@@ -2115,14 +2190,14 @@ cli.footer(
 );
 ----
 
-In this example the positionals section is omitted because the positional
-doesn't have a description.
+In this example the operands section is omitted because the operand doesn't
+have a description.
 
 [source, shell session]
 ----
 $ a.out --help
 Heading before usage
-Usage: a.out [OPTIONS] [positional]
+Usage: a.out [OPTIONS] [operand]
 
 Description of what the command does, including any general discussion of the
 various aspects of its use.

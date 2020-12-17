@@ -1153,11 +1153,16 @@ protected:
     // Whether this option has one value or a vector of values.
     bool m_vector {};
 
-    // Whether the value is a bool on the command line (no separate value).
-    bool m_bool{};
+    // Whether only operands appear after this value, or if more options are
+    // still allowed.
+    bool m_finalOpt {};
 
-    bool m_flagValue{};
-    bool m_flagDefault{};
+    // Whether the value is a bool on the command line (no separate value). Set
+    // for flag values and true bools.
+    bool m_bool {};
+
+    bool m_flagValue {};
+    bool m_flagDefault {};
 
 private:
     friend class Cli;
@@ -1219,6 +1224,15 @@ public:
     // flagged as the default. If none (or many) are set marked as the default
     // one will be chosen for you.
     A & flagValue(bool isDefault = false);
+
+    // All following arguments are treated as operands (positional) rather
+    // than options (positionless), as if "--" had been used.
+    //
+    // There are restrictions when used on an operand:
+    //  - If operand is required, must not be preceded by optional operands.
+    //  - If operand is optional, must not be followed by required operands.
+    //  - Must not be preceded by vector operands with variable arity.
+    A & finalOpt();
 
     // Adds a choice, when choices have been added only values that match one
     // of the choices are allowed. Useful for things like enums where there is
@@ -1517,6 +1531,13 @@ A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
     }
     m_bool = true;
     return *self;
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::finalOpt() {
+    this->m_finalOpt = true;
+    return static_cast<A &>(*this);
 }
 
 //===========================================================================
@@ -1901,19 +1922,6 @@ public:
 
     //-----------------------------------------------------------------------
     // CONFIGURATION
-
-    // Used to capture arguments for processing by another parser, such as a
-    // child program. All arguments after the last positional are put into the
-    // vector, including any starting with '-', as if "--" had been used.
-    //
-    // There are several restrictions:
-    //  - Must be a positional option.
-    //  - Only one option can be marked passthru.
-    //  - Must be at least one other positional option.
-    //  - Must not be a positional with unlimited arity.
-    //  - Must not be on the top level if it has subcommands. A command
-    //    alternative is cli.unknownCmd.
-    OptVec & passthruArgs();
 
     // Set the number of values that can be assigned to a vector option.
     // Defaults to a min/max of 1/-1 where -1 means unlimited.

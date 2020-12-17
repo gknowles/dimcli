@@ -114,10 +114,13 @@ to the low, if higher than high it's made merely high.
 | opt.defaultValue
 | Allows the default to be changed after the opt has been created.
 
+| opt.<<guide.adoc#final-option, finalOpt>>
+| Interpret all following arguments as positional operands.
+
 | opt.<<guide.adoc#feature-switches, flagValue>>
-| Turns the argument into a feature switch, there are normally multiple
-switches pointed at a single external value, one of which should be flagged as
-the default.
+| Turns the argument into a feature switch. There are normally multiple
+switches pointed at a single external value, each of which sets it to a
+different value, with one flagged as the default.
 
 | opt.imbue
 | Change the locale used when parsing values via iostream. Defaults to the
