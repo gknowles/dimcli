@@ -18,6 +18,7 @@
 #include <iostream>
 #include <locale>
 #include <sstream>
+#include <stdlib.h>     // getenv_s()
 
 using namespace std;
 using namespace Dim;
