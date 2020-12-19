@@ -245,7 +245,7 @@ Usage: test [--help] [B]
         cli.exec();
         EXPECT_ERR(
             cli,
-            "Error: Command \"empty\" found by parse not defined.\n"
+            "Error: Command 'empty' found by parse not defined.\n"
         );
         EXPECT_ASSERT(1 + R"(
 !"command found by parse not defined"
