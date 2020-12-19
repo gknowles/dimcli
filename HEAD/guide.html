@@ -514,24 +514,24 @@ implicitly created for them.</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.opt&lt;string&gt;("a apple [apple]").desc("apples are red");
+    cli.opt&lt;string&gt;("a apple [APPLE]").desc("apples are red");
     cli.opt&lt;bool&gt;("!o orange apricot.").desc("oranges are orange");
-    cli.opt&lt;string&gt;("&lt;pear&gt;").desc("pears are yellow");
+    cli.opt&lt;string&gt;("&lt;PEAR&gt;").desc("pears are yellow");
     (void) cli.parse(argc, argv);
     return EX_OK;
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Ends up looking like this (note: required operands have priority, so [apple]
+<p>Ends up looking like this (note: required operands have priority, so [APPLE]
 won&#8217;t be set unless there are at least two arguments):</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out --help
-Usage: a.out [OPTIONS] [apple] pear
-  apple     apples are red
-  pear      pears are yellow
+Usage: a.out [OPTIONS] [APPLE] PEAR
+  APPLE     apples are red
+  PEAR      pears are yellow
 
 Options:
   -a, --apple=STRING  apples are red
@@ -593,14 +593,14 @@ before the optionals get a turn.</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto &amp; a = cli.opt&lt;int&gt;("[a]");
-    auto &amp; b = cli.optVec&lt;int&gt;("&lt;b&gt;").size(1, 2); // take 1 to 2 values
-    auto &amp; c = cli.opt&lt;int&gt;("&lt;c&gt;");
+    auto &amp; a = cli.opt&lt;int&gt;("[A]");
+    auto &amp; b = cli.optVec&lt;int&gt;("&lt;B&gt;").size(1, 2); // take 1 to 2 values
+    auto &amp; c = cli.opt&lt;int&gt;("&lt;C&gt;");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
-    if (a) cout &lt;&lt; "a:" &lt;&lt; *a &lt;&lt; ' ';
-    for (int val : *b) cout &lt;&lt; "b:" &lt;&lt; val &lt;&lt; ' ';
-    if (c) cout &lt;&lt; "c:" &lt;&lt; *c &lt;&lt; ' ';
+    if (a) cout &lt;&lt; "A:" &lt;&lt; *a &lt;&lt; ' ';
+    for (int val : *b) cout &lt;&lt; "B:" &lt;&lt; val &lt;&lt; ' ';
+    if (c) cout &lt;&lt; "C:" &lt;&lt; *c &lt;&lt; ' ';
     return EX_OK;
 }</code></pre>
 </div>
@@ -611,19 +611,19 @@ before the optionals get a turn.</p>
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out
-Error: Option "b" missing value.
+Error: Option 'B' missing value.
 Must have 1 to 2 values.
 $ a.out 1
-Error: Option "c" missing value.
-$ # With two args 'a' is not populated as it's optional whlie 'b' &amp; 'c'
+Error: Option 'C' missing value.
+$ # With two args 'A' is not populated as it's optional whlie 'B' &amp; 'C'
 $ # are required.
 $ a.out 1 2
-b:1 c:2
+B:1 C:2
 $ a.out 1 2 3
-b:1 b:2 c:3
-$ # With four args we have enough left for 'a' after populating 'b' &amp; 'c'.
+B:1 B:2 C:3
+$ # With four args we have enough left for 'A' after populating 'B' &amp; 'C'.
 $ a.out 1 2 3 4
-a:1 b:2 b:3 c:4
+A:1 B:2 B:3 C:4
 $ a.out 1 2 3 4 5
 Error: Unexpected argument: 5</code></pre>
 </div>
@@ -729,7 +729,7 @@ int main(int argc, char * argv[]) {
     vector&lt;string&gt; oranges;
     cli.optVec(&amp;oranges, "o orange").size(1, 2).desc("oranges");
     // For apples demonstrate using just the proxy object.
-    auto &amp; apples = cli.optVec&lt;string&gt;("[apple]").desc("red fruit");
+    auto &amp; apples = cli.optVec&lt;string&gt;("[APPLE]").desc("red fruit");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout &lt;&lt; "Comparing (" &lt;&lt; *apples &lt;&lt; ") and (" &lt;&lt; oranges &lt;&lt; ").";
@@ -743,8 +743,8 @@ int main(int argc, char * argv[]) {
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out --help
-Usage: a.out [OPTIONS] [apple...]
-  apple     red fruit
+Usage: a.out [OPTIONS] [APPLE...]
+  APPLE     red fruit
 
 Options:
   -o, --orange=STRING  oranges (limit: 1 to 2)
@@ -754,7 +754,7 @@ Options:
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
 $ a.out -omandarin -onavel -ohamlin
-Error: Too many "-o" values: hamlin
+Error: Too many '-o' values: hamlin
 The maximum number of values is 2.</code></pre>
 </div>
 </div>
@@ -765,7 +765,7 @@ occasionally save a little bit of typing.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre lang="C++"><code>auto &amp; apples = cli.optVec&lt;string&gt;("[apple]").desc("red fruit");
+<pre lang="C++"><code>auto &amp; apples = cli.optVec&lt;string&gt;("[APPLE]").desc("red fruit");
 ...
 cout &lt;&lt; "There were " &lt;&lt; apples.size() &lt;&lt; " apples." &lt;&lt; endl;
 if (apples)
@@ -799,12 +799,12 @@ Options:
   --help    Show this message and exit.
 
 $ a.out -v1
-Error: Option "-v" missing value.
+Error: Option '-v' missing value.
 Must have 2 to 3 values.
 $ a.out -v1 -v1
 Success
 $ a.out -v1 -v1 -v1 -v1
-Error: Too many "-v" values: 1
+Error: Too many '-v' values: 1
 The maximum number of values is 3.</code></pre>
 </div>
 </div>
@@ -954,7 +954,7 @@ opt.implicitValue().</p>
     auto &amp; v1 = cli.opt&lt;string&gt;("?o ?optional", "default");
     auto &amp; v2 = cli.opt&lt;string&gt;("?i ?with-implicit", "default");
     v2.implicitValue("implicit");
-    auto &amp; p = cli.opt&lt;string&gt;("[operand]", "default");
+    auto &amp; p = cli.opt&lt;string&gt;("[OPERAND]", "default");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout &lt;&lt; "v1 = " &lt;&lt; *v1 &lt;&lt; ", v2 = " &lt;&lt; *v2 &lt;&lt; ", p = " &lt;&lt; *p;
@@ -1014,7 +1014,7 @@ they are added.</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto &amp; val = cli.opt&lt;string&gt;("&lt;value&gt;").desc("It's required!");
+    auto &amp; val = cli.opt&lt;string&gt;("&lt;VALUE&gt;").desc("It's required!");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout &lt;&lt; "The value: " &lt;&lt; *val;
@@ -1030,14 +1030,14 @@ they are added.</p>
 <pre lang="shell session"><code>$ a.out 99
 The value: 99
 $ a.out --help
-Usage: a.out [OPTIONS] value
-  value     It's required!
+Usage: a.out [OPTIONS] VALUE
+  VALUE     It's required!
 
 Options:
   --help    Show this message and exit.
 
 $ a.out
-Error: Option "value" missing value.</code></pre>
+Error: Option 'VALUE' missing value.</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1060,8 +1060,8 @@ Error: Option "value" missing value.</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out
-Usage: a.out [OPTIONS] value
-  value     It's required!
+Usage: a.out [OPTIONS] VALUE
+  VALUE     It's required!
 
 Options:
   --help    Show this message and exit.</code></pre>
@@ -1159,7 +1159,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-Error: Invalid "-n" value: x</code></pre>
+Error: Invalid '-n' value: x</code></pre>
 </div>
 </div>
 </div>
@@ -1398,7 +1398,7 @@ exec() call can be separate from parse():</p>
 <pre lang="shell session"><code>$ a.out
 Error: No command given.
 $ a.out --help
-Usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] COMMAND [ARGS...]
 
 Commands:
   apple     Show apple.
@@ -1606,7 +1606,7 @@ command line when referenced.</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto &amp; words = cli.optVec&lt;string&gt;("[words]").desc("Things you say.");
+    auto &amp; words = cli.optVec&lt;string&gt;("[WORDS]").desc("Things you say.");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout &lt;&lt; "Words:";
@@ -1622,8 +1622,8 @@ command line when referenced.</p>
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out --help
-Usage: a.out [OPTIONS] [words...]
-  words     Things you say.
+Usage: a.out [OPTIONS] [WORDS...]
+  WORDS     Things you say.
 
 Options:
   --help    Show this message and exit.
@@ -1687,7 +1687,7 @@ and any before actions.</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto &amp; words = cli.optVec&lt;string&gt;("[words]");
+    auto &amp; words = cli.optVec&lt;string&gt;("[WORDS]");
     cli.envOpts("AOUT_OPTS");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1920,7 +1920,7 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto &amp; say = cli.optVec&lt;string&gt;("say").desc("Something to say.");
     auto &amp; sys = cli.opt&lt;bool&gt;("do").finalOpt().desc("Do something.");
-    auto &amp; args = cli.optVec&lt;string&gt;("[program and arguments]")
+    auto &amp; args = cli.optVec&lt;string&gt;("[PROGRAM_AND_ARGUMENTS]")
         .desc("Complicated thing to do.");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1940,8 +1940,8 @@ int main(int argc, char * argv[]) {
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out --help
-Usage: a.out [OPTIONS] [&lt;program and arguments&gt;...]
-  program and arguments  Complicated thing to do.
+Usage: a.out [OPTIONS] [PROGRAM_AND_ARGUMENTS...]
+  PROGRAM_AND_ARGUMENTS  Complicated thing to do.
 
 Options:
   --do / --no-do  Do something.
@@ -2080,8 +2080,8 @@ Wait
 $ a.out --streetlight
 Error: No value given for --streetlight
 $ a.out --streetlight=purple
-Error: Invalid "--streetlight" value: purple
-Must be "green", "yellow", or "red".
+Error: Invalid '--streetlight' value: purple
+Must be 'green', 'yellow', or 'red'.
 $ a.out --streetlight=green
 Go!</code></pre>
 </div>
@@ -2151,8 +2151,8 @@ be equal to the nearest of the two edges.</p>
 <div class="content">
 <pre lang="C++"><code>int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto &amp; count = cli.opt&lt;int&gt;("&lt;count&gt;").clamp(1, 10);
-    auto &amp; letter = cli.opt&lt;char&gt;("&lt;letter&gt;").range('a','z');
+    auto &amp; count = cli.opt&lt;int&gt;("&lt;COUNT&gt;").clamp(1, 10);
+    auto &amp; letter = cli.opt&lt;char&gt;("&lt;LETTER&gt;").range('a','z');
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout &lt;&lt; string(*count, *letter) &lt;&lt; endl;
@@ -2165,8 +2165,8 @@ be equal to the nearest of the two edges.</p>
 <pre lang="shell session"><code>$ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-Error: Out of range "letter" value: 1
-Must be between "a" and "z".</code></pre>
+Error: Out of range 'LETTER' value: 1
+Must be between 'a' and 'z'.</code></pre>
 </div>
 </div>
 </div>
@@ -2480,8 +2480,8 @@ $ a.out -b 32KB
 $ a.out -b 32kib
 32768 bytes
 $ a.out -b 32bk
-Error: Invalid "-b" value: 32bk
-Units symbol "bk" not recognized.</code></pre>
+Error: Invalid '-b' value: 32bk
+Units symbol 'bk' not recognized.</code></pre>
 </div>
 </div>
 </div>
@@ -2573,11 +2573,11 @@ $ a.out -i 1y
 31536000 seconds
 $ # You can only fit 136.2 years worth of seconds into uint32_t
 $ a.out -i 137y
-Error: Out of range "-i" value: 137y
-Must be between "0" and "4,294,967,295".
+Error: Out of range '-i' value: 137y
+Must be between '0' and '4,294,967,295'.
 $ # We set fUnitRequire, so units are required...
 $ a.out -i 60
-Error: Invalid "-i" value: 60
+Error: Invalid '-i' value: 60
 Value requires suffix specifying the units.</code></pre>
 </div>
 </div>
@@ -2722,7 +2722,7 @@ fails because "nine" isn&#8217;t an int.</p>
 <div class="content">
 <pre lang="shell session"><code>$ a.out
 Cookies [0]: nine
-Error: Invalid "--cookies" value: nine</code></pre>
+Error: Invalid '--cookies' value: nine</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2936,7 +2936,7 @@ columns. Newlines should be reserved for paragraph breaks.</p>
 cli.header("Heading before usage");
 cli.desc("Description of what the command does, including any general "
     "discussion of the various aspects of its use.");
-cli.opt&lt;bool&gt;("[operand]");
+cli.opt&lt;bool&gt;("[OPERAND]");
 cli.opt&lt;string&gt;("option").valueDesc("OPT_VAL").desc("About this option.");
 cli.opt&lt;int&gt;("p", 1).desc("Option p.");
 cli.opt&lt;int&gt;("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
@@ -2956,7 +2956,7 @@ have a description.</p>
 <div class="content">
 <pre lang="shell session"><code>$ a.out --help
 Heading before usage
-Usage: a.out [OPTIONS] [operand]
+Usage: a.out [OPTIONS] [OPERAND]
 
 Description of what the command does, including any general discussion of the
 various aspects of its use.
@@ -3149,7 +3149,7 @@ already in the command group that you want for the new command.</p>
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out --help
-Usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] COMMAND [ARGS...]
 
 First:
   1a
@@ -3197,7 +3197,7 @@ expect.</p>
 <div class="listingblock">
 <div class="content">
 <pre lang="shell session"><code>$ a.out help
-Usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] COMMAND [ARGS...]
 
 Commands:
   help      Show help for individual commands and exit.
@@ -3206,11 +3206,11 @@ Options:
   --help    Show this message and exit.
 
 $ a.out help help
-Usage: a.out help [OPTIONS] [command]
+Usage: a.out help [OPTIONS] [COMMAND]
 
 Show help for individual commands and exit. If no command is given the list of
 commands and general options are shown.
-  command   Command to show help information about.
+  COMMAND   Command to show help information about.
 
 Options:
   -u, --usage / --no-usage  Only show condensed usage.
@@ -3218,10 +3218,10 @@ Options:
   --help                    Show this message and exit.
 
 $ a.out help -u
-Usage: a.out [--help] command [args...]
+Usage: a.out [--help] COMMAND [ARGS...]
 
 $ a.out help help -u
-Usage: a.out help [-u, --usage] [--help] [command]</code></pre>
+Usage: a.out help [-u, --usage] [--help] [COMMAND]</code></pre>
 </div>
 </div>
 </div>
