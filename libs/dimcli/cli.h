@@ -519,7 +519,7 @@ public:
     );
 
     // Calls badUsage(prefix, value, detail) with prefix set to:
-    //  "Invalid \"" + opt.from() + "\" value"
+    //  "Invalid '" + opt.from() + "' value"
     bool badUsage(
         const OptBase & opt,
         const std::string & value,
@@ -748,10 +748,10 @@ bool Cli::badRange(
     const T & low,
     const T & high
 ) {
-    auto prefix = "Out of range \"" + opt.from() + "\" value";
+    auto prefix = "Out of range '" + opt.from() + "' value";
     std::string detail, lstr, hstr;
     if (opt.toString(lstr, low) && opt.toString(hstr, high))
-        detail = "Must be between \"" + lstr + "\" and \"" + hstr + "\".";
+        detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
     return badUsage(prefix, val, detail);
 }
 

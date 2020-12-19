@@ -291,22 +291,22 @@ For example:
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    cli.opt<string>("a apple [apple]").desc("apples are red");
+    cli.opt<string>("a apple [APPLE]").desc("apples are red");
     cli.opt<bool>("!o orange apricot.").desc("oranges are orange");
-    cli.opt<string>("<pear>").desc("pears are yellow");
+    cli.opt<string>("<PEAR>").desc("pears are yellow");
     (void) cli.parse(argc, argv);
     return EX_OK;
 }
 ----
-Ends up looking like this (note: required operands have priority, so [apple]
+Ends up looking like this (note: required operands have priority, so [APPLE]
 won't be set unless there are at least two arguments):
 
 [source, shell session]
 ----
 $ a.out --help
-Usage: a.out [OPTIONS] [apple] pear
-  apple     apples are red
-  pear      pears are yellow
+Usage: a.out [OPTIONS] [APPLE] PEAR
+  APPLE     apples are red
+  PEAR      pears are yellow
 
 Options:
   -a, --apple=STRING  apples are red
@@ -348,14 +348,14 @@ A few things to keep in mind about operands (positional arguments):
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & a = cli.opt<int>("[a]");
-    auto & b = cli.optVec<int>("<b>").size(1, 2); // take 1 to 2 values
-    auto & c = cli.opt<int>("<c>");
+    auto & a = cli.opt<int>("[A]");
+    auto & b = cli.optVec<int>("<B>").size(1, 2); // take 1 to 2 values
+    auto & c = cli.opt<int>("<C>");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
-    if (a) cout << "a:" << *a << ' ';
-    for (int val : *b) cout << "b:" << val << ' ';
-    if (c) cout << "c:" << *c << ' ';
+    if (a) cout << "A:" << *a << ' ';
+    for (int val : *b) cout << "B:" << val << ' ';
+    if (c) cout << "C:" << *c << ' ';
     return EX_OK;
 }
 ----
@@ -365,19 +365,19 @@ A few combinations to show how this plays out:
 [source, shell session]
 ----
 $ a.out
-Error: Option "b" missing value.
+Error: Option 'B' missing value.
 Must have 1 to 2 values.
 $ a.out 1
-Error: Option "c" missing value.
-$ # With two args 'a' is not populated as it's optional whlie 'b' & 'c'
+Error: Option 'C' missing value.
+$ # With two args 'A' is not populated as it's optional whlie 'B' & 'C'
 $ # are required.
 $ a.out 1 2
-b:1 c:2
+B:1 C:2
 $ a.out 1 2 3
-b:1 b:2 c:3
-$ # With four args we have enough left for 'a' after populating 'b' & 'c'.
+B:1 B:2 C:3
+$ # With four args we have enough left for 'A' after populating 'B' & 'C'.
 $ a.out 1 2 3 4
-a:1 b:2 b:3 c:4
+A:1 B:2 B:3 C:4
 $ a.out 1 2 3 4 5
 Error: Unexpected argument: 5
 ----
@@ -461,7 +461,7 @@ int main(int argc, char * argv[]) {
     vector<string> oranges;
     cli.optVec(&oranges, "o orange").size(1, 2).desc("oranges");
     // For apples demonstrate using just the proxy object.
-    auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
+    auto & apples = cli.optVec<string>("[APPLE]").desc("red fruit");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "Comparing (" << *apples << ") and (" << oranges << ").";
@@ -473,8 +473,8 @@ View from the command line:
 [source, shell session]
 ----
 $ a.out --help
-Usage: a.out [OPTIONS] [apple...]
-  apple     red fruit
+Usage: a.out [OPTIONS] [APPLE...]
+  APPLE     red fruit
 
 Options:
   -o, --orange=STRING  oranges (limit: 1 to 2)
@@ -484,7 +484,7 @@ Options:
 $ a.out -o mandarin -onavel "red delicious" honeycrisp
 Comparing (red delicious, honeycrisp) and (mandarin, navel).
 $ a.out -omandarin -onavel -ohamlin
-Error: Too many "-o" values: hamlin
+Error: Too many '-o' values: hamlin
 The maximum number of values is 2.
 ----
 
@@ -494,7 +494,7 @@ occasionally save a little bit of typing.
 
 [source, C++]
 ----
-auto & apples = cli.optVec<string>("[apple]").desc("red fruit");
+auto & apples = cli.optVec<string>("[APPLE]").desc("red fruit");
 ...
 cout << "There were " << apples.size() << " apples." << endl;
 if (apples)
@@ -527,12 +527,12 @@ Options:
   --help    Show this message and exit.
 
 $ a.out -v1
-Error: Option "-v" missing value.
+Error: Option '-v' missing value.
 Must have 2 to 3 values.
 $ a.out -v1 -v1
 Success
 $ a.out -v1 -v1 -v1 -v1
-Error: Too many "-v" values: 1
+Error: Too many '-v' values: 1
 The maximum number of values is 3.
 ----
 
@@ -648,7 +648,7 @@ int main(int argc, char * argv[]) {
     auto & v1 = cli.opt<string>("?o ?optional", "default");
     auto & v2 = cli.opt<string>("?i ?with-implicit", "default");
     v2.implicitValue("implicit");
-    auto & p = cli.opt<string>("[operand]", "default");
+    auto & p = cli.opt<string>("[OPERAND]", "default");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "v1 = " << *v1 << ", v2 = " << *v2 << ", p = " << *p;
@@ -692,7 +692,7 @@ Let's test for empty command lines and add "--help" to them. But first, our
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & val = cli.opt<string>("<value>").desc("It's required!");
+    auto & val = cli.opt<string>("<VALUE>").desc("It's required!");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "The value: " << *val;
@@ -706,14 +706,14 @@ And it's output:
 $ a.out 99
 The value: 99
 $ a.out --help
-Usage: a.out [OPTIONS] value
-  value     It's required!
+Usage: a.out [OPTIONS] VALUE
+  VALUE     It's required!
 
 Options:
   --help    Show this message and exit.
 
 $ a.out
-Error: Option "value" missing value.
+Error: Option 'VALUE' missing value.
 ----
 
 Now add the before action:
@@ -732,8 +732,8 @@ And missing arguments are a thing of the past...
 [source, shell session]
 ----
 $ a.out
-Usage: a.out [OPTIONS] value
-  value     It's required!
+Usage: a.out [OPTIONS] VALUE
+  VALUE     It's required!
 
 Options:
   --help    Show this message and exit.
@@ -804,7 +804,7 @@ The product is: 1
 $ a.out -n3 -n2
 The product is: 6
 $ a.out -nx
-Error: Invalid "-n" value: x
+Error: Invalid '-n' value: x
 ----
 
 
@@ -1007,7 +1007,7 @@ The end result at the console:
 $ a.out
 Error: No command given.
 $ a.out --help
-Usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] COMMAND [ARGS...]
 
 Commands:
   apple     Show apple.
@@ -1204,7 +1204,7 @@ What you write:
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & words = cli.optVec<string>("[words]").desc("Things you say.");
+    auto & words = cli.optVec<string>("[WORDS]").desc("Things you say.");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << "Words:";
@@ -1218,8 +1218,8 @@ What happens later:
 [source, shell session]
 ----
 $ a.out --help
-Usage: a.out [OPTIONS] [words...]
-  words     Things you say.
+Usage: a.out [OPTIONS] [WORDS...]
+  WORDS     Things you say.
 
 Options:
   --help    Show this message and exit.
@@ -1274,7 +1274,7 @@ and any before actions.
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & words = cli.optVec<string>("[words]");
+    auto & words = cli.optVec<string>("[WORDS]");
     cli.envOpts("AOUT_OPTS");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1466,7 +1466,7 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & say = cli.optVec<string>("say").desc("Something to say.");
     auto & sys = cli.opt<bool>("do").finalOpt().desc("Do something.");
-    auto & args = cli.optVec<string>("[program and arguments]")
+    auto & args = cli.optVec<string>("[PROGRAM_AND_ARGUMENTS]")
         .desc("Complicated thing to do.");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1485,8 +1485,8 @@ Let's try it out.
 [source, shell session]
 ----
 $ a.out --help
-Usage: a.out [OPTIONS] [<program and arguments>...]
-  program and arguments  Complicated thing to do.
+Usage: a.out [OPTIONS] [PROGRAM_AND_ARGUMENTS...]
+  PROGRAM_AND_ARGUMENTS  Complicated thing to do.
 
 Options:
   --do / --no-do  Do something.
@@ -1613,8 +1613,8 @@ Wait
 $ a.out --streetlight
 Error: No value given for --streetlight
 $ a.out --streetlight=purple
-Error: Invalid "--streetlight" value: purple
-Must be "green", "yellow", or "red".
+Error: Invalid '--streetlight' value: purple
+Must be 'green', 'yellow', or 'red'.
 $ a.out --streetlight=green
 Go!
 ----
@@ -1670,8 +1670,8 @@ be equal to the nearest of the two edges.
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & count = cli.opt<int>("<count>").clamp(1, 10);
-    auto & letter = cli.opt<char>("<letter>").range('a','z');
+    auto & count = cli.opt<int>("<COUNT>").clamp(1, 10);
+    auto & letter = cli.opt<char>("<LETTER>").range('a','z');
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     cout << string(*count, *letter) << endl;
@@ -1684,8 +1684,8 @@ int main(int argc, char * argv[]) {
 $ a.out 1000 b
 bbbbbbbbbb
 $ a.out 1000 1
-Error: Out of range "letter" value: 1
-Must be between "a" and "z".
+Error: Out of range 'LETTER' value: 1
+Must be between 'a' and 'z'.
 ----
 
 
@@ -1833,8 +1833,8 @@ $ a.out -b 32KB
 $ a.out -b 32kib
 32768 bytes
 $ a.out -b 32bk
-Error: Invalid "-b" value: 32bk
-Units symbol "bk" not recognized.
+Error: Invalid '-b' value: 32bk
+Units symbol 'bk' not recognized.
 ----
 
 ==== Time Units
@@ -1883,11 +1883,11 @@ $ a.out -i 1y
 31536000 seconds
 $ # You can only fit 136.2 years worth of seconds into uint32_t
 $ a.out -i 137y
-Error: Out of range "-i" value: 137y
-Must be between "0" and "4,294,967,295".
+Error: Out of range '-i' value: 137y
+Must be between '0' and '4,294,967,295'.
 $ # We set fUnitRequire, so units are required...
 $ a.out -i 60
-Error: Invalid "-i" value: 60
+Error: Invalid '-i' value: 60
 Value requires suffix specifying the units.
 ----
 
@@ -1997,7 +1997,7 @@ fails because "nine" isn't an int.
 ----
 $ a.out
 Cookies [0]: nine
-Error: Invalid "--cookies" value: nine
+Error: Invalid '--cookies' value: nine
 ----
 You can change the prompt to something more appropriate and hide the default:
 
@@ -2178,7 +2178,7 @@ Dim::Cli cli;
 cli.header("Heading before usage");
 cli.desc("Description of what the command does, including any general "
     "discussion of the various aspects of its use.");
-cli.opt<bool>("[operand]");
+cli.opt<bool>("[OPERAND]");
 cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
 cli.opt<int>("p", 1).desc("Option p.");
 cli.opt<int>("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
@@ -2197,7 +2197,7 @@ have a description.
 ----
 $ a.out --help
 Heading before usage
-Usage: a.out [OPTIONS] [operand]
+Usage: a.out [OPTIONS] [OPERAND]
 
 Description of what the command does, including any general discussion of the
 various aspects of its use.
@@ -2340,7 +2340,7 @@ Let's see the command groupings...
 [source, shell session]
 ----
 $ a.out --help
-Usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] COMMAND [ARGS...]
 
 First:
   1a
@@ -2381,7 +2381,7 @@ expect.
 [source, shell session]
 ----
 $ a.out help
-Usage: a.out [OPTIONS] command [args...]
+Usage: a.out [OPTIONS] COMMAND [ARGS...]
 
 Commands:
   help      Show help for individual commands and exit.
@@ -2390,11 +2390,11 @@ Options:
   --help    Show this message and exit.
 
 $ a.out help help
-Usage: a.out help [OPTIONS] [command]
+Usage: a.out help [OPTIONS] [COMMAND]
 
 Show help for individual commands and exit. If no command is given the list of
 commands and general options are shown.
-  command   Command to show help information about.
+  COMMAND   Command to show help information about.
 
 Options:
   -u, --usage / --no-usage  Only show condensed usage.
@@ -2402,10 +2402,10 @@ Options:
   --help                    Show this message and exit.
 
 $ a.out help -u
-Usage: a.out [--help] command [args...]
+Usage: a.out [--help] COMMAND [ARGS...]
 
 $ a.out help help -u
-Usage: a.out help [-u, --usage] [--help] [command]
+Usage: a.out help [-u, --usage] [--help] [COMMAND]
 ----
 
 

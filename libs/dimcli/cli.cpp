@@ -569,7 +569,7 @@ bool Cli::OptBase::withUnits(
         return cli.badUsage(
             *this,
             val,
-            "Units symbol \"" + unit + "\" not recognized."
+            "Units symbol '" + unit + "' not recognized."
         );
     }
 }
@@ -968,8 +968,7 @@ static void defCmdAction(Cli & cli) {
     } else {
         cli.fail(
             kExitSoftware,
-            "Command \"" + cli.commandMatched() + '"'
-                + " has not been implemented."
+            "Command '" + cli.commandMatched() + "' has not been implemented."
         );
     }
 }
@@ -2048,7 +2047,7 @@ bool Cli::parseValue(
     const char ptr[]
 ) {
     if (!opt.assign(name, pos)) {
-        string prefix = "Too many \"" + name + "\" values";
+        string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
             + intToString(opt, opt.maxSize()) + ".";
         return badUsage(prefix, ptr, detail);
@@ -2073,7 +2072,7 @@ bool Cli::badUsage(
     string out;
     auto & cmd = commandMatched();
     if (cmd.size())
-        out = "Command \"" + cmd + "\": ";
+        out = "Command '" + cmd + "': ";
     out += prefix;
     if (!value.empty()) {
         out += ": ";
@@ -2088,7 +2087,7 @@ bool Cli::badUsage(
     const string & value,
     const string & detail
 ) {
-    string prefix = "Invalid \"" + opt.from() + "\" value";
+    string prefix = "Invalid '" + opt.from() + "' value";
     return badUsage(prefix, value, detail);
 }
 
@@ -2243,7 +2242,7 @@ static bool badMinMatched(
             + " to " + intToString(opt, max) + " values.";
     }
     return cli.badUsage(
-        "Option \"" + (name.empty() ? opt.from() : name) + "\" missing value.",
+        "Option '" + (name.empty() ? opt.from() : name) + "' missing value.",
         {},
         detail
     );
@@ -2375,7 +2374,7 @@ bool Cli::parse(vector<string> & args) {
                 if (equal
                     && (argName.opt->m_flagValue || !parseBool(val, ptr))
                 ) {
-                    return badUsage("Invalid \"" + name + "\" value", ptr);
+                    return badUsage("Invalid '" + name + "' value", ptr);
                 }
                 rawValues.emplace_back(
                     RawValue::kNamed,
@@ -2602,7 +2601,7 @@ int Cli::exec() {
         assert(!"command found by parse not defined");
         fail(
             kExitSoftware,
-            "Command \"" + name + "\" found by parse not defined."
+            "Command '" + name + "' found by parse not defined."
         );
     }
     return exitCode();
@@ -2854,9 +2853,9 @@ static void printChoicesDetail(
     size_t pos = 0;
     auto num = keys.size();
     for (auto i = keys.begin(); pos < num; ++pos, ++i) {
-        val = '"';
+        val = "'";
         val += i->key;
-        val += '"';
+        val += "'";
         if (pos == 0 && num == 2) {
             writeToken(os, wp, val);
             writeToken(os, wp, "or");
