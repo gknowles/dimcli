@@ -18,7 +18,6 @@
 #include <iostream>
 #include <locale>
 #include <sstream>
-#include <stdlib.h>     // getenv_s()
 
 using namespace std;
 using namespace Dim;
@@ -2277,13 +2276,8 @@ bool Cli::parse(vector<string> & args) {
 #if !defined(DIMCLI_LIB_NO_ENV)
     // Insert environment options
     if (m_cfg->envOpts.size()) {
-        size_t len;
-        auto name = m_cfg->envOpts.c_str();
-        if (!getenv_s(&len, NULL, 0, name)) {
-            string val(len, '\0');
-            getenv_s(&len, val.data(), len + 1, name);
+        if (auto val = getenv(m_cfg->envOpts.c_str()))
             replace(args, 1, 0, toArgv(val));
-        }
     }
 #endif
 
