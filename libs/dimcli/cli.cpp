@@ -209,6 +209,7 @@ struct Cli::Config {
     size_t maxLineWidth {kDefaultMaxLineWidth};
 
     static void touchAllCmds(Cli & cli);
+    static Config & get(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli);
     static CommandConfig & findCmdAlways(Cli & cli, const string & name);
     static const CommandConfig & findCmdOrDie(const Cli & cli);
@@ -345,6 +346,12 @@ void Cli::Config::touchAllCmds(Cli & cli) {
     // Make sure all commands have a backing command group.
     for (auto && cmd : cli.m_cfg->cmds)
         Config::findCmdGrpAlways(cli, cmd.second.cmdGroup);
+}
+
+//===========================================================================
+// static
+Cli::Config & Cli::Config::get(Cli & cli) {
+    return *cli.m_cfg;
 }
 
 //===========================================================================
@@ -594,7 +601,7 @@ void Cli::OptIndex::index(
     for (unsigned i = 0; i < m_argNames.size(); ++i) {
         auto & key = m_argNames[i];
         if (key.name.empty())
-            key.name = "arg" + to_string(i + 1);
+            key.name = "ARG" + to_string(i + 1);
     }
 }
 
@@ -1173,7 +1180,7 @@ Cli & Cli::helpCmd() {
         .desc("Show help for individual commands and exit. If no command is "
             "given the list of commands and general options are shown.")
         .action(helpCmdAction);
-    cli.opt<string>("[command]")
+    cli.opt<string>("[COMMAND]")
         .desc("Command to show help information about.");
     cli.opt<bool>("u usage")
         .desc("Only show condensed usage.");
@@ -2650,6 +2657,7 @@ struct WrapPos {
     size_t minDescCol {11};
     size_t maxDescCol {28};
     size_t maxWidth {79};
+    size_t lines {0};
 
     WrapPos(const Cli::Config & cfg)
         : minDescCol{cfg.minDescCol}
@@ -2673,6 +2681,7 @@ struct ChoiceKey {
 
 //===========================================================================
 static void writeNewline(ostream & os, WrapPos & wp) {
+    wp.lines += 1;
     os << '\n' << wp.prefix;
     wp.pos = wp.prefix.size();
 }
@@ -2874,7 +2883,7 @@ int Cli::printHelp(
         writeToken(os, wp, "Usage:");
         writeToken(os, wp, displayName(progName));
         writeToken(os, wp, cmdName);
-        writeToken(os, wp, "[args...]");
+        writeToken(os, wp, "[ARGS...]");
         writeNewline(os, wp);
         return exitCode();
     }
@@ -2908,19 +2917,22 @@ int Cli::printHelp(
 }
 
 //===========================================================================
-int Cli::writeUsageImpl(
+// returns number of lines written to os
+static size_t writeUsageImpl(
     ostream & os,
+    Cli & cli,
     const string & arg0,
     const string & cmdName,
     bool expandedOptions
 ) {
-    OptIndex ndx;
-    ndx.index(*this, cmdName, true);
-    auto & cmd = Config::findCmdAlways(*this, cmdName);
-    auto prog = displayName(arg0.empty() ? progName() : arg0);
+    auto & cfg = Cli::Config::get(cli);
+    Cli::OptIndex ndx;
+    ndx.index(cli, cmdName, true);
+    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+    auto prog = displayName(arg0.empty() ? cli.progName() : arg0);
     const string usageStr{"Usage: "};
     os << usageStr << prog;
-    WrapPos wp{*m_cfg};
+    WrapPos wp{cfg};
     wp.pos = prog.size() + usageStr.size();
     wp.prefix = string(wp.pos, ' ');
     if (cmdName.size())
@@ -2934,7 +2946,7 @@ int Cli::writeUsageImpl(
             ndx.findNamedOpts(
                 namedOpts,
                 colWidth,
-                *this,
+                cli,
                 cmd,
                 kNameNonDefault,
                 true
@@ -2943,18 +2955,18 @@ int Cli::writeUsageImpl(
                 writeToken(os, wp, "[" + key.list + "]");
         }
     }
-    if (cmdName.empty() && m_cfg->cmds.size() > 1) {
-        writeToken(os, wp, "command");
-        writeToken(os, wp, "[args...]");
-    } else if (cmdName.empty() && m_cfg->allowUnknown) {
-        writeToken(os, wp, "[command]");
-        writeToken(os, wp, "[args...]");
+    if (cmdName.empty() && cfg.cmds.size() > 1) {
+        writeToken(os, wp, "COMMAND");
+        writeToken(os, wp, "[ARGS...]");
+    } else if (cmdName.empty() && cfg.allowUnknown) {
+        writeToken(os, wp, "[COMMAND]");
+        writeToken(os, wp, "[ARGS...]");
     } else {
         for (auto && pa : ndx.m_argNames) {
             string token = pa.name.find(' ') == string::npos
                 ? pa.name
                 : "<" + pa.name + ">";
-            if (pa.opt->m_vector)
+            if (pa.opt->maxSize() < 0 || pa.opt->maxSize() > 1)
                 token += "...";
             if (pa.optional) {
                 writeToken(os, wp, "[" + token + "]");
@@ -2964,7 +2976,7 @@ int Cli::writeUsageImpl(
         }
     }
     os << '\n';
-    return exitCode();
+    return wp.lines + 1;
 }
 
 //===========================================================================
@@ -2973,7 +2985,8 @@ int Cli::printUsage(
     const string & arg0,
     const string & cmd
 ) {
-    return writeUsageImpl(os, arg0, cmd, false);
+    writeUsageImpl(os, *this, arg0, cmd, false);
+    return exitCode();
 }
 
 //===========================================================================
@@ -2982,7 +2995,8 @@ int Cli::printUsageEx(
     const string & arg0,
     const string & cmd
 ) {
-    return writeUsageImpl(os, arg0, cmd, true);
+    writeUsageImpl(os, *this, arg0, cmd, true);
+    return exitCode();
 }
 
 //===========================================================================

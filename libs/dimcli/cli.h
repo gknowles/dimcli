@@ -670,12 +670,6 @@ private:
     OptBase * findOpt(const void * value);
 
     std::string descStr(const OptBase & opt) const;
-    int writeUsageImpl(
-        std::ostream & os,
-        const std::string & arg0,
-        const std::string & cmd,
-        bool expandedOptions
-    );
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;

@@ -210,7 +210,7 @@ void assertTests() {
     EXPECT_ASSERT(1 + R"(
 !"bad argument name, contains '='"
 )");
-    cli.opt<int>("[b] [c]");
+    cli.opt<int>("[B] [C]");
     EXPECT_ASSERT(1 + R"(
 !"argument with multiple positional names"
 )");
@@ -227,7 +227,7 @@ void assertTests() {
 !"bad modifier '.' for short name"
 )");
     EXPECT_USAGE(cli, "", 1 + R"(
-Usage: test [--help] [b]
+Usage: test [--help] [B]
 )");
     EXPECT_ASSERT(1 + R"(
 !"bad argument name, contains '='"
@@ -334,15 +334,15 @@ void valueTests() {
     // parsing failure
     {
         cli = {};
-        auto & opt = cli.opt("[value]", ExtractNoInsert::kBad)
+        auto & opt = cli.opt("[VALUE]", ExtractNoInsert::kBad)
             .desc("Value to attempt to parse.");
         EXPECT_PARSE(cli, "g");
         EXPECT(*opt == ExtractNoInsert::kGood);
         EXPECT_PARSE(cli, "b", false);
         EXPECT(*opt == ExtractNoInsert::kInvalid);
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] [value]
-  value     Value to attempt to parse.
+Usage: test [OPTIONS] [VALUE]
+  VALUE     Value to attempt to parse.
 
 Options:
   --help    Show this message and exit.
@@ -352,15 +352,15 @@ Options:
     // default render failure
     {
         cli = {};
-        auto & opt = cli.opt("[value]", ExtractWithInsert::kGood)
+        auto & opt = cli.opt("[VALUE]", ExtractWithInsert::kGood)
             .desc("Value to attempt to parse.");
         EXPECT_PARSE(cli);
         EXPECT(*opt == ExtractWithInsert::kGood);
         EXPECT_PARSE(cli, "b", false);
         EXPECT(*opt == ExtractWithInsert::kInvalid);
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] [value]
-  value     Value to attempt to parse. (default: g)
+Usage: test [OPTIONS] [VALUE]
+  VALUE     Value to attempt to parse. (default: g)
 
 Options:
   --help    Show this message and exit.
@@ -374,8 +374,8 @@ Options:
         EXPECT_PARSE(cli, "i");
         EXPECT(*opt == ExtractWithInsert::kInOnly);
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] [value]
-  value     Value to attempt to parse.
+Usage: test [OPTIONS] [VALUE]
+  VALUE     Value to attempt to parse.
 
 Options:
   --help    Show this message and exit.
@@ -503,15 +503,15 @@ Options:
 )");
 
     cli = {};
-    auto & state2 = cli.optVec<State>("[streetlights]")
+    auto & state2 = cli.optVec<State>("[STREETLIGHTS]")
         .desc("Color of street lights.")
         .valueDesc("COLOR")
         .choice(State::stop, "red", "Means stop.", "3")
         .choice(State::wait, "yellow", "Means wait, even if you're late.", "2")
         .choice(State::go, "green", "Means go!", "1");
     EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] [streetlights...]
-  streetlights  Color of street lights.
+Usage: test [OPTIONS] [STREETLIGHTS...]
+  STREETLIGHTS  Color of street lights.
       green   Means go!
       yellow  Means wait, even if you're late.
       red     Means stop.
@@ -523,7 +523,7 @@ Options:
     EXPECT(state2.size() == 1 && state2[0] == State::stop);
     EXPECT_PARSE(cli, "white", false);
     EXPECT_ERR(cli, 1 + R"(
-Error: Invalid "streetlights" value: white
+Error: Invalid "STREETLIGHTS" value: white
 Must be "green", "yellow", or "red".
 )");
 
@@ -591,15 +591,15 @@ Usage: test
         cli.group("name").title("Name options")
             .optVec<string>("name");
         EXPECT(cli.title() == "Name options");
-        cli.group({}).optVec<string>("[key]").desc(
+        cli.group({}).optVec<string>("[KEY]").desc(
             "it's the key arguments with a very long description that "
             "wraps the line at least once, maybe more.");
         cli.title(
             "Long explanation of this very short set of options, it's so "
             "long that it even wraps around to the next line");
         EXPECT_HELP(cli, {}, 1 + R"(
-Usage: test [OPTIONS] [key...]
-  key       it's the key arguments with a very long description that wraps the
+Usage: test [OPTIONS] [KEY...]
+  KEY       it's the key arguments with a very long description that wraps the
             line at least once, maybe more.
 
 Long explanation of this very short set of options, it's so long that it even
@@ -622,14 +622,14 @@ Name options:
         EXPECT_USAGE(cli, {}, 1 + R"(
 Usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --quantity=NUM]
             [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
-            [key...]
+            [KEY...]
 )");
 
         // with maxWidth of 70
         cli.maxWidth(70);
         EXPECT_HELP(cli, {}, 1 + R"(
-Usage: test [OPTIONS] [key...]
-  key      it's the key arguments with a very long description that
+Usage: test [OPTIONS] [KEY...]
+  KEY      it's the key arguments with a very long description that
            wraps the line at least once, maybe more.
 
 Long explanation of this very short set of options, it's so long that
@@ -652,14 +652,14 @@ Name options:
         EXPECT_USAGE(cli, {}, 1 + R"(
 Usage: test [-c COUNT] [--does-not-quite-fit-into-col]
             [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
-            [--name=STRING] [-s, --special] [--help] [key...]
+            [--name=STRING] [-s, --special] [--help] [KEY...]
 )");
 
         // with maxWidth of 50
         cli.maxWidth(50);
         EXPECT_HELP(cli, {}, 1 + R"(
-Usage: test [OPTIONS] [key...]
-  key    it's the key arguments with a very long
+Usage: test [OPTIONS] [KEY...]
+  KEY    it's the key arguments with a very long
          description that wraps the line at least
          once, maybe more.
 
@@ -688,7 +688,7 @@ Usage: test [-c COUNT]
             [--does-not-quite-fit-into-col]
             [-n, --quantity=NUM] [--n2=NUM]
             [--n3=NUM] [--name=STRING]
-            [-s, --special] [--help] [key...]
+            [-s, --special] [--help] [KEY...]
 )");
 
     }
@@ -901,7 +901,7 @@ Options:
   --help    Show this message and exit.
 )");
         EXPECT_HELP(c1, "", 1 + R"(
-Usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] COMMAND [ARGS...]
 
 Primary:
   one       First sentence of description.
@@ -924,7 +924,7 @@ Options:
         cli.command("2a").cmdGroup("Second").cmdSortKey("2");
         cli.command("3a").cmdGroup("Third").cmdSortKey("3");
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] COMMAND [ARGS...]
 
 First:
   1a
@@ -950,7 +950,7 @@ Options:
         EXPECT(*p1 == 5);
         EXPECT(cli.commandMatched() == "one");
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] COMMAND [ARGS...]
 
 Commands:
   one
@@ -966,7 +966,7 @@ Options:
 )");
     }
         EXPECT_HELP(cli, "unknown", 1 + R"(
-Usage: test unknown [args...]
+Usage: test unknown [ARGS...]
 )");
 
     // unknownCommand
@@ -981,13 +981,13 @@ Usage: test unknown [args...]
         EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
         EXPECT_PARSE(cli, "");
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] [command] [args...]
+Usage: test [OPTIONS] [COMMAND] [ARGS...]
 
 Options:
   --help    Show this message and exit.
 )");
         EXPECT_HELP(cli, "unknown", 1 + R"(
-Usage: test unknown [args...]
+Usage: test unknown [ARGS...]
 )");
     }
 
@@ -996,7 +996,7 @@ Usage: test unknown [args...]
         cli = {};
         cli.helpCmd();
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] command [args...]
+Usage: test [OPTIONS] COMMAND [ARGS...]
 
 Commands:
   help      Show help for individual commands and exit.
@@ -1005,11 +1005,11 @@ Options:
   --help    Show this message and exit.
 )");
         auto helpText = 1 + R"(
-Usage: test help [OPTIONS] [command]
+Usage: test help [OPTIONS] [COMMAND]
 
 Show help for individual commands and exit. If no command is given the list of
 commands and general options are shown.
-  command   Command to show help information about.
+  COMMAND   Command to show help information about.
 
 Options:
   -u, --usage / --no-usage  Only show condensed usage.
@@ -1024,10 +1024,10 @@ Options:
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == helpText);
         EXPECT_USAGE(cli, "", 1 + R"(
-Usage: test [--help] command [args...]
+Usage: test [--help] COMMAND [ARGS...]
 )");
         EXPECT_USAGE(cli, "help", 1 + R"(
-Usage: test help [-u, --usage] [--help] [command]
+Usage: test help [-u, --usage] [--help] [COMMAND]
 )");
         EXPECT_PARSE(cli, "help notACmd");
         EXPECT(cli.exec() == Dim::kExitUsage);
@@ -1040,7 +1040,7 @@ Error: Command "help": Help requested for unknown command: notACmd
         EXPECT(cli.exec() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == 1 + R"(
-Usage: test help [-u, --usage] [--help] [command]
+Usage: test help [-u, --usage] [--help] [COMMAND]
 )");
     }
 }
@@ -1296,7 +1296,7 @@ void responseTests() {
     writeRsp("test/reX.rsp", "@reX.rsp");
 
     cli = {};
-    auto & args = cli.optVec<string>("[args]");
+    auto & args = cli.optVec<string>("[ARGS]");
     EXPECT_PARSE(cli, "@test/a.rsp");
     EXPECT(*args == vector<string>{"1", "x", "y", "2"});
 
@@ -1478,8 +1478,8 @@ Options:
     {
         cli = {};
         vector<bool> v0;
-        cli.optVec<bool>(&v0, "[zero]").desc("External bool");
-        auto & v1 = cli.optVec<bool>("[one]").desc("Internal bool.");
+        cli.optVec<bool>(&v0, "[ZERO]").desc("External bool");
+        auto & v1 = cli.optVec<bool>("[ONE]").desc("Internal bool.");
         EXPECT_PARSE(cli, "0");
         EXPECT(v0.size() == 1 && v0[0] == 0);
         EXPECT(v1.size() == 0);
@@ -1516,7 +1516,7 @@ Options:
     // optional optVec with size
     {
         cli = {};
-        auto & v0 = cli.optVec<int>("[one]").size(1, 2);
+        auto & v0 = cli.optVec<int>("[ONE]").size(1, 2);
         EXPECT_PARSE(cli, "1 2 3", false);
         EXPECT_ERR(cli, "Error: Unexpected argument: 3\n");
         EXPECT(v0.size() == 0);
@@ -1525,17 +1525,17 @@ Options:
     // required optVec with size
     {
         cli = {};
-        auto & v0 = cli.optVec<int>("<one>").size(1, 2)
+        auto & v0 = cli.optVec<int>("<ONE>").size(1, 2)
             .desc("The one and only?");
         EXPECT_PARSE(cli, "", false);
         EXPECT_ERR(cli, 1 + R"(
-Error: Option "one" missing value.
+Error: Option "ONE" missing value.
 Must have 1 to 2 values.
 )");
         EXPECT(v0.size() == 0);
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] one...
-  one       The one and only? (limit: 1 to 2)
+Usage: test [OPTIONS] ONE...
+  ONE       The one and only? (limit: 1 to 2)
 
 Options:
   --help    Show this message and exit.
@@ -1545,18 +1545,18 @@ Options:
     // positional argument matching
     {
         cli = {};
-        auto & v1 = cli.optVec<int>("<one>");
-        auto & v2 = cli.optVec<int>("<two>");
+        auto & v1 = cli.optVec<int>("<ONE>");
+        auto & v2 = cli.optVec<int>("<TWO>");
         EXPECT_PARSE(cli, "1 2 3");
         EXPECT(*v1 == vector<int>{1, 2});
         EXPECT(*v2 == vector<int>{3});
     }
     {
         cli = {};
-        auto & v0 = cli.optVec<int>("[zero]").size(2);
-        auto & v1 = cli.optVec<int>("[one]");
-        auto & v2 = cli.optVec<int>("<two>").size(1);
-        auto & v3 = cli.optVec<int>("<three>").size(2);
+        auto & v0 = cli.optVec<int>("[ZERO]").size(2);
+        auto & v1 = cli.optVec<int>("[ONE]");
+        auto & v2 = cli.optVec<int>("<TWO>").size(1);
+        auto & v3 = cli.optVec<int>("<THREE>").size(2);
         EXPECT_PARSE(cli, "1 2 3");
         EXPECT(v0->empty());
         EXPECT(v1->empty());
@@ -1565,7 +1565,7 @@ Options:
 
         EXPECT_PARSE(cli, "1 2", false);
         EXPECT_ERR(cli, 1 + R"(
-Error: Option "three" missing value.
+Error: Option "THREE" missing value.
 Must have 2 values.
 )");
         EXPECT(v0->empty());
@@ -1615,7 +1615,7 @@ void basicTests() {
         auto & name = cli.group("name").title("Name options")
             .optVec<string>("name");
         EXPECT(cli.title() == "Name options");
-        auto & keys = cli.group({}).optVec<string>("[key]");
+        auto & keys = cli.group({}).optVec<string>("[KEY]");
         EXPECT_PARSE(cli, "-n3");
         EXPECT(*num == 3);
         EXPECT(!*special);
@@ -1653,7 +1653,7 @@ void basicTests() {
         cli = {};
         cli.opt<int>("[]", 1);
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [--help] [arg1]
+Usage: test [--help] [ARG1]
 )");
     }
 }
@@ -1681,7 +1681,7 @@ void unitsTests() {
     // si units
     {
         cli = {};
-        auto & dbls = cli.optVec<double>("[v]").siUnits("b");
+        auto & dbls = cli.optVec<double>("[V]").siUnits("b");
         EXPECT_PARSE(cli, "1 1k 1b 1kb 1Mb 1kib 1000mb");
         EXPECT(dbls[0] == 1
             && dbls[1] == 1000
@@ -1692,10 +1692,10 @@ void unitsTests() {
             && dbls[6] == 1
         );
         EXPECT_PARSE(cli, "b", false);
-        EXPECT_ERR(cli, "Error: Invalid \"v\" value: b\n");
+        EXPECT_ERR(cli, "Error: Invalid \"V\" value: b\n");
         EXPECT_PARSE(cli, "1B", false);
         EXPECT_ERR(cli,
-            "Error: Invalid \"v\" value: 1B\n"
+            "Error: Invalid \"V\" value: 1B\n"
             "Units symbol \"B\" not recognized.\n"
         );
 
@@ -1704,7 +1704,7 @@ void unitsTests() {
         EXPECT(dbls[0] == 1024 && dbls[1] == 1024);
         EXPECT_PARSE(cli, "1000m", false);
         EXPECT_ERR(cli, 1 + R"(
-Error: Invalid "v" value: 1000m
+Error: Invalid "V" value: 1000m
 Units symbol "m" not recognized.
 )");
 
@@ -1718,7 +1718,7 @@ Units symbol "m" not recognized.
         );
         EXPECT_PARSE(cli, "1000u", false);
         EXPECT_ERR(cli, 1 + R"(
-Error: Invalid "v" value: 1000u
+Error: Invalid "V" value: 1000u
 Units symbol "u" not recognized.
 )");
 
@@ -1728,22 +1728,22 @@ Units symbol "u" not recognized.
         EXPECT(dbls[0] == 1 && dbls[1] == 1000);
         EXPECT_PARSE(cli, "1", false);
         EXPECT_ERR(cli, 1 + R"(
-Error: Invalid "v" value: 1
+Error: Invalid "V" value: 1
 Value requires suffix specifying the units.
 )");
         EXPECT_PARSE(cli, "1k", false);
         EXPECT_ERR(cli, 1 + R"(
-Error: Invalid "v" value: 1k
+Error: Invalid "V" value: 1k
 Units symbol "k" not recognized.
 )");
         EXPECT_PARSE(cli, "b", false);
-        EXPECT_ERR(cli, "Error: Invalid \"v\" value: b\n");
+        EXPECT_ERR(cli, "Error: Invalid \"V\" value: b\n");
         EXPECT_PARSE(cli, "k", false);
-        EXPECT_ERR(cli, "Error: Invalid \"v\" value: k\n");
+        EXPECT_ERR(cli, "Error: Invalid \"V\" value: k\n");
         EXPECT_PARSE(cli, "kb", false);
-        EXPECT_ERR(cli, "Error: Invalid \"v\" value: kb\n");
+        EXPECT_ERR(cli, "Error: Invalid \"V\" value: kb\n");
         EXPECT_PARSE(cli, "1x23kb", false);
-        EXPECT_ERR(cli, "Error: Invalid \"v\" value: 1x23kb\n");
+        EXPECT_ERR(cli, "Error: Invalid \"V\" value: 1x23kb\n");
         dbls.siUnits("", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1k");
         EXPECT(dbls[0] == 1000);
@@ -1775,7 +1775,7 @@ Must be between "-2,147,483,648" and "2,147,483,647".
         EXPECT(se);
 
         EXPECT_HELP(cli, "", 1 + R"(
-Usage: test [OPTIONS] [v...]
+Usage: test [OPTIONS] [V...]
 
 Options:
   -d FLOAT[<units>]   (default: 0)
@@ -1979,7 +1979,7 @@ void envTests() {
     int result;
 
     cli = {};
-    auto & args = cli.optVec<string>("[args]");
+    auto & args = cli.optVec<string>("[ARGS]");
     cli.envOpts("TEST_OPTS");
     result = putenv((char *) "TEST_OPTS=");
     EXPECT(!result);
