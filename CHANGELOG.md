@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
+
+## dimcli 6.0.0 (2020-12-21)
 - Cosmetic - Converted docs from Markdown to AsciiDoc
 - Cosmetic - Expand testing to include samples embedded in docs
 - Added - Detail to errors parsing values with units

@@ -6,7 +6,8 @@ Distributed under the Boost Software License, Version 1.0.
   <Site name="DIMCLI" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
     <Version tag="HEAD"/>
-    <Version tag="v5.0.2" layout="md +ref" default="true"/>
+    <Version tag="v6.0.0" default="true"/>
+    <Version tag="v5.0.2" layout="md +ref"/>
     <Version tag="v5.0.1" layout="md +ref"/>
     <Version tag="v5.0.0" layout="md +ref"/>
     <Version tag="v4.1.0" layout="md"/>

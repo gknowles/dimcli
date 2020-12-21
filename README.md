@@ -40,7 +40,7 @@ All you need is:
 
 ### Using cmake
 Get the latest snapshot:
-[dimcli 5.0.2](https://github.com/gknowles/dimcli/archive/v5.0.2.zip)
+[dimcli 6.0.0](https://github.com/gknowles/dimcli/archive/v6.0.0.zip)
 
 Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):
@@ -55,7 +55,7 @@ c:\dimcli on a windows machine):
   - install Visual Studio >= 2015
     - include the "Github Extension for Visual Studio" (if you care)
     - include git
-- Make the library
+- Make the library (assuming VS 2015)
   - git clone https://github.com/gknowles/dimcli.git
   - cd dimcli
   - md build & cd build
@@ -77,7 +77,7 @@ Why not a single header file?
 
 Sources of inspiration:
 
-- LLVM's CommandLine module
+- LLVM CommandLine module
 - click - Python command line interface creation kit
 - My own bad experiences
 
