@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
 - Cosmetic - Converted docs from Markdown to AsciiDoc
-- Cosmetic - Testing of samples embedded in docs
+- Cosmetic - Expand testing to include samples embedded in docs
 - Added - Detail to errors parsing values with units
 - Added - Variable argument cli.toArgvL() & cli.toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Command handlers now return void
 - Fixed - Meaningless and ignored "--no" version appears for flag values
 - Added - opt.finalOpt() makes all following arguments positional
+- Changed - Renamed cli.printPositionals() to cli.printOperands()
 
 ## dimcli 5.0.2 (2020-01-14)
 - Fixed - Name conflict with c++20 std::boolean

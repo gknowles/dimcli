@@ -81,7 +81,7 @@ struct OptName {
     Cli::OptBase * opt;
     bool invert;    // set to false instead of true (only for bools)
     bool optional;  // value need not be present? (non-bools only)
-    string name;    // name of argument (only for positionals)
+    string name;    // name of argument (only for operands)
     int pos;        // used to sort an option's names in declaration order
 };
 
@@ -105,7 +105,7 @@ struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
 };
 
 struct RawValue {
-    enum Type { kPositional, kNamed, kCommand } type;
+    enum Type { kOperand, kOption, kCommand } type;
     Cli::OptBase * opt;
     string name;
     size_t pos;
@@ -761,7 +761,7 @@ void Cli::OptIndex::index(OptBase & opt) {
         if (hasEqual && close == ' ') {
             assert(!"bad argument name, contains '='");
         } else if (hasPos && close != ' ') {
-            assert(!"argument with multiple positional names");
+            assert(!"argument with multiple operand names");
         } else {
             if (close == ' ') {
                 name = string(b, ptr - b);
@@ -805,8 +805,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
         }
 
         if (m_final == Final::kOpt && !optional) {
-            assert(!"optional operand with finalOpt followed by required "
-                "operand.");
+            assert(!"required operand after optional operand w/finalOpt.");
             return;
         }
         if (!opt.m_finalOpt) {
@@ -814,23 +813,18 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
                 m_final = Final::kNonVar;
             if (m_final < Final::kNonOpt && optional)
                 m_final = Final::kNonOpt;
-        } else {
-            if (m_final == Final::kNonVar) {
-                assert(!"operand with finalOpt preceded by variable size "
-                    "operand.");
+        } else if (m_final == Final::kNonVar) {
+            assert(!"operand w/finalOpt after variable size operand.");
+            return;
+        } else if (m_final == Final::kNonOpt) {
+            if (!optional) {
+                assert(!"required operand w/finalOpt after optional operand.");
                 return;
+            } else {
+                m_final = Final::kOpt;
             }
-            if (m_final == Final::kNonOpt) {
-                if (!optional) {
-                    assert(!"required operand with finalOpt preceded by "
-                        "optional operand.");
-                    return;
-                } else {
-                    m_final = Final::kOpt;
-                }
-            }
-            if (m_final == Final::kUnset)
-                m_final = optional ? Final::kOpt : Final::kReq;
+        } else if (m_final == Final::kUnset) {
+            m_final = optional ? Final::kOpt : Final::kReq;
         }
         if (m_final < Final::kOpt)
             m_finalOpr += opt.minSize();
@@ -1351,7 +1345,7 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
 //===========================================================================
 // These rules where gleaned by inspecting glib's g_shell_parse_argv which
 // takes its rules from the "Shell Command Language" section of the UNIX98
-// spec -- ignoring parameter expansion ("$()" and "${}"), command
+// spec -- but ignoring parameter expansion ("$()" and "${}"), command
 // substitution (back quote `), operators as separators, etc.
 //
 // Arguments are split on whitespace (" \t\r\n\f\v") unless the whitespace
@@ -2133,9 +2127,15 @@ static bool parseBool(bool & out, const string & val) {
     return true;
 }
 
+enum class OprCat {
+    kMinReq,    // Minimum expected for all required opts (vectors may be >1)
+    kReq,       // Max expected for all required opts
+    kOpt,       // All optionals
+};
+
 //===========================================================================
 static int numMatches(
-    int cat,
+    OprCat cat,
     int avail,
     const OptName & optn
 ) {
@@ -2144,26 +2144,24 @@ static int numMatches(
     auto maxVec = optn.opt->maxSize();
     bool vec = minVec != 1 || maxVec != 1;
 
-    if (cat == 0 && !op && vec && avail >= minVec) {
-        // Category 0 (min required) with required vector not requiring too
-        // many arguments.
+    if (cat == OprCat::kMinReq && !op && vec && avail >= minVec) {
+        // Min required with required vector not requiring too many arguments.
         return minVec;
     }
-    if (cat == 1 && !op && vec) {
-        // Category 0 (max required) with required vector.
+    if (cat == OprCat::kReq && !op && vec) {
+        // Max required with required vector.
         return maxVec == -1 ? avail : min(avail, maxVec - minVec);
     }
-    if (cat == 2 && op && vec && avail >= minVec) {
-        // Category 2 (all optional) with optional vector not requiring too
-        // many arguments.
+    if (cat == OprCat::kOpt && op && vec && avail >= minVec) {
+        // All optionals with optional vector not requiring too many arguments.
         return maxVec == -1 ? avail : min(avail, maxVec);
     }
-    if (cat == 0 && !op && !vec
-        || cat == 2 && op && !vec
+    if (cat == OprCat::kMinReq && !op && !vec
+        || cat == OprCat::kOpt && op && !vec
     ) {
-        // Category 0 (min required) with required non-vector; or
-        // Category 1 (all optional) with optional non-vector.
-        return 1;
+        // Min required with required non-vector; or
+        // all optional with optional non-vector.
+        return min(avail, 1);
     }
 
     // Fall through for unmatched combinations.
@@ -2171,27 +2169,22 @@ static int numMatches(
 }
 
 //===========================================================================
-static bool assignPositionals(
+static bool assignOperands(
     RawValue * rawValues,
     size_t numRawValues,
     Cli & cli,
     const Cli::OptIndex & ndx,
     int numPos
 ) {
-    // Assign positional values to options. There must be enough values for all
-    // opts of a category for any of the next category to be eligible.
-    //
-    // Categories:
-    //      0. Minimum expected for all required opts (vectors may be >1)
-    //      1. Max expected for all required opts
-    //      2. All optionals
+    // Assign positional values to operands. There must be enough values for
+    // all opts of a category for any of the next category to be eligible.
     vector<int> matched(ndx.m_argNames.size());
     int usedPos = 0;
 
-    for (unsigned category = 0; category < 3; ++category) {
+    for (auto&& cat : { OprCat::kMinReq, OprCat::kReq, OprCat::kOpt }) {
         for (unsigned i = 0; i < matched.size() && usedPos < numPos; ++i) {
             auto & argName = ndx.m_argNames[i];
-            int num = numMatches(category, numPos - usedPos, argName);
+            int num = numMatches(cat, numPos - usedPos, argName);
             matched[i] += num;
             usedPos += num;
         }
@@ -2201,10 +2194,10 @@ static bool assignPositionals(
         return cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
     assert(usedPos == numPos);
 
-    int ipos = 0;       // Positional opt being matched.
+    int ipos = 0;       // Operand being matched.
     int imatch = 0;     // Values already been matched to this opt.
     for (auto val = rawValues; val < rawValues + numRawValues; ++val) {
-        if (val->opt || val->type != RawValue::kPositional)
+        if (val->opt || val->type != RawValue::kOperand)
             continue;
         if (matched[ipos] <= imatch) {
             imatch = 0;
@@ -2269,7 +2262,7 @@ bool Cli::parse(vector<string> & args) {
     // look ahead to match, command processing requires that the command be
     // unambiguously identifiable.
     assert((ndx.m_allowCommands || !cmdMode)
-        && "mixing top level positionals with commands");
+        && "mixing top level operands with commands");
 
     resetValues();
 
@@ -2327,7 +2320,7 @@ bool Cli::parse(vector<string> & args) {
                     moreOpts = false;
                 if (argName.opt->m_bool) {
                     rawValues.emplace_back(
-                        RawValue::kNamed,
+                        RawValue::kOption,
                         argName.opt,
                         name,
                         argPos,
@@ -2343,7 +2336,7 @@ bool Cli::parse(vector<string> & args) {
 
             ptr += 1;
             if (!*ptr) {
-                // Bare "--" found, all remaining args are positional.
+                // Bare "--" found, all remaining args are operands.
                 moreOpts = false;
                 continue;
             }
@@ -2372,7 +2365,7 @@ bool Cli::parse(vector<string> & args) {
                     return badUsage("Invalid '" + name + "' value", ptr);
                 }
                 rawValues.emplace_back(
-                    RawValue::kNamed,
+                    RawValue::kOption,
                     argName.opt,
                     name,
                     argPos,
@@ -2386,15 +2379,18 @@ bool Cli::parse(vector<string> & args) {
         // Positional value
         if (cmdMode == kPending && numPos == ndx.m_minOprs) {
             auto cmd = (string) ptr;
-            if (!assignPositionals(
+            bool noExtras = assignOperands(
                 rawValues.data(),
                 rawValues.size(),
                 *this,
                 ndx,
                 numPos
-            )) {
-                return false;
-            }
+            );
+            // Number of assigned operands should always exactly match the
+            // count, since it's equal to the calculated minimum.
+            assert(noExtras
+                && "internal dimcli error: operand count mismatch");
+
             rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
             precmdValues = rawValues.size();
             numPos = 0;
@@ -2420,7 +2416,7 @@ bool Cli::parse(vector<string> & args) {
             moreOpts = false;
 
         rawValues.emplace_back(
-            RawValue::kPositional,
+            RawValue::kOperand,
             nullptr,
             string{},
             argPos,
@@ -2433,7 +2429,7 @@ bool Cli::parse(vector<string> & args) {
     OPTION_VALUE:
         if (*ptr || equal) {
             rawValues.emplace_back(
-                RawValue::kNamed,
+                RawValue::kOption,
                 argName.opt,
                 name,
                 argPos,
@@ -2443,7 +2439,7 @@ bool Cli::parse(vector<string> & args) {
         }
         if (argName.optional) {
             rawValues.emplace_back(
-                RawValue::kNamed,
+                RawValue::kOption,
                 argName.opt,
                 name,
                 argPos,
@@ -2456,7 +2452,7 @@ bool Cli::parse(vector<string> & args) {
         if (argPos == argc)
             return badUsage("No value given for " + name);
         rawValues.emplace_back(
-            RawValue::kNamed,
+            RawValue::kOption,
             argName.opt,
             name,
             argPos,
@@ -2465,7 +2461,7 @@ bool Cli::parse(vector<string> & args) {
     }
 
     if (cmdMode != kUnknown) {
-        if (!assignPositionals(
+        if (!assignOperands(
             rawValues.data() + precmdValues,
             rawValues.size() - precmdValues,
             *this,
@@ -2494,11 +2490,8 @@ bool Cli::parse(vector<string> & args) {
     for (auto&& argName : ndx.m_argNames) {
         auto & opt = *argName.opt;
         if (!argName.optional) {
-            // Report required positional arguments that are missing.
+            // Report required operands that are missing.
             if (!opt || opt.size() < (size_t) opt.minSize())
-                return badMinMatched(*this, opt, argName.name);
-        } else {
-            if (!argName.pos && opt && opt.size() < (size_t) opt.minSize())
                 return badMinMatched(*this, opt, argName.name);
         }
     }
@@ -2899,7 +2892,7 @@ int Cli::printHelp(
     }
     if (cmdName.empty())
         printCommands(os);
-    printPositionals(os, cmdName);
+    printOperands(os, cmdName);
     printOptions(os, cmdName);
     auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
     if (*ftr.data()) {
@@ -2994,7 +2987,7 @@ int Cli::printUsageEx(
 }
 
 //===========================================================================
-void Cli::printPositionals(ostream & os, const string & cmd) {
+void Cli::printOperands(ostream & os, const string & cmd) {
     OptIndex ndx;
     ndx.index(*this, cmd, true);
     size_t colWidth = 0;

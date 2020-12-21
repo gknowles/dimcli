@@ -212,7 +212,7 @@ void assertTests() {
 )");
     cli.opt<int>("[B] [C]");
     EXPECT_ASSERT(1 + R"(
-!"argument with multiple positional names"
+!"argument with multiple operand names"
 )");
     cli.opt<int>("-d");
     EXPECT_ASSERT(1 + R"(
@@ -231,11 +231,27 @@ Usage: test [--help] [B]
 )");
     EXPECT_ASSERT(1 + R"(
 !"bad argument name, contains '='"
-!"argument with multiple positional names"
+!"argument with multiple operand names"
 !"bad argument name, contains '-'"
 !"bad modifier '?' for bool argument"
 !"bad modifier '.' for short name"
 )");
+
+    // bad vector size
+    {
+        cli = {};
+        cli.optVec<string>("g")
+            .size(-1)
+            .size(-1, 0)
+            .size(0, -10)
+            .size(1, 0);
+        EXPECT_ASSERT(1 + R"RAW(
+!"bad optVec size, minimum must be >= 0"
+!"bad optVec size, minimum must be >= 0"
+!"bad optVec size, maximum must be >= 0 or -1 (unlimited)"
+!"bad optVec size, min greater than max"
+)RAW");
+    }
 
     // exec usage
     {
@@ -249,6 +265,33 @@ Usage: test [--help] [B]
         );
         EXPECT_ASSERT(1 + R"(
 !"command found by parse not defined"
+)");
+    }
+
+    // finalOpt
+    {
+        cli = {};
+        cli.opt<int>("[A]").finalOpt();
+        cli.opt<int>("<B>");
+        EXPECT_PARSE(cli, "1");
+        EXPECT_ASSERT(1 + R"(
+!"required operand after optional operand w/finalOpt."
+)");
+
+        cli = {};
+        cli.optVec<int>("<A>");
+        cli.opt<bool>("<B>").finalOpt();
+        EXPECT_PARSE(cli, "1");
+        EXPECT_ASSERT(1 + R"(
+!"operand w/finalOpt after variable size operand."
+)");
+
+        cli = {};
+        cli.opt<int>("[A]");
+        cli.opt<int>("<B>").finalOpt();
+        EXPECT_PARSE(cli, "1");
+        EXPECT_ASSERT(1 + R"(
+!"required operand w/finalOpt after optional operand."
 )");
     }
 }
@@ -584,7 +627,7 @@ Usage: test
         cli.opt(num, "c").desc("alias for quantity").valueDesc("COUNT");
         cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc({});
         cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
-        cli.opt<bool>("does-not-quite-fit-into-col.")
+        cli.opt<bool>("almost-fits-into-desc-col.")
             .desc("slightly too long option name that also has a long "
                   "description");
         cli.opt<bool>("s special !S", false).desc("snowflake");
@@ -604,28 +647,28 @@ Usage: test [OPTIONS] [KEY...]
 
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
-  -c COUNT            alias for quantity (default: 0)
-  --does-not-quite-fit-into-col
-                      slightly too long option name that also has a long
-                      description
-  -n, --quantity=NUM  quantity is an int (default: 1)
-  --n2=NUM            no defaultDesc
-  --n3=NUM            custom defaultDesc (default: three)
+  --almost-fits-into-desc-col  slightly too long option name that also has a
+                             long description
+  -c COUNT                   alias for quantity (default: 0)
+  -n, --quantity=NUM         quantity is an int (default: 1)
+  --n2=NUM                   no defaultDesc
+  --n3=NUM                   custom defaultDesc (default: three)
   -s, --special / -S, --no-special
-                      snowflake
+                             snowflake
 
 Name options:
   --name=STRING
 
-  --help              Show this message and exit.
+  --help                     Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [-c COUNT] [--does-not-quite-fit-into-col] [-n, --quantity=NUM]
+Usage: test [--almost-fits-into-desc-col] [-c COUNT] [-n, --quantity=NUM]
             [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
             [KEY...]
 )");
 
         // with maxWidth of 70
+        cli.maxWidth(70, 10, 20); // for coverage of explicit desc cols
         cli.maxWidth(70);
         EXPECT_HELP(cli, {}, 1 + R"(
 Usage: test [OPTIONS] [KEY...]
@@ -634,10 +677,10 @@ Usage: test [OPTIONS] [KEY...]
 
 Long explanation of this very short set of options, it's so long that
 it even wraps around to the next line:
-  -c COUNT            alias for quantity (default: 0)
-  --does-not-quite-fit-into-col
+  --almost-fits-into-desc-col
                       slightly too long option name that also has a
                       long description
+  -c COUNT            alias for quantity (default: 0)
   -n, --quantity=NUM  quantity is an int (default: 1)
   --n2=NUM            no defaultDesc
   --n3=NUM            custom defaultDesc (default: three)
@@ -650,7 +693,7 @@ Name options:
   --help              Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [-c COUNT] [--does-not-quite-fit-into-col]
+Usage: test [--almost-fits-into-desc-col] [-c COUNT]
             [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
             [--name=STRING] [-s, --special] [--help] [KEY...]
 )");
@@ -666,10 +709,10 @@ Usage: test [OPTIONS] [KEY...]
 Long explanation of this very short set of
 options, it's so long that it even wraps around
 to the next line:
-  -c COUNT       alias for quantity (default: 0)
-  --does-not-quite-fit-into-col
+  --almost-fits-into-desc-col
                  slightly too long option name
                  that also has a long description
+  -c COUNT       alias for quantity (default: 0)
   -n, --quantity=NUM
                  quantity is an int (default: 1)
   --n2=NUM       no defaultDesc
@@ -684,10 +727,9 @@ Name options:
   --help         Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [-c COUNT]
-            [--does-not-quite-fit-into-col]
-            [-n, --quantity=NUM] [--n2=NUM]
-            [--n3=NUM] [--name=STRING]
+Usage: test [--almost-fits-into-desc-col]
+            [-c COUNT] [-n, --quantity=NUM]
+            [--n2=NUM] [--n3=NUM] [--name=STRING]
             [-s, --special] [--help] [KEY...]
 )");
 
@@ -941,7 +983,7 @@ Options:
 )");
     }
 
-    // allowed top level positional
+    // allowed top level operands
     {
         cli = {};
         auto & p1 = cli.opt<int>("<1>");
@@ -1030,8 +1072,9 @@ Usage: test [--help] COMMAND [ARGS...]
 Usage: test help [-u, --usage] [--help] [COMMAND]
 )");
         EXPECT_PARSE(cli, "help notACmd");
-        EXPECT(cli.exec() == Dim::kExitUsage);
-        EXPECT_ERR(cli, 1 + R"(
+        out.str("");
+        EXPECT(cli.exec(out) == Dim::kExitUsage);
+        EXPECT(out.str() == 1 + R"(
 Error: Command 'help': Help requested for unknown command: notACmd
 )");
         EXPECT_PARSE(cli, "help help --usage");
@@ -1441,7 +1484,7 @@ void vectorTests() {
     int line = 0;
     CliTest cli;
 
-    // optVec
+    // vector option
     {
         cli = {};
         auto & strs = cli.optVec<string>("r ?s").implicitValue("a")
@@ -1485,7 +1528,7 @@ Options:
         EXPECT(v1.size() == 0);
     }
 
-    // optVec with size
+    // vector option with size
     {
         cli = {};
         auto & v0 = cli.optVec<int>("0").size(0).desc("None allowed.");
@@ -1513,7 +1556,7 @@ Options:
 )");
     }
 
-    // optional optVec with size
+    // optional vector operand with size
     {
         cli = {};
         auto & v0 = cli.optVec<int>("[ONE]").size(1, 2);
@@ -1522,7 +1565,47 @@ Options:
         EXPECT(v0.size() == 0);
     }
 
-    // required optVec with size
+    // vector operand with 0 size (ignored)
+    {
+        cli = {};
+        auto & v0 = cli.optVec<int>("<ONE>").size(0);
+        EXPECT_PARSE(cli, "", true);
+        EXPECT(v0.size() == 0);
+    }
+
+    // vector with too few values
+    {
+        cli = {};
+        cli.optVec<int>("[FIRST]").size(2, -1);
+        EXPECT_PARSE(cli, "1", false);
+        EXPECT_ERR(cli, "Error: Unexpected argument: 1\n");
+
+        cli = {};
+        cli.optVec<int>("<SECOND>").size(2, -1);
+        EXPECT_PARSE(cli, "1", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option 'SECOND' missing value.
+Must have 2 or more values.
+)");
+
+        cli = {};
+        cli.optVec<int>("3").size(2);
+        EXPECT_PARSE(cli, "-3 1", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option '-3' missing value.
+Must have 2 values.
+)");
+
+        cli = {};
+        cli.optVec<int>("fourth").size(2, 3);
+        EXPECT_PARSE(cli, "--fourth=1", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option '--fourth' missing value.
+Must have 2 to 3 values.
+)");
+    }
+
+    // required vector operand with size
     {
         cli = {};
         auto & v0 = cli.optVec<int>("<ONE>").size(1, 2)
@@ -1536,6 +1619,20 @@ Must have 1 to 2 values.
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] ONE...
   ONE       The one and only? (limit: 1 to 2)
+
+Options:
+  --help    Show this message and exit.
+)");
+
+        v0.size(2, -1);
+        EXPECT_PARSE(cli, "", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option 'ONE' missing value.
+Must have 2 or more values.
+)");
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS] ONE...
+  ONE       The one and only? (limit: 2+)
 
 Options:
   --help    Show this message and exit.
@@ -1995,6 +2092,44 @@ void envTests() {
 
 /****************************************************************************
 *
+*   finalOpt tests
+*
+***/
+
+//===========================================================================
+void finalOptTests() {
+    int line = 0;
+    CliTest cli;
+
+    // finalOpt operand after optional operand
+    {
+        cli = {};
+        cli.opt<int>("[A]");
+        auto & b = cli.optVec<int>("[B]").finalOpt();
+        EXPECT_PARSE(cli, "1 2 3");
+        EXPECT(*b == vector<int>{2, 3});
+    }
+
+    // finalOpt option
+    {
+        cli = {};
+        cli.opt<bool>("a lname").finalOpt();
+        auto & b = cli.opt<int>("b").finalOpt();
+        auto & c = cli.optVec<string>("[C]");
+        EXPECT_PARSE(cli, "-a -b");
+        EXPECT(!b);
+        EXPECT(*c == vector<string>{"-b"});
+        EXPECT_PARSE(cli, "-b 1 -b");
+        EXPECT(*b == 1);
+        EXPECT(*c == vector<string>{"-b"});
+        EXPECT_PARSE(cli, "--lname -a");
+        EXPECT(*c == vector<string>{"-a"});
+    }
+}
+
+
+/****************************************************************************
+*
 *   Main
 *
 ***/
@@ -2008,27 +2143,28 @@ static int runTests(bool prompt) {
     Dim::Cli cli;
     cli.maxWidth(80);
 
-    unitsTests();
-    parseTests();
-    basicTests();
-    vectorTests();
-    execTests();
-    flagTests();
-    valueTests();
-    choiceTests();
-    helpTests();
-    cmdTests();
-    beforeTests();
-    envTests();
-    argvTests();
-    optCheckTests();
-    filesystemTests();
-    responseTests();
-    promptTests(prompt);
-
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
     assertTests();
 #endif
+
+    valueTests();
+    parseTests();
+    choiceTests();
+    helpTests();
+    cmdTests();
+    argvTests();
+    optCheckTests();
+    flagTests();
+    responseTests();
+    filesystemTests();
+    execTests();
+    vectorTests();
+    basicTests();
+    unitsTests();
+    promptTests(prompt);
+    beforeTests();
+    envTests();
+    finalOptTests();
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;

@@ -419,7 +419,7 @@ public:
         const std::string & cmd = {}
     );
 
-    void printPositionals(
+    void printOperands(
         std::ostream & os,
         const std::string & cmd = {}
     );
