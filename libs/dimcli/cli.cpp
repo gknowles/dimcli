@@ -2388,6 +2388,7 @@ bool Cli::parse(vector<string> & args) {
             );
             // Number of assigned operands should always exactly match the
             // count, since it's equal to the calculated minimum.
+            (void) noExtras;
             assert(noExtras
                 && "internal dimcli error: operand count mismatch");
 
