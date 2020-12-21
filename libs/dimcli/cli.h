@@ -89,13 +89,15 @@
 #pragma clang diagnostic push
 #endif
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
-#elif defined(__GNUC__) || defined(__GNUG__)
+#elif defined(__GNUC__)
 #ifndef DIMCLI_LIB_KEEP_MACROS
 #pragma GCC diagnostic push
 #endif
 #endif
 
-#ifdef DIMCLI_LIB_DYN_LINK
+#ifndef DIMCLI_LIB_DYN_LINK
+#define DIMCLI_LIB_DECL
+#else
 #if defined(_MSC_VER)
 // 'identifier': class 'type' needs to have dll-interface to be used
 // by clients of class 'type2'
@@ -109,8 +111,6 @@
 #define DIMCLI_LIB_DECL __declspec(dllimport)
 #endif
 #endif
-#else
-#define DIMCLI_LIB_DECL
 #endif
 
 #if !defined(_CPPUNWIND) && !defined(_HAS_EXCEPTIONS)
