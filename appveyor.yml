@@ -20,6 +20,9 @@ environment:
     - CXX: clang++-10
       CC: clang-10
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: clang++-11
+      CC: clang-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: g++-7
       CC: gcc-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
