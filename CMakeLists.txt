@@ -1,6 +1,6 @@
 # CMakeLists.txt - general project generator
 #
-# Copyright Glen Knowles 2016 - 2020.
+# Copyright Glen Knowles 2016 - 2021.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # Use this one file *unmodified* for all projects that follow the convections.
@@ -399,9 +399,16 @@ if(MSVC)
     endif()
 
     # "/Od" - disables optimization
-    # "/RTC1" - runtime checks (stack frame over/under run and uninit var use)
-    # "/ZI" - debug with edit and continue (disables some optimizations)
-    set(CMAKE_CXX_FLAGS_DEBUG "/Od /RTC1 /ZI")
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od")
+    if(FALSE AND NOT MSVC_VERSION LESS 1928)
+        # "/fsanitize=address" - enables ASAN memory error detector
+        set(CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address")
+    else()
+        # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
+        # "/ZI" - debug with edit and continue (disables some optimizations)
+        set(CMAKE_CXX_FLAGS_DEBUG "/Od /RTC1 /ZI")
+    endif()
     if(LINK_STATIC_RUNTIME)
         # "/MTd" - multithread debug static runtime
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
