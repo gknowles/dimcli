@@ -32,7 +32,7 @@ environment:
     - CXX: g++-10
       CC: gcc-10
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      # INSTALL_COMPILER: ON
+      INSTALL_COMPILER: ON
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
