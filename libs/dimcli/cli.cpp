@@ -2724,7 +2724,7 @@ static size_t parseLine(RawLine * out, const char line[]) {
 
 //===========================================================================
 static int wrapIndent(int indent, size_t width) {
-    if (indent > width) {
+    if (indent > (int) width) {
         return (indent - 2) % ((int) width - 2) + 2;
     } else {
         return indent;
