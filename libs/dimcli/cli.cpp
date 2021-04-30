@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2020.
+// Copyright Glen Knowles 2016 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.cpp - dimcli
@@ -42,8 +42,8 @@ const size_t kMinConsoleWidth = 50;
 const size_t kMaxConsoleWidth = 80;
 
 // column where description text starts
-const size_t kDefaultMinDescCol = 11;
-const size_t kDefaultMaxDescCol = 28;
+const auto kDefaultMinKeyWidth = 15.0f;
+const auto kDefaultMaxKeyWidth = 38.0f;
 
 // maximum help text line length
 const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
@@ -150,9 +150,8 @@ struct Cli::OptIndex {
         const string & cmd,
         bool requireVisible
     );
-    bool findNamedOpts(
-        vector<OptKey> & namedOpts,
-        size_t & colWidth,
+    void index(OptBase & opt);
+    vector<OptKey> findNamedOpts(
         const Cli & cli,
         CommandConfig & cmd,
         NameListType type,
@@ -164,7 +163,12 @@ struct Cli::OptIndex {
         NameListType type
     ) const;
 
-    void index(OptBase & opt);
+    static string desc(const OptBase & opt, bool withMarkup = true);
+    static const unordered_map<string, OptBase::ChoiceDesc> & choiceDescs(
+        const OptBase & opt
+    );
+
+private:
     void indexName(OptBase & opt, const string & name, int pos);
     void indexShortName(
         OptBase & opt,
@@ -204,8 +208,8 @@ struct Cli::Config {
     vector<string> unknownArgs;
 
     size_t maxWidth {kDefaultConsoleWidth};
-    size_t minDescCol {kDefaultMinDescCol};
-    size_t maxDescCol {kDefaultMaxDescCol};
+    float minKeyWidth {kDefaultMinKeyWidth};
+    float maxKeyWidth {kDefaultMaxKeyWidth};
     size_t maxLineWidth {kDefaultMaxLineWidth};
 
     static void touchAllCmds(Cli & cli);
@@ -239,10 +243,14 @@ struct Cli::Config {
 // forward declarations
 static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
 static void defCmdAction(Cli & cli);
-static void printChoicesDetail(
-    ostream & os,
-    const Cli::Config & cfg,
+static void writeChoicesDetail(
+    string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+);
+static string format(
+    int * lines,
+    const Cli::Config & cfg,
+    const string & text
 );
 
 //===========================================================================
@@ -479,12 +487,10 @@ Cli::Config::Config() {
 void Cli::Config::updateWidth(size_t width) {
     this->maxWidth = width;
     this->maxLineWidth = width - 1;
-    this->minDescCol = kDefaultMinDescCol
+    this->minKeyWidth = kDefaultMinKeyWidth
         * (kDefaultConsoleWidth + width) / 2
-        / kDefaultConsoleWidth;
-    this->maxDescCol = kDefaultMaxDescCol
-        * width
-        / kDefaultConsoleWidth;
+        / width;
+    this->maxKeyWidth = kDefaultMaxKeyWidth;
 }
 
 
@@ -606,20 +612,16 @@ void Cli::OptIndex::index(
 }
 
 //===========================================================================
-bool Cli::OptIndex::findNamedOpts(
-    vector<OptKey> & namedOpts,
-    size_t & colWidth,
+vector<OptKey> Cli::OptIndex::findNamedOpts(
     const Cli & cli,
     CommandConfig & cmd,
     NameListType type,
     bool flatten
 ) const {
-    namedOpts.clear();
+    vector<OptKey> out;
     for (auto && opt : cli.m_cfg->opts) {
         auto list = nameList(cli, *opt, type);
         if (auto width = list.size()) {
-            if (width < cli.m_cfg->maxDescCol)
-                colWidth = max(colWidth, width);
             OptKey key;
             key.opt = opt.get();
             key.list = list;
@@ -631,13 +633,13 @@ bool Cli::OptIndex::findNamedOpts(
                 key.sort.clear();
             key.sort += '\0';
             key.sort += list.substr(list.find_first_not_of('-'));
-            namedOpts.push_back(key);
+            out.push_back(key);
         }
     }
-    sort(namedOpts.begin(), namedOpts.end(), [](auto & a, auto & b) {
+    sort(out.begin(), out.end(), [](auto & a, auto & b) {
         return a.sort < b.sort;
     });
-    return !namedOpts.empty();
+    return out;
 }
 
 //===========================================================================
@@ -919,9 +921,9 @@ bool Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
     if (opt.parseValue(val))
         return true;
 
-    ostringstream os;
-    printChoicesDetail(os, *cli.m_cfg, opt.m_choiceDescs);
-    return cli.badUsage(opt, val, os.str());
+    string desc;
+    writeChoicesDetail(&desc, opt.m_choiceDescs);
+    return cli.badUsage(opt, val, desc);
 }
 
 //===========================================================================
@@ -1265,9 +1267,9 @@ ostream & Cli::conout() {
 void Cli::maxWidth(int maxWidth, int minDescCol, int maxDescCol) {
     m_cfg->updateWidth(maxWidth);
     if (minDescCol)
-        m_cfg->minDescCol = minDescCol;
+        m_cfg->minKeyWidth = 100.0f * minDescCol / maxWidth;
     if (maxDescCol)
-        m_cfg->maxDescCol = maxDescCol;
+        m_cfg->maxKeyWidth = 100.0f * maxDescCol / maxWidth;
 }
 
 //===========================================================================
@@ -2088,8 +2090,8 @@ bool Cli::badUsage(
 //===========================================================================
 bool Cli::fail(int code, const string & msg, const string & detail) {
     m_cfg->exitCode = code;
-    m_cfg->errMsg = msg;
-    m_cfg->errDetail = detail;
+    m_cfg->errMsg = format(nullptr, *m_cfg, msg);
+    m_cfg->errDetail = format(nullptr, *m_cfg, detail);
     return false;
 }
 
@@ -2633,29 +2635,11 @@ bool Cli::commandExists(const string & name) const {
 
 /****************************************************************************
 *
-*   Help
+*   Help Text
 *
 ***/
 
 namespace {
-
-struct WrapPos {
-    size_t pos{0};
-    string prefix;
-    size_t minDescCol {11};
-    size_t maxDescCol {28};
-    size_t maxWidth {79};
-    size_t lines {0};
-
-    WrapPos(const Cli::Config & cfg)
-        : minDescCol{cfg.minDescCol}
-        , maxDescCol{cfg.maxDescCol}
-        , maxWidth{cfg.maxLineWidth}
-    {}
-    size_t clampDescWidth(size_t colWidth) const {
-        return clamp(colWidth, minDescCol, maxDescCol);
-    }
-};
 
 struct ChoiceKey {
     size_t pos;
@@ -2665,96 +2649,282 @@ struct ChoiceKey {
     bool def;
 };
 
+struct RawCol {
+    int indent {};
+    int childIndent {};
+    const char * text {};
+    int textLen {};
+    int width {-1};         // chars
+    float minWidth {-1};    // percentage
+    float maxWidth {-1};    // percentage
+};
+
+struct RawLine {
+    bool newTable {};
+    vector<RawCol> cols;
+};
+
 } // namespace
 
 //===========================================================================
-static void writeNewline(ostream & os, WrapPos & wp) {
-    wp.lines += 1;
-    os << '\n' << wp.prefix;
-    wp.pos = wp.prefix.size();
-}
-
-//===========================================================================
-// Write token, potentially adding a line break first.
-static void writeToken(ostream & os, WrapPos & wp, const string & token) {
-    if (wp.pos + token.size() + 1 > wp.maxWidth) {
-        if (wp.pos > wp.prefix.size()) {
-            writeNewline(os, wp);
-        }
-    }
-    if (wp.pos) {
-        os << ' ';
-        wp.pos += 1;
-    }
-    os << token;
-    wp.pos += token.size();
-}
-
-//===========================================================================
-// Write series of tokens, collapsing (and potentially breaking on) spaces.
-static void writeText(ostream & os, WrapPos & wp, const string & text) {
-    const char * base = text.c_str();
+static size_t parseLine(RawLine * out, const char line[]) {
+    *out = {};
+    auto ptr = line;
     for (;;) {
-        while (*base == ' ')
-            base += 1;
-        if (!*base)
-            return;
-        const char * nl = strchr(base, '\n');
-        const char * ptr = strchr(base, ' ');
-        if (!ptr)
-            ptr = text.c_str() + text.size();
-        if (nl && nl < ptr) {
-            writeToken(os, wp, string(base, nl));
-            writeNewline(os, wp);
-            base = nl + 1;
-        } else {
-            writeToken(os, wp, string(base, ptr));
-            base = ptr;
+        auto & col = out->cols.emplace_back();
+        for (;; ++ptr) {
+            if (*ptr == ' ') {
+                col.indent += 1;
+            } else if (*ptr == '\a') {
+                char * eptr;
+                col.minWidth = strtof(ptr + 1, &eptr);
+                col.maxWidth = strtof(eptr, &eptr);
+                if (*eptr == '\a'
+                    && col.minWidth <= col.maxWidth
+                    && col.minWidth > 0 && col.minWidth <= 100
+                ) {
+                    col.maxWidth = min(col.maxWidth, 100.0f);
+                } else {
+                    col.minWidth = -1;
+                    col.maxWidth = -1;
+                }
+            } else if (*ptr == '\v') {
+                col.childIndent += 1;
+            } else if (*ptr == '\r') {
+                col.childIndent -= 1;
+            } else if (*ptr == '\f') {
+                out->newTable = true;
+            } else {
+                col.text = ptr;
+                break;
+            }
+        }
+        if (!out->newTable) {
+            col.minWidth = -1;
+            col.maxWidth = -1;
+        }
+        col.textLen = 0;
+        for (;;) {
+            char ch = *ptr++;
+            if (!ch) {
+                return ptr - line - 1;
+            } else if (ch == '\n') {
+                return ptr - line;
+            } else if (ch == '\t') {
+                break;
+            } else if (ch == ' ' || ch == '\r') {
+                // skip
+            } else {
+                col.textLen = int(ptr - col.text);
+            }
         }
     }
 }
 
 //===========================================================================
-// Like text, except advance to descCol first, and indent any additional
-// required lines to descCol.
-static void writeDescCol(
-    ostream & os,
-    WrapPos & wp,
-    const string & text,
-    size_t descCol
-) {
-    if (text.empty())
-        return;
-    if (wp.pos < descCol) {
-        writeToken(os, wp, string(descCol - wp.pos - 1, ' '));
-    } else if (wp.pos < descCol + 4) {
-        os << ' ';
-        wp.pos += 1;
-    } else {
-        wp.pos = wp.maxWidth;
-    }
-    wp.prefix.assign(descCol, ' ');
-    writeText(os, wp, text);
+static int wrapIndent(int indent, size_t width) {
+    return indent > width
+        ? (indent - 2) % (width - 2) + 2
+        : indent;
 }
 
 //===========================================================================
-string Cli::descStr(const Cli::OptBase & opt) const {
-    string desc = opt.m_desc;
-    if (!opt.m_choiceDescs.empty()) {
+// Appends formatted text to *outPtr, adds the number of formatted lines to
+// *lines, and returns the new output pos (column).
+static size_t formatCol(
+    string * outPtr,
+    int * lines,
+    const RawCol & col,
+    size_t startPos,
+    size_t pos,
+    size_t lineWidth
+) {
+    auto width = (col.width == -1) ? lineWidth : col.width;
+    assert(width > 0);
+    auto & out = *outPtr;
+
+    if (startPos && col.textLen) {
+        if (pos + 1 < startPos) {
+            out.append(startPos - pos, ' ');
+            pos = startPos;
+        } else if (pos < startPos + 3) {
+            out += "  ";
+            pos += 2;
+        } else {
+            pos = lineWidth;
+        }
+    }
+
+    bool firstWord = true;
+    auto indent = wrapIndent(col.indent, width);
+    auto childIndent = startPos
+        + wrapIndent(col.indent + col.childIndent, width);
+    out.append(indent, ' ');
+    pos += indent;
+    for (auto ptr = col.text, eptr = ptr + col.textLen; ptr != eptr;) {
+        if (*ptr == ' ') {
+            ptr += 1;
+            continue;
+        }
+        auto eword = (const char *) memchr(ptr, ' ', eptr - ptr);
+        if (!eword)
+            eword = eptr;
+        size_t wordLen = eword - ptr;
+        if (pos + wordLen + 1 > lineWidth
+            && pos > wordLen
+        ) {
+            firstWord = true;
+            *lines += 1;
+            out += '\n';
+            out.append(childIndent, ' ');
+            pos = childIndent;
+        }
+        if (firstWord) {
+            firstWord = false;
+        } else {
+            out += ' ';
+            pos += 1;
+        }
+        for (; ptr != eword; ++ptr) {
+            if (*ptr == '\b') {
+                out += ' ';
+            } else {
+                out += *ptr;
+            }
+        }
+        pos += wordLen;
+        ptr = eword;
+    }
+    return pos;
+}
+
+//===========================================================================
+// Returns number of output lines after formatting.
+//
+// Special characters:
+//  \s  soft word break
+//  \b  non-breaking space
+//  \t  transitions from key to description column
+//  \v  increase indentation after line wrap by one
+//  \r  reduced indentation after line wrap by one
+//  \f  line starts a new table, not extending current table at this indent
+static int formatLine(
+    string * outPtr,
+    const RawLine & raw,
+    size_t lineWidth
+) {
+    auto & out = *outPtr;
+    if (raw.cols.size() == 1 && !raw.cols[0].textLen)
+        return 0;
+
+    auto lines = 0;
+    size_t pos = 0;
+    size_t startPos = 0;
+    for (auto&& col : raw.cols) {
+        pos = formatCol(&out, &lines, col, startPos, pos, lineWidth);
+        startPos += col.width;
+    }
+    return lines;
+}
+
+//===========================================================================
+// Returns formatted text and adds lines generated to *lines.
+static string format(
+    int * lines,
+    const Cli::Config & cfg,
+    const string & text
+) {
+    vector<RawLine> raws;
+    for (auto ptr = text.c_str(); *ptr;) {
+        auto & raw = raws.emplace_back();
+        ptr += parseLine(&raw, ptr);
+    }
+
+    struct TableInfo {
+        vector<int> width;
+        vector<int> rows;
+
+        void apply(vector<RawLine> * raws) {
+            for (auto&& line : this->rows) {
+                auto & cols = (*raws)[line].cols;
+                for (auto i = 0; i < cols.size(); ++i) {
+                    if (this->width[i])
+                        cols[i].width = this->width[i];
+                }
+            }
+            this->width.clear();
+            this->rows.clear();
+        }
+    };
+    unordered_map<int, TableInfo> tables;
+    for (auto i = 0; i < raws.size(); ++i) {
+        auto & raw = raws[i];
+        auto & cols = raw.cols;
+        if (cols.size() == 1)
+            continue;
+        auto & tab = tables[cols[0].indent];
+        if (raw.newTable)
+            tab.apply(&raws);
+        tab.rows.push_back(i);
+        if (cols.size() > tab.width.size())
+            tab.width.resize(cols.size());
+        auto & tcols = raws[tab.rows[0]].cols;
+        for (auto icol = 0; icol < cols.size(); ++icol) {
+            auto & tcol = tcols[icol];
+            if (tcol.maxWidth == -1) {
+                tcol.minWidth = cfg.minKeyWidth;
+                tcol.maxWidth = icol ? cfg.minKeyWidth : cfg.maxKeyWidth;
+            }
+            auto & col = cols[icol];
+            int width = col.indent + col.textLen + 2;
+            int minWidth = (int) round(tcol.minWidth * cfg.maxLineWidth / 100);
+            int maxWidth = (int) round(tcol.maxWidth * cfg.maxLineWidth / 100);
+            if (width > tab.width[icol] && width <= maxWidth + 2)
+                tab.width[icol] = clamp(width, minWidth, maxWidth);
+        }
+    }
+    for (auto&& [indent, tab] : tables)
+        tab.apply(&raws);
+
+    int cnt = 0;
+    string out;
+    if (auto num = (int) raws.size()) {
+        cnt += num - 1;
+        cnt += formatLine(&out, raws[0], cfg.maxLineWidth);
+        for (auto i = 1; i < num; ++i) {
+            out += '\n';
+            cnt += formatLine(&out, raws[i], cfg.maxLineWidth);
+        }
+    }
+    if (lines)
+        *lines = cnt;
+    return out;
+}
+
+//===========================================================================
+// static
+string Cli::OptIndex::desc(
+    const Cli::OptBase & opt,
+    bool withMarkup
+) {
+    string suffix;
+    if (!withMarkup) {
+        // Raw description without any markup.
+    } else if (!opt.m_choiceDescs.empty()) {
         // "default" tag is added to individual choices later.
     } else if (opt.m_flagValue && opt.m_flagDefault) {
-        desc += " (default)";
+        suffix += "(default)";
     } else if (opt.m_vector) {
         auto minVec = opt.minSize();
         auto maxVec = opt.maxSize();
         if (minVec != 1 || maxVec != -1) {
-            desc += " (limit: " + intToString(opt, minVec);
+            suffix += "(limit: " + intToString(opt, minVec);
             if (maxVec == -1) {
-                desc += "+";
+                suffix += "+";
             } else if (minVec != maxVec) {
-                desc += " to " + intToString(opt, maxVec);
+                suffix += " to " + intToString(opt, maxVec);
             }
-            desc += ")";
+            suffix += ")";
         }
     } else if (!opt.m_bool) {
         string tmp;
@@ -2767,318 +2937,185 @@ string Cli::descStr(const Cli::OptBase & opt) const {
                 tmp.clear();
         }
         if (!tmp.empty())
-            desc += " (default: " + tmp + ")";
+            suffix += "(default: " + tmp + ")";
     }
-    return desc;
+    if (suffix.empty()) {
+        return opt.m_desc;
+    } else if (opt.m_desc.empty()) {
+        return suffix;
+    } else {
+        return opt.m_desc + ' ' + suffix;
+    }
 }
 
 //===========================================================================
-static void getChoiceKeys(
-    vector<ChoiceKey> & keys,
-    size_t & maxWidth,
+// static
+const unordered_map<string, Cli::OptBase::ChoiceDesc> &
+Cli::OptIndex::choiceDescs(const OptBase & opt) {
+    return opt.m_choiceDescs;
+}
+
+//===========================================================================
+static vector<ChoiceKey> getChoiceKeys(
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
-    keys.clear();
-    maxWidth = 0;
+    vector<ChoiceKey> out;
     for (auto && cd : choices) {
-        maxWidth = max(maxWidth, cd.first.size());
         ChoiceKey key;
         key.pos = cd.second.pos;
         key.key = cd.first.c_str();
         key.desc = cd.second.desc.c_str();
         key.sortKey = cd.second.sortKey.c_str();
         key.def = cd.second.def;
-        keys.push_back(key);
+        out.push_back(key);
     }
-    sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
+    sort(out.begin(), out.end(), [](auto & a, auto & b) {
         if (int rc = strcmp(a.sortKey, b.sortKey))
             return rc < 0;
         return a.pos < b.pos;
     });
+    return out;
+}
+
+//===========================================================================
+static void writeNbsp(string * out, const string & str) {
+    for (auto ch : str)
+        out->append(1, (ch == ' ') ? '\b' : ch);
 }
 
 //===========================================================================
 static void writeChoices(
-    ostream & os,
-    WrapPos & wp,
+    string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
+    auto & out = *outPtr;
     if (choices.empty())
         return;
-    size_t colWidth = 0;
-    vector<ChoiceKey> keys;
-    getChoiceKeys(keys, colWidth, choices);
+    auto keys = getChoiceKeys(choices);
     const size_t indent = 6;
-    colWidth = wp.clampDescWidth(colWidth + indent + 1);
 
     string desc;
+    string prefix(indent, ' ');
     for (auto && k : keys) {
-        wp.prefix.assign(indent + 2, ' ');
-        writeToken(os, wp, string(indent, ' ') + k.key);
-        desc = k.desc;
+        out += prefix;
+        writeNbsp(&out, k.key);
+        out += '\t';
+        out += k.desc;
         if (k.def)
-            desc += " (default)";
-        writeDescCol(os, wp, desc, colWidth);
-        os << '\n';
-        wp.pos = 0;
+            out += " (default)";
+        out += '\n';
     }
 }
 
 //===========================================================================
-static void printChoicesDetail(
-    ostream & os,
-    const Cli::Config & cfg,
+static void writeChoicesDetail(
+    string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 ) {
+    auto & out = *outPtr;
     if (choices.empty())
         return;
-    WrapPos wp{cfg};
-    writeText(os, wp, "Must be ");
-    size_t colWidth = 0;
-    vector<ChoiceKey> keys;
-    getChoiceKeys(keys, colWidth, choices);
+    out += "Must be";
+    auto keys = getChoiceKeys(choices);
 
     string val;
     size_t pos = 0;
     auto num = keys.size();
     for (auto i = keys.begin(); pos < num; ++pos, ++i) {
-        val = "'";
-        val += i->key;
-        val += "'";
+        out += " '";
+        writeNbsp(&out, i->key);
+        out += "'";
         if (pos == 0 && num == 2) {
-            writeToken(os, wp, val);
-            writeToken(os, wp, "or");
+            out += " or";
         } else if (pos + 1 == num) {
-            val += '.';
-            writeToken(os, wp, val);
+            out += '.';
         } else {
-            val += ',';
-            writeToken(os, wp, val);
+            out += ',';
             if (pos + 2 == num)
-                writeToken(os, wp, "or");
+                out += " or";
         }
     }
 }
 
 //===========================================================================
-int Cli::printHelp(
-    ostream & os,
-    const string & progName,
-    const string & cmdName
-) {
-    if (!commandExists(cmdName)) {
-        WrapPos wp{*m_cfg};
-        writeToken(os, wp, "Usage:");
-        writeToken(os, wp, displayName(progName));
-        writeToken(os, wp, cmdName);
-        writeToken(os, wp, "[ARGS...]");
-        writeNewline(os, wp);
-        return exitCode();
-    }
-
-    auto & cmd = Config::findCmdAlways(*this, cmdName);
-    auto & top = Config::findCmdAlways(*this, "");
-    auto & hdr = cmd.header.empty() ? top.header : cmd.header;
-    if (*hdr.data()) {
-        WrapPos wp{*m_cfg};
-        writeText(os, wp, hdr);
-        writeNewline(os, wp);
-    }
-    printUsage(os, progName, cmdName);
-    if (!cmd.desc.empty()) {
-        WrapPos wp{*m_cfg};
-        writeNewline(os, wp);
-        writeText(os, wp, cmd.desc);
-        writeNewline(os, wp);
-    }
-    if (cmdName.empty())
-        printCommands(os);
-    printOperands(os, cmdName);
-    printOptions(os, cmdName);
-    auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
-    if (*ftr.data()) {
-        WrapPos wp{*m_cfg};
-        writeNewline(os, wp);
-        writeText(os, wp, ftr);
-    }
-    return exitCode();
-}
-
-//===========================================================================
-// returns number of lines written to os
-static size_t writeUsageImpl(
-    ostream & os,
+static void writeUsage(
+    string * outPtr,
     Cli & cli,
     const string & arg0,
     const string & cmdName,
     bool expandedOptions
 ) {
+    auto & out = *outPtr;
     auto & cfg = Cli::Config::get(cli);
     Cli::OptIndex ndx;
     ndx.index(cli, cmdName, true);
-    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
     auto prog = displayName(arg0.empty() ? cli.progName() : arg0);
-    const string usageStr{"Usage: "};
-    os << usageStr << prog;
-    WrapPos wp{cfg};
-    wp.pos = prog.size() + usageStr.size();
-    wp.prefix = string(wp.pos, ' ');
-    if (cmdName.size())
-        writeToken(os, wp, cmdName);
+    auto prefix = "Usage: " + prog;
+    out.append(prefix.size() + 1, '\v');
+    out += prefix;
+    if (cmdName.size()) {
+        out += ' ';
+        out += cmdName;
+    }
     if (!ndx.m_shortNames.empty() || !ndx.m_longNames.empty()) {
         if (!expandedOptions) {
-            writeToken(os, wp, "[OPTIONS]");
+            out += " [OPTIONS]";
         } else {
-            size_t colWidth = 0;
-            vector<OptKey> namedOpts;
-            ndx.findNamedOpts(
-                namedOpts,
-                colWidth,
+            auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+            auto namedOpts = ndx.findNamedOpts(
                 cli,
                 cmd,
                 kNameNonDefault,
                 true
             );
-            for (auto && key : namedOpts)
-                writeToken(os, wp, "[" + key.list + "]");
+            for (auto && key : namedOpts) {
+                out += ' ';
+                writeNbsp(&out, "[" + key.list + "]");
+            }
         }
     }
     if (cmdName.empty() && cfg.cmds.size() > 1) {
-        writeToken(os, wp, "COMMAND");
-        writeToken(os, wp, "[ARGS...]");
+        out += " COMMAND [ARGS...]";
     } else if (cmdName.empty() && cfg.allowUnknown) {
-        writeToken(os, wp, "[COMMAND]");
-        writeToken(os, wp, "[ARGS...]");
+        out += " [COMMAND] [ARGS...]";
+    } else if (!cli.commandExists(cmdName)) {
+        out += " [ARGS...]";
     } else {
         for (auto && pa : ndx.m_argNames) {
+            out += ' ';
             string token = pa.name.find(' ') == string::npos
                 ? pa.name
                 : "<" + pa.name + ">";
             if (pa.opt->maxSize() < 0 || pa.opt->maxSize() > 1)
                 token += "...";
             if (pa.optional) {
-                writeToken(os, wp, "[" + token + "]");
+                writeNbsp(&out, "[" + token + "]");
             } else {
-                writeToken(os, wp, token);
+                writeNbsp(&out, token);
             }
         }
     }
-    os << '\n';
-    return wp.lines + 1;
+    out += '\n';
 }
 
 //===========================================================================
-int Cli::printUsage(
-    ostream & os,
-    const string & arg0,
-    const string & cmd
-) {
-    writeUsageImpl(os, *this, arg0, cmd, false);
-    return exitCode();
-}
+static void writeCommands(string * outPtr, Cli & cli) {
+    auto & out = *outPtr;
+    auto & cfg = Cli::Config::get(cli);
+    Cli::Config::touchAllCmds(cli);
 
-//===========================================================================
-int Cli::printUsageEx(
-    ostream & os,
-    const string & arg0,
-    const string & cmd
-) {
-    writeUsageImpl(os, *this, arg0, cmd, true);
-    return exitCode();
-}
-
-//===========================================================================
-void Cli::printOperands(ostream & os, const string & cmd) {
-    OptIndex ndx;
-    ndx.index(*this, cmd, true);
-    size_t colWidth = 0;
-    bool hasDesc = false;
-    for (auto && pa : ndx.m_argNames) {
-        // Find widest positional argument name.
-        if (pa.name.size() < m_cfg->maxDescCol)
-            colWidth = max(colWidth, pa.name.size());
-        hasDesc = hasDesc || pa.opt->m_desc.size();
-    }
-    if (!hasDesc)
-        return;
-
-    WrapPos wp{*m_cfg};
-    colWidth = wp.clampDescWidth(colWidth + 3);
-    for (auto && pa : ndx.m_argNames) {
-        wp.prefix.assign(4, ' ');
-        writeToken(os, wp, "  " + pa.name);
-        writeDescCol(os, wp, descStr(*pa.opt), colWidth);
-        os << '\n';
-        wp.pos = 0;
-        writeChoices(os, wp, pa.opt->m_choiceDescs);
-    }
-}
-
-//===========================================================================
-void Cli::printOptions(ostream & os, const string & cmdName) {
-    OptIndex ndx;
-    ndx.index(*this, cmdName, true);
-    auto & cmd = Config::findCmdAlways(*this, cmdName);
-
-    // Find named args and the longest name list.
-    size_t colWidth = 0;
-    vector<OptKey> namedOpts;
-    if (!ndx.findNamedOpts(namedOpts, colWidth, *this, cmd, kNameAll, false))
-        return;
-
-    WrapPos wp{*m_cfg};
-    colWidth = wp.clampDescWidth(colWidth + 3);
-    const char * gname = nullptr;
-    for (auto && key : namedOpts) {
-        if (!gname || key.opt->m_group != gname) {
-            gname = key.opt->m_group.c_str();
-            writeNewline(os, wp);
-            auto & grp = Config::findGrpAlways(cmd, key.opt->m_group);
-            auto title = grp.title;
-            if (title.empty()
-                && strcmp(gname, kInternalOptionGroup) == 0
-                && &key == namedOpts.data()
-            ) {
-                // First group and it's the internal group, give it a title
-                // so it's not just left hanging.
-                title = "Options";
-            }
-            if (!title.empty()) {
-                writeText(os, wp, title + ":");
-                writeNewline(os, wp);
-            }
-        }
-        wp.prefix.assign(4, ' ');
-        os << ' ';
-        wp.pos = 1;
-        writeText(os, wp, key.list);
-        writeDescCol(os, wp, descStr(*key.opt), colWidth);
-        wp.prefix.clear();
-        writeNewline(os, wp);
-        writeChoices(os, wp, key.opt->m_choiceDescs);
-        wp.prefix.clear();
-    }
-}
-
-//===========================================================================
-void Cli::printCommands(ostream & os) {
-    Config::touchAllCmds(*this);
-
-    size_t colWidth = 0;
     struct CmdKey {
         const char * name;
         const CommandConfig * cmd;
         const GroupConfig * grp;
     };
     vector<CmdKey> keys;
-    for (auto && cmd : m_cfg->cmds) {
-        if (auto width = cmd.first.size()) {
-            if (width < m_cfg->maxDescCol)
-                colWidth = max(colWidth, width);
+    for (auto && cmd : cfg.cmds) {
+        if (cmd.first.size()) {
             CmdKey key = {
                 cmd.first.c_str(),
                 &cmd.second,
-                &m_cfg->cmdGroups[cmd.second.cmdGroup]
+                &cfg.cmdGroups[cmd.second.cmdGroup]
             };
             keys.push_back(key);
         }
@@ -3091,13 +3128,14 @@ void Cli::printCommands(ostream & os) {
         return strcmp(a.name, b.name) < 0;
     });
 
-    WrapPos wp{*m_cfg};
-    colWidth = wp.clampDescWidth(colWidth + 3);
     const char * gname = nullptr;
     for (auto && key : keys) {
+        string indent = "  \v\v";
         if (!gname || key.grp->name != gname) {
+            if (!gname)
+                indent += '\f';
             gname = key.grp->name.c_str();
-            writeNewline(os, wp);
+            out += '\n';
             auto title = key.grp->title;
             if (title.empty()
                 && strcmp(gname, kInternalOptionGroup) == 0
@@ -3107,13 +3145,13 @@ void Cli::printCommands(ostream & os) {
                 title = "Commands";
             }
             if (!title.empty()) {
-                writeText(os, wp, title + ":");
-                writeNewline(os, wp);
+                out += title;
+                out += ":\n";
             }
         }
 
-        wp.prefix.assign(4, ' ');
-        writeToken(os, wp, "  "s + key.name);
+        out += indent;
+        writeNbsp(&out, key.name);
         auto desc = key.cmd->desc;
         size_t pos = 0;
         for (;;) {
@@ -3127,10 +3165,177 @@ void Cli::printCommands(ostream & os) {
             }
         }
         desc = trim(desc);
-        writeDescCol(os, wp, desc, colWidth);
-        wp.prefix.clear();
-        writeNewline(os, wp);
+        if (!desc.empty()) {
+            out += '\t';
+            out += desc;
+        }
+        out += '\n';
     }
+}
+
+//===========================================================================
+static void writeOperands(string * outPtr, Cli & cli, const string & cmd) {
+    auto & out = *outPtr;
+    Cli::OptIndex ndx;
+    ndx.index(cli, cmd, true);
+    bool hasDesc = false;
+    for (auto && pa : ndx.m_argNames) {
+        if (!ndx.desc(*pa.opt, false).empty()) {
+            hasDesc = true;
+            break;
+        }
+    }
+    if (!hasDesc)
+        return;
+
+    out += '\f';
+    for (auto && pa : ndx.m_argNames) {
+        out += "  \v\v";
+        writeNbsp(&out, pa.name);
+        out += '\t';
+        out += ndx.desc(*pa.opt);
+        out += '\n';
+        writeChoices(&out, ndx.choiceDescs(*pa.opt));
+    }
+}
+
+//===========================================================================
+static void writeOptions(string * outPtr, Cli & cli, const string & cmdName) {
+    auto & out = *outPtr;
+    Cli::OptIndex ndx;
+    ndx.index(cli, cmdName, true);
+    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+
+    // Find named args and the longest name list.
+    auto namedOpts = ndx.findNamedOpts(cli, cmd, kNameAll, false);
+    if (namedOpts.empty())
+        return;
+
+    const char * gname = nullptr;
+    for (auto && key : namedOpts) {
+        string indent = "  \v\v";
+        if (!gname || key.opt->group() != gname) {
+            if (!gname)
+                indent += '\f';
+            gname = key.opt->group().c_str();
+            out += '\n';
+            auto & grp = Cli::Config::findGrpAlways(cmd, key.opt->group());
+            auto title = grp.title;
+            if (title.empty()
+                && strcmp(gname, kInternalOptionGroup) == 0
+                && &key == namedOpts.data()
+            ) {
+                // First group and it's the internal group, give it a title
+                // so it's not just left hanging.
+                title = "Options";
+            }
+            if (!title.empty()) {
+                out += title;
+                out += ":\n";
+            }
+        }
+        out += indent;
+        out += key.list;
+        out += '\t';
+        out += ndx.desc(*key.opt);
+        out += '\n';
+        writeChoices(&out, ndx.choiceDescs(*key.opt));
+    }
+}
+
+//===========================================================================
+static void writeHelp(
+    string * outPtr,
+    Cli & cli,
+    const string & progName,
+    const string & cmdName
+) {
+    auto & out = *outPtr;
+    if (!cli.commandExists(cmdName))
+        return writeUsage(&out, cli, progName, cmdName, false);
+
+    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+    auto & top = Cli::Config::findCmdAlways(cli, "");
+    auto & hdr = cmd.header.empty() ? top.header : cmd.header;
+    if (*hdr.data()) {
+        out += hdr;
+        out += '\n';
+    }
+    writeUsage(&out, cli, progName, cmdName, false);
+    if (!cmd.desc.empty()) {
+        out.append(1, '\n').append(cmd.desc).append(1, '\n');
+    }
+    if (cmdName.empty())
+        writeCommands(&out, cli);
+    writeOperands(&out, cli, cmdName);
+    writeOptions(&out, cli, cmdName);
+    auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
+    if (*ftr.data()) {
+        out += '\n';
+        out += ftr;
+    }
+}
+
+//===========================================================================
+int Cli::printHelp(
+    ostream & os,
+    const string & progName,
+    const string & cmdName
+) {
+    string raw;
+    writeHelp(&raw, *this, progName, cmdName);
+    os << format(nullptr, *m_cfg, raw) << '\n';
+    return exitCode();
+}
+
+//===========================================================================
+int Cli::printUsage(
+    ostream & os,
+    const string & arg0,
+    const string & cmd
+) {
+    string raw;
+    writeUsage(&raw, *this, arg0, cmd, false);
+    os << format(nullptr, *m_cfg, raw) << '\n';
+    return exitCode();
+}
+
+//===========================================================================
+int Cli::printUsageEx(
+    ostream & os,
+    const string & arg0,
+    const string & cmd
+) {
+    string raw;
+    writeUsage(&raw, *this, arg0, cmd, true);
+    os << format(nullptr, *m_cfg, raw) << '\n';
+    return exitCode();
+}
+
+//===========================================================================
+void Cli::printOperands(ostream & os, const string & cmd) {
+    string raw;
+    writeOperands(&raw, *this, cmd);
+    os << format(nullptr, *m_cfg, raw);
+}
+
+//===========================================================================
+void Cli::printOptions(ostream & os, const string & cmd) {
+    string raw;
+    writeOperands(&raw, *this, cmd);
+    os << format(nullptr, *m_cfg, raw);
+}
+
+//===========================================================================
+void Cli::printCommands(ostream & os) {
+    string raw;
+    writeCommands(&raw, *this);
+    os << format(nullptr, *m_cfg, raw);
+}
+
+//===========================================================================
+void Cli::printText(ostream & os, const string & text) {
+    os << format(nullptr, *m_cfg, text);
 }
 
 //===========================================================================

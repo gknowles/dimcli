@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2020.
+// Copyright Glen Knowles 2016 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // clitest.cpp - dimcli test cli
@@ -477,7 +477,7 @@ void parseTests() {
     EXPECT_PARSE(cli, "-na", false);
     EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
     EXPECT_PARSE(cli, "-o", false);
-    EXPECT_ERR(cli, "Error: Malformed '-o' value: \n");
+    EXPECT_ERR(cli, "Error: Malformed '-o' value:\n");
     EXPECT_PARSE(cli, "-n", false);
     EXPECT_ERR(cli, "Error: No value given for -n\n");
     EXPECT_PARSE(cli, "-n a", false);
@@ -627,7 +627,7 @@ Usage: test
         cli.opt(num, "c").desc("alias for quantity").valueDesc("COUNT");
         cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc({});
         cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
-        cli.opt<bool>("almost-fits-into-desc-col.")
+        cli.opt<bool>("oversized-for-the-desc-col.")
             .desc("slightly too long option name that also has a long "
                   "description");
         cli.opt<bool>("s special !S", false).desc("snowflake");
@@ -647,28 +647,28 @@ Usage: test [OPTIONS] [KEY...]
 
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
-  --almost-fits-into-desc-col  slightly too long option name that also has a
-                             long description
-  -c COUNT                   alias for quantity (default: 0)
-  -n, --quantity=NUM         quantity is an int (default: 1)
-  --n2=NUM                   no defaultDesc
-  --n3=NUM                   custom defaultDesc (default: three)
+  -c COUNT                    alias for quantity (default: 0)
+  -n, --quantity=NUM          quantity is an int (default: 1)
+  --n2=NUM                    no defaultDesc
+  --n3=NUM                    custom defaultDesc (default: three)
+  --oversized-for-the-desc-col  slightly too long option name that also has a
+                              long description
   -s, --special / -S, --no-special
-                             snowflake
+                              snowflake
 
 Name options:
   --name=STRING
 
-  --help                     Show this message and exit.
+  --help                      Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [--almost-fits-into-desc-col] [-c COUNT] [-n, --quantity=NUM]
-            [--n2=NUM] [--n3=NUM] [--name=STRING] [-s, --special] [--help]
-            [KEY...]
+Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
+            [--name=STRING] [--oversized-for-the-desc-col] [-s, --special]
+            [--help] [KEY...]
 )");
 
         // with maxWidth of 70
-        cli.maxWidth(70, 10, 20); // for coverage of explicit desc cols
+        cli.maxWidth(70, 10, 20); // for coverage of explicit desc col
         cli.maxWidth(70);
         EXPECT_HELP(cli, {}, 1 + R"(
 Usage: test [OPTIONS] [KEY...]
@@ -677,13 +677,13 @@ Usage: test [OPTIONS] [KEY...]
 
 Long explanation of this very short set of options, it's so long that
 it even wraps around to the next line:
-  --almost-fits-into-desc-col
-                      slightly too long option name that also has a
-                      long description
   -c COUNT            alias for quantity (default: 0)
   -n, --quantity=NUM  quantity is an int (default: 1)
   --n2=NUM            no defaultDesc
   --n3=NUM            custom defaultDesc (default: three)
+  --oversized-for-the-desc-col
+                      slightly too long option name that also has a
+                      long description
   -s, --special / -S, --no-special
                       snowflake
 
@@ -693,31 +693,31 @@ Name options:
   --help              Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [--almost-fits-into-desc-col] [-c COUNT]
-            [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
-            [--name=STRING] [-s, --special] [--help] [KEY...]
+Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
+            [--name=STRING] [--oversized-for-the-desc-col]
+            [-s, --special] [--help] [KEY...]
 )");
 
         // with maxWidth of 50
         cli.maxWidth(50);
         EXPECT_HELP(cli, {}, 1 + R"(
 Usage: test [OPTIONS] [KEY...]
-  KEY    it's the key arguments with a very long
-         description that wraps the line at least
-         once, maybe more.
+  KEY     it's the key arguments with a very long
+          description that wraps the line at
+          least once, maybe more.
 
 Long explanation of this very short set of
 options, it's so long that it even wraps around
 to the next line:
-  --almost-fits-into-desc-col
-                 slightly too long option name
-                 that also has a long description
   -c COUNT       alias for quantity (default: 0)
   -n, --quantity=NUM
                  quantity is an int (default: 1)
   --n2=NUM       no defaultDesc
   --n3=NUM       custom defaultDesc (default:
                  three)
+  --oversized-for-the-desc-col
+                 slightly too long option name
+                 that also has a long description
   -s, --special / -S, --no-special
                  snowflake
 
@@ -727,9 +727,9 @@ Name options:
   --help         Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [--almost-fits-into-desc-col]
-            [-c COUNT] [-n, --quantity=NUM]
+Usage: test [-c COUNT] [-n, --quantity=NUM]
             [--n2=NUM] [--n3=NUM] [--name=STRING]
+            [--oversized-for-the-desc-col]
             [-s, --special] [--help] [KEY...]
 )");
 
@@ -748,8 +748,8 @@ Usage: test [OPTIONS] <equal '=' in name>
 
 Options:
   --option, --with, --excessively, --long, --list, --of, --key, --names /
-     --no-option, --no-with, --no-excessively, --no-long, --no-list, --no-of,
-     --no-key, --no-names
+    --no-option, --no-with, --no-excessively, --no-long, --no-list, --no-of,
+    --no-key, --no-names
             Why so many?
 
   --help    Show this message and exit.

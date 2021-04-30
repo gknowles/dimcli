@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2020.
+// Copyright Glen Knowles 2016 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.h - dimcli
@@ -305,13 +305,15 @@ public:
     Cli & action(std::function<ActionFn> fn);
 
     // Arbitrary text can be added to the help text for each command, this text
-    // can come before the usage (header), between the usage and the
-    // arguments/options (desc), or after the options (footer). Use line breaks
-    // only for paragraph breaks, let the automatic line wrapping take care of
-    // the rest.
+    // can come before the usage (header), immediately after the usage (desc),
+    // or after the options (footer).
     //
     // Unless individually overridden, commands default to using the header and
     // footer (but not the desc) specified at the top level.
+    //
+    // The text is run through the automatic formatter, Use line breaks
+    // only for paragraph breaks, let the automatic line wrapping take care of
+    // the rest.
     Cli & header(const std::string & val);
     Cli & desc(const std::string & val);
     Cli & footer(const std::string & val);
@@ -383,11 +385,11 @@ public:
     // longest name clamped to within the given descCol min/max.
     //
     // By default min(max)DescCol are derived from maxWidth, and maxWidth
-    // defaults to console width clamped to within 50 to 80 columns.
+    // defaults to the width of the console clamped to within 50 to 80 columns.
     void maxWidth(int maxWidth, int minDescCol = 0, int maxDescCol = 0);
 
     // Enabled by default, response file expansion replaces arguments of the
-    // form "@file" with the contents of the file.
+    // form "@file" with the contents of the named file.
     void responseFiles(bool enable = true);
 
     // Changes the streams used for prompting, printing help messages, etc.
@@ -400,6 +402,11 @@ public:
     //-----------------------------------------------------------------------
     // RENDERING HELP TEXT
 
+    // If exitCode() is not EX_OK, prints the errMsg and errDetail (if
+    // present), otherwise does nothing. Returns exitCode(). Only makes sense
+    // after parsing has completed.
+    int printError(std::ostream & os);
+
     // printHelp & printUsage return the current exitCode()
     int printHelp(
         std::ostream & os,
@@ -411,8 +418,8 @@ public:
         const std::string & progName = {},
         const std::string & cmd = {}
     );
-    // Same as printUsage(), except individually lists all non-default options
-    // instead of the [OPTIONS] catchall.
+    // Same as printUsage(), except always lists all non-default options
+    // individually instead of the [OPTIONS] catchall.
     int printUsageEx(
         std::ostream & os,
         const std::string & progName = {},
@@ -426,10 +433,8 @@ public:
     void printOptions(std::ostream & os, const std::string & cmd = {});
     void printCommands(std::ostream & os);
 
-    // If exitCode() is not EX_OK, prints the errMsg and errDetail (if
-    // present), otherwise does nothing. Returns exitCode(). Only makes sense
-    // after parsing has completed.
-    int printError(std::ostream & os);
+    // Write text and simple tables, wrapping as needed.
+    void printText(std::ostream & os, const std::string & text);
 
     // Friendly name for type, used in help text.
     template <typename T>
@@ -668,8 +673,6 @@ private:
 
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
-
-    std::string descStr(const OptBase & opt) const;
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;

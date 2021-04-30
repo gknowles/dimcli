@@ -1,5 +1,5 @@
 ////
-Copyright Glen Knowles 2016 - 2020.
+Copyright Glen Knowles 2016 - 2021.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -279,7 +279,6 @@ all names may have modifier flags:
 
 | .    | Suffix
 | For boolean options with long names, suppresses the implicit "no-" version.
-
 |===
 
 By default, long names for boolean options get a second "no-" version
@@ -323,7 +322,7 @@ name, therefore this option declares '&#8209;n' an inverted bool:
 ----
 cli.opt<bool>("n !n");
 ----
-But with these it becomes '-n STRING', a string:
+But with this combination it becomes '-n STRING', a string:
 
 [source, C++]
 ----
@@ -402,7 +401,7 @@ int main(int argc, char * argv[]) {
     auto & shout = cli.opt<bool>("shout !whisper").desc("I can't hear you!");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
-    string prog = argv[0];
+    string prog = cli.progName();
     if (*shout) {
         auto & f = use_facet<ctype<char>>(cout.getloc());
         f.toupper(prog.data(), prog.data() + prog.size());
@@ -2131,7 +2130,7 @@ sections.
 
 | Usage
 | cli.opt()
-| Generated text listing the defined operands.
+| Command usage listing the defined options and operands.
 
 | Description
 | cli.desc()
@@ -2430,6 +2429,10 @@ work:
 
 * cli.printHelp
 * cli.printUsage / cli.printUsageEx
-* cli.printPositionals
+* cli.printOperands
 * cli.printOptions
 * cli.printCommands
+
+==== Formatting Text
+The cli.printText command can be used to word wrap paragraphs and columnize
+simple tables.

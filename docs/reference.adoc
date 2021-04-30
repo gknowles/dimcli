@@ -1,5 +1,5 @@
 ﻿////
-Copyright Glen Knowles 2019 - 2020.
+Copyright Glen Knowles 2019 - 2021.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -194,7 +194,7 @@ standard parsing logic. Since it causes the parse and check actions to be
 called care must be taken to avoid infinite recursion if used from those
 actions. Can be used from after actions to simulate a value.
 
-| cli.prompt
+| cli.<<guide.adoc#prompting, prompt>>
 | Prompt sends a prompt message to cout and read a response from cin (unless
 cli.iostreams() changed the streams to use), the response is then passed to
 cli.parseValue() to set the value and run any actions.
@@ -212,7 +212,7 @@ tied to a command line argument.
 | opt.reset
 | Set option to its default value.
 
-| opt.implicitValue
+| opt.<<guide.adoc#optional-values, implicitValue>>
 | Set option to (or add to option vector) the value for missing optionals.
 
 2+h| Commands
@@ -223,7 +223,7 @@ command actions, parsing related failures normally use cli.badUsage() instead.
 
 2+h| After parsing
 
-| cli.commandMatched
+| cli.<<guide.adoc#external-commands, commandMatched>>
 | Command to run, as determined by the arguments, empty string if there are no
 commands defined or none were matched.
 
@@ -276,7 +276,7 @@ For vectors, it refers to where the value on the back came from. If pos() is 0
 the value wasn't populated from the command line or wasn't populated at all,
 check from() to tell the difference.
 
-| opt.size
+| opt.<<guide.adoc#counting, size>>
 | Number of values, non-vectors are always 1.
 |===
 
@@ -326,7 +326,7 @@ previous one.
 
 2+h| Options
 
-| opt.<<guide.adoc#subcommands,command>>
+| opt.<<guide.adoc#subcommands, command>>
 | Set subcommand for which this is an option.
 
 | opt.<<guide.adoc#option-groups, group>>
@@ -349,6 +349,11 @@ suppress the entire clause.
 
 2+h| Rendering
 
+| cli.<<guide.adoc#going-your-own-way, printError>>
+| If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
+otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
+completed.
+
 | cli.<<guide.adoc#going-your-own-way, printHelp>>
 | Write help page for selected command to std::ostream&amp;
 
@@ -358,7 +363,7 @@ suppress the entire clause.
 | cli.<<guide.adoc#going-your-own-way, printUsageEx>>
 | Write usage, but include names of all non-default options.
 
-| cli.<<guide.adoc#going-your-own-way, printPositionals>>
+| cli.<<guide.adoc#going-your-own-way, printOperands>>
 | Write names and descriptions of positional arguments.
 
 | cli.<<guide.adoc#going-your-own-way, printOptions>>
@@ -367,10 +372,8 @@ suppress the entire clause.
 | cli.<<guide.adoc#going-your-own-way, printCommands>>
 | Write names and descriptions of commands
 
-| cli.<<guide.adoc#going-your-own-way, printError>>
-| If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
-otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
-completed.
+| cli.printText
+| Write text and simple tables, wrapping as needed.
 
 | cli.valueDesc<T>
 | Default friendly name for options of type, used in help text.
@@ -406,7 +409,8 @@ intended for testing. Setting to null restores the defaults which are cin and
 cout respectively.
 
 | cli.maxWidth
-| Change the column at which errors and help text wraps.
+| Change the column at which errors and help text wraps. Defaults from 80 down
+to 50 depending on width of output console.
 
 | cli.<<guide.adoc#response-files, responseFiles>>
 | Enabled by default, response file expansion replaces arguments of the form
