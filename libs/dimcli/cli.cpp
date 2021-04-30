@@ -2671,7 +2671,8 @@ static size_t parseLine(RawLine * out, const char line[]) {
     *out = {};
     auto ptr = line;
     for (;;) {
-        auto & col = out->cols.emplace_back();
+        out->cols.emplace_back();
+        auto & col = out->cols.back();
         for (;; ++ptr) {
             if (*ptr == ' ') {
                 col.indent += 1;
@@ -2723,9 +2724,11 @@ static size_t parseLine(RawLine * out, const char line[]) {
 
 //===========================================================================
 static int wrapIndent(int indent, size_t width) {
-    return indent > width
-        ? (indent - 2) % (width - 2) + 2
-        : indent;
+    if (indent > width) {
+        return (indent - 2) % ((int) width - 2) + 2;
+    } else {
+        return indent;
+    }
 }
 
 //===========================================================================
@@ -2836,7 +2839,8 @@ static string format(
 ) {
     vector<RawLine> raws;
     for (auto ptr = text.c_str(); *ptr;) {
-        auto & raw = raws.emplace_back();
+        raws.emplace_back();
+        auto & raw = raws.back();
         ptr += parseLine(&raw, ptr);
     }
 
@@ -2847,7 +2851,7 @@ static string format(
         void apply(vector<RawLine> * raws) {
             for (auto&& line : this->rows) {
                 auto & cols = (*raws)[line].cols;
-                for (auto i = 0; i < cols.size(); ++i) {
+                for (unsigned i = 0; i < cols.size(); ++i) {
                     if (this->width[i])
                         cols[i].width = this->width[i];
                 }
@@ -2857,7 +2861,7 @@ static string format(
         }
     };
     unordered_map<int, TableInfo> tables;
-    for (auto i = 0; i < raws.size(); ++i) {
+    for (unsigned i = 0; i < raws.size(); ++i) {
         auto & raw = raws[i];
         auto & cols = raw.cols;
         if (cols.size() == 1)
@@ -2869,7 +2873,7 @@ static string format(
         if (cols.size() > tab.width.size())
             tab.width.resize(cols.size());
         auto & tcols = raws[tab.rows[0]].cols;
-        for (auto icol = 0; icol < cols.size(); ++icol) {
+        for (unsigned icol = 0; icol < cols.size(); ++icol) {
             auto & tcol = tcols[icol];
             if (tcol.maxWidth == -1) {
                 tcol.minWidth = cfg.minKeyWidth;
@@ -3322,7 +3326,7 @@ void Cli::printOperands(ostream & os, const string & cmd) {
 //===========================================================================
 void Cli::printOptions(ostream & os, const string & cmd) {
     string raw;
-    writeOperands(&raw, *this, cmd);
+    writeOptions(&raw, *this, cmd);
     os << format(nullptr, *m_cfg, raw);
 }
 
