@@ -186,17 +186,21 @@ endfunction()
 
 function(install_archive_pdb tgt dstdir)
     if(NOT MSVC)
-        return()
-    endif()
-    if(BUILD_SHARED_LIBS)
+        # do nothing
+    elseif(BUILD_SHARED_LIBS)
         install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
     else()
         # Special handling required to get PDBs of static libraries installed.
         # I would hope that there's a better way to do this, but I don't know
         # what it may be...
+        if(MSVC_VERSION LESS 1920)
+            set(src "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir")
+        else()
+            set(src "${CMAKE_CURRENT_BINARY_DIR}")
+        endif()
         foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-            install(FILES
-                "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir/${cfg}/${tgt}.pdb"
+            install(
+                FILES "${src}/${cfg}/${tgt}.pdb"
                 DESTINATION ${dstdir}
                 CONFIGURATIONS ${cfg})
         endforeach()
