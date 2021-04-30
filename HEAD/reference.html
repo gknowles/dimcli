@@ -360,7 +360,7 @@ called care must be taken to avoid infinite recursion if used from those
 actions. Can be used from after actions to simulate a value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.prompt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#prompting">prompt</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Prompt sends a prompt message to cout and read a response from cin (unless
 cli.iostreams() changed the streams to use), the response is then passed to
 cli.parseValue() to set the value and run any actions.</p></td>
@@ -383,7 +383,7 @@ tied to a command line argument.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set option to its default value.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.implicitValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#optional-values">implicitValue</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set option to (or add to option vector) the value for missing optionals.</p></td>
 </tr>
 <tr>
@@ -398,7 +398,7 @@ command actions, parsing related failures normally use cli.badUsage() instead.</
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">After parsing</p></th>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.commandMatched</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#external-commands">commandMatched</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Command to run, as determined by the arguments, empty string if there are no
 commands defined or none were matched.</p></td>
 </tr>
@@ -465,7 +465,7 @@ the value wasn&#8217;t populated from the command line or wasn&#8217;t populated
 check from() to tell the difference.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.size</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#counting">size</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Number of values, non-vectors are always 1.</p></td>
 </tr>
 </tbody>
@@ -569,6 +569,12 @@ suppress the entire clause.</p></td>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Rendering</p></th>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printError</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
+otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
+completed.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printHelp</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Write help page for selected command to std::ostream&amp;</p></td>
 </tr>
@@ -581,7 +587,7 @@ suppress the entire clause.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Write usage, but include names of all non-default options.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printPositionals</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printOperands</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Write names and descriptions of positional arguments.</p></td>
 </tr>
 <tr>
@@ -593,10 +599,8 @@ suppress the entire clause.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Write names and descriptions of commands</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printError</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
-otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
-completed.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.printText</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write text and simple tables, wrapping as needed.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.valueDesc&lt;T&gt;</p></td>
@@ -651,7 +655,8 @@ cout respectively.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.maxWidth</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Change the column at which errors and help text wraps.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change the column at which errors and help text wraps. Defaults from 80 down
+to 50 depending on width of output console.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#response-files">responseFiles</a></p></td>
