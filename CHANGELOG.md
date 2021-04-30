@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
 - Added - cli.printText()
-- Added - Name/Desc style tables in header and footer
+- Added - Render Name/Desc style tables in header and footer
 
 ## dimcli 6.0.0 (2020-12-21)
 - Cosmetic - Converted docs from Markdown to AsciiDoc
