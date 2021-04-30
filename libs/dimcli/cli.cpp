@@ -2887,8 +2887,8 @@ static string format(
                 tab.width[icol] = clamp(width, minWidth, maxWidth);
         }
     }
-    for (auto&& [indent, tab] : tables)
-        tab.apply(&raws);
+    for (auto&& kv : tables)
+        kv.second.apply(&raws);
 
     int cnt = 0;
     string out;
