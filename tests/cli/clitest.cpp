@@ -666,6 +666,40 @@ Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
             [--name=STRING] [--oversized-for-the-desc-col] [-s, --special]
             [--help] [KEY...]
 )");
+        out.str("");
+        EXPECT(cli.printUsage(out, kCommand, "") == Dim::kExitOk);
+        EXPECT(out.str() == "Usage: test [OPTIONS] [KEY...]\n");
+        out.str("");
+        cli.printOperands(out, "");
+        auto tmp = out.str();
+        EXPECT(tmp == 1 + R"(
+  KEY       it's the key arguments with a very long description that wraps the
+            line at least once, maybe more.)"
+        );
+        out.str("");
+        cli.printOptions(out, "");
+        tmp = out.str();
+        EXPECT(tmp == R"(
+Long explanation of this very short set of options, it's so long that it even
+wraps around to the next line:
+  -c COUNT                    alias for quantity (default: 0)
+  -n, --quantity=NUM          quantity is an int (default: 1)
+  --n2=NUM                    no defaultDesc
+  --n3=NUM                    custom defaultDesc (default: three)
+  --oversized-for-the-desc-col  slightly too long option name that also has a
+                              long description
+  -s, --special / -S, --no-special
+                              snowflake
+
+Name options:
+  --name=STRING
+
+  --help                      Show this message and exit.)"
+        );
+        out.str("");
+        cli.printCommands(out);
+        tmp = out.str();
+        EXPECT(tmp == "");
 
         // with maxWidth of 70
         cli.maxWidth(70, 10, 20); // for coverage of explicit desc col
