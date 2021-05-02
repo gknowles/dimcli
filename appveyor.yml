@@ -23,6 +23,10 @@ environment:
     - CXX: clang++-11
       CC: clang-11
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: clang++-12
+      CC: clang-12
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
     - CXX: g++-7
       CC: gcc-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -31,6 +35,10 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: g++-10
       CC: gcc-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - CXX: g++-11
+      CC: gcc-11
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       INSTALL_COMPILER: ON
     - TOOLSET: v140
