@@ -247,11 +247,7 @@ static void writeChoicesDetail(
     string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
 );
-static string format(
-    int * lines,
-    const Cli::Config & cfg,
-    const string & text
-);
+static string format(const Cli::Config & cfg, const string & text);
 
 //===========================================================================
 #if defined(_WIN32)
@@ -2090,8 +2086,8 @@ bool Cli::badUsage(
 //===========================================================================
 bool Cli::fail(int code, const string & msg, const string & detail) {
     m_cfg->exitCode = code;
-    m_cfg->errMsg = format(nullptr, *m_cfg, msg);
-    m_cfg->errDetail = format(nullptr, *m_cfg, detail);
+    m_cfg->errMsg = format(*m_cfg, msg);
+    m_cfg->errDetail = format(*m_cfg, detail);
     return false;
 }
 
@@ -2685,9 +2681,12 @@ static size_t parseLine(RawLine * out, const char line[]) {
                     && col.minWidth > 0 && col.minWidth <= 100
                 ) {
                     col.maxWidth = min(col.maxWidth, 100.0f);
+                    ptr = eptr;
                 } else {
                     col.minWidth = -1;
                     col.maxWidth = -1;
+                    col.text = ptr;
+                    break;
                 }
             } else if (*ptr == '\v') {
                 col.childIndent += 1;
@@ -2724,7 +2723,7 @@ static size_t parseLine(RawLine * out, const char line[]) {
 
 //===========================================================================
 static int wrapIndent(int indent, size_t width) {
-    if (indent > (int) width) {
+    if (indent >= (int) width) {
         return (indent - 2) % ((int) width - 2) + 2;
     } else {
         return indent;
@@ -2832,11 +2831,7 @@ static int formatLine(
 
 //===========================================================================
 // Returns formatted text and adds lines generated to *lines.
-static string format(
-    int * lines,
-    const Cli::Config & cfg,
-    const string & text
-) {
+static string format(const Cli::Config & cfg, const string & text) {
     vector<RawLine> raws;
     for (auto ptr = text.c_str(); *ptr;) {
         raws.emplace_back();
@@ -2883,8 +2878,10 @@ static string format(
             int width = col.indent + col.textLen + 2;
             int minWidth = (int) round(tcol.minWidth * cfg.maxLineWidth / 100);
             int maxWidth = (int) round(tcol.maxWidth * cfg.maxLineWidth / 100);
-            if (width > tab.width[icol] && width <= maxWidth + 2)
-                tab.width[icol] = clamp(width, minWidth, maxWidth);
+            if (width < minWidth || width > maxWidth + 2)
+                width = minWidth;
+            if (width > tab.width[icol])
+                tab.width[icol] = min(width, maxWidth);
         }
     }
     for (auto&& kv : tables)
@@ -2900,8 +2897,6 @@ static string format(
             cnt += formatLine(&out, raws[i], cfg.maxLineWidth);
         }
     }
-    if (lines)
-        *lines = cnt;
     return out;
 }
 
@@ -3288,7 +3283,7 @@ int Cli::printHelp(
 ) {
     string raw;
     writeHelp(&raw, *this, progName, cmdName);
-    os << format(nullptr, *m_cfg, raw) << '\n';
+    os << format(*m_cfg, raw) << '\n';
     return exitCode();
 }
 
@@ -3300,7 +3295,7 @@ int Cli::printUsage(
 ) {
     string raw;
     writeUsage(&raw, *this, arg0, cmd, false);
-    os << format(nullptr, *m_cfg, raw) << '\n';
+    os << format(*m_cfg, raw) << '\n';
     return exitCode();
 }
 
@@ -3312,7 +3307,7 @@ int Cli::printUsageEx(
 ) {
     string raw;
     writeUsage(&raw, *this, arg0, cmd, true);
-    os << format(nullptr, *m_cfg, raw) << '\n';
+    os << format(*m_cfg, raw) << '\n';
     return exitCode();
 }
 
@@ -3320,26 +3315,26 @@ int Cli::printUsageEx(
 void Cli::printOperands(ostream & os, const string & cmd) {
     string raw;
     writeOperands(&raw, *this, cmd);
-    os << format(nullptr, *m_cfg, raw);
+    os << format(*m_cfg, raw);
 }
 
 //===========================================================================
 void Cli::printOptions(ostream & os, const string & cmd) {
     string raw;
     writeOptions(&raw, *this, cmd);
-    os << format(nullptr, *m_cfg, raw);
+    os << format(*m_cfg, raw);
 }
 
 //===========================================================================
 void Cli::printCommands(ostream & os) {
     string raw;
     writeCommands(&raw, *this);
-    os << format(nullptr, *m_cfg, raw);
+    os << format(*m_cfg, raw);
 }
 
 //===========================================================================
 void Cli::printText(ostream & os, const string & text) {
-    os << format(nullptr, *m_cfg, text);
+    os << format(*m_cfg, text);
 }
 
 //===========================================================================

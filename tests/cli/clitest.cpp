@@ -605,6 +605,61 @@ Must be 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
 ***/
 
 //===========================================================================
+void helpTextTests() {
+    int line = 0;
+    CliTest cli;
+    ostringstream out;
+    string raw;
+
+    // wrap table cell indent
+    raw.clear();
+    out.str("");
+    for (auto i = 0; i < 6; ++i) {
+        raw += "\f\a10 10\a";   // column min/max width to 8, (10% of 80)
+        raw.append(2 * i, ' ');
+        raw.append(5, (char) i + 'A');
+        raw += '\t';
+        raw.append(8, (char) i + 'a');
+        raw += '\n';
+    }
+    cli.printText(out, raw);
+    auto tmp = out.str();
+    EXPECT(tmp == 1 + R"(
+AAAAA   aaaaaaaa
+  BBBBB  bbbbbbbb
+    CCCCC  cccccccc
+      DDDDD
+        dddddddd
+  EEEEE  eeeeeeee
+    FFFFF  ffffffff)");
+
+    // passthru invalid column min/max width
+    out.str("");
+    raw = "\f\aone\a\ttwo\n";
+    cli.printText(out, raw);
+    tmp = out.str();
+    EXPECT(tmp == "\aone\a       two");
+
+    // indent and unindent wrapped lines
+    out.str("");
+    cli.maxWidth(50);
+    raw = "\fnone\tThe quick brown fox jumped over the lazy dog.\n"
+        "\fchild +2\t\v\vThe quick brown fox jumped over the lazy dog.\n"
+        "\fpara +2\t\r\r  The quick brown fox jumped over the lazy dog.\n"
+        "\n";
+    cli.printText(out, raw);
+    tmp = out.str();
+    EXPECT(tmp == 1 + R"(
+none      The quick brown fox jumped over the
+          lazy dog.
+child +2  The quick brown fox jumped over the
+            lazy dog.
+para +2     The quick brown fox jumped over the
+          lazy dog.
+)");
+}
+
+//===========================================================================
 void helpTests() {
     int line = 0;
     CliTest cli;
@@ -2185,6 +2240,7 @@ static int runTests(bool prompt) {
     parseTests();
     choiceTests();
     helpTests();
+    helpTextTests();
     cmdTests();
     argvTests();
     optCheckTests();
