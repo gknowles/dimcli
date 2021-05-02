@@ -1,4 +1,4 @@
-# Copyright Glen Knowles 2016 - 2020.
+# Copyright Glen Knowles 2016 - 2021.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # appveyor.yml
@@ -14,24 +14,14 @@ environment:
       CC: clang-6.0
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       INSTALL_COMPILER: ON
-    - CXX: clang++-9
-      CC: clang-9
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: clang++-10
       CC: clang-10
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: clang++-11
       CC: clang-11
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: clang++-12
-      CC: clang-12
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      INSTALL_COMPILER: ON
     - CXX: g++-7
       CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: g++-9
-      CC: gcc-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
     - CXX: g++-10
       CC: gcc-10
