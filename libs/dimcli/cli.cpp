@@ -2699,10 +2699,17 @@ static size_t parseLine(RawLine * out, const char line[]) {
                 break;
             }
         }
+
+        // Don't allow unindent to bleed into previous column.
+        col.childIndent = max(col.childIndent, -col.indent);
+
+        // Width limits can only be set when a table is started, this prevents
+        // multiply defined column rules.
         if (!out->newTable) {
             col.minWidth = -1;
             col.maxWidth = -1;
         }
+
         col.textLen = 0;
         for (;;) {
             char ch = *ptr++;

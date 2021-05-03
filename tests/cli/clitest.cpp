@@ -657,6 +657,21 @@ child +2  The quick brown fox jumped over the
 para +2     The quick brown fox jumped over the
           lazy dog.
 )");
+
+    // three columns
+    out.str("");
+    cli.maxWidth(80);
+    raw = "one\t1\tfirst\n"
+        "two\t2\tsecond\n"
+        "three\t3\tthird\n"
+        "\n";
+    cli.printText(out, raw);
+    tmp = out.str();
+    EXPECT(tmp == 1 + R"(
+one         1           first
+two         2           second
+three       3           third
+)");
 }
 
 //===========================================================================
