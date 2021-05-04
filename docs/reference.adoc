@@ -15,7 +15,7 @@ Distributed under the Boost Software License, Version 1.0.
 | Handle to the shared command line configuration, this shared configuration
 allows options to be statically registered from multiple source files.
 
-| <<guide.adoc#clilocal, CliLocal>>
+| <<guide.adoc#multiple-parsers, CliLocal>>
 | Standalone cli instance independent of the shared configuration.
 
 | Cli::Convert

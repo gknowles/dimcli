@@ -1186,10 +1186,35 @@ Options:
   --help          Show this message and exit.
 ----
 
-===== CliLocal
-You can also use Dim::CliLocal, a completely self-contained parser, if you
-need to redefine options, have results from multiple parses at once, or
-otherwise avoid the shared configuration referenced by Dim::Cli.
+
+=== Multiple Parsers
+You can use Dim::CliLocal if you need to redefine options, have results from
+multiple parses at once, or otherwise avoid the shared configuration.
+
+Like Dim::Cli, Dim::CliLocal is a handle to a configuration, but instead of
+the shared configuration it's default constructor creates a new
+configuration instance and references that instead.
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::CliLocal c1;
+    c1.opt<string>("one").desc("Option of first command line parser.");
+    Dim::CliLocal c2;
+    c2.opt<string>("two").desc("Option of second command line parser.");
+
+    c1.printUsageEx(cout, "first");
+    c2.printUsageEx(cout, "second");
+    return EX_OK;
+}
+----
+
+[source, shell session]
+----
+$ a.out
+Usage: first [--one=STRING] [--help]
+Usage: second [--two=STRING] [--help]
+----
 
 
 === Response Files
