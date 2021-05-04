@@ -658,6 +658,24 @@ para +2     The quick brown fox jumped over the
           lazy dog.
 )");
 
+    // indent and unindent wrapped lines
+    out.str("");
+    cli.maxWidth(50);
+    raw = "Default indenting starts on first column and stays there.\n"
+        "\v\vLine with child wrapped lines indented 2 characters.\n"
+        "  \r\rParagraph indenting, first indented with unindented kids.\n"
+        "\n";
+    cli.printText(out, raw);
+    tmp = out.str();
+    EXPECT(tmp == 1 + R"(
+Default indenting starts on first column and
+stays there.
+Line with child wrapped lines indented 2
+  characters.
+  Paragraph indenting, first indented with
+unindented kids.
+)");
+
     // three columns
     out.str("");
     cli.maxWidth(80);

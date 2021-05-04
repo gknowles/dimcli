@@ -401,13 +401,18 @@ public:
 
     //-----------------------------------------------------------------------
     // RENDERING HELP TEXT
+    //
+    // NOTE: The print*() family of methods may return incomplete or
+    //       meaningless results if used before parse() has been called to
+    //       supply the program name and finalize the configuration. Except
+    //       printText(), which only references console width.
 
     // If exitCode() is not EX_OK, prints the errMsg and errDetail (if
-    // present), otherwise does nothing. Returns exitCode(). Only makes sense
+    // present), otherwise prints nothing. Returns exitCode(). Only makes sense
     // after parsing has completed.
     int printError(std::ostream & os);
 
-    // printHelp & printUsage return the current exitCode()
+    // printHelp & printUsage return the current exitCode().
     int printHelp(
         std::ostream & os,
         const std::string & progName = {},
@@ -457,6 +462,11 @@ public:
     [[nodiscard]] bool parse(
         std::ostream & oerr,
         std::vector<std::string> & args
+    );
+    [[nodiscard]] bool parse(std::vector<std::string> && args);
+    [[nodiscard]] bool parse(
+        std::ostream & oerr,
+        std::vector<std::string> && args
     );
 
     // Sets all options to their defaults, called internally when parsing
@@ -810,8 +820,8 @@ std::string Cli::valueDesc<DIMCLI_LIB_FILESYSTEM_PATH>() {
 *
 *   CliLocal
 *
-*   Stand-alone cli instance independent of the shared configuration. Mainly
-*   for testing.
+*   Constructs new cli instance independent of the shared configuration.
+*   Mainly for testing.
 *
 ***/
 

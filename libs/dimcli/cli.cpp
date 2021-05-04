@@ -2525,6 +2525,16 @@ bool Cli::parse(ostream & os, vector<string> & args) {
 }
 
 //===========================================================================
+bool Cli::parse(vector<string> && args) {
+    return parse(args);
+}
+
+//===========================================================================
+bool Cli::parse(ostream & os, vector<string> && args) {
+    return parse(os, args);
+}
+
+//===========================================================================
 bool Cli::parse(size_t argc, char * argv[]) {
     auto args = toArgv(argc, argv);
     return parse(args);
