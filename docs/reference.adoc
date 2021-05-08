@@ -372,8 +372,20 @@ completed.
 | cli.<<guide.adoc#going-your-own-way, printCommands>>
 | Write names and descriptions of commands
 
-| cli.printText
-| Write text and simple tables, wrapping as needed.
+| cli.<<guide.adoc#paragraphs, printText>>
+a| Write text and simple tables, wrapping as needed. Characters with special
+meaning when embedded in the text:
+[%autowidth, cols="^,<"]
+!===
+! \a
+! Set min and max widths of a table column as percentages of console width.
+! \b ! Non-breaking space.
+! \f ! Start of new table.
+! \r ! Decrease indent of wrapped text.
+! \t ! Column separator in table row.
+! \v ! Increase indent of wrapped text.
+! SP ! Increase indent of paragraph or column text.
+!===
 
 | cli.valueDesc<T>
 | Default friendly name for options of type, used in help text.

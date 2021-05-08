@@ -311,9 +311,9 @@ public:
     // Unless individually overridden, commands default to using the header and
     // footer (but not the desc) specified at the top level.
     //
-    // The text is run through the automatic formatter, Use line breaks
-    // only for paragraph breaks, let the automatic line wrapping take care of
-    // the rest.
+    // The text is run through cli.printText(), so use line breaks only for
+    // paragraph breaks, and let the automatic line wrapping take care of the
+    // rest.
     Cli & header(const std::string & val);
     Cli & desc(const std::string & val);
     Cli & footer(const std::string & val);
@@ -385,7 +385,7 @@ public:
     // longest name clamped to within the given descCol min/max.
     //
     // By default min(max)DescCol are derived from maxWidth, and maxWidth
-    // defaults to the width of the console clamped to within 50 to 80 columns.
+    // defaults to the width of the console clamped from 50 to 80 columns.
     void maxWidth(int maxWidth, int minDescCol = 0, int maxDescCol = 0);
 
     // Enabled by default, response file expansion replaces arguments of the
@@ -438,10 +438,7 @@ public:
     void printOptions(std::ostream & os, const std::string & cmd = {});
     void printCommands(std::ostream & os);
 
-    // Write text and simple tables, wrapping as needed.
-    void printText(std::ostream & os, const std::string & text);
-
-    // Friendly name for type, used in help text.
+    // Friendly name for type used in help text, such as NUM, VALUE, or FILE.
     template <typename T>
     static std::string valueDesc();
 
@@ -647,6 +644,114 @@ public:
     // command implementation. Not reliable before cli.parse() has been called
     // and had a chance to update the internal data structures.
     bool commandExists(const std::string & name) const;
+
+    //-----------------------------------------------------------------------
+    // RENDERING ARBITRARY TEXT
+    //
+    // NOTE: This text rendering method is not needed for applications to
+    //       process command lines but may be useful to command line programs
+    //       that output text messages.
+    //
+    // Write text and simple tables, wrapping as needed. The text is split on
+    // \n into lines, and each line is processed as either a paragraph (if
+    // there are no \t chars) or table row (if there are \t chars). Formatting
+    // is modified by embedding special characters in the text.
+    //
+    // PARAGRAPHS
+    // A Paragraph consist of a preamble followed by the body. The preamble
+    // contains any of the following and ends at the first character that
+    // doesn't match:
+    //  - \r    Decrease indent of wrapped text.
+    //  - \v    Increase indent of wrapped text.
+    //  - SP    Increase indent of paragraph or column text.
+    //
+    // cli.maxWidth(50); // These examples assume console width of 50.
+    // cli.printText(cout,
+    //   "Default paragraph wrapped at column 50 with default indentation.\n"
+    //   "  \r\rIndented paragraph with all following lines unindented.\n"
+    //   "\v\vParagraph with all lines but the very first indented.\n");
+    // ----
+    // Default paragraph wrapped at column 50 with
+    // default indentation.
+    //   Indented paragraph with all following lines
+    // unindented.
+    // Paragraph with all lines but the very first
+    //   indented.
+    // ----
+    //
+    // The body of a paragraph consists of space separated tokens (consecutive
+    // spaces are treated as one). Line breaks are added between tokens as
+    // needed. The following characters have special meaning in the body:
+    //  - \b    Non-breaking space.
+    //
+    // "The quick brown fox jumped underneath the lazy dog.\n"
+    // "The quick brown fox jumped underneath the lazy\bdog.\n"
+    // ----
+    // The quick brown fox jumped underneath the lazy
+    // dog.
+    // The quick brown fox jumped underneath the
+    // lazy dog.
+    // ----
+    //
+    // TABLES
+    // All lines containing one or more \t characters are table rows. Tables
+    // are made up of rows grouped by the first column indent and then split by
+    // those with the \f (new table) flag. Columns are just additional
+    // paragraphs with larger indentation. In other words, column width is only
+    // used to find the starting position of the next column.
+    //
+    // Additional special phrases in column preamble:
+    //  - \a<MIN> <MAX>\a
+    //          Set min and max widths of a table column, where MIN and MAX
+    //          are percentages of console width encoded as floats. Used in
+    //          columns of a row that is marked with \f (new table).
+    //  - \f    Start of new table, allowed in preamble of any or all columns.
+    //
+    // Tables can be interleaved.
+    //
+    // "Table A, Row I\tOnly 0 indent table\n"
+    // "  Table B, Row I\tFirst 2 indent table\n"
+    // "Table A, Row II\tOnly 0 indent table\n"
+    // "  \fTable C, Row I\tNew 2 indent table (because\bof\b\\f)\n"
+    // ----
+    // Table A, Row I   Only 0 indent table
+    //   Table B, Row I  First 2 indent table
+    // Table A, Row II  Only 0 indent table
+    //   Table C, Row I  New 2 indent table
+    //                   (because of \f)
+    // ----
+    //
+    // Text never wraps until the end of the console window.
+    //
+    // "This is first column text that extends to the following line.\t"
+    // "Second column, also with enough text to wrap all the way around.\t"
+    // "Third and final column, also wrapping.\n"
+    // ----
+    // This is first column text that extends to the
+    // following line.
+    //           Second column, also with enough text
+    //           to wrap all the way around.
+    //                     Third and final column, also
+    //                     wrapping.
+    // ----
+    //
+    // Column width is calculated by finding the longest text of any cell in
+    // that column of the table that doesn't exceed the column's max width with
+    // a minimum of the min width. Default min/max column width is 15%/38% for
+    // the first and 15%/15% for the rest. The default for the first column can
+    // be changed with cli.maxWidth().
+    //
+    // "\f\a10 10\aone\tSet column width to 5 (10% of 50).\n"
+    // "two\tSecond row.\n"
+    // "fifteen\tToo long for column width, pushed down.\n"
+    // ----
+    // one    Set column width to 5 (10% of 50).
+    // two    There is always an extra two space gap
+    //        between columns.
+    // seventeen
+    //        Too long for column width, pushed down.
+    // ----
+    void printText(std::ostream & os, const std::string & text);
 
     //-----------------------------------------------------------------------
     // HELPERS
