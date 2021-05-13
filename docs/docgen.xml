@@ -1,12 +1,15 @@
 ﻿<!--
-Copyright Glen Knowles 2020.
+Copyright Glen Knowles 2020 - 2021.
 Distributed under the Boost Software License, Version 1.0.
+
+docgen config file
+https://github.com/gknowles/dimapp/tree/master/tools/docgen
 -->
 <Docs>
   <Site name="DIMCLI" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
     <Version tag="HEAD"/>
-    <Version tag="v6.0.0" default="true"/>
+    <Version tag="v6.0.0" layout="v6" default="true"/>
     <Version tag="v5.0.2" layout="md +ref"/>
     <Version tag="v5.0.1" layout="md +ref"/>
     <Version tag="v5.0.0" layout="md +ref"/>
@@ -42,6 +45,8 @@ Distributed under the Boost Software License, Version 1.0.
       <Lang name="shell session"/>
       <ShellPrefix value="$ "/>
       <CommentPrefix value="$ #"/>
+      <SetEnv regex="^\$\sexport\s([^=&quot;]+)=(.*)$"/>
+      <SetEnv regex="^\$\sexport\s&quot;([^=&quot;]+)=([^&quot;]*)&quot;$"/>
       <Shell>
         <Arg value="cmd"/>
         <Arg value="/D"/>
@@ -51,6 +56,15 @@ Distributed under the Boost Software License, Version 1.0.
   </Samples>
   <Layout name="default">
     <Page name="User's Guide" file="guide.adoc" default="true"/>
+    <Page name="Reference" file="reference.adoc"/>
+    <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+  </Layout>
+  <Layout name="v6">
+    <Page name="User's Guide" file="guide.adoc" default="true">
+      <Patch>
+
+      </Patch>
+    </Page>
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
   </Layout>

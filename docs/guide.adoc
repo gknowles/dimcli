@@ -1340,7 +1340,7 @@ if (!cli.parse(argc, argv))
 
 How this works:
 
-[source, shell session, test noscript]
+[source, shell session]
 ----
 $ export AOUT_OPTS=
 $ a.out c d
@@ -2519,7 +2519,7 @@ following characters have special meaning:
 "The quick brown fox jumped underneath the lazy\bdog.\n"
 ----
 
-[source, shell session, test repl 1 6]
+[source, shell session, test repl 1]
 ----
 The quick brown fox jumped underneath the lazy
 dog.
