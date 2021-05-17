@@ -60,6 +60,13 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
   </Layout>
   <Layout name="v6">
+    <!--
+    Patch 5 ='s down to 4 to suppress warning.
+
+    Without this patch asciidoctor complains (correctly according to the
+    asciidoc spec) that there's a jump from "===" to "=====" without an
+    intervening "====" section.
+    -->
     <Page name="User's Guide" file="guide.adoc" default="true">
       <Patch>
         <![CDATA[
