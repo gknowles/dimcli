@@ -62,8 +62,21 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
   <Layout name="v6">
     <Page name="User's Guide" file="guide.adoc" default="true">
       <Patch>
+        <![CDATA[
+diff --git a/docs/guide.adoc b/docs/guide.adoc
+index 3374002..9d19b44 100644
+--- a/docs/guide.adoc
++++ b/docs/guide.adoc
+@@ -1187,7 +1187,7 @@ Options:
+   --help          Show this message and exit.
+ ----
 
-      </Patch>
+-===== CliLocal
++==== CliLocal
+ You can also use Dim::CliLocal, a completely self-contained parser, if you
+ need to redefine options, have results from multiple parses at once, or
+ otherwise avoid the shared configuration referenced by Dim::Cli.
+]]></Patch>
     </Page>
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
