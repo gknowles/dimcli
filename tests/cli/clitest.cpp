@@ -613,7 +613,7 @@ void helpTextTests() {
 
     // wrap table cell indent
     raw.clear();
-    out.str("");
+    out.str({});
     for (auto i = 0; i < 6; ++i) {
         raw += "\f\a10 10\a";   // column min/max width to 8, (10% of 80)
         raw.append(2 * i, ' ');
@@ -634,14 +634,14 @@ AAAAA   aaaaaaaa
     FFFFF  ffffffff)");
 
     // passthru invalid column min/max width
-    out.str("");
+    out.str({});
     raw = "\f\aone\a\ttwo\n";
     cli.printText(out, raw);
     tmp = out.str();
     EXPECT(tmp == "\aone\a       two");
 
     // indent and unindent wrapped lines
-    out.str("");
+    out.str({});
     cli.maxWidth(50);
     raw = "\fnone\tThe quick brown fox jumped over the lazy dog.\n"
         "\fchild +2\t\v\vThe quick brown fox jumped over the lazy dog.\n"
@@ -659,7 +659,7 @@ para +2     The quick brown fox jumped over the
 )");
 
     // indent and unindent wrapped lines
-    out.str("");
+    out.str({});
     cli.maxWidth(50);
     raw = "Default indenting starts on first column and stays there.\n"
         "\v\vLine with child wrapped lines indented 2 characters.\n"
@@ -677,7 +677,7 @@ unindented kids.
 )");
 
     // three columns
-    out.str("");
+    out.str({});
     cli.maxWidth(80);
     raw = "one\t1\tfirst\n"
         "two\t2\tsecond\n"
@@ -754,17 +754,17 @@ Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
             [--name=STRING] [--oversized-for-the-desc-col] [-s, --special]
             [--help] [KEY...]
 )");
-        out.str("");
+        out.str({});
         EXPECT(cli.printUsage(out, kCommand, "") == Dim::kExitOk);
         EXPECT(out.str() == "Usage: test [OPTIONS] [KEY...]\n");
-        out.str("");
+        out.str({});
         cli.printOperands(out, "");
         auto tmp = out.str();
         EXPECT(tmp == 1 + R"(
   KEY       it's the key arguments with a very long description that wraps the
             line at least once, maybe more.)"
         );
-        out.str("");
+        out.str({});
         cli.printOptions(out, "");
         tmp = out.str();
         EXPECT(tmp == R"(
@@ -784,7 +784,7 @@ Name options:
 
   --help                      Show this message and exit.)"
         );
-        out.str("");
+        out.str({});
         cli.printCommands(out);
         tmp = out.str();
         EXPECT(tmp == "");
@@ -882,8 +882,8 @@ Options:
     {
         cli = {};
         cli.versionOpt("1.0");
-        in.str("");
-        out.str("");
+        in.str({});
+        out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli, "--version", false, Dim::kExitOk);
         auto tmp = out.str();
@@ -898,7 +898,7 @@ Options:
         cli = {};
         cli.helpNoArgs();
         out.clear();
-        out.str("");
+        out.str({});
         cli.iostreams(nullptr, &out);
         EXPECT_PARSE(cli, {}, false, Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
@@ -933,7 +933,7 @@ Options:
                 return true;
             });
         out.clear();
-        out.str("");
+        out.str({});
         cli.iostreams(nullptr, &out);
         EXPECT_PARSE(cli, "-?", false, Dim::kExitOk);
         EXPECT(out.str() == 1 + R"(
@@ -1182,7 +1182,7 @@ Options:
 )";
         EXPECT_HELP(cli, "help", helpText);
         EXPECT_PARSE(cli, "help help");
-        out.str("");
+        out.str({});
         cli.iostreams(nullptr, &out);
         EXPECT(cli.exec() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
@@ -1194,13 +1194,13 @@ Usage: test [--help] COMMAND [ARGS...]
 Usage: test help [-u, --usage] [--help] [COMMAND]
 )");
         EXPECT_PARSE(cli, "help notACmd");
-        out.str("");
+        out.str({});
         EXPECT(cli.exec(out) == Dim::kExitUsage);
         EXPECT(out.str() == 1 + R"(
 Error: Command 'help': Help requested for unknown command: notACmd
 )");
         EXPECT_PARSE(cli, "help help --usage");
-        out.str("");
+        out.str({});
         cli.iostreams(nullptr, &out);
         EXPECT(cli.exec() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
@@ -2093,7 +2093,7 @@ Options:
         EXPECT(*pass == "hi");
         in.clear();
         in.str("secret\nsecret\n");
-        out.str("");
+        out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
         EXPECT(*pass == "secret");
@@ -2101,7 +2101,7 @@ Options:
         EXPECT(in.get() == EOF);
         in.clear();
         in.str("secret\nmistype_secret\n");
-        out.str("");
+        out.str({});
         EXPECT_PARSE(cli, {}, false);
         EXPECT_ERR(cli, "Error: Confirm failed, entries not the same.\n");
         EXPECT(in.get() == EOF);
@@ -2122,7 +2122,7 @@ Options:
         EXPECT(*ask);
         in.clear();
         in.str("n\n");
-        out.str("");
+        out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli, {}, false, Dim::kExitOk);
         EXPECT(!*ask);
@@ -2143,7 +2143,7 @@ Options:
         auto & ask = cli.optVec<string>("name").prompt(Dim::Cli::fPromptHide);
         in.clear();
         in.str("jack\n");
-        out.str("");
+        out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
         EXPECT(out.str() == "Name: \n");
@@ -2156,7 +2156,7 @@ Options:
         auto & ask = cli.opt<string>("name", "jill").prompt();
         in.clear();
         in.str("jack\n");
-        out.str("");
+        out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
         EXPECT(out.str() == "Name [jill]: ");

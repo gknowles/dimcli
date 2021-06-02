@@ -1087,7 +1087,7 @@ auto Cli::Convert::toString_impl(
     -> decltype(std::declval<std::ostream &>() << src, bool())
 {
     m_interpreter.clear();
-    m_interpreter.str("");
+    m_interpreter.str({});
     if (!(m_interpreter << src)) {
         out.clear();
         return false;
@@ -2133,12 +2133,12 @@ inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
 //===========================================================================
 template <typename T>
 inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
-    auto last = std::prev(m_proxy->m_values->end());
+    auto back = std::prev(m_proxy->m_values->end());
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
         // internally and will be 0 or 1.
         if (value == "1") {
-            *last = this->defaultValue();
+            *back = this->defaultValue();
         } else {
             assert(value == "0" && "internal dimcli error");
             m_proxy->m_values->pop_back();
@@ -2150,7 +2150,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         auto i = this->m_choiceDescs.find(value);
         if (i == this->m_choiceDescs.end())
             return false;
-        *last = this->m_choices[i->second.pos];
+        *back = this->m_choices[i->second.pos];
         return true;
     }
 
@@ -2158,7 +2158,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
     // *last returns a proxy object instead of a reference to T.
     T tmp;
     bool result = this->fromString(tmp, value);
-    *last = std::move(tmp);
+    *back = std::move(tmp);
     return result;
 }
 
