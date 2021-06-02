@@ -1062,9 +1062,9 @@ bool Cli::Convert::fromString_impl(
     //  - specialization of Cli::Convert::fromString template for T, such as:
     //      template<> bool Cli::Convert::fromString<MyType>::(
     //          MyType & out, const std::string & src) const { ... }
-    //  - parse action attached to the Opt<T> instance that doesn't call
+    //  - parse action attached to the Opt<T> instance that does NOT call
     //    opt.parseValue(), such as opt.choice().
-    assert(!"no assignment from string or stream extraction operator");
+    assert(!"unusable type, no conversion from string exists");
     return false;
 }
 

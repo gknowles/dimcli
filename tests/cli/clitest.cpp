@@ -197,7 +197,7 @@ void assertTests() {
     EXPECT_PARSE(cli, "-v x", false);
     EXPECT_ERR(cli, "Error: Invalid '-v' value: x\n");
     EXPECT_ASSERT(1 + R"(
-!"no assignment from string or stream extraction operator"
+!"unusable type, no conversion from string exists"
 )");
     cli.opt<bool>("t").implicitValue(false);
     EXPECT_ASSERT(1 + R"(
