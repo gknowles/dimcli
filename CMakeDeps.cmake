@@ -8,6 +8,7 @@
 # docs/build.bat
 # docs/docgen.xml
 # docs/guide.adoc
+# docs/memleak.log
 # docs/reference.adoc
 # docs/test.bat
 # libs/dimcli/cli.cpp
@@ -15,11 +16,11 @@
 # tests/cli/clitest.cpp
 # tests/cli/pch.cpp
 # tests/cli/pch.h
-# tests/ostrm/ostrmtest.cpp
-# tests/ostrm/pch.cpp
-# tests/ostrm/pch.h
-# tests/perf/args.h
-# tests/perf/pch.cpp
-# tests/perf/pch.h
-# tests/perf/perftest.cpp
+# tools/ostrm/ostrmtest.cpp
+# tools/ostrm/pch.cpp
+# tools/ostrm/pch.h
+# tools/perf/args.h
+# tools/perf/pch.cpp
+# tools/perf/pch.h
+# tools/perf/perftest.cpp
 # vendor/gh-pages
