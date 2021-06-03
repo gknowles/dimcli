@@ -6,12 +6,17 @@ Distributed under the Boost Software License, Version 1.0.
 # dimcli
 
 | MSVC 2015, 2017, 2019 / CLANG 6, 10, 11 / GCC 7, 10, 11 | Test Coverage |
-|:-------------------------------------------------------:|:-------------:|
-| [![AppVeyor Status](https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true)](https://ci.appveyor.com/project/gknowles/dimcli/branch/master) | [![codecov](https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg)](https://codecov.io/gh/gknowles/dimcli) |
+| :-----------------------------------------------------: | :-----------: |
+| [![AppVeyor][av-image]][av-link] | [![Codecov][cc-image]][cc-link] |
+
+[av-image]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
+[av-link]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
+[cc-image]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
+[cc-link]: https://codecov.io/gh/gknowles/dimcli
 
 C++ command line parser toolkit for kids of all ages.
 
-- GNU style command lines, such as (-o, --output=FILE, etc.)
+- GNU style command lines (-o, --output=FILE, etc.)
 - Parses directly to any supplied (or implicitly created) variable that is:
   - Default constructible
   - Copyable
@@ -25,9 +30,56 @@ C++ command line parser toolkit for kids of all ages.
 - Works whether or not exceptions and RTTI are disabled.
 - Distributed under the Boost Software License, Version 1.0.
 
-## Documentation
-Check out the [documentation](https://gknowles.github.io/dimcli/), you'll be glad
-you did! Thorough with many examples.
+## Sample Usage
+
+Check out the complete [documentation](https://gknowles.github.io/dimcli/),
+you'll be glad you did! Thorough with many examples.
+
+~~~ C++
+#include "dimcli/cli.h"
+#include <iostream>
+using namespace std;
+
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    // Populate existing variable
+    int count;
+    cli.opt(&count, "c n count", 1).desc("times to say hello");
+    // Allocate option variable, returned object acts like a smart
+    // pointer to underlying variable.
+    auto & name = cli.opt<string>("name", "Unknown").desc("who to greet");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    if (!name)
+        cout << "Greeting the unknown." << endl;
+    for (int i = 0; i < count; ++i)
+        cout << "Hello " << *name << "!" << endl;
+    return 0;
+}
+~~~
+
+What it does when run:
+
+~~~ console
+$ a.out -x
+Error: Unknown option: -x
+
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -c, -n, --count=NUM  times to say hello (default: 1)
+  --name=STRING        who to greet (default: Unknown)
+
+  --help               Show this message and exit.
+
+$ a.out --count=2
+Greeting the unknown.
+Hello Unknown!
+Hello Unknown!
+$ a.out --name John
+Hello John!
+~~~
 
 ## Include in Your Project
 ### Copy source directly into your project
@@ -44,6 +96,7 @@ Get the latest snapshot:
 
 Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):
+- md build & cd build
 - cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 14 2015 Win64"
 - cmake --build .
 - ctest -C Debug

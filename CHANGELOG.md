@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## dimcli 6.0.0 (2020-12-21)
 - Cosmetic - Converted docs from Markdown to AsciiDoc
-- Cosmetic - Expand testing to include samples embedded in docs
+- Cosmetic - Expand automated testing to include samples embedded in docs
 - Added - Detail to errors parsing values with units
 - Added - Variable argument cli.toArgvL() & cli.toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
