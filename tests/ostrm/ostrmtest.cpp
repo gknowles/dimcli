@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2019.
+// Copyright Glen Knowles 2019 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // ostrmtest.cpp - dimcli test ostrm
@@ -32,7 +32,16 @@ public:
 };
 
 //===========================================================================
-int main() {
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & test = cli.opt<bool>("test", false).desc("Run tests.");
+    if (!cli.parse(argc, argv))
+        return cli.printError(std::cerr);
+    if (*test) {
+        std::cout << "Run from automated testing framework, quick exit.";
+        return 0;
+    }
+
     stringstream os;
     auto loc = locale();
     auto loc2 = locale("");

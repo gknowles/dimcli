@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2019.
+// Copyright Glen Knowles 2016 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // perftest.cpp - dimcli test perf
@@ -13,19 +13,27 @@ void Dim::assertHandler(const char text[], unsigned line)
 {}
 #endif
 
-inline bool doubleequals(const double a, const double b)
-{
+inline bool doubleequals(const double a, const double b) {
     static const double delta = 0.0001;
     const double diff = a - b;
     return diff < delta && diff > -delta;
 }
 
-int main()
-{
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & test = cli.opt<bool>("test", false).desc("Run tests.");
+    if (!cli.parse(argc, argv))
+        return cli.printError(std::cerr);
+    if (*test) {
+        std::cout << "Run from automated testing framework, quick exit.";
+        return 0;
+    }
+
     std::vector<std::string> carguments({"-i", "7", "-c", "a", "2.7",
         "--char", "b", "8.4", "-c", "c", "8.8", "--char", "d"});
     std::vector<std::string> pcarguments({"progname", "-i", "7",
-        "-c", "a", "2.7", "--char", "b", "8.4", "-c", "c", "8.8", "--char", "d"});
+        "-c", "a", "2.7", "--char", "b", "8.4", "-c", "c", "8.8",
+        "--char", "d"});
     for (int i = 0; i < 1000; ++i) {
         carguments.push_back("7");
         pcarguments.push_back("7");
@@ -94,4 +102,6 @@ int main()
         std::cout << "dimcli seconds to run: "
             << duration_cast<duration<double>>(runtime).count() << std::endl;
     }
+
+    return 0;
 }

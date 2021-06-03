@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2019.
+// Copyright Glen Knowles 2016 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // pch.h - dimcli test perf
@@ -6,7 +6,8 @@
 #include "dimcli/cli.h"
 
 #pragma warning(disable : 4100) // unreferenced formal parameter
-#pragma warning(disable : 4458) // declaration of 'var' hides class member
+#pragma warning(disable : 4456) // declaration hides previous local declaration
+#pragma warning(disable : 4458) // declaration hides class member
 #include "args.h"
 
 #include <iostream>

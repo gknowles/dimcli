@@ -1,9 +1,11 @@
-// Copyright Glen Knowles 2019 - 2020.
+// Copyright Glen Knowles 2019 - 2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // pch.h - dimcli test ostrm
 
 #define _SILENCE_CXX17_STRSTREAM_DEPRECATION_WARNING
+
+#include "dimcli/cli.h"
 
 #include <chrono>
 #include <cstdlib>
