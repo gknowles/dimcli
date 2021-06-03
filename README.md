@@ -33,7 +33,7 @@ C++ command line parser toolkit for kids of all ages.
 ## Sample Usage
 
 Check out the complete [documentation](https://gknowles.github.io/dimcli/),
-you'll be glad you did! Thorough with many examples.
+you'll be glad you did! Thorough with many examples and a quick reference.
 
 ~~~ C++
 #include "dimcli/cli.h"
@@ -42,14 +42,20 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    // Populate existing variable
+
+    // Populate existing variable from option.
     int count;
-    cli.opt(&count, "c n count", 1).desc("times to say hello");
+    cli.opt(&count, "c n count", 1).desc("Times to say hello");
+
     // Allocate option variable, returned object acts like a smart
     // pointer to underlying variable.
-    auto & name = cli.opt<string>("name", "Unknown").desc("who to greet");
+    auto & name = cli.opt<string>("name", "Unknown").desc("Who to greet");
+
+    // Parse command line
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
+
+    // Access the options
     if (!name)
         cout << "Greeting the unknown." << endl;
     for (int i = 0; i < count; ++i)
@@ -63,16 +69,14 @@ What it does when run:
 ~~~ console
 $ a.out -x
 Error: Unknown option: -x
-
 $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  -c, -n, --count=NUM  times to say hello (default: 1)
-  --name=STRING        who to greet (default: Unknown)
+  -c, -n, --count=NUM  Times to say hello (default: 1)
+  --name=STRING        Who to greet (default: Unknown)
 
   --help               Show this message and exit.
-
 $ a.out --count=2
 Greeting the unknown.
 Hello Unknown!
