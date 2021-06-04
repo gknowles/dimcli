@@ -3,7 +3,7 @@
 #
 # appveyor.yml
 #
-version: 0.1.{build}
+version: "{build}"
 environment:
   matrix:
     - CXX: g++-7
@@ -70,7 +70,6 @@ for:
       - cd publish
       - 7z a dimcli-latest.zip include lib
       - cd ..\..
-      - bin\cli --test
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -85,8 +84,8 @@ for:
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
       - cmake --build . --config ${CONFIGURATION}
-      - ../bin/cli --test
-    after_build:
+      - cd ..
+    after_test:
       - sh: |
             if [ "$BUILD_COVERAGE" = "ON" ]; then
                 bash <(curl -s https://codecov.io/bash)
@@ -95,4 +94,6 @@ for:
 artifacts:
   - path: build\publish\dimcli-latest.zip
     name: dimcli
-    type: zip
+
+test_script:
+  - bin\cli --test
