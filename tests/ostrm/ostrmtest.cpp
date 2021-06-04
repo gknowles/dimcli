@@ -10,6 +10,13 @@ using namespace std;
 using namespace std::chrono;
 
 
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+//===========================================================================
+void Dim::assertHandler(const char text[], unsigned line)
+{}
+#endif
+
+
 class Timer {
     high_resolution_clock::time_point m_start;
     high_resolution_clock::time_point m_lap;
