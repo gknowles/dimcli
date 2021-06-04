@@ -1481,7 +1481,7 @@ protected:
     // those limits badRange() is called, otherwise returns true.
     template <typename U>
     auto checkLimits(Cli & cli, const std::string & val, const U & x, int)
-    -> decltype((U) std::declval<T&>() > x);
+        -> decltype((U) std::declval<T&>() > x);
     template <typename U>
     bool checkLimits(Cli & cli, const std::string & val, const U & x, long);
 
@@ -1746,7 +1746,8 @@ auto Cli::OptShim<A, T>::checkLimits(
     const std::string & val,
     const U & x,
     int
-) -> decltype((U) std::declval<T&>() > x)
+)
+    -> decltype((U) std::declval<T&>() > x)
 {
     constexpr auto low = std::numeric_limits<T>::min();
     constexpr auto high = std::numeric_limits<T>::max();
