@@ -1,7 +1,7 @@
-# CMakeLists.txt - general project generator
-#
 # Copyright Glen Knowles 2016 - 2021.
 # Distributed under the Boost Software License, Version 1.0.
+#
+# CMakeLists.txt - general project generator
 #
 # Use this one file *unmodified* for all projects that follow the convections.
 # All the careful tweaking is for Visual Studio, but it works on linux with
@@ -12,12 +12,12 @@
 #   /<project_name>/CMakeLists.txt - this file
 #   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
 #   /<project_name>/libs/<lib_project_name>/**
-#   /<project_name>/libs/${PROJECT_NAME}/config.h
-#       has special transformation
+#   /<project_name>/libs/${PROJECT_NAME}/config.h - may be modified by the
+#       install task, see "Installing" below.
 #   /<project_name>/tests/<test_project_name>/**
 #   /<project_name>/tools/<tool_project_name>/**
-#   /<project_name>/vendor/<vendor_project_name>/
-#       if /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
+#   /<project_name>/vendor/<vendor_project_name>/ - only if
+#       /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
 #
 # Code files:
 # Source files are expected to be "*.cpp" and "*.h".
