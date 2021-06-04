@@ -24,6 +24,7 @@ C++ command line parser toolkit for kids of all ages.
 * Works whether or not exceptions and RTTI are disabled.
 * Distributed under the Boost Software License, Version 1.0.
 
+=== Sample Usage
 How does it feel?
 
 [source, C++, test prefix 0]
@@ -81,6 +82,32 @@ Hello Unknown!
 $ a.out --name John
 Hello John!
 ----
+
+=== Use in Your Project
+You can get the code into your project in several different ways, here are a
+few:
+
+*Copy source directly into your project*
+
+All you need is:
+
+* libs/dimcli/cli.h
+* libs/dimcli/cli.cpp
+
+*Use https://github.com/Microsoft/vcpkg[vcpkg]*
+
+* vcpkg install dimcli
+
+*Build with cmake*
+
+. Get the latest https://github.com/gknowles/dimcli/releases[dimcli] release.
+. Build as a library (this example uses Visual C++ 2015 to install a 64-bit
+  build to c:\dimcli on a windows machine):
+** md build & cd build
+** cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 14 2015 Win64"
+** cmake --build .
+** ctest -C Debug
+** cmake --build . --target install
 
 
 == Basics
