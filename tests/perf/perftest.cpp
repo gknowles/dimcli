@@ -9,16 +9,19 @@
 using namespace std::chrono;
 
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
+//===========================================================================
 void Dim::assertHandler(const char text[], unsigned line)
 {}
 #endif
 
-inline bool doubleequals(const double a, const double b) {
+//===========================================================================
+static bool doubleequals(const double a, const double b) {
     static const double delta = 0.0001;
     const double diff = a - b;
     return diff < delta && diff > -delta;
 }
 
+//===========================================================================
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     auto & test = cli.opt("test", false).desc("Run tests.");
