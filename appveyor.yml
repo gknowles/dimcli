@@ -96,4 +96,4 @@ artifacts:
     name: dimcli
 
 test_script:
-  - bin\cli --test
+  - '"bin/cli" --test'
