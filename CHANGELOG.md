@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 6.1.0 (2021-06-04)
 - Added - cli.printText()
 - Added - Render Name/Desc style tables in header and footer
 

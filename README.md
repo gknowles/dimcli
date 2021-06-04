@@ -97,7 +97,7 @@ All you need is:
 
 ### Using cmake
 Get the latest snapshot:
-[dimcli 6.0.0](https://github.com/gknowles/dimcli/archive/v6.0.0.zip)
+[dimcli 6.1.0](https://github.com/gknowles/dimcli/archive/v6.1.0.zip)
 
 Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):
