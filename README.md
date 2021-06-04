@@ -43,19 +43,20 @@ using namespace std;
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
 
-    // Populate existing variable from option.
+    // Define option that populates an existing variable.
     int count;
-    cli.opt(&count, "c n count", 1).desc("Times to say hello");
+    cli.opt(&count, "c n count", 1).desc("Times to say hello.");
 
     // Allocate option variable, returned object acts like a smart
     // pointer to underlying variable.
-    auto & name = cli.opt<string>("name", "Unknown").desc("Who to greet");
+    auto & name = cli.opt<string>("name", "Unknown")
+        .desc("Who to greet.");
 
-    // Parse command line
+    // Parse command line.
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
 
-    // Access the options
+    // Access the options.
     if (!name)
         cout << "Greeting the unknown." << endl;
     for (int i = 0; i < count; ++i)
@@ -73,8 +74,8 @@ $ a.out --help
 Usage: a.out [OPTIONS]
 
 Options:
-  -c, -n, --count=NUM  Times to say hello (default: 1)
-  --name=STRING        Who to greet (default: Unknown)
+  -c, -n, --count=NUM  Times to say hello. (default: 1)
+  --name=STRING        Who to greet. (default: Unknown)
 
   --help               Show this message and exit.
 $ a.out --count=2
