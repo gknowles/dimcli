@@ -21,7 +21,7 @@ inline bool doubleequals(const double a, const double b) {
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & test = cli.opt<bool>("test", false).desc("Run tests.");
+    auto & test = cli.opt("test", false).desc("Run tests.");
     if (!cli.parse(argc, argv))
         return cli.printError(std::cerr);
     if (*test) {

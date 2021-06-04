@@ -217,18 +217,22 @@ public:
     template <typename T>
     Opt<T> & opt(const std::string & names, const T & def = {});
 
-    template <typename T>
+    template <typename T, typename = typename
+        std::enable_if<!std::is_const<T>::value>::type>
     Opt<T> & opt(T * value, const std::string & names);
 
-    template <typename T, typename U, typename =
-        typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    template <typename T, typename U,
+        typename = typename
+            std::enable_if<std::is_convertible<U, T>::value>::type,
+        typename = typename std::enable_if<!std::is_const<T>::value>::type>
     Opt<T> & opt(T * value, const std::string & names, const U & def);
 
     template <typename T>
     Opt<T> & opt(Opt<T> & value, const std::string & names);
 
-    template <typename T, typename U, typename =
-        typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    template <typename T, typename U,
+        typename = typename
+            std::enable_if<std::is_convertible<U, T>::value>::type>
     Opt<T> & opt(Opt<T> & value, const std::string & names, const U & def);
 
     template <typename T>
@@ -795,7 +799,7 @@ private:
 };
 
 //===========================================================================
-template <typename T, typename U, typename>
+template <typename T, typename U, typename, typename>
 Cli::Opt<T> & Cli::opt(
     T * value,
     const std::string & names,
@@ -808,7 +812,7 @@ Cli::Opt<T> & Cli::opt(
 }
 
 //===========================================================================
-template <typename T>
+template <typename T, typename>
 Cli::Opt<T> & Cli::opt(T * value, const std::string & names) {
     return opt(value, names, T{});
 }

@@ -360,7 +360,7 @@ void valueTests() {
     // parse action
     {
         cli = {};
-        auto & sum = cli.opt<int>("n number", 1)
+        auto & sum = cli.opt("n number", 1)
             .desc("numbers to multiply")
             .parse([](auto & cli, auto & arg, const string & val) {
                 int tmp = *arg;
@@ -470,8 +470,8 @@ void parseTests() {
     EXPECT_PARSE(cli, "x", false);
     EXPECT_ERR(cli, "Error: Unexpected argument: x\n");
 
-    cli.opt<int>("n", 1);
-    cli.opt<int>("?o", 2).check([](auto & cli, auto & opt, auto & val) {
+    cli.opt("n", 1);
+    cli.opt("?o", 2).check([](auto & cli, auto & opt, auto & val) {
         return cli.badUsage("Malformed '"s + opt.from() + "' value: " + val);
     });
     EXPECT_PARSE(cli, "-na", false);
@@ -484,7 +484,7 @@ void parseTests() {
     EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
 
     cli = {};
-    cli.opt<int>("<n>", 1);
+    cli.opt("<n>", 1);
     EXPECT_PARSE(cli, "", false);
     EXPECT_ERR(cli, "Error: Option 'n' missing value.\n");
 }
@@ -711,14 +711,14 @@ Usage: test
 
     {
         cli = {};
-        auto & num = cli.opt<int>("n quantity", 1).desc("quantity is an int");
+        auto & num = cli.opt("n quantity", 1).desc("quantity is an int");
         cli.opt(num, "c").desc("alias for quantity").valueDesc("COUNT");
-        cli.opt<int>("n2", 2).desc("no defaultDesc").defaultDesc({});
-        cli.opt<int>("n3", 3).desc("custom defaultDesc").defaultDesc("three");
+        cli.opt("n2", 2).desc("no defaultDesc").defaultDesc({});
+        cli.opt("n3", 3).desc("custom defaultDesc").defaultDesc("three");
         cli.opt<bool>("oversized-for-the-desc-col.")
             .desc("slightly too long option name that also has a long "
                   "description");
-        cli.opt<bool>("s special !S", false).desc("snowflake");
+        cli.opt("s special !S", false).desc("snowflake");
         cli.group("name").title("Name options")
             .optVec<string>("name");
         EXPECT(cli.title() == "Name options");
@@ -924,7 +924,7 @@ Options:
         EXPECT(count == 3);
 
         cli = {};
-        cli.opt<bool>("help. ?", false)
+        cli.opt("help. ?", false)
             .check([](auto & cli, auto & opt, auto &) {
                 if (*opt) {
                     cli.printHelp(cli.conout(), {}, cli.commandMatched());
@@ -947,7 +947,7 @@ Options:
     // multiline footer
     {
         cli = {};
-        cli.opt<bool>(cli.helpOpt(), "no-help.", false).show(false);
+        cli.opt(cli.helpOpt(), "no-help.", false).show(false);
         cli.header("");
         EXPECT(cli.header().size() == 1 && cli.header()[0] == '\0');
         cli.header("Multiline header:\n"
@@ -1023,14 +1023,14 @@ void cmdTests() {
     // subcommands
     {
         Dim::Cli c1;
-        auto & a1 = c1.command("one").cmdTitle("Primary").opt<int>("a", 1);
+        auto & a1 = c1.command("one").cmdTitle("Primary").opt("a", 1);
         EXPECT(c1.cmdTitle() == "Primary");
         c1.desc("First sentence of description. Rest of one's description.");
         Dim::Cli c2;
-        auto & a2 = c2.command("two").cmdGroup("Additional").opt<int>("a", 2);
+        auto & a2 = c2.command("two").cmdGroup("Additional").opt("a", 2);
 
         // create option and hide it underneath an undefined command
-        c2.opt<int>("b", 99).command("three");
+        c2.opt("b", 99).command("three");
 
         EXPECT_PARSE(c1, "one -a3");
         EXPECT(*a1 == 3);
@@ -1298,7 +1298,7 @@ void optCheckTests() {
     // require
     {
         cli = {};
-        auto & count = cli.opt<int>("c", 1).require();
+        auto & count = cli.opt("c", 1).require();
         EXPECT_PARSE(cli, "-c10");
         EXPECT(*count == 10);
         EXPECT_PARSE(cli, {}, false);
@@ -1317,7 +1317,7 @@ void optCheckTests() {
     // clamp and range
     {
         cli = {};
-        auto & count = cli.opt<int>("<count>", 2).clamp(1, 10);
+        auto & count = cli.opt("<count>", 2).clamp(1, 10);
         auto & letter = cli.opt<char>("<letter>").range('a', 'z');
         EXPECT_PARSE(cli, "20 a");
         EXPECT(*count == 10);
@@ -1377,7 +1377,7 @@ Other:
 
     {
         cli = {};
-        auto & on = cli.opt<bool>("on.", true).flagValue();
+        auto & on = cli.opt("on.", true).flagValue();
         auto & notOn = cli.opt(on, "!notOn.").flagValue(true);
         EXPECT_PARSE(cli, "--on");
         EXPECT(*notOn);
@@ -1394,7 +1394,7 @@ Options:
 
     {
         cli = {};
-        auto & opt = cli.opt<int>("x", 1).flagValue(true);
+        auto & opt = cli.opt("x", 1).flagValue(true);
         cli.opt(opt, "y !z", 2).flagValue();
         EXPECT_PARSE(cli, "-y");
         EXPECT(*opt == 2);
@@ -1826,11 +1826,11 @@ void basicTests() {
 
     {
         cli = {};
-        auto & num = cli.opt<int>(" n number ", 1);
+        auto & num = cli.opt(" n number ", 1);
         cli.opt(num, "c");
-        cli.opt<int>("n2", 2);
-        cli.opt<int>("n3", 3);
-        auto & special = cli.opt<bool>("s special !S", false).desc("snowflake");
+        cli.opt("n2", 2);
+        cli.opt("n3", 3);
+        auto & special = cli.opt("s special !S", false).desc("snowflake");
         auto & name = cli.group("name").title("Name options")
             .optVec<string>("name");
         EXPECT(cli.title() == "Name options");
@@ -1870,7 +1870,7 @@ void basicTests() {
 
     {
         cli = {};
-        cli.opt<int>("[]", 1);
+        cli.opt("[]", 1);
         EXPECT_USAGE(cli, {}, 1 + R"(
 Usage: test [--help] [ARG1]
 )");
