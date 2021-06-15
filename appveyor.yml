@@ -43,6 +43,7 @@ environment:
 matrix:
   exclude:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       platform: Win32
     - BUILD_COVERAGE: ON
       configuration: Release
