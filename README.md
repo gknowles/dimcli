@@ -122,8 +122,7 @@ c:\dimcli on a windows machine):
 - Test
   - ctest -C Debug
 - Visual Studio
-  - open dimcli\dimcli.sln (not the one in dimcli\build\dimcli.sln) for github
-    integration to work
+  - open dimcli\build\dimcli.sln
 
 ## Random Thoughts
 Why not a single header file?

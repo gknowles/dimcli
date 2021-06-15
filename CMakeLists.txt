@@ -73,9 +73,6 @@ option(INSTALL_LIBS "Install includes libs" OFF)
 option(INSTALL_TOOLS "Install includes tool binaries" OFF)
 option(INSTALL_TESTS "Install includes test binaries" OFF)
 
-# For internal use by this script
-option(RECURSIVE_GENERATE "Recursive call to cmake" OFF)
-
 # Reference to suppress "not used" warning when manually specified
 set(tmp "${BUILD_COVERAGE}")        # only used by gcc builds
 set(tmp "${CMAKE_BUILD_TYPE}")      # not used (vcpkg sets it)
@@ -317,56 +314,10 @@ else()
 endif()
 string(TOUPPER "${PROJECT_NAME}" DEFINE_PREFIX)
 
-# OUT_OF_TREE is 0 if binary dir is a subdirectory of source dir, else non-zero.
+# OUT_OF_TREE is 0 if binary dir is a subdirectory of source dir, else
+# non-zero.
 string(FIND "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/"
     OUT_OF_TREE)
-
-# In order to put a copy of the solution in the source root (where it's
-# required to be for the github integration) we need to copy - and tweak - it
-# post generation. But cmake doesn't allow for post generation hooks, so we
-# launch another instance of cmake and then transform and copy the solution
-# file after that instance returns.
-if(MSVC AND ROOT_PROJECT AND NOT RECURSIVE_GENERATE AND NOT OUT_OF_TREE)
-    message(STATUS "Recursive generate started")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND}
-            -G "${CMAKE_GENERATOR}"
-            -T "${CMAKE_GENERATOR_TOOLSET}"
-            -A "${CMAKE_GENERATOR_PLATFORM}"
-            -DRECURSIVE_GENERATE:BOOL=ON
-            -DLINK_STATIC_RUNTIME:BOOL=${LINK_STATIC_RUNTIME}
-            -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
-            -DBUILD_UNICODE:BOOL=${BUILD_UNICODE}
-            -DBUILD_TESTING:BOOL=${DBUILD_TESTING}
-            -DBUILD_COVERAGE:BOOL=${DBUILD_COVERAGE}
-            ${CMAKE_SOURCE_DIR}
-    )
-    message(STATUS "Recursive generate done")
-
-    set(sln_binpath ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.sln)
-    if(EXISTS ${sln_binpath})
-        # Load solution file from bin-dir and change the relative references
-        # to project files so that the in memory copy is as if it had been
-        # built in the source dir.
-        file(RELATIVE_PATH prefix
-            "${CMAKE_CURRENT_SOURCE_DIR}"
-            "${CMAKE_CURRENT_BINARY_DIR}")
-        file(READ ${sln_binpath} sln_content)
-        string(REGEX REPLACE
-            "\"([^\"]+).vcxproj\""
-            "\"${prefix}/\\1.vcxproj\""
-            sln_content
-            "${sln_content}")
-
-        # Compare the updated contents with the existing source path sln, if it
-        # exists and is the same we don't want to disturb VS by touching it.
-        set(sln_srcpath ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.sln)
-        update_file("${sln_srcpath}" "${sln_content}")
-    endif()
-
-    # Fall through so that (in addition to a duplicate generate :P) any
-    # --build or --install gets to run with all the facts.
-endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER cmake)
@@ -440,7 +391,8 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
     endif()
     if(BUILD_COVERAGE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+            -fprofile-arcs -ftest-coverage")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
@@ -526,7 +478,7 @@ file(GLOB_RECURSE allnames docs/*)
 list(APPEND sources ${allnames})
 add_file_project(about ${sources})
 
-file(GLOB_RECURSE sources bin/conf/*)
+file(GLOB_RECURSE sources conf/*)
 add_file_project(conf ${sources})
 
 # tool targets
