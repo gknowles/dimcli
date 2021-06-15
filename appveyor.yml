@@ -12,7 +12,7 @@ environment:
       BUILD_COVERAGE: ON
     - CXX: clang++-6.0
       CC: clang-6.0
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       INSTALL_COMPILER: ON
     - CXX: clang++-10
       CC: clang-10
@@ -73,6 +73,7 @@ for:
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
     install:
       - sh: |
             if [ "$INSTALL_COMPILER" = "ON" ]; then
