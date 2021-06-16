@@ -12,7 +12,7 @@ environment:
       BUILD_COVERAGE: ON
     - CXX: clang++-6.0
       CC: clang-6.0
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       INSTALL_COMPILER: ON
     - CXX: clang++-10
       CC: clang-10
