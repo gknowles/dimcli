@@ -2537,13 +2537,13 @@ bool Cli::parse(ostream & os, vector<string> && args) {
 //===========================================================================
 bool Cli::parse(size_t argc, char * argv[]) {
     auto args = toArgv(argc, argv);
-    return parse(args);
+    return parse(move(args));
 }
 
 //===========================================================================
 bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
     auto args = toArgv(argc, argv);
-    return parse(os, args);
+    return parse(os, move(args));
 }
 
 
