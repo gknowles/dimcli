@@ -11,7 +11,7 @@ Distributed under the Boost Software License, Version 1.0.
 
 [av-image]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
 [av-link]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
-[cc-image]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
+[cc-image]: https://img.shields.io/badge/dynamic/json?color=success&label=codecov&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fmaster "Codecov"
 [cc-link]: https://codecov.io/gh/gknowles/dimcli
 
 C++ command line parser toolkit for kids of all ages.
