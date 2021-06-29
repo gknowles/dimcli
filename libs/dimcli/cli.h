@@ -479,8 +479,13 @@ public:
     static std::vector<std::string> toArgv(const std::string & cmdline);
     // Copy array of pointers into vector of args.
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
+    static std::vector<std::string> toArgv(size_t argc, const char * argv[]);
     // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
+    static std::vector<std::string> toArgv(
+        size_t argc,
+        const wchar_t * argv[]
+    );
     // Copy args into vector of args. Arguments must be convertible to string
     // via Convert::toString().
     template <typename ...Args>
@@ -496,9 +501,9 @@ public:
 
     // Parse according to glib conventions, based on the UNIX98 shell spec.
     static std::vector<std::string> toGlibArgv(const std::string & cmdline);
-    // Parse using GNU conventions, same rules as buildargv()
+    // Parse using GNU conventions, same rules as buildargv().
     static std::vector<std::string> toGnuArgv(const std::string & cmdline);
-    // Parse using Windows rules
+    // Parse using Windows conventions.
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
     // Join args into a single command line, escaping as needed, that parses
@@ -508,6 +513,8 @@ public:
     // Join array of pointers into command line, escaping as needed.
     static std::string toCmdline(size_t argc, char * argv[]);
     static std::string toCmdline(size_t argc, const char * argv[]);
+    static std::string toCmdline(size_t argc, wchar_t * argv[]);
+    static std::string toCmdline(size_t argc, const wchar_t * argv[]);
     // Join arguments into command line, escaping as needed. Arguments must be
     // convertible to string via Convert::toString().
     template <typename ...Args>
@@ -515,9 +522,9 @@ public:
 
     // Join according to glib conventions, based on the UNIX98 shell spec.
     static std::string toGlibCmdline(size_t argc, char * argv[]);
-    // Join using GNU conventions, same rules as buildargv()
+    // Join using GNU conventions, same rules as buildargv().
     static std::string toGnuCmdline(size_t argc, char * argv[]);
-    // Join using Windows rules
+    // Join using Windows conventions.
     static std::string toWindowsCmdline(size_t argc, char * argv[]);
 
     //-----------------------------------------------------------------------

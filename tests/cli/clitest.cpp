@@ -1277,9 +1277,16 @@ c\d)", {"ab$c\\d"});
     EXPECT(cli.toCmdline(a1) == cmdline);
     auto p1 = cli.toPtrArgv(a1);
     EXPECT(cli.toCmdline(p1.size(), p1.data()) == cmdline);
-    const wchar_t * wargs[] = { L"a", L"b", L"c", NULL };
-    a1 = cli.toArgv(sizeof wargs / sizeof *wargs - 1, (wchar_t **) wargs);
+    a1 = cli.toArgv(p1.size(), p1.data());
     EXPECT(cli.toCmdline(a1) == cmdline);
+
+    const wchar_t * wargv[] = { L"a", L"b", L"c", NULL };
+    auto wargc = sizeof wargv / sizeof *wargv - 1;
+    a1 = cli.toArgv(wargc, wargv);
+    EXPECT(cli.toCmdline(a1) == cmdline);
+    auto c1 = cli.toCmdline(wargc, wargv);
+    EXPECT(c1 == cmdline);
+
     EXPECT(cli.toCmdlineL("a", 'b', "c"s) == cmdline);
 }
 

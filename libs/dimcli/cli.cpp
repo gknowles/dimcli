@@ -1315,6 +1315,12 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
 
 //===========================================================================
 // static
+vector<string> Cli::toArgv(size_t argc, const char * argv[]) {
+    return toArgv(argc, (char **) argv);
+}
+
+//===========================================================================
+// static
 vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
@@ -1326,6 +1332,12 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     assert(argc == out.size() && !argv[argc]
         && "bad arguments, argc and null terminator don't agree");
     return out;
+}
+
+//===========================================================================
+// static
+vector<string> Cli::toArgv(size_t argc, const wchar_t * argv[]) {
+    return toArgv(argc, (wchar_t **) argv);
 }
 
 //===========================================================================
@@ -1679,6 +1691,18 @@ string Cli::toCmdline(size_t argc, char * argv[]) {
 // static
 string Cli::toCmdline(size_t argc, const char * argv[]) {
     return toCmdline(argc, (char **) argv);
+}
+
+//===========================================================================
+// static
+string Cli::toCmdline(size_t argc, wchar_t * argv[]) {
+    return toCmdline(toArgv(argc, argv));
+}
+
+//===========================================================================
+// static
+string Cli::toCmdline(size_t argc, const wchar_t * argv[]) {
+    return toCmdline(argc, (wchar_t **) argv);
 }
 
 //===========================================================================
