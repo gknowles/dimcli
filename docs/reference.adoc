@@ -30,31 +30,71 @@ Cli::OptVec&lt;T>.
 | Reference to vector of values and metadata for multivalued option.
 |===
 
-== Subcommands
+== Application
 
 [%autowidth]
 |===
-2+| Create
+2+| Configure
 
-| cli.<<guide.adoc#subcommands, command>>
-| Changes config context to reference the options of the selected command. Use
-an empty string to specify the top level context. If a new command is selected
-it is created in the command group of the current context.
+| cli.<<guide.adoc#before-actions, before>>
+| Actions taken after environment variable and response file expansion but
+before any individual arguments are parsed.
 
-| cli.<<guide.adoc#help-subcommand, helpCmd>>
-| Add "help" command that shows the help text for other commands. Allows users
-to run "prog help command" instead of the more awkward "prog command --help".
+| cli.conin
+| Get console input stream that will be used for prompting.
 
-2+h| Configuration
+| cli.conout
+| Get console output stream that will be used for prompting.
 
-| cli.<<guide.adoc#subcommands, action>>
-| Action that should be taken when the currently selected command is run.
-Actions are executed when cli.exec() is called by the application.
+| cli.<<guide.adoc#environment-variable, envOpts>>
+| Environment variable to get initial options from. Defaults to the empty
+string, but when set the content of the named variable is parsed into args
+which are then inserted into the argument list right after arg0.
 
-| cli.<<guide.adoc#external-commands, unknownCmd>>
-| Allows unknown subcommands, and sets the action to run when they occur. After
-parsing cli.commandMatched() and cli.unknownArgs() can be used to get the
-command and it's arguments.
+| cli.<<guide.adoc#help-option, helpNoArgs>>
+| Adds before action that replaces empty command lines with "--help".
+
+| cli.iostreams
+| Changes the streams used for prompting, printing help messages, etc. Mainly
+intended for testing. Setting to null restores the defaults which are cin and
+cout respectively.
+
+| cli.maxWidth
+| Change the column at which errors and help text wraps. Defaults from 80 down
+to 50 depending on width of output console.
+
+| cli.<<guide.adoc#response-files, responseFiles>>
+| Enabled by default, response file expansion replaces arguments of the form
+"@file" with the contents of the file.
+
+2+h| Parse and execute
+
+| cli.<<guide.adoc#subcommands, exec>>
+| Optionally parses, and then executes the action of the matched command;
+returns true if it worked. On failure it's expected to have set exitCode,
+errMsg, and optionally errDetail via fail().
+
+| cli.<<guide.adoc#basic-usage, parse>>
+| Parse the command line, populate the options, and set the error and other
+miscellaneous state. Returns true if processing should continue.
+
+| cli.resetValues
+| Sets all options to their defaults, called internally when parsing starts.
+
+2+h| After parsing
+
+| cli.errMsg
+| Error message, only meaningful when exitCode() != EX_OK
+
+| cli.errDetail
+| Additional information that may help the user correct their mistake, may be
+empty.
+
+| cli.<<guide.adoc#basic-usage, exitCode>>
+| EX_OK (0), EX_USAGE, or any value set by user defined actions.
+
+| cli.progName
+| Program name received in argv[0]
 |===
 
 == Options
@@ -87,7 +127,7 @@ enter it twice.
 | Add --version option that shows "${progName.filename()} version $\{ver}" and
 exits. An empty progName defaults to argv[0].
 
-2+h| Configuration
+2+h| Configure
 
 | opt.<<guide.adoc#after-actions, after>>
 | Action to run after all arguments have been parsed, any number of after
@@ -110,6 +150,9 @@ set of possible values.
 | opt.<<guide.adoc#range-and-clamp, clamp>>
 | Forces the value to be within the range, if it's less than the low it's set
 to the low, if higher than high it's made merely high.
+
+| opt.<<guide.adoc#subcommands, command>>
+| Set subcommand for which this is an option.
 
 | opt.defaultValue
 | Allows the default to be changed after the opt has been created.
@@ -157,27 +200,8 @@ to a minimum of 1 and a maximum of -1 (unlimited).
 | opt.<<guide.adoc#time-units, timeUnits>>
 | Adjusts the value to seconds when time units are present: removes the units
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
-|===
 
-== Parsing and Execution
-
-[%autowidth]
-|===
-2+| Application
-
-| cli.<<guide.adoc#subcommands, exec>>
-| Optionally parses, and then executes the action of the matched command;
-returns true if it worked. On failure it's expected to have set exitCode,
-errMsg, and optionally errDetail via fail().
-
-| cli.<<guide.adoc#basic-usage, parse>>
-| Parse the command line, populate the options, and set the error and other
-miscellaneous state. Returns true if processing should continue.
-
-| cli.resetValues
-| Sets all options to their defaults, called internally when parsing starts.
-
-2+h| Actions
+2+h| Parse
 
 | cli.<<guide.adoc#after-actions, badUsage>>
 | Intended for use from return statements in action callbacks. Sets exit code
@@ -215,35 +239,7 @@ tied to a command line argument.
 | opt.<<guide.adoc#optional-values, implicitValue>>
 | Set option to (or add to option vector) the value for missing optionals.
 
-2+h| Commands
-
-| cli.fail
-| Sets exitCode(), errMsg(), and errDetail(), intended to be called from
-command actions, parsing related failures normally use cli.badUsage() instead.
-
 2+h| After parsing
-
-| cli.<<guide.adoc#external-commands, commandMatched>>
-| Command to run, as determined by the arguments, empty string if there are no
-commands defined or none were matched.
-
-| cli.errMsg
-| Error message, only meaningful when exitCode() != EX_OK
-
-| cli.errDetail
-| Additional information that may help the user correct their mistake, may be
-empty.
-
-| cli.<<guide.adoc#basic-usage, exitCode>>
-| EX_OK (0), EX_USAGE, or any value set by user defined actions.
-
-| cli.progName
-| Program name received in argv[0]
-
-| cli.<<guide.adoc#external-commands, unknownArgs>>
-| If commands are defined, and the matched command is unknown, the unknownArgs
-vector is populated with the all arguments that follow the command. Including
-any that started with "-", as if "--" had been given.
 
 | opt.<<guide.adoc#life-after-parsing, operator bool>>
 | True if the value was populated from the command line, whether the resulting
@@ -278,6 +274,51 @@ check from() to tell the difference.
 
 | opt.<<guide.adoc#counting, size>>
 | Number of values, non-vectors are always 1.
+|===
+
+== Subcommands
+
+[%autowidth]
+|===
+2+| Create
+
+| cli.<<guide.adoc#subcommands, command>>
+| Changes config context to reference the options of the selected command. Use
+an empty string to specify the top level context. If a new command is selected
+it is created in the command group of the current context.
+
+| cli.<<guide.adoc#help-subcommand, helpCmd>>
+| Add "help" command that shows the help text for other commands. Allows users
+to run "prog help command" in addition to the more awkward "prog command
+--help".
+
+2+h| Configure
+
+| cli.<<guide.adoc#subcommands, action>>
+| Action that should be taken when the currently selected command is run.
+Actions are executed when cli.exec() is called by the application.
+
+| cli.<<guide.adoc#external-commands, unknownCmd>>
+| Allows unknown subcommands, and sets the action to run when they occur. After
+parsing cli.commandMatched() and cli.unknownArgs() can be used to get the
+command and it's arguments.
+
+2+h| Execute
+
+| cli.fail
+| Sets exitCode(), errMsg(), and errDetail(), intended to be called from
+command actions, parsing related failures normally use cli.badUsage() instead.
+
+2+h| After parsing
+
+| cli.<<guide.adoc#external-commands, commandMatched>>
+| Command to run, as determined by the arguments, empty string if there are no
+commands defined or none were matched.
+
+| cli.<<guide.adoc#external-commands, unknownArgs>>
+| If commands are defined, and the matched command is unknown, the unknownArgs
+vector is populated with the all arguments that follow the command. Including
+any that started with "-", as if "--" had been given.
 |===
 
 == Help Text
@@ -347,7 +388,7 @@ suppress the entire clause.
 | opt.show
 | Controls whether or not the option appears in help pages.
 
-2+h| Rendering
+2+h| Print
 
 | cli.<<guide.adoc#going-your-own-way, printError>>
 | If exitCode() is not EX_OK, prints the errMsg and errDetail (if present),
@@ -379,6 +420,7 @@ meaning when embedded in the text:
 !===
 ! \a
 ! Set min and max widths of a table column as percentages of console width.
+Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
 ! \b ! Non-breaking space.
 ! \f ! Start of new table.
 ! \r ! Decrease indent of wrapped text.
@@ -388,45 +430,7 @@ meaning when embedded in the text:
 !===
 
 | cli.valueDesc<T>
-| Default friendly name for options of type, used in help text.
-|===
-
-== Configuration
-
-[%autowidth]
-|===
-2+| Miscellaneous
-
-| cli.<<guide.adoc#before-actions, before>>
-| Actions taken after environment variable and response file expansion but
-before any individual arguments are parsed.
-
-| cli.conin
-| Get console input stream that will be used for prompting.
-
-| cli.conout
-| Get console output stream that will be used for prompting.
-
-| cli.<<guide.adoc#environment-variable, envOpts>>
-| Environment variable to get initial options from. Defaults to the empty
-string, but when set the content of the named variable is parsed into args
-which are then inserted into the argument list right after arg0.
-
-| cli.<<guide.adoc#help-option, helpNoArgs>>
-| Adds before action that replaces empty command lines with "--help".
-
-| cli.iostreams
-| Changes the streams used for prompting, printing help messages, etc. Mainly
-intended for testing. Setting to null restores the defaults which are cin and
-cout respectively.
-
-| cli.maxWidth
-| Change the column at which errors and help text wraps. Defaults from 80 down
-to 50 depending on width of output console.
-
-| cli.<<guide.adoc#response-files, responseFiles>>
-| Enabled by default, response file expansion replaces arguments of the form
-"@file" with the contents of the file.
+| Default friendly name for type, such as NUM, FLOAT, or STRING.
 |===
 
 == Conversions
@@ -436,14 +440,20 @@ to 50 depending on width of output console.
 2+| Argv
 
 | Cli::toArgv(string)
-| Parse command line into argument vector of strings, using default conventions
-(Gnu or Windows) of the platform.
+| Parse command line into argument vector of strings (args), using default
+conventions (Gnu or Windows) of the platform.
 
 | Cli::toArgv(argc, argv)
-| Copy array of pointers to argument vector of strings.
+| Copy array of pointers to argument vector of strings (args).
 
 | Cli::toArgvL(arg0, ...)
 | Copy arguments to vector of strings. Uses cvt.toString to convert arguments.
+
+| Cli::toPtrArgv(args)
+| Create vector of pointers suitable for use with argc/argv APIs, has a
+trailing null that is not included in size(). The return values point into the
+source vector of strings and are only valid until that vector is resized or
+destroyed.
 
 | Cli::toGlibArgv(string)
 | Parse according to glib conventions, based on the UNIX98 shell spec.
@@ -452,11 +462,12 @@ to 50 depending on width of output console.
 | Parse using GNU conventions, same rules as buildargv().
 
 | Cli::toWindowsArgv(string)
-| Parse using Windows rules.
+| Parse using Windows conventions.
 
-| Cli::toCmdline(argc, argv)
-| Join array of arguments into a single command line, escaping as needed, that
-will parse back into those same arguments. Uses the default conventions (Gnu or
+| Cli::toCmdline(argc, argv) +
+Cli::toCmdline(args)
+| Join arguments into a single command line, escaping as needed, that will
+parse back into those same arguments. Uses the default conventions (Gnu or
 Windows).
 
 | Cli::toCmdlineL(arg0, ...)
@@ -470,15 +481,15 @@ convert arguments.
 | Join using GNU conventions, same rules as buildargv().
 
 | Cli::toWindowsCmdline
-| Join using Windows rules.
+| Join using Windows conventions.
 
 2+h| Value
 
-| opt.fromString<T>
+| opt.fromString<T> +
 cvt.fromString<T>
 | Parses string into any supported type.
 
-| opt.toString<T>
+| opt.toString<T> +
 cvt.toString<T>
 | Converts value of any supported type into a string.
 |===
