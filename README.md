@@ -33,7 +33,8 @@ C++ command line parser toolkit for kids of all ages.
 ## Sample Usage
 
 Check out the complete [documentation](https://gknowles.github.io/dimcli/),
-you'll be glad you did! Thorough with many examples and a quick reference.
+you'll be glad you did! With many examples and
+[reference](https://gknowles.github.io/dimcli/reference.html).
 
 ~~~ C++
 #include "dimcli/cli.h"
