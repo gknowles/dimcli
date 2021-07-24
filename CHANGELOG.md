@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## Unreleased
 - Cosmetic - Stop using cmake recursively
 - Added - More cli.toArgv() and cli.toCmdline() overloads
+- Fixed - cli.toArgvL() and cli.toCmdlineL() not using std::forward()
 
 ## dimcli 6.1.0 (2021-06-04)
 - Added - cli.printText()

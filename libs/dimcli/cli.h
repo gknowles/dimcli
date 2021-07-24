@@ -489,7 +489,7 @@ public:
     // Copy args into vector of args. Arguments must be convertible to string
     // via Convert::toString().
     template <typename ...Args>
-    static std::vector<std::string> toArgvL(Args... args);
+    static std::vector<std::string> toArgvL(Args &&... args);
 
     // Create vector of pointers suitable for use with argc/argv APIs, has a
     // trailing null that is not included in size(). The return values point
@@ -518,7 +518,7 @@ public:
     // Join arguments into command line, escaping as needed. Arguments must be
     // convertible to string via Convert::toString().
     template <typename ...Args>
-    static std::string toCmdlineL(Args... args);
+    static std::string toCmdlineL(Args &&... args);
 
     // Join according to glib conventions, based on the UNIX98 shell spec.
     static std::string toGlibCmdline(size_t argc, char * argv[]);
@@ -1129,19 +1129,19 @@ bool Cli::Convert::toString_impl(
 
 //===========================================================================
 template <typename ...Args>
-std::vector<std::string> Cli::toArgvL(Args... args) {
+std::vector<std::string> Cli::toArgvL(Args &&... args) {
     std::string tmp;
     Convert cvt;
-    std::vector<std::string> vargs = {
-        ((void) cvt.toString(tmp, args), tmp)...
+    std::vector<std::string> out = {
+        ((void) cvt.toString(tmp, std::forward<Args>(args)), tmp)...
     };
-    return vargs;
+    return out;
 }
 
 //===========================================================================
 template <typename ...Args>
-std::string Cli::toCmdlineL(Args... args) {
-    return toCmdline(toArgvL(args...));
+std::string Cli::toCmdlineL(Args &&... args) {
+    return toCmdline(toArgvL(std::forward<Args>(args)...));
 }
 
 
