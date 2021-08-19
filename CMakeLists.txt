@@ -14,6 +14,7 @@
 #   /<project_name>/libs/<lib_project_name>/**
 #   /<project_name>/libs/${PROJECT_NAME}/config.h - may be modified by the
 #       install task, see "Installing" below.
+#   /<project_name>/testlibs/<test_lib_project_name>/**
 #   /<project_name>/tests/<test_project_name>/**
 #   /<project_name>/tools/<tool_project_name>/**
 #   /<project_name>/vendor/<vendor_project_name>/ - only if
@@ -35,7 +36,8 @@
 # with the correct dllexport/dllimport attributes.
 #
 # Testing:
-# CTest will run all tests, and pass them the "--test" argument.
+# CTest will run all tests, and pass them the "--test" argument. The testlibs
+# contain compile time tests that are never run or linked to anything else.
 #
 # Installing:
 # By default nothing is installed. Installation of libs, tools, and tests
@@ -122,7 +124,10 @@ function(update_deps_file)
     include(${deps_file})
 endfunction()
 
-function(write_predefined_target_user_file prjname)
+# Available options:
+#   "debug" - include default debugger settings
+#   "props" - import global and project specific *.user.props files
+function(write_user_file prjname opts)
     if(NOT MSVC)
         return()
     endif()
@@ -132,50 +137,41 @@ function(write_predefined_target_user_file prjname)
 <Project ToolsVersion="4.0"
         xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 ]=])
-    file(GLOB props LIST_DIRECTORIES false
-        "${CMAKE_SOURCE_DIR}/*.user.props")
-    foreach(propfile ${props})
-        file(APPEND ${user_file} [=[
-    <Import Project="]=] "${propfile}" [=["/>
-]=])
-    endforeach()
-    file(APPEND ${user_file} [=[
-</Project>
-]=])
-endfunction()
-
-function(write_user_file prjname)
-    if(NOT MSVC)
-        return()
-    endif()
-    set(user_file "${CMAKE_CURRENT_BINARY_DIR}/${prjname}.vcxproj.user")
-    file(WRITE ${user_file} [=[
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0"
-        xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-]=])
-    foreach(cfgname ${CMAKE_CONFIGURATION_TYPES})
-        if(${cfgname} STREQUAL Release)
-            set(libpath "lib")
-        else()
-            set(libpath "${cfgname}/lib")
-        endif()
-        set(cfgplat "${cfgname}|${MSVC_CXX_ARCHITECTURE_ID}")
-        file(APPEND ${user_file} [=[
+    list(FIND opts debug hasOpt)
+    if(NOT ${hasOpt} EQUAL -1)
+        foreach(cfgname ${CMAKE_CONFIGURATION_TYPES})
+            if(${cfgname} STREQUAL Release)
+                set(libpath "lib")
+            else()
+                set(libpath "${cfgname}/lib")
+            endif()
+            set(cfgplat "${cfgname}|${MSVC_CXX_ARCHITECTURE_ID}")
+            file(APPEND ${user_file} [=[
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'==']=] "${cfgplat}" [=['">
         <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
         <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
         <VcpkgLibPath>]=] "${libpath}" [=[</VcpkgLibPath>
     </PropertyGroup>
 ]=])
-    endforeach()
-    file(GLOB props LIST_DIRECTORIES false
-        "${CMAKE_SOURCE_DIR}/*.user.props")
-    foreach(propfile ${props})
-        file(APPEND ${user_file} [=[
+        endforeach()
+    endif()
+    list(FIND opts props hasOpt)
+    if(NOT ${hasOpt} EQUAL -1)
+        if(TARGET ${prjname})
+            get_target_property(srcdir ${prjname} SOURCE_DIR)
+            file(GLOB props LIST_DIRECTORIES false
+                "${srcdir}/*.user.props"
+                "${CMAKE_SOURCE_DIR}/*.user.props")
+        else()
+            file(GLOB props LIST_DIRECTORIES false
+                "${CMAKE_SOURCE_DIR}/*.user.props")
+        endif()
+        foreach(propfile ${props})
+            file(APPEND ${user_file} [=[
     <Import Project="]=] "${propfile}" [=["/>
 ]=])
-    endforeach()
+        endforeach()
+    endif()
     file(APPEND ${user_file} [=[
 </Project>
 ]=])
@@ -234,7 +230,7 @@ function(add_exec_project tgt srcdir)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
         target_link_libraries(${tgt} "stdc++fs")
     endif()
-    write_user_file(${tgt})
+    write_user_file(${tgt} "debug;props")
 endfunction()
 
 function(add_lib_project tgt srcdir)
@@ -273,7 +269,7 @@ function(add_lib_project tgt srcdir)
             endif()
         endforeach()
     endif()
-    write_user_file(${tgt})
+    write_user_file(${tgt} "debug;props")
 endfunction()
 
 function(add_file_project tgt)
@@ -357,12 +353,13 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
     if(FALSE AND NOT MSVC_VERSION LESS 1928)
         # "/fsanitize=address" - enables ASAN memory error detector
+        # "/Zi" - debug info format (not present would be no info)
         set(CMAKE_CXX_FLAGS_DEBUG
-            "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address")
+            "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi")
     else()
         # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
         # "/ZI" - debug with edit and continue (disables some optimizations)
-        set(CMAKE_CXX_FLAGS_DEBUG "/Od /RTC1 /ZI")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /RTC1 /ZI")
     endif()
     if(LINK_STATIC_RUNTIME)
         # "/MTd" - multithread debug static runtime
@@ -516,6 +513,16 @@ foreach(var ${allnames})
     endif()
 endforeach()
 
+# test lib targets - use for compile only tests, never linked
+file(GLOB allnames testlibs/*)
+foreach(var ${allnames})
+    if(IS_DIRECTORY "${var}")
+        get_filename_component(prjname "${var}" NAME)
+        add_lib_project(${prjname} "${var}")
+        set_target_properties(${prjname} PROPERTIES FOLDER testlibs)
+    endif()
+endforeach()
+
 # update deps file
 update_deps_file(${deps})
 
@@ -539,7 +546,7 @@ endif()
 
 # Add settings for predefined cmake targets
 foreach(tgt ALL_BUILD PACKAGE ZERO_CHECK INSTALL RUN_TESTS)
-    write_predefined_target_user_file("${tgt}")
+    write_user_file("${tgt}" "props")
 endforeach()
 
 include(CPack)
