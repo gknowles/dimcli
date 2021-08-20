@@ -1,0 +1,48 @@
+﻿<!--
+Copyright Glen Knowles 2021.
+Distributed under the Boost Software License, Version 1.0.
+
+cmtupd config file
+https://github.com/gknowles/dimapp/tree/master/tools/cmtupd
+-->
+<Comments>
+  <Rule name="Copyright">
+    <Var name="Owner" value="Glen Knowles"/>
+    <Match regex="{Prefix}Copyright {Owner} (\d\d\d\d)(?: - (\d\d\d\d))?\."
+        replace="{Prefix}Copyright {Owner} {FirstYear} - {$CurrentYear}.">
+      <Capture var="FirstYear"/>
+      <Capture var="LastYear" default="{FirstYear}"/>
+    </Match>
+    <Group>
+      <File regex="CMakeLists\.txt"/>
+      <File regex=".*\.cmake"/>
+      <File regex=".*\.yaml"/>
+      <File regex=".*\.yml"/>
+      <Exclude regex="CMakeDeps\.cmake"/>
+      <Var name="Prefix" value="# "/>
+    </Group>
+    <Group>
+      <File regex=".*\.adoc"/>
+      <File regex=".*\.md"/>
+      <File regex=".*\.natvis"/> <!-- xml -->
+      <File regex=".*\.xml"/>
+      <File regex=".*\.xml\.sample"/>
+      <File regex=".*\.xsd"/>
+      <Var name="Prefix" value=""/>
+    </Group>
+    <Group>
+      <File regex=".*\.cpp"/>
+      <File regex=".*\.h"/>
+      <Exclude regex="tests/perf/args\.h"/>
+      <Var name="Prefix" value="// "/>
+    </Group>
+    <Group>
+      <File regex=".*\.abnf"/>
+      <Var name="Prefix" value="; "/>
+    </Group>
+    <Group>
+      <File regex=".*\.bat"/>
+      <Var name="Prefix" value=":: "/>
+    </Group>
+  </Rule>
+</Comments>
