@@ -21,4 +21,5 @@
 # tests/perf/pch.cpp
 # tests/perf/pch.h
 # tests/perf/perftest.cpp
+# tests/repro/main.cpp
 # vendor/gh-pages
