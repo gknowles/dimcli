@@ -272,14 +272,17 @@ public:
 
     // Changes config context to point at the selected option group of the
     // current command, that you can then start stuffing things into.
-    Cli & group(const std::string & name);
+    Cli & group(const std::string & name) &;
+    Cli group(const std::string & name) && { return group(name); }
 
     // Heading title to display, defaults to group name. If empty there will
     // be a single blank line separating this group from the previous one.
-    Cli & title(const std::string & val);
+    Cli & title(const std::string & val) &;
+    Cli title(const std::string & val) && { return title(val); }
 
     // Option groups are sorted by key, defaults to group name.
-    Cli & sortKey(const std::string & key);
+    Cli & sortKey(const std::string & key) &;
+    Cli sortKey(const std::string & key) && { return sortKey(key); }
 
     const std::string & group() const { return m_group; }
     const std::string & title() const;
@@ -290,7 +293,10 @@ public:
     // command. Use an empty string to specify the top level context. If a new
     // command is selected it is created in the command group of the current
     // context.
-    Cli & command(const std::string & name, const std::string & group = {});
+    Cli & command(const std::string & name, const std::string & group = {}) &;
+    Cli command(const std::string & name, const std::string & group = {}) && {
+        return command(name, group);
+    }
 
     // Function signature of actions that are tied to commands.
     using ActionFn = void(Cli & cli);
@@ -306,7 +312,8 @@ public:
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
     // handling in main to wait for it to complete.
-    Cli & action(std::function<ActionFn> fn);
+    Cli & action(std::function<ActionFn> fn) &;
+    Cli action(std::function<ActionFn> fn) && { return action(fn); }
 
     // Arbitrary text can be added to the help text for each command, this text
     // can come before the usage (header), immediately after the usage (desc),
@@ -318,9 +325,12 @@ public:
     // The text is run through cli.printText(), so use line breaks only for
     // paragraph breaks, and let the automatic line wrapping take care of the
     // rest.
-    Cli & header(const std::string & val);
-    Cli & desc(const std::string & val);
-    Cli & footer(const std::string & val);
+    Cli & header(const std::string & val) &;
+    Cli header(const std::string & val) && { return header(val); }
+    Cli & desc(const std::string & val) &;
+    Cli desc(const std::string & val) && { return desc(val); }
+    Cli & footer(const std::string & val) &;
+    Cli footer(const std::string & val) && { return footer(val); }
 
     const std::string & command() const { return m_command; }
     const std::string & header() const;
@@ -330,16 +340,21 @@ public:
     // Add "help" command that shows the help text for other commands. Allows
     // users to run "prog help command" instead of the slightly more awkward
     // "prog command --help".
-    Cli & helpCmd();
+    Cli & helpCmd() &;
+    Cli helpCmd() && { return helpCmd(); }
 
     // Allows unknown subcommands, and sets either a default action, which
     // errors out, or a custom action to run when there is an unknown command.
     // Use cli.commandMatched() and cli.unknownArgs() to determine the command
     // and it's arguments.
-    Cli & unknownCmd(std::function<ActionFn> fn = {});
+    Cli & unknownCmd(std::function<ActionFn> fn = {}) &;
+    Cli unknownCmd(std::function<ActionFn> fn = {}) && {
+        return unknownCmd(fn);
+    }
 
     // Adds before action that replaces the empty command line with "--help".
-    Cli & helpNoArgs();
+    Cli & helpNoArgs() &;
+    Cli helpNoArgs() && { return helpNoArgs(); }
 
     //-----------------------------------------------------------------------
     // A command group collects commands into sections in the help text, in the
@@ -352,14 +367,17 @@ public:
     // Setting the command group at the top level (the "" command) only serves
     // to set the initial command group for new commands created while in the
     // top level context.
-    Cli & cmdGroup(const std::string & name);
+    Cli & cmdGroup(const std::string & name) &;
+    Cli cmdGroup(const std::string & name) && { return cmdGroup(name); }
 
     // Heading title to display, defaults to group name. If empty there will be
     // a single blank line separating this group from the previous one.
-    Cli & cmdTitle(const std::string & val);
+    Cli & cmdTitle(const std::string & val) &;
+    Cli cmdTitle(const std::string & val) && { return cmdTitle(val); }
 
     // Command groups are sorted by key, defaults to group name.
-    Cli & cmdSortKey(const std::string & key);
+    Cli & cmdSortKey(const std::string & key) &;
+    Cli cmdSortKey(const std::string & key) && { return cmdSortKey(key); }
 
     const std::string & cmdGroup() const;
     const std::string & cmdTitle() const;
@@ -374,13 +392,15 @@ public:
     // function should:
     //  - inspect and possibly modify the raw arguments coming in
     //  - return false if parsing should stop, via badUsage() for errors
-    Cli & before(std::function<BeforeFn> fn);
+    Cli & before(std::function<BeforeFn> fn) &;
+    Cli before(std::function<BeforeFn> fn) && { return before(fn); }
 
 #if !defined(DIMCLI_LIB_NO_ENV)
     // Environment variable to get initial options from. Defaults to the empty
     // string, but when set the content of the named variable is parsed into
     // args which are then inserted into the argument list right after arg0.
-    void envOpts(const std::string & envVar);
+    Cli & envOpts(const std::string & envVar) &;
+    Cli envOpts(const std::string & envVar) && { return envOpts(envVar); }
 #endif
 
     // Change the column at which errors and help text wraps. When there is a
@@ -390,16 +410,23 @@ public:
     //
     // By default min(max)DescCol are derived from maxWidth, and maxWidth
     // defaults to the width of the console clamped from 50 to 80 columns.
-    void maxWidth(int maxWidth, int minDescCol = 0, int maxDescCol = 0);
+    Cli & maxWidth(int maxWidth, int minDescCol = 0, int maxDescCol = 0) &;
+    Cli maxWidth(int maxW, int minDescCol = 0, int maxDescCol = 0) && {
+        return maxWidth(maxW, minDescCol, maxDescCol);
+    }
 
     // Enabled by default, response file expansion replaces arguments of the
     // form "@file" with the contents of the named file.
-    void responseFiles(bool enable = true);
+    Cli & responseFiles(bool enable = true) &;
+    Cli responseFiles(bool enable = true) && { return responseFiles(enable); }
 
     // Changes the streams used for prompting, printing help messages, etc.
     // Mainly intended for testing. Setting to null restores the defaults
     // which are cin and cout respectively.
-    Cli & iostreams(std::istream * in, std::ostream * out);
+    Cli & iostreams(std::istream * in, std::ostream * out) &;
+    Cli iostreams(std::istream * in, std::ostream * out) && {
+        return iostreams(in, out);
+    }
     std::istream & conin();
     std::ostream & conout();
 
@@ -472,7 +499,8 @@ public:
 
     // Sets all options to their defaults, called internally when parsing
     // starts.
-    Cli & resetValues();
+    Cli & resetValues() &;
+    Cli resetValues() &&;
 
     // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.
