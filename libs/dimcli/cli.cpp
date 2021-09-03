@@ -1088,15 +1088,30 @@ Cli & Cli::group(const string & name) & {
 }
 
 //===========================================================================
+Cli && Cli::group(const string & name) && {
+    return move(group(name));
+}
+
+//===========================================================================
 Cli & Cli::title(const string & val) & {
     Config::findGrpAlways(*this).title = val;
     return *this;
 }
 
 //===========================================================================
+Cli && Cli::title(const string & val) && {
+    return move(title(val));
+}
+
+//===========================================================================
 Cli & Cli::sortKey(const string & val) & {
     Config::findGrpAlways(*this).sortKey = val;
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::sortKey(const string & val) && {
+    return move(sortKey(val));
 }
 
 //===========================================================================
@@ -1118,9 +1133,19 @@ Cli & Cli::command(const string & name, const string & grpName) & {
 }
 
 //===========================================================================
+Cli && Cli::command(const string & name, const string & grpName) && {
+    return move(command(name, grpName));
+}
+
+//===========================================================================
 Cli & Cli::action(function<ActionFn> fn) & {
     Config::findCmdAlways(*this).action = move(fn);
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::action(function<ActionFn> fn) && {
+    return move(action(fn));
 }
 
 //===========================================================================
@@ -1133,9 +1158,19 @@ Cli & Cli::header(const string & val) & {
 }
 
 //===========================================================================
+Cli && Cli::header(const string & val) && {
+    return move(header(val));
+}
+
+//===========================================================================
 Cli & Cli::desc(const string & val) & {
     Config::findCmdAlways(*this).desc = val;
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::desc(const string & val) && {
+    return move(desc(val));
 }
 
 //===========================================================================
@@ -1145,6 +1180,11 @@ Cli & Cli::footer(const string & val) & {
     if (ftr.empty())
         ftr.push_back('\0');
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::footer(const string & val) && {
+    return move(footer(val));
 }
 
 //===========================================================================
@@ -1179,6 +1219,11 @@ Cli & Cli::helpCmd() & {
 }
 
 //===========================================================================
+Cli && Cli::helpCmd() && {
+    return move(helpCmd());
+}
+
+//===========================================================================
 Cli & Cli::unknownCmd(function<ActionFn> fn) & {
     m_cfg->allowUnknown = true;
     m_cfg->unknownCmd = move(fn);
@@ -1186,8 +1231,18 @@ Cli & Cli::unknownCmd(function<ActionFn> fn) & {
 }
 
 //===========================================================================
+Cli && Cli::unknownCmd(function<ActionFn> fn) && {
+    return move(unknownCmd(fn));
+}
+
+//===========================================================================
 Cli & Cli::helpNoArgs() & {
     return before(helpBeforeAction);
+}
+
+//===========================================================================
+Cli && Cli::helpNoArgs() && {
+    return move(helpNoArgs());
 }
 
 //===========================================================================
@@ -1198,15 +1253,30 @@ Cli & Cli::cmdGroup(const string & name) & {
 }
 
 //===========================================================================
+Cli && Cli::cmdGroup(const string & name) && {
+    return move(cmdGroup(name));
+}
+
+//===========================================================================
 Cli & Cli::cmdTitle(const string & val) & {
     Config::findCmdGrpAlways(*this).title = val;
     return *this;
 }
 
 //===========================================================================
+Cli && Cli::cmdTitle(const string & val) && {
+    return move(cmdTitle(val));
+}
+
+//===========================================================================
 Cli & Cli::cmdSortKey(const string & key) & {
     Config::findCmdGrpAlways(*this).sortKey = key;
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::cmdSortKey(const string & key) && {
+    return move(cmdSortKey(key));
 }
 
 //===========================================================================
@@ -1230,11 +1300,21 @@ Cli & Cli::before(function<BeforeFn> fn) & {
     return *this;
 }
 
+//===========================================================================
+Cli && Cli::before(function<BeforeFn> fn) && {
+    return move(before(fn));
+}
+
 #if !defined(DIMCLI_LIB_NO_ENV)
 //===========================================================================
 Cli & Cli::envOpts(const string & var) & {
     m_cfg->envOpts = var;
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::envOpts(const string & var) && {
+    return move(envOpts(var));
 }
 #endif
 
@@ -1245,10 +1325,20 @@ Cli & Cli::responseFiles(bool enable) & {
 }
 
 //===========================================================================
+Cli && Cli::responseFiles(bool enable) && {
+    return move(responseFiles(enable));
+}
+
+//===========================================================================
 Cli & Cli::iostreams(istream * in, ostream * out) & {
     m_cfg->conin = in ? in : &cin;
     m_cfg->conout = out ? out : &cout;
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::iostreams(istream * in, ostream * out) && {
+    return move(iostreams(in, out));
 }
 
 //===========================================================================
@@ -1269,6 +1359,11 @@ Cli & Cli::maxWidth(int maxWidth, int minDescCol, int maxDescCol) & {
     if (maxDescCol)
         m_cfg->maxKeyWidth = 100.0f * maxDescCol / maxWidth;
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::maxWidth(int maxW, int minDescCol, int maxDescCol) && {
+    return move(maxWidth(maxW, minDescCol, maxDescCol));
 }
 
 //===========================================================================
@@ -1995,6 +2090,11 @@ Cli & Cli::resetValues() & {
     m_cfg->command.clear();
     m_cfg->unknownArgs.clear();
     return *this;
+}
+
+//===========================================================================
+Cli && Cli::resetValues() && {
+    return move(resetValues());
 }
 
 //===========================================================================
