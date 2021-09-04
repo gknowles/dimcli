@@ -462,7 +462,7 @@ void parseTests() {
     EXPECT_PARSE(cli, "--help=x", false);
     EXPECT_ERR(cli, "Error: Invalid '--help' value: x\n");
 
-    cli.helpCmd();
+    CliTest(cli).helpCmd();
     EXPECT_PARSE(cli, "x", false);
     EXPECT_ERR(cli, "Error: Unknown command: x\n");
 
@@ -642,7 +642,7 @@ AAAAA   aaaaaaaa
 
     // indent and unindent wrapped lines
     out.str({});
-    cli.maxWidth(50);
+    CliTest(cli).maxWidth(50);
     raw = "\fnone\tThe quick brown fox jumped over the lazy dog.\n"
         "\fchild +2\t\v\vThe quick brown fox jumped over the lazy dog.\n"
         "\fpara +2\t\r\r  The quick brown fox jumped over the lazy dog.\n"
@@ -725,7 +725,7 @@ Usage: test
         cli.group({}).optVec<string>("[KEY]").desc(
             "it's the key arguments with a very long description that "
             "wraps the line at least once, maybe more.");
-        cli.title(
+        CliTest(cli).title(
             "Long explanation of this very short set of options, it's so "
             "long that it even wraps around to the next line");
         EXPECT_HELP(cli, {}, 1 + R"(
@@ -896,7 +896,7 @@ Options:
     // helpNoArgs (aka before action)
     {
         cli = {};
-        cli.helpNoArgs();
+        CliTest(cli).helpNoArgs();
         out.clear();
         out.str({});
         cli.iostreams(nullptr, &out);
@@ -948,16 +948,16 @@ Options:
     {
         cli = {};
         cli.opt(cli.helpOpt(), "no-help.", false).show(false);
-        cli.header("");
+        CliTest(cli).header("");
         EXPECT(cli.header().size() == 1 && cli.header()[0] == '\0');
         cli.header("Multiline header:\n"
                    "- second line\n");
-        cli.footer("");
+        CliTest(cli).footer("");
         EXPECT(cli.footer().size() == 1 && cli.footer()[0] == '\0');
         cli.footer("Multiline footer:\n"
                    "- first reference\n"
                    "- second reference\n");
-        cli.desc("Description.");
+        CliTest(cli).desc("Description.");
         EXPECT(cli.desc() == "Description.");
         EXPECT_HELP(cli, "", 1 + R"(
 Multiline header:
@@ -985,9 +985,11 @@ Multiline footer:
     // group sortKey
     {
         cli = {};
-        cli.group("One").sortKey("1").opt("1", true).desc("First option.");
+        cli.group("One").sortKey("1")
+            .opt("1", true).desc("First option.");
         EXPECT(cli.sortKey() == "1");
-        cli.group("Two").sortKey("2").opt("2", true).desc("Second option.");
+        CliTest(cli).group("Two").sortKey("2").opt("2", true)
+            .desc("Second option.");
         cli.group("Three").sortKey("3").opt("3", true).desc("Third option.");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
@@ -1020,7 +1022,7 @@ void cmdTests() {
     istringstream in;
     ostringstream out;
 
-    // subcommands
+    // subcommands - multiple handles to shared configuration
     {
         Dim::Cli c1;
         auto & a1 = c1.command("one").cmdTitle("Primary").opt("a", 1);
@@ -1040,7 +1042,7 @@ void cmdTests() {
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);
         EXPECT_ERR(c2, "Error: Command 'two': No value given for -a\n");
-        EXPECT(c1.resetValues().exec() == Dim::kExitUsage);
+        EXPECT(Dim::Cli(c1).resetValues().exec() == Dim::kExitUsage);
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
         EXPECT(c1.exec() == Dim::kExitSoftware);
@@ -1083,9 +1085,11 @@ Options:
     {
         cli = {};
         cli.command("1a").cmdGroup("First").cmdSortKey("1");
+
         EXPECT(cli.cmdSortKey() == "1");
         cli.command("1b");
-        cli.command("2a").cmdGroup("Second").cmdSortKey("2");
+        CliTest(cli).command("2a").cmdGroup("Second").cmdSortKey("2")
+            .cmdTitle("Second");
         cli.command("3a").cmdGroup("Third").cmdSortKey("3");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] COMMAND [ARGS...]
@@ -1136,7 +1140,7 @@ Usage: test unknown [ARGS...]
     // unknownCommand
     {
         cli = {};
-        cli.unknownCmd();
+        CliTest(cli).unknownCmd();
         cli.unknownCmd([](auto &) {
             return true;
         });
@@ -1474,7 +1478,7 @@ void responseTests() {
 
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid response file: test/does_not_exist.rsp\n");
-    cli.responseFiles(false);
+    CliTest(cli).responseFiles(false);
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp");
     EXPECT(args && args[0] == "@test/does_not_exist.rsp");
     cli.responseFiles(true);
@@ -1583,7 +1587,7 @@ void execTests() {
 
     {
         cli = {};
-        cli.action([](auto &) {});
+        CliTest(cli).action([](auto &) {});
         auto rc = cli.exec(nargsNone, (char **) argsNone);
         EXPECT(rc == Dim::kExitOk);
         out.clear();
@@ -2101,7 +2105,7 @@ Options:
         in.clear();
         in.str("secret\nsecret\n");
         out.str({});
-        cli.iostreams(&in, &out);
+        CliTest(cli).iostreams(&in, &out);
         EXPECT_PARSE(cli);
         EXPECT(*pass == "secret");
         EXPECT(out.str() == "Password: \nEnter again to confirm: \n");
@@ -2181,7 +2185,7 @@ Options:
 //===========================================================================
 void beforeTests() {
     CliTest cli;
-    cli.before([](auto & cli, auto & args) {
+    CliTest(cli).before([](auto & cli, auto & args) {
         if (args.size() > 1)
             return cli.fail(Dim::kExitUsage, "Too many args");
         return true;
@@ -2206,7 +2210,7 @@ void envTests() {
 
     cli = {};
     auto & args = cli.optVec<string>("[ARGS]");
-    cli.envOpts("TEST_OPTS");
+    CliTest(cli).envOpts("TEST_OPTS");
     result = putenv((char *) "TEST_OPTS=");
     EXPECT(!result);
     EXPECT_PARSE(cli, "c d");

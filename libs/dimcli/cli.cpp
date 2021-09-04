@@ -1226,7 +1226,8 @@ const string & Cli::footer() const {
 
 //===========================================================================
 Cli & Cli::helpCmd() & {
-    // Use new instance so the current context command is preserved.
+    // Use new instance so the current context (command and option group) is
+    // preserved.
     Cli cli{*this};
     cli.command("help")
         .cmdGroup(kInternalOptionGroup)
