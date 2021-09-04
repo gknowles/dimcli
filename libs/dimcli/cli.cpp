@@ -12,6 +12,7 @@
 #include "cli.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -234,13 +235,13 @@ struct Cli::Config {
 };
 
 
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
 /****************************************************************************
 *
-*   Code coverage testing of asserts
+*   Hook for testing asserts
 *
 ***/
 
-#ifdef DIMCLI_LIB_BUILD_COVERAGE
 static atomic<AssertHandlerFn> s_assertFn;
 
 //===========================================================================
