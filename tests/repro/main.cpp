@@ -8,12 +8,6 @@
 
 using namespace std;
 
-#ifdef DIMCLI_LIB_BUILD_COVERAGE
-//===========================================================================
-void Dim::assertHandler(const char text[], unsigned line)
-{}
-#endif
-
 static auto & yell = Dim::Cli().opt<bool>("yell.").desc("Say it loud.");
 static auto command = Dim::Cli().command("apple").desc("Change color of the apple.");
 static auto & color = command.opt<string>("color", "red");

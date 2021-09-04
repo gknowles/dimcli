@@ -236,6 +236,28 @@ struct Cli::Config {
 
 /****************************************************************************
 *
+*   Code coverage testing of asserts
+*
+***/
+
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+static atomic<AssertHandlerFn> s_assertFn;
+
+//===========================================================================
+AssertHandlerFn Dim::setAssertHandler(AssertHandlerFn fn) {
+    return s_assertFn.exchange(fn);
+}
+
+//===========================================================================
+void Dim::doAssert(const char expr[], unsigned line) {
+    if (auto fn = s_assertFn.load())
+        (*fn)(expr, line);
+}
+#endif
+
+
+/****************************************************************************
+*
 *   Helpers
 *
 ***/

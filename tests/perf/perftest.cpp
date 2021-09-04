@@ -8,12 +8,6 @@
 
 using namespace std::chrono;
 
-#ifdef DIMCLI_LIB_BUILD_COVERAGE
-//===========================================================================
-void Dim::assertHandler(const char text[], unsigned line)
-{}
-#endif
-
 //===========================================================================
 static bool doubleequals(const double a, const double b) {
     static const double delta = 0.0001;

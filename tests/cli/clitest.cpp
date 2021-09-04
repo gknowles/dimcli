@@ -170,7 +170,7 @@ struct AssertInfo {
 vector<AssertInfo> s_asserts;
 
 //===========================================================================
-void Dim::assertHandler(const char expr[], unsigned line) {
+static void assertHandler(const char expr[], unsigned line) {
     s_asserts.push_back({expr, line});
 }
 
@@ -2273,6 +2273,7 @@ static int runTests(bool prompt) {
     cli.maxWidth(80);
 
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
+    Dim::setAssertHandler(assertHandler);
     assertTests();
 #endif
 

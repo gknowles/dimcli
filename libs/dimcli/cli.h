@@ -159,11 +159,13 @@
 namespace Dim {
 
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
-void assertHandler(const char expr[], unsigned line);
+using AssertHandlerFn = void(*)(const char expr[], unsigned line);
+AssertHandlerFn setAssertHandler(AssertHandlerFn fn);
+void doAssert(const char expr[], unsigned line);
 
 #undef assert
 #define assert(expr) \
-    (void) ( (!!(expr)) || (Dim::assertHandler(#expr, unsigned(__LINE__)), 0) )
+    (void) ( (!!(expr)) || (Dim::doAssert(#expr, unsigned(__LINE__)), 0) )
 #endif
 
 
