@@ -429,7 +429,7 @@ Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
 ! SP ! Increase indent of paragraph or column text.
 !===
 
-| cli.valueDesc<T>
+| cli.<<guide.adoc#value-description, valueDesc>><T>
 | Default friendly name for type, such as NUM, FLOAT, or STRING.
 |===
 
