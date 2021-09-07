@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 6.2.0 (2021-09-06)
 - Cosmetic - Stop using cmake recursively
 - Added - More cli.toArgv() and cli.toCmdline() overloads
 - Fixed - cli.toArgvL() and cli.toCmdlineL() not using std::forward()
