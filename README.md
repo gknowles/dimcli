@@ -97,8 +97,7 @@ All you need is:
 - vcpkg install dimcli
 
 ### Using cmake
-Get the latest snapshot:
-[dimcli 6.2.0](https://github.com/gknowles/dimcli/archive/v6.2.0.zip)
+Get the latest dimcli [release](https://github.com/gknowles/dimcli/releases).
 
 Build it (this example uses Visual C++ 2015 to install a 64-bit build to
 c:\dimcli on a windows machine):
