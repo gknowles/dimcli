@@ -2232,7 +2232,7 @@ cli.desc("Description of what the command does, including any general "
     "discussion of the various aspects of its use.");
 cli.opt<bool>("[OPERAND]");
 cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
-cli.opt<int>("p", 1).desc("Option p.");
+cli.opt<long long>("p", 1).valueDesc("NUM64").desc("Option p.");
 cli.opt<int>("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
 cli.opt<int>("r", 3).desc("Option r.").defaultDesc("");
 cli.footer(
@@ -2256,7 +2256,7 @@ various aspects of its use.
 
 Options:
   --option=OPT_VAL  About this option.
-  -p NUM            Option p. (default: 1)
+  -p NUM64          Option p. (default: 1)
   -q NUM            Option q. (default: two, yes TWO!)
   -r NUM            Option r.
 
@@ -2267,6 +2267,38 @@ Footer at end, usually with where to find more info.
 - second reference
 ----
 
+==== Value description
+Value descriptions like OPT_VAL and NUM64 can be changed per option as shown
+above, but you can also change the default for a type by specializing
+Cli::valueDesc&lt;>(). For example, we can change the default for "long long"
+instead of explicitly overriding it for -p.
+
+Add the specialization:
+
+[source, C++, test repl 0 0]
+----
+template <>
+inline string Dim::Cli::valueDesc<long long>() {
+    return "NUM64";
+}
+
+----
+
+And remove the call to opt.valueDesc() from the "p" option:
+
+[source, C++, test repl 12 1]
+----
+cli.opt<long long>("p", 1).desc("Option p.");
+----
+
+The help text will be the same.
+
+[source, shell session, test repl 0 1]
+////
+$ a.out --help
+////
+++++
+++++
 
 === Option Groups
 Option groups are used to collect related options together in the help text. In
