@@ -50,8 +50,8 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
       <SetEnv regex="^\$\sexport\s&quot;([^=&quot;]+)=([^&quot;]*)&quot;$"/>
       <Shell>
         <Arg value="cmd"/>
-        <Arg value="/D"/>
-        <Arg value="/C"/>
+        <Arg value="/D"/>   <!-- disable execution of autorun commands -->
+        <Arg value="/C"/>   <!-- execute string and terminate -->
       </Shell>
     </Script>
   </Samples>

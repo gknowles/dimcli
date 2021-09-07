@@ -48,7 +48,7 @@ int main(int argc, char * argv[]) {
     int count;
     cli.opt(&count, "c n count", 1).desc("Times to say hello.");
 
-    // Allocate option variable, returned object acts like a smart
+    // Or, allocate option variable, returned object acts like a smart
     // pointer to underlying variable.
     auto & name = cli.opt<string>("name", "Unknown")
         .desc("Who to greet.");

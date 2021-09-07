@@ -1,3 +1,6 @@
+// Sample code copied from issue submitted by Jan Tojnar on 2021-09-02.
+// See https://github.com/gknowles/dimcli/issues/19
+
 #include "../../libs/dimcli/cli.h"
 #include <iostream>
 //#include <sysexits.h>
