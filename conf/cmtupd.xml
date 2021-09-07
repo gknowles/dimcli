@@ -34,6 +34,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/cmtupd
       <File regex=".*\.cpp"/>
       <File regex=".*\.h"/>
       <Exclude regex="tests/perf/args\.h"/>
+      <Exclude regex="tests/repro/main\.cpp"/>
       <Var name="Prefix" value="// "/>
     </Group>
     <Group>
