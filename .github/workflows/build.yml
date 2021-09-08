@@ -38,4 +38,4 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}
-      run: bin/cli --test
+      run: '"bin/cli" --test'
