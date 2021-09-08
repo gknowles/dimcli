@@ -48,7 +48,7 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         env:
-          - CXX=g++-9 CC=gcc-9 BUILD_COVERAGE=ON
+          - CXX=g++-7 CC=gcc-7 INSTALL_GCC=7 BUILD_COVERAGE=ON
 #          - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM=6.0
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-10 CC=clang-10
