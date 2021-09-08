@@ -477,6 +477,7 @@ file(GLOB sources
 file(GLOB_RECURSE allnames docs/*)
 list(APPEND sources ${allnames})
 file(GLOB_RECURSE allnames .github/*.yml)
+source_group(github FILES ${allnames})
 list(APPEND sources ${allnames})
 add_file_project(about ${sources})
 
