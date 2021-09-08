@@ -50,12 +50,15 @@ jobs:
           - CXX=g++-7 CC=gcc-7 INSTALL_GCC=7
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11 INSTALL_GCC=11
+        exclude:
+          - env: CXX=g++-9 CC=gcc-9 BUILD_COVERAGE=ON
+            configuration: Release
+
     runs-on: ${{matrix.image}}
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build
-      working-directory: ${{github.workspace}}
+    - name: Install
       run: |
         export ${{matrix.env}}
         if [ -n "$INSTALL_LLVM" ]; then
@@ -66,6 +69,11 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y ${CC} ${CXX}
         fi
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: |
+        export ${{matrix.env}}
         mkdir -p build && cd build
         cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
         cmake --build . --config ${{matrix.configuration}}
@@ -73,6 +81,7 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}
       run: |
+        export ${{matrix.env}}
         export LANG=en_US.UTF-8
         bin/cli --test
         if [ "$BUILD_COVERAGE" = "ON" ]; then
