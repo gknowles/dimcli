@@ -42,8 +42,13 @@ jobs:
         image: [ubuntu-20.04]
         configuration: [Debug, Release]
         env:
+          - CXX=g++-9 CC=gcc-9 BUILD_COVERAGE=ON
+          - CXX=clang++6.0 CC=clang-6.0 INSTALL_COMPILER=ON
           - CXX=clang++-10 CC=clang-10
           - CXX=clang++-11 CC=clang-11
+          - CXX=g++-7 CC=gcc-7 INSTALL_COMPILER=ON
+          - CXX=g++-10 CC=gcc-10
+          - CXX=g++-11 CC=gcc-11 INSTALL_COMPILER=ON
     runs-on: ${{matrix.image}}
     steps:
     - uses: actions/checkout@v2
@@ -52,8 +57,12 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         export ${{matrix.env}}
+        if [ "$INSTALL_COMPILER" = "ON" ]; then
+            sudo apt-get update
+            sudo apt-get install -y ${CC} ${CXX}
+        fi
         mkdir -p build && cd build
-        cmake ..
+        cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
         cmake --build . --config ${{matrix.configuration}}
 
     - name: Test
@@ -61,3 +70,6 @@ jobs:
       run: |
         export LANG=en_US.UTF-8
         bin/cli --test
+        if [ "$BUILD_COVERAGE" = "ON" ]; then
+            bash <(curl -s https://codecov.io/bash)
+        fi
