@@ -7,8 +7,10 @@ Distributed under the Boost Software License, Version 1.0.
 
 | MSVC 2015, 2017, 2019 / CLANG 6, 10, 11 / GCC 7, 10, 11 | Test Coverage |
 | :-----------------------------------------------------: | :-----------: |
-| [![AppVeyor][av-image]][av-link] | [![Codecov][cc-image]][cc-link] |
+| [![Build][gh-image]][gh-link] | [![Codecov][cc-image]][cc-link] |
 
+[gh-image]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg "GitHub Actions"
+[gh-link]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml
 [av-image]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
 [av-link]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
 [cc-image]: https://img.shields.io/badge/dynamic/json?color=success&label=codecov&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fmaster "Codecov"
