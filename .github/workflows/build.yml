@@ -21,7 +21,8 @@ jobs:
     - name: Configure CMake
       working-directory: ${{github.workspace}}
       run: |
-        md build & cd build
+        md build 
+        cd build
         cmake -G "Visual Studio 16 2019" -A ${{matrix.platform}} -T ${{matrix.toolset}} ..
         cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}} -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
 
