@@ -476,6 +476,8 @@ file(GLOB sources
     configure.bat)
 file(GLOB_RECURSE allnames docs/*)
 list(APPEND sources ${allnames})
+file(GLOB_RECURSE allnames .github/*.yml)
+list(APPEND sources ${allnames})
 add_file_project(about ${sources})
 
 file(GLOB_RECURSE sources conf/*)
