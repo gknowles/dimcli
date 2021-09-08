@@ -58,7 +58,7 @@ jobs:
           - CXX=g++-11 CC=gcc-11 INSTALL_GCC=11
         image: [ubuntu-20.04]
         exclude:
-          - env: CXX=g++-9 CC=gcc-9 BUILD_COVERAGE=ON
+          - env: CXX=g++-7 CC=gcc-7 INSTALL_GCC=7 BUILD_COVERAGE=ON
             configuration: Release
 
     runs-on: ${{matrix.image}}
