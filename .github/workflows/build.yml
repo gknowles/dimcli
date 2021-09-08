@@ -15,6 +15,9 @@ jobs:
         configuration: [Debug, Release]
         toolset: [v140, v141, v142]
     runs-on: ${{matrix.image}}
+    defaults:
+      run:
+        shell: cmd
     steps:
     - uses: actions/checkout@v2
 
