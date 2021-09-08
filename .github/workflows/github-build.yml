@@ -60,4 +60,4 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         export LANG=en_US.UTF-8
-        '"bin/cli" --test'
+        bin/cli --test
