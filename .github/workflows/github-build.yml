@@ -21,20 +21,40 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Configure CMake
+    - name: Build
       working-directory: ${{github.workspace}}
       run: |
-        md build 
+        md build
         cd build
-        cmake -G "Visual Studio 16 2019" -A ${{matrix.platform}} -T ${{matrix.toolset}} ..
+        cmake .. -G "Visual Studio 16 2019" -A ${{matrix.platform}} -T ${{matrix.toolset}}
         cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}} -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
-
-    - name: Build
-      working-directory: ${{github.workspace}}/build
-      run: |
         cmake --build . --target install --config ${{matrix.configuration}}
         cd publish
         :: 7z a dimcli-latest.zip include lib
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: '"bin/cli" --test'
+
+  build-ubuntu:
+    strategy:
+      matrix:
+        image: [ubuntu-20.04]
+        configuration: [Debug, Release]
+        env:
+          - CXX=clang++-10 CC=clang-10
+          - CXX=clang++-11 CC=clang-11
+    runs-on: ${{matrix.image}}
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build
+      working-directory: ${{github-workspace}}
+      run: |
+        export LANG=en_US.UTF-8 ${{matrix.env}}
+        mkdir -p build && cd build
+        cmake ..
+        cmake --build . --config ${{matrix.configuration}}
 
     - name: Test
       working-directory: ${{github.workspace}}
