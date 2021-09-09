@@ -1578,7 +1578,10 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     // bool options are always marked as bool
-    assert(this->m_bool && "internal dimcli error");
+    if (!this->m_bool) {
+        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+            "bool option not marked bool");
+    }
     if (this->m_flagValue)
         return this->m_flagDefault;
     return this->defaultValue();
@@ -1840,9 +1843,10 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
             sval = std::to_string(ival);
         } else {
             success = opt.toString(sval, dval);
-            assert(success
-                && "internal dimcli error, convert double to string failed"
-            );
+            if (!success) {
+                assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+                    "convert double to string failed");
+            }
         }
         if (!opt.parseValue(sval))
             return cli.badUsage(opt, val);
@@ -2003,8 +2007,9 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         // internally and will be 0 or 1.
         if (value == "1") {
             tmp = this->defaultValue();
-        } else {
-            assert(value == "0" && "internal dimcli error");
+        } else if (value != "0") {
+            assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+                "flagValue not parsed from 0 or 1");
         }
         return true;
     }
@@ -2182,7 +2187,10 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         if (value == "1") {
             *back = this->defaultValue();
         } else {
-            assert(value == "0" && "internal dimcli error");
+            if (value != "0") {
+                assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+                    "flagValue not parsed from 0 or 1");
+            }
             m_proxy->m_values->pop_back();
             m_proxy->m_matches.pop_back();
         }
@@ -2244,7 +2252,9 @@ inline void Cli::OptVec<T>::assignImplicit() {
 //===========================================================================
 template <typename T>
 inline const std::string & Cli::OptVec<T>::from(size_t index) const {
-    return index >= size() ? m_empty : m_proxy->m_matches[index].name;
+    return index >= size()
+        ? m_empty
+        : m_proxy->m_matches[index].name;
 }
 
 //===========================================================================

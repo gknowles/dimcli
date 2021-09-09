@@ -420,8 +420,10 @@ CommandConfig & Cli::Config::findCmdAlways(
 const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
-    assert(i != cmds.end()
-        && "internal dimcli error: uninitialized command context");
+    if (i == cmds.end()) {
+        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+            "uninitialized command context");
+    }
     return i->second;
 }
 
@@ -457,8 +459,10 @@ GroupConfig & Cli::Config::findCmdGrpOrDie(const Cli & cli) {
     auto & name = cli.cmdGroup();
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
-    assert(i != grps.end()
-        && "internal dimcli error: uninitialized command group context");
+    if (i == grps.end()) {
+        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+            "uninitialized command group context");
+    }
     return i->second;
 }
 
@@ -487,8 +491,10 @@ GroupConfig & Cli::Config::findGrpAlways(
 const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
-    assert(i != grps.end()
-        && "internal dimcli error: uninitialized group context");
+    if (i == grps.end()) {
+        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+            "uninitialized group context");
+    }
     return i->second;
 }
 
@@ -678,8 +684,10 @@ static bool includeName(
             return name.invert;
 
         // includeName is always called with a filter (i.e. not kNameAll).
-        assert(type == kNameNonDefault
-            && "internal dimcli error: unknown NameListType");
+        if (type != kNameNonDefault) {
+            assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+                "unknown NameListType");
+        }
         return inverted == name.invert;
     }
     return true;
@@ -2537,9 +2545,10 @@ bool Cli::parse(vector<string> & args) {
             );
             // Number of assigned operands should always exactly match the
             // count, since it's equal to the calculated minimum.
-            (void) noExtras;
-            assert(noExtras
-                && "internal dimcli error: operand count mismatch");
+            if (!noExtras) {
+                assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+                    "operand count mismatch");
+            }
 
             rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
             precmdValues = rawValues.size();
