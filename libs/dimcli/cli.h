@@ -158,8 +158,6 @@
 
 namespace Dim {
 
-#define DIMCLI_LIB_BUILD_COVERAGE
-
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
 using AssertHandlerFn = void(*)(const char expr[], unsigned line);
 AssertHandlerFn setAssertHandler(AssertHandlerFn fn);
