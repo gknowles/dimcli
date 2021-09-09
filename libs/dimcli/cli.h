@@ -906,11 +906,8 @@ bool Cli::badRange(
 ) {
     auto prefix = "Out of range '" + opt.from() + "' value";
     std::string detail, lstr, hstr;
-    if (opt.toString(lstr, low)
-        && opt.toString(hstr, high)
-    ) {
+    if (opt.toString(lstr, low) && opt.toString(hstr, high))
         detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
-    }
     return badUsage(prefix, val, detail);
 }
 

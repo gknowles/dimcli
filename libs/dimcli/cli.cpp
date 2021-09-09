@@ -3598,7 +3598,7 @@ void Cli::consoleEnableEcho(bool enable) {
 //===========================================================================
 unsigned Cli::consoleWidth(bool queryWidth) {
     winsize w;
-    if (queryWidth && ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1)
+    if (queryWidth && ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1)
         return w.ws_col;
     return kDefaultConsoleWidth;
 }
