@@ -237,10 +237,25 @@ Usage: test [--help] [B]
 !"bad modifier '.' for short name"
 )");
 
+    // bad choices
+    cli = {};
+    cli.opt<string>("g").choice("none", "", "No choice");
+    EXPECT_ASSERT(1 + R"(
+!"an empty string can't be a choice"
+)");
+
+    // bad low/high
+    cli = {};
+    cli.opt<int>("h").range(5, 1).clamp(4, 2);
+    EXPECT_ASSERT(1 + R"(
+!"bad range, low greater than high"
+!"bad clamp, low greater than high"
+)");
+
     // bad vector size
     {
         cli = {};
-        cli.optVec<string>("g")
+        cli.optVec<string>("i")
             .size(-1)
             .size(-1, 0)
             .size(0, -10)

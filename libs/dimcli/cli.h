@@ -158,6 +158,8 @@
 
 namespace Dim {
 
+#define DIMCLI_LIB_BUILD_COVERAGE
+
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
 using AssertHandlerFn = void(*)(const char expr[], unsigned line);
 AssertHandlerFn setAssertHandler(AssertHandlerFn fn);
@@ -1698,7 +1700,8 @@ A & Cli::OptShim<A, T>::choice(
 ) {
     // The empty string isn't a valid choice because it can't be specified on
     // the command line, where unspecified picks the default instead.
-    assert(!key.empty() && "an empty string can't be a choice");
+    if (key.empty())
+        assert(!"an empty string can't be a choice");
     auto & cd = m_choiceDescs[key];
     cd.pos = m_choices.size();
     cd.desc = desc;
@@ -1850,7 +1853,8 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
-    assert(!(high < low) && "bad clamp, low greater than high");
+    if (high < low)
+        assert(!"bad clamp, low greater than high");
     return check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
         if (*opt < low) {
             *opt = low;
@@ -1864,7 +1868,8 @@ A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
-    assert(!(high < low) && "bad range, low greater than high");
+    if (high < low)
+        assert(!"bad range, low greater than high");
     return check([low, high](auto & cli, auto & opt, auto & val) {
         return (*opt >= low && *opt <= high)
             || cli.badRange(opt, val, low, high);
