@@ -25,7 +25,8 @@ jobs:
       run:
         shell: cmd
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
       with:
         submodules: true
 
@@ -49,22 +50,23 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         env:
-          - CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
-#          - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM=6.0
-          - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
-          - CXX=clang++-10 CC=clang-10
+          - CXX=g++-11 CC=gcc-11 BUILD_COVERAGE=ON
+          - CXX=clang++-6.0 CC=clang-6.0 INSTALL_APT=6.0
+#          - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-11 CC=clang-11
-          - CXX=g++-7 CC=gcc-7 INSTALL_GCC=7
+          - CXX=clang++-12 CC=clang-12 INSTALL_LLVM=12
+          - CXX=g++-7 CC=gcc-7 INSTALL_APT=7
           - CXX=g++-10 CC=gcc-10
-          - CXX=g++-11 CC=gcc-11 INSTALL_GCC=11
+          - CXX=g++-11 CC=gcc-11 INSTALL_APT=11
         image: [ubuntu-20.04]
         exclude:
-          - env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
+          - env: CXX=g++-11 CC=gcc-11 BUILD_COVERAGE=ON
             configuration: Release
 
     runs-on: ${{matrix.image}}
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
       with:
         submodules: true
 
@@ -75,7 +77,7 @@ jobs:
             wget https://apt.llvm.org/llvm.sh
             chmod +x llvm.sh
             sudo ./llvm.sh $INSTALL_LLVM
-        elif [ -n "$INSTALL_GCC" ]; then
+        elif [ -n "$INSTALL_APT" ]; then
             sudo apt-get update
             sudo apt-get install -y ${CC} ${CXX}
         fi
