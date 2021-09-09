@@ -906,8 +906,11 @@ bool Cli::badRange(
 ) {
     auto prefix = "Out of range '" + opt.from() + "' value";
     std::string detail, lstr, hstr;
-    if (opt.toString(lstr, low) && opt.toString(hstr, high))
+    if (opt.toString(lstr, low)
+        && opt.toString(hstr, high)
+    ) {
         detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
+    }
     return badUsage(prefix, val, detail);
 }
 
@@ -2252,9 +2255,11 @@ inline void Cli::OptVec<T>::assignImplicit() {
 //===========================================================================
 template <typename T>
 inline const std::string & Cli::OptVec<T>::from(size_t index) const {
-    return index >= size()
-        ? m_empty
-        : m_proxy->m_matches[index].name;
+    if (index >= size()) {
+        return m_empty;
+    } else {
+        return m_proxy->m_matches[index].name;
+    }
 }
 
 //===========================================================================
