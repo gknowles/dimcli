@@ -97,17 +97,11 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}
-      if: ${{!matrix.coverage}}
       run: |
         export ${{matrix.env}}
         export LANG=en_US.UTF-8
         bin/cli --test
 
-    - name: Test-Coverage
-      working-directory: ${{github.workspace}}
+    - name: Report Coverage
+      uses: codecov/codecov-action@v2
       if: ${{matrix.coverage}}
-      run: |
-        export ${{matrix.env}}
-        export LANG=en_US.UTF-8
-        bin/cli --test
-        bash <(curl -s https://codecov.io/bash)
