@@ -106,4 +106,4 @@ jobs:
       if: ${{matrix.coverage}}
       uses: codecov/codecov-action@v2
       with:
-        root_dir: ${{github.workspace}}
+        working-directory: ${{github.workspace}}
