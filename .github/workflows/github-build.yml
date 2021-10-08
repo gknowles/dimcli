@@ -103,5 +103,7 @@ jobs:
         bin/cli --test
 
     - name: Report Coverage
-      uses: codecov/codecov-action@v2
       if: ${{matrix.coverage}}
+      uses: codecov/codecov-action@v2
+      with:
+        root_dir: ${{github.workspace}}
