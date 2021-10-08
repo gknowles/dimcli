@@ -402,6 +402,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
     endif()
+    if(BUILD_COVERAGE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+            -fprofile-arcs -ftest-coverage -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+            -fprofile-arcs")
+    endif()
 endif()
 
 if(BUILD_UNICODE)

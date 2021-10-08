@@ -50,9 +50,9 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         env:
-          - CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
+          - CXX=g++-10 CC=gcc-10
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-          - CXX=clang++-11 CC=clang-11
+          - CXX=clang++-11 CC=clang-11 BUILD_COVERAGE=ON
           - CXX=clang++-12 CC=clang-12 INSTALL_APT=12
           - CXX=g++-7 CC=gcc-7 INSTALL_APT=7
           - CXX=g++-10 CC=gcc-10
@@ -100,6 +100,9 @@ jobs:
         export ${{matrix.env}}
         export LANG=en_US.UTF-8
         bin/cli --test
-        if [ "$BUILD_COVERAGE" = "ON" ]; then
-            bash <(curl -s https://codecov.io/bash)
-        fi
+
+    - name: Test-Coverage
+      working-directory: ${{github.workspace}}
+      if: env.BUILD_COVERAGE == 'ON'
+      run: |
+        bash <(curl -s https://codecov.io/bash)
