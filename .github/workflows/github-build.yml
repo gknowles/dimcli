@@ -104,6 +104,5 @@ jobs:
 
     - name: Report Coverage
       if: ${{matrix.coverage}}
-      uses: codecov/codecov-action@v2
-      with:
-        working-directory: ${{github.workspace}}
+      run: |
+        bash <(curl -s https://codecov.io/baseh)
