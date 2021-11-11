@@ -44,7 +44,12 @@ jobs:
       run: |
         md build
         cd build
-        cmake .. -G "Visual Studio 16 2019" -A ${{matrix.platform}} -T ${{matrix.toolset}}
+        if "${{matrix.toolset}}" == "v143" (
+          set generator=Visual Studio 17 2022
+        ) else (
+          set generator=Visual Studio 16 2019
+        )
+        cmake .. -G "%generator%" -A ${{matrix.platform}} -T ${{matrix.toolset}}
         cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}} -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
         cmake --build . --target install --config ${{matrix.configuration}}
         cd publish
