@@ -5,8 +5,8 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| MSVC 2015, 2017, 2019 / CLANG 6, 11, 12 / GCC 7, 10, 11 | Test Coverage |
-| :-----------------------------------------------------: | :-----------: |
+| MSVC 2015, 2017, 2019, 2022 / CLANG 6, 11, 12 / GCC 7, 10, 11 | Test Coverage |
+| :-----------------------------------------------------------: | :-----------: |
 | [![Build][gh-image]][gh-link] | [![Codecov][cc-image]][cc-link] |
 
 [gh-image]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg "GitHub Actions"
