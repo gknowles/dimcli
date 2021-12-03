@@ -64,11 +64,10 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         env:
-          - CXX=clang++-5.0 CC=clang-5.0 INSTALL_LLVM_BIONIC=5.0
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
           - CXX=clang++-11 CC=clang-11
           - CXX=clang++-12 CC=clang-12 INSTALL_APT=12
-          - CXX=clang++-13 CC=clang-13 INSTALL_APT=13
+          - CXX=clang++-13 CC=clang-13 INSTALL_LLVM_BIONIC=13
           - CXX=g++-7 CC=gcc-7 INSTALL_APT=7
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11 INSTALL_APT=11
