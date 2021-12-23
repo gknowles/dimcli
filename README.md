@@ -118,6 +118,7 @@ c:\dimcli on a windows machine):
 - Make the library (assuming VS 2015)
   - git clone https://github.com/gknowles/dimcli.git
   - cd dimcli
+  - git submodule update --init
   - md build & cd build
   - cmake .. -G "Visual Studio 14 2015 Win64"
   - cmake . --build
