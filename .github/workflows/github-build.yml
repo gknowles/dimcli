@@ -121,6 +121,7 @@ jobs:
       if: ${{matrix.coverage}}
       working-directory: ${{github.workspace}}
       run: |
+        find . -type f -name '*.gcda'
         # bash <(curl -s https://codecov.io/bash)
         curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
         curl -Os https://uploader.codecov.io/latest/linux/codecov
@@ -129,4 +130,4 @@ jobs:
         gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
         shasum -a 256 -c codecov.SHA256SUM
         chmod +x codecov
-        ./codecov -v -s ./build/CMakeFiles/dimcli.dir/libs/dimcli
+        ./codecov -v -s ./build/dimcli.dir/libs/dimcli
