@@ -3613,6 +3613,13 @@ unsigned Cli::consoleWidth(bool queryWidth) {
         if (w.ws_col)
             return w.ws_col;
     }
+#if !defined(DIMCLI_LIB_NO_ENV)
+    if (auto val = getenv("COLUMNS")) {
+        auto width = atoi(val);
+        if (width > 0)
+            return width;
+    }
+#endif
     return kDefaultConsoleWidth;
 }
 
