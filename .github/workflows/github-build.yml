@@ -116,6 +116,7 @@ jobs:
       run: |
         export ${{matrix.env}}
         export LANG=en_US.UTF-8
+        export COLUMNS
         bin/cli --test
 
     - name: Report Coverage
