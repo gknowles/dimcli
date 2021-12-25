@@ -2349,7 +2349,10 @@ static bool assignOperands(
 
     if (usedPos < numPos)
         return cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
-    assert(usedPos == numPos);
+    if (usedPos != numPos) {
+        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+            "not all operands mapped to variables"); 
+    }
 
     int ipos = 0;       // Operand being matched.
     int imatch = 0;     // Values already been matched to this opt.
@@ -2401,7 +2404,8 @@ static bool badMinMatched(
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
     // The 0th (name of this program) opt must always be present.
-    assert(!args.empty() && "at least one (program name) argument required");
+    assert(!args.empty() 
+        && "at least one argument (the program name) required");
 
     Config::touchAllCmds(*this);
     OptIndex ndx;
@@ -2918,9 +2922,12 @@ static size_t formatCol(
     size_t pos,
     size_t lineWidth
 ) {
-    auto width = (col.width == -1) ? lineWidth : col.width;
-    assert(width > 0);
     auto & out = *outPtr;
+    auto width = (col.width == -1) ? lineWidth : col.width;
+    if (!width) {
+        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
+            "unknown column width");
+    }
 
     if (startPos && col.textLen) {
         if (pos + 1 < startPos) {
@@ -3598,8 +3605,12 @@ void Cli::consoleEnableEcho(bool enable) {
 //===========================================================================
 unsigned Cli::consoleWidth(bool queryWidth) {
     winsize w;
-    if (queryWidth && ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1)
+    if (queryWidth && (
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1
+        || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
+    )) {
         return w.ws_col;
+    }
     return kDefaultConsoleWidth;
 }
 
