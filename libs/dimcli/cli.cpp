@@ -3608,8 +3608,10 @@ unsigned Cli::consoleWidth(bool queryWidth) {
     if (queryWidth && (
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1
         || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
+        || ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1
     )) {
-        return w.ws_col;
+        if (w.ws_col)
+            return w.ws_col;
     }
     return kDefaultConsoleWidth;
 }
