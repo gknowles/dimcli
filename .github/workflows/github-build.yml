@@ -50,7 +50,8 @@ jobs:
           set generator=Visual Studio 16 2019
         )
         cmake .. -G "%generator%" -A ${{matrix.platform}} -T ${{matrix.toolset}}
-        cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}} -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
+        cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}}^
+          -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
         cmake --build . --target install --config ${{matrix.configuration}}
         cd publish
         :: 7z a dimcli-latest.zip include lib
@@ -122,12 +123,13 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         find . -type f -regex '.*\.\(gc.*\|o\|cpp\|h\)'
-        bash <(curl -s https://codecov.io/bash) 
-        #curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
-        #curl -Os https://uploader.codecov.io/latest/linux/codecov
-        #curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-        #curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
-        #gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
-        #shasum -a 256 -c codecov.SHA256SUM
-        #chmod +x codecov
-        #find . -type f -name '*.gc*' -exec ./codecov -v -f {} +
+        find . -type f -name '*.gcno' -exec gcov -pb {}+
+        #bash <(curl -s https://codecov.io/bash) 
+        curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+        curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+        gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+        shasum -a 256 -c codecov.SHA256SUM
+        chmod +x codecov
+        ./codecov -v
