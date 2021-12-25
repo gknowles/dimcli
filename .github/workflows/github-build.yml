@@ -121,7 +121,7 @@ jobs:
       if: ${{matrix.coverage}}
       working-directory: ${{github.workspace}}
       run: |
-        find . -type f -name '*.gc*'
+        find . -type f -regex '.*\.\(gc.*\|o\|cpp\|h\)'
         bash <(curl -s https://codecov.io/bash) 
         #curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
         #curl -Os https://uploader.codecov.io/latest/linux/codecov
