@@ -123,7 +123,7 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         find . -type f -regex '.*\.\(gc.*\|o\|cpp\|h\)'
-        find . -type f -name '*.gcno' -exec gcov -pb {}+
+        find . -type f -name '*.gcno' -exec gcov -pb {} +
         #bash <(curl -s https://codecov.io/bash) 
         curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
         curl -Os https://uploader.codecov.io/latest/linux/codecov
