@@ -3605,21 +3605,22 @@ void Cli::consoleEnableEcho(bool enable) {
 //===========================================================================
 unsigned Cli::consoleWidth(bool queryWidth) {
     winsize w;
-    if (queryWidth && (
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1
-        || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
-        || ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1
-    )) {
-        if (w.ws_col)
-            return w.ws_col;
-    }
+    if (queryWidth) {
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1
+            || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
+            || ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1
+        ) {
+            if (w.ws_col)
+                return w.ws_col;
+        }
 #if !defined(DIMCLI_LIB_NO_ENV)
-    if (auto val = getenv("COLUMNS")) {
-        auto width = atoi(val);
-        if (width > 0)
-            return width;
-    }
+        if (auto val = getenv("COLUMNS")) {
+            auto width = atoi(val);
+            if (width > 0)
+                return width;
+        }
 #endif
+    }
     return kDefaultConsoleWidth;
 }
 
