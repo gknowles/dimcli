@@ -646,7 +646,7 @@ vector<OptKey> Cli::OptIndex::findNamedOpts(
     vector<OptKey> out;
     for (auto && opt : cli.m_cfg->opts) {
         auto list = nameList(cli, *opt, type);
-        if (auto width = list.size()) {
+        if (list.size()) {
             OptKey key;
             key.opt = opt.get();
             key.list = list;
@@ -812,7 +812,6 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
     bool invert = false;
     bool optional = false;
 
-    auto where = m_argNames.end();
     switch (name[0]) {
     case '-':
         assert(!"bad argument name, contains '-'");
