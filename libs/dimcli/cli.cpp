@@ -2851,7 +2851,7 @@ static size_t parseLine(RawLine * out, const char line[]) {
                 col.maxWidth = strtof(eptr, &eptr);
                 if (*eptr == '\a'
                     && col.minWidth <= col.maxWidth
-                    && col.minWidth > 0 && col.minWidth <= 100
+                    && col.minWidth >= 0 && col.minWidth <= 100
                 ) {
                     col.maxWidth = min(col.maxWidth, 100.0f);
                     ptr = eptr;
