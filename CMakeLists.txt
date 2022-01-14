@@ -1,4 +1,4 @@
-# Copyright Glen Knowles 2016 - 2021.
+# Copyright Glen Knowles 2016 - 2022.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # CMakeLists.txt - general project generator
@@ -351,9 +351,9 @@ if(MSVC)
 
     # "/Od" - disables optimization
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
-    if(FALSE AND NOT MSVC_VERSION LESS 1928)
+    if(NOT MSVC_VERSION LESS 1928)
         # "/fsanitize=address" - enables ASAN memory error detector
-        # "/Zi" - debug info format (not present would be no info)
+        # "/Zi" - debug info (not present would be no info)
         set(CMAKE_CXX_FLAGS_DEBUG
             "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi")
     else()
@@ -379,8 +379,6 @@ if(MSVC)
         # "/MD" - multithread release dll runtime
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     endif()
-
-    set_property(SOURCE "pch.cpp" APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
@@ -433,6 +431,8 @@ endforeach()
 # no group, but - just for regexs (bug?) - that causes cmake to use defaults.
 source_group(" " REGULAR_EXPRESSION ".*")
 source_group("docs" REGULAR_EXPRESSION "docs/.*")
+source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
+source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
 
 if(ROOT_PROJECT)
     include_directories(libs)
@@ -479,12 +479,12 @@ file(GLOB sources
     *.yml
     *.adoc
     *.md
+    *.rst
     *.props
     configure.bat)
 file(GLOB_RECURSE allnames docs/*)
 list(APPEND sources ${allnames})
 file(GLOB_RECURSE allnames .github/*.yml)
-source_group(github FILES ${allnames})
 list(APPEND sources ${allnames})
 add_file_project(about ${sources})
 
