@@ -1,5 +1,5 @@
 ////
-Copyright Glen Knowles 2016 - 2021.
+Copyright Glen Knowles 2016 - 2022.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -2613,17 +2613,17 @@ Tables can be interleaved.
 
 [source, C++, test repl 4 2]
 ----
-"Table A, Row I\tOnly 0 indent table\n"
+"Table A, Row I\tThe 0 indent table\n"
 "  Table B, Row I\tFirst 2 indent table\n"
-"Table A, Row II\tOnly 0 indent table\n"
+"Table A, Row II\tThe 0 indent table\n"
 "  \fTable C, Row I\tNew 2 indent table (because\bof\b\\f)\n"
 ----
 
 [source, shell session, test repl 1]
 ----
-Table A, Row I   Only 0 indent table
+Table A, Row I   The 0 indent table
   Table B, Row I  First 2 indent table
-Table A, Row II  Only 0 indent table
+Table A, Row II  The 0 indent table
   Table C, Row I  New 2 indent table
                   (because of \f)
 ----
@@ -2656,15 +2656,15 @@ cli.maxWidth().
 [source, C++, test repl 4 3]
 ----
 "\f\a10 10\aone\tSet column width to 5 (10% of 50).\n"
-"two\tSecond row.\n"
-"fifteen\tToo long for column width, pushed down.\n"
+"four\tThere is always at least a two space gap between columns.\n"
+"fourteen\tToo long for column width, pushed down.\n"
 ----
 
 [source, shell session, test repl 1]
 ----
-one    Set column width to 5 (10% of 50).
-two    There is always an extra two space gap
-       between columns.
-seventeen
-       Too long for column width, pushed down.
+one  Set column width to 5 (10% of 50).
+four  There is always at least a two space gap
+     between columns.
+fourteen
+     Too long for column width, pushed down.
 ----
