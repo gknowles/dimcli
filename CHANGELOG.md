@@ -1,6 +1,6 @@
 ﻿
 <!--
-Copyright Glen Knowles 2016 - 2021.
+Copyright Glen Knowles 2016 - 2022.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## Unreleased (2022-01-14)
 - Fixed - minWidth of 0 rejected in text columns
 
 ## dimcli 6.2.0 (2021-09-06)
