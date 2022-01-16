@@ -351,7 +351,7 @@ if(MSVC)
 
     # "/Od" - disables optimization
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
-    if(NOT MSVC_VERSION LESS 1928)
+    if(FALSE AND NOT MSVC_VERSION LESS 1928)
         # "/fsanitize=address" - enables ASAN memory error detector
         # "/Zi" - debug info (not present would be no info)
         set(CMAKE_CXX_FLAGS_DEBUG
