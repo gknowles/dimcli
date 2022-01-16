@@ -1,5 +1,5 @@
 ﻿<!--
-Copyright Glen Knowles 2020 - 2021.
+Copyright Glen Knowles 2020 - 2022.
 Distributed under the Boost Software License, Version 1.0.
 
 docgen config file
@@ -35,7 +35,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
       <Lang name="C++"/>
       <Lang name="cpp"/>
       <File extension="cpp"/>
-      <Compile>
+      <Compile untracked="true">
         <Arg value="cl"/>
         <Arg value="/nologo"/>
         <Arg value="/std:c++latest"/>
