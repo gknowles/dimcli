@@ -7,13 +7,6 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
 -->
 <Docs>
   <Site name="DIMCLI" outDir="../vendor/gh-pages">
-
-    <!--
-    <Preserve> not implemented, currently /.git* is instead explicitly
-    white listed in code.
-    -->
-    <Preserve file="/.git"/>
-
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
     <Version tag="HEAD"/>
     <Version tag="v6.2.0" default="true"/>
