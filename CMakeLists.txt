@@ -228,8 +228,9 @@ function(add_exec_project tgt srcdir)
             AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
         # required for #include <experimental/filesystem>
         target_link_libraries(${tgt} "stdc++fs")
-#    elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-#        target_link_libraries(${tgt} "stdc++fs")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang
+            AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
+        target_link_libraries(${tgt} "stdc++fs")
     endif()
     write_user_file(${tgt} "debug;props")
 endfunction()
