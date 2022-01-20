@@ -401,6 +401,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
         # Clang++-6 in c++2a mode, failing with a reference to the unknown
         # std::is_constant_evaluated().
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b")
     endif()
