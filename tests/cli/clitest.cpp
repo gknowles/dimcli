@@ -1057,7 +1057,10 @@ void cmdTests() {
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);
         EXPECT_ERR(c2, "Error: Command 'two': No value given for -a\n");
+
+        // Call exec using temporary cli object.
         EXPECT(Dim::Cli(c1).resetValues().exec() == Dim::kExitUsage);
+
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
         EXPECT(c1.exec() == Dim::kExitSoftware);
@@ -2335,6 +2338,7 @@ int main(int argc, char * argv[]) {
 
     CliTest cli;
     cli.helpNoArgs();
+    cli.footer("On parsing failures, lists arguments from command line.");
     cli.opt<bool>("test").desc("Run tests.");
     auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting.");
     if (cli.parse(argc, argv))

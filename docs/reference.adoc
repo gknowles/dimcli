@@ -1,5 +1,5 @@
 ﻿////
-Copyright Glen Knowles 2019 - 2021.
+Copyright Glen Knowles 2019 - 2022.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -70,8 +70,8 @@ to 50 depending on width of output console.
 2+h| Parse and execute
 
 | cli.<<guide.adoc#subcommands, exec>>
-| Optionally parses, and then executes the action of the matched command;
-returns true if it worked. On failure it's expected to have set exitCode,
+| Executes the action of the matched command, optionally parsing first, 
+returning true if it worked. On failure it's expected to have set exitCode,
 errMsg, and optionally errDetail via fail().
 
 | cli.<<guide.adoc#basic-usage, parse>>
@@ -201,7 +201,7 @@ to a minimum of 1 and a maximum of -1 (unlimited).
 | Adjusts the value to seconds when time units are present: removes the units
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
 
-2+h| Parse
+2+h| While parsing
 
 | cli.<<guide.adoc#after-actions, badUsage>>
 | Intended for use from return statements in action callbacks. Sets exit code
@@ -303,12 +303,6 @@ Actions are executed when cli.exec() is called by the application.
 parsing cli.commandMatched() and cli.unknownArgs() can be used to get the
 command and it's arguments.
 
-2+h| Execute
-
-| cli.fail
-| Sets exitCode(), errMsg(), and errDetail(), intended to be called from
-command actions, parsing related failures normally use cli.badUsage() instead.
-
 2+h| After parsing
 
 | cli.<<guide.adoc#external-commands, commandMatched>>
@@ -319,6 +313,12 @@ commands defined or none were matched.
 | If commands are defined, and the matched command is unknown, the unknownArgs
 vector is populated with the all arguments that follow the command. Including
 any that started with "-", as if "--" had been given.
+
+2+h| While executing
+
+| cli.fail
+| Sets exitCode(), errMsg(), and errDetail(), intended to be called from
+command actions, parsing related failures normally use cli.badUsage() instead.
 |===
 
 == Help Text

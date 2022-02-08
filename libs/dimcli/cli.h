@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2021.
+// Copyright Glen Knowles 2016 - 2022.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.h - dimcli
@@ -1505,7 +1505,7 @@ protected:
     bool doCheckActions(Cli & cli, const std::string & value) final;
     bool doAfterActions(Cli & cli) final;
     bool inverted() const final;
-    bool exec(
+    bool act(
         Cli & cli,
         const std::string & value,
         const std::vector<std::function<ActionFn>> & actions
@@ -1559,13 +1559,13 @@ inline bool Cli::OptShim<A, T>::doCheckActions(
     Cli & cli,
     const std::string & val
 ) {
-    return exec(cli, val, m_checks);
+    return act(cli, val, m_checks);
 }
 
 //===========================================================================
 template <typename A, typename T>
 inline bool Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
-    return exec(cli, {}, m_afters);
+    return act(cli, {}, m_afters);
 }
 
 //===========================================================================
@@ -1589,7 +1589,7 @@ inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::exec(
+inline bool Cli::OptShim<A, T>::act(
     Cli & cli,
     const std::string & val,
     const std::vector<std::function<ActionFn>> & actions
