@@ -192,8 +192,8 @@ to 50 depending on width of output console.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#subcommands">exec</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optionally parses, and then executes the action of the matched command;
-returns true if it worked. On failure it&#8217;s expected to have set exitCode,
+<td class="tableblock halign-left valign-top"><p class="tableblock">Executes the action of the matched command, optionally parsing first,
+returning true if it worked. On failure it&#8217;s expected to have set exitCode,
 errMsg, and optionally errDetail via fail().</p></td>
 </tr>
 <tr>
@@ -367,7 +367,7 @@ to a minimum of 1 and a maximum of -1 (unlimited).</p></td>
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.</p></td>
 </tr>
 <tr>
-<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Parse</p></th>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">While parsing</p></th>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#after-actions">badUsage</a></p></td>
@@ -505,14 +505,6 @@ parsing cli.commandMatched() and cli.unknownArgs() can be used to get the
 command and it&#8217;s arguments.</p></td>
 </tr>
 <tr>
-<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Execute</p></th>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.fail</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sets exitCode(), errMsg(), and errDetail(), intended to be called from
-command actions, parsing related failures normally use cli.badUsage() instead.</p></td>
-</tr>
-<tr>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">After parsing</p></th>
 </tr>
 <tr>
@@ -525,6 +517,14 @@ commands defined or none were matched.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">If commands are defined, and the matched command is unknown, the unknownArgs
 vector is populated with the all arguments that follow the command. Including
 any that started with "-", as if "--" had been given.</p></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">While executing</p></th>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets exitCode(), errMsg(), and errDetail(), intended to be called from
+command actions, parsing related failures normally use cli.badUsage() instead.</p></td>
 </tr>
 </tbody>
 </table>
