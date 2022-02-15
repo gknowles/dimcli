@@ -990,7 +990,8 @@ int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.").action(apple);
     cli.command("orange").desc("Show orange.").action(orange);
-    return cli.exec(cerr, argc, argv);
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
 }
 ----
 
@@ -1024,7 +1025,8 @@ exec() call can be separate from parse():
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
     // any additional validation...
-    return cli.exec(cerr);
+    cli.exec();
+    return cli.printError(cerr);
 ----
 
 The end result at the console:
@@ -1095,7 +1097,8 @@ int unknown(Dim::Cli & cli) {
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.unknownCmd(unknown);
-    return cli.exec(cerr, argc, argv);
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
 }
 ----
 
@@ -2455,7 +2458,8 @@ How to add it:
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.helpCmd();
-    return cli.exec(cerr, argc, argv);
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
 }
 ----
 

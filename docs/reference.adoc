@@ -71,8 +71,9 @@ to 50 depending on width of output console.
 
 | cli.<<guide.adoc#subcommands, exec>>
 | Executes the action of the matched command, optionally parsing first, 
-returning true if it worked. On failure it's expected to have set exitCode,
-errMsg, and optionally errDetail via fail().
+returning true if it was attempted, false if usage error or otherwise short 
+circuited. On failure it's expected to have set exitCode, errMsg, and 
+optionally errDetail via fail().
 
 | cli.<<guide.adoc#basic-usage, parse>>
 | Parse the command line, populate the options, and set the error and other

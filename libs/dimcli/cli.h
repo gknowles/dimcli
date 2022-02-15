@@ -302,15 +302,18 @@ public:
     ) &&;
 
     // Function signature of actions that are tied to commands.
-    using ActionFn = void(Cli & cli);
+    using ActionFn = bool(Cli & cli);
 
-    // Action that should be taken when the currently selected command is run.
-    // Actions are executed when cli.exec() is called by the application. The
+    // Action that should be taken when the currently selected command is run,
+    // which happens when cli.exec() is called by the application. The 
     // command's action function should:
-    //  - do something useful
-    //  - use badUsage() for parsing errors not caught by parse(), such as
-    //    complex interactions between arguments.
-    //  - use fail() on other errors to set exitCode, et al
+    //  - Use badUsage() and return false for parsing errors not caught by 
+    //    parse(), such as complex interactions between arguments.
+    //  - Return false if no action was really attempted, as when only printing
+    //    help text or a version string, mirroring what parse() would have 
+    //    returned.
+    //  - Do something useful
+    //  - Use fail() on other errors to set exitCode, et al
     //
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
@@ -649,23 +652,27 @@ public:
     // had been given.
     const std::vector<std::string> & unknownArgs() const;
 
-    // Executes the action of the matched command and returns exitCode(). On
-    // failure the action is expected to have set exitCode, errMsg, and
-    // optionally errDetail by calling fail(). If no command was matched the
-    // action of the empty "" command is run, which defaults to failing with
-    // "No command given." but can be set using cli.action() like any other
-    // command.
+    // Executes the action of the matched command and propagates it's return 
+    // value back to he caller. On failure the action is expected to have set 
+    // exitCode, errMsg, and optionally errDetail by calling fail(). If no 
+    // command was matched the action of the empty "" command is run, which 
+    // defaults to failing with "No command given." but can be set using 
+    // cli.action() like any other command.
     //
+    // To be consistent with cli.parse() the action should return false if it
+    // ends immediately, such as a usage error, printing help text, or a version 
+    // string. Otherwise, if the action was really attempted, return true.
+    // 
     // It is assumed that a prior call to parse() has already been made to set
     // the matched command.
-    int exec();
-    int exec(std::ostream & oerr);
+    bool exec();
+    bool exec(std::ostream & oerr);
 
     // Helpers to parse and, if successful, execute.
-    int exec(size_t argc, char * argv[]);
-    int exec(std::ostream & oerr, size_t argc, char * argv[]);
-    int exec(std::vector<std::string> & args);
-    int exec(std::ostream & oerr, std::vector<std::string> & args);
+    bool exec(size_t argc, char * argv[]);
+    bool exec(std::ostream & oerr, size_t argc, char * argv[]);
+    bool exec(std::vector<std::string> & args);
+    bool exec(std::ostream & oerr, std::vector<std::string> & args);
 
     // Sets exitCode(), errMsg(), errDetail(), and returns false. Intended to
     // be called from command actions, parsing related failures should use

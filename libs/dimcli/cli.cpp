@@ -265,7 +265,7 @@ void Dim::doAssert(const char expr[], unsigned line) {
 
 // forward declarations
 static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static void defCmdAction(Cli & cli);
+static bool defCmdAction(Cli & cli);
 static void writeChoicesDetail(
     string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
@@ -984,11 +984,11 @@ static bool helpOptAction(
 }
 
 //===========================================================================
-static void defCmdAction(Cli & cli) {
+static bool defCmdAction(Cli & cli) {
     if (cli.commandMatched().empty()) {
-        cli.fail(kExitUsage, "No command given.");
+        return cli.fail(kExitUsage, "No command given.");
     } else {
-        cli.fail(
+        return cli.fail(
             kExitSoftware,
             "Command '" + cli.commandMatched() + "' has not been implemented."
         );
@@ -996,20 +996,19 @@ static void defCmdAction(Cli & cli) {
 }
 
 //===========================================================================
-static void helpCmdAction(Cli & cli) {
+static bool helpCmdAction(Cli & cli) {
     Cli::OptIndex ndx;
     ndx.index(cli, cli.commandMatched(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
     if (!cli.commandExists(cmd)) {
         cli.badUsage("Help requested for unknown command", cmd);
-        return;
-    }
-    if (usage) {
+    } else if (usage) {
         cli.printUsageEx(cli.conout(), {}, cmd);
     } else {
         cli.printHelp(cli.conout(), {}, cmd);
     }
+    return false;
 }
 
 
@@ -2747,7 +2746,7 @@ const vector<string> & Cli::unknownArgs() const {
 }
 
 //===========================================================================
-int Cli::exec() {
+bool Cli::exec() {
     auto & name = commandMatched();
     auto cmdFn = commandExists(name)
         ? m_cfg->cmds[name].action
@@ -2755,44 +2754,43 @@ int Cli::exec() {
 
     if (cmdFn) {
         fail(kExitOk, {});
-        cmdFn(*this);
+        return cmdFn(*this);
     } else {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"command found by parse not defined");
-        fail(
+        return fail(
             kExitSoftware,
             "Command '" + name + "' found by parse not defined."
         );
     }
-    return exitCode();
 }
 
 //===========================================================================
-int Cli::exec(ostream & os) {
-    exec();
-    return printError(os);
+bool Cli::exec(ostream & os) {
+    if (exec())
+        return true;
+    printError(os);
+    return false;
 }
 
 //===========================================================================
-int Cli::exec(size_t argc, char * argv[]) {
-    return parse(argc, argv) ? exec() : exitCode();
+bool Cli::exec(size_t argc, char * argv[]) {
+    return parse(argc, argv) && exec();
 }
 
 //===========================================================================
-int Cli::exec(ostream & os, size_t argc, char * argv[]) {
-    exec(argc, argv);
-    return printError(os);
+bool Cli::exec(ostream & os, size_t argc, char * argv[]) {
+    return parse(os, argc, argv) && exec(os);
 }
 
 //===========================================================================
-int Cli::exec(vector<string> & args) {
-    return parse(args) ? exec() : exitCode();
+bool Cli::exec(vector<string> & args) {
+    return parse(args) && exec();
 }
 
 //===========================================================================
-int Cli::exec(ostream & os, vector<string> & args) {
-    exec(args);
-    return printError(os);
+bool Cli::exec(ostream & os, vector<string> & args) {
+    return parse(os, args) && exec(os);
 }
 
 //===========================================================================
