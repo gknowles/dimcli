@@ -479,23 +479,13 @@ public:
     // Parse the command line, populate the options, and set the error and
     // other miscellaneous state. Returns true if processing should continue.
     //
-    // The ostream& argument is only used to print the error message, if any,
-    // via printError(). Error information can also be extracted after parse()
-    // completes, see errMsg() and friends.
+    // Error information can also be extracted after parse() completes, see 
+    // errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
-    [[nodiscard]] bool parse(std::ostream & oerr, size_t argc, char * argv[]);
 
     // "args" is non-const so response files can be expanded in place.
     [[nodiscard]] bool parse(std::vector<std::string> & args);
-    [[nodiscard]] bool parse(
-        std::ostream & oerr,
-        std::vector<std::string> & args
-    );
     [[nodiscard]] bool parse(std::vector<std::string> && args);
-    [[nodiscard]] bool parse(
-        std::ostream & oerr,
-        std::vector<std::string> && args
-    );
 
     // Sets all options to their defaults, called internally when parsing
     // starts.
@@ -666,13 +656,10 @@ public:
     // It is assumed that a prior call to parse() has already been made to set
     // the matched command.
     bool exec();
-    bool exec(std::ostream & oerr);
 
     // Helpers to parse and, if successful, execute.
     bool exec(size_t argc, char * argv[]);
-    bool exec(std::ostream & oerr, size_t argc, char * argv[]);
     bool exec(std::vector<std::string> & args);
-    bool exec(std::ostream & oerr, std::vector<std::string> & args);
 
     // Sets exitCode(), errMsg(), errDetail(), and returns false. Intended to
     // be called from command actions, parsing related failures should use

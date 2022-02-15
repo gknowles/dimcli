@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased (2022-02-14)
 - Changed - cli.exec() returns was work attempted, instead of exit code
+- Removed - cli.parse() and cli.exec() variants taking an ostream. Use 
+    with cli.printError() instead.
 
 ## dimcli 6.2.1 (2022-02-07)
 - Fixed - minWidth of 0 rejected in text columns

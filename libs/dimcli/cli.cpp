@@ -2679,33 +2679,14 @@ bool Cli::parse(vector<string> & args) {
 }
 
 //===========================================================================
-bool Cli::parse(ostream & os, vector<string> & args) {
-    if (parse(args))
-        return true;
-    printError(os);
-    return false;
-}
-
-//===========================================================================
 bool Cli::parse(vector<string> && args) {
     return parse(args);
-}
-
-//===========================================================================
-bool Cli::parse(ostream & os, vector<string> && args) {
-    return parse(os, args);
 }
 
 //===========================================================================
 bool Cli::parse(size_t argc, char * argv[]) {
     auto args = toArgv(argc, argv);
     return parse(move(args));
-}
-
-//===========================================================================
-bool Cli::parse(ostream & os, size_t argc, char * argv[]) {
-    auto args = toArgv(argc, argv);
-    return parse(os, move(args));
 }
 
 
@@ -2766,31 +2747,13 @@ bool Cli::exec() {
 }
 
 //===========================================================================
-bool Cli::exec(ostream & os) {
-    if (exec())
-        return true;
-    printError(os);
-    return false;
-}
-
-//===========================================================================
 bool Cli::exec(size_t argc, char * argv[]) {
     return parse(argc, argv) && exec();
 }
 
 //===========================================================================
-bool Cli::exec(ostream & os, size_t argc, char * argv[]) {
-    return parse(os, argc, argv) && exec(os);
-}
-
-//===========================================================================
 bool Cli::exec(vector<string> & args) {
     return parse(args) && exec();
-}
-
-//===========================================================================
-bool Cli::exec(ostream & os, vector<string> & args) {
-    return parse(os, args) && exec(os);
 }
 
 //===========================================================================

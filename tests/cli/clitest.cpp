@@ -1218,15 +1218,15 @@ Usage: test help [-u, --usage] [--help] [COMMAND]
 )");
         EXPECT_PARSE(cli, "help notACmd");
         out.str({});
-        EXPECT(!cli.exec(out));
-        EXPECT(cli.exitCode() == Dim::kExitUsage);
+        EXPECT(!cli.exec());
+        EXPECT(cli.printError(out) == Dim::kExitUsage);
         EXPECT(out.str() == 1 + R"(
 Error: Command 'help': Help requested for unknown command: notACmd
 )");
         EXPECT_PARSE(cli, "help help --usage");
         out.str({});
         cli.iostreams(nullptr, &out);
-        EXPECT(cli.exec() == Dim::kExitOk);
+        EXPECT(!cli.exec() && cli.exitCode() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == 1 + R"(
 Usage: test help [-u, --usage] [--help] [COMMAND]
@@ -1596,13 +1596,13 @@ void execTests() {
 
     {
         cli = {};
-        auto rc = cli.parse(out, nargsUnknown, (char **) argsUnknown);
-        EXPECT(rc == false && cli.exitCode() == Dim::kExitUsage);
+        auto rc = cli.parse(nargsUnknown, (char **) argsUnknown);
+        EXPECT(rc == false && cli.printError(out) == Dim::kExitUsage);
         EXPECT(out.str() == "Error: Unexpected argument: unknown\n");
         out.clear();
         out.str({});
-        rc = cli.parse(out, nargsNone, (char **) argsNone);
-        EXPECT(rc && out.str() == "");
+        rc = cli.parse(nargsNone, (char **) argsNone);
+        EXPECT(rc && cli.printError(out) == Dim::kExitOk && out.str() == "");
     }
 
     {
@@ -1612,15 +1612,15 @@ void execTests() {
         EXPECT(cli.exitCode() == Dim::kExitOk);
         out.clear();
         out.str({});
-        EXPECT(cli.exec(out, nargsNone, (char **) argsNone));
-        EXPECT(cli.exitCode() == Dim::kExitOk && out.str() == "");
+        EXPECT(cli.exec(nargsNone, (char **) argsNone));
+        EXPECT(cli.printError(out) == Dim::kExitOk && out.str() == "");
         EXPECT(cli.exec(vargsNone));
         EXPECT(cli.exitCode() == Dim::kExitOk);
         out.clear();
         out.str({});
         cli = {};
-        EXPECT(!cli.exec(out, vargsNone));
-        EXPECT(cli.exitCode() == Dim::kExitUsage);
+        EXPECT(!cli.exec(vargsNone));
+        EXPECT(cli.printError(out) == Dim::kExitUsage);
         EXPECT(out.str() == "Error: No command given.\n");
     }
 }
