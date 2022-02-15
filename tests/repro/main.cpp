@@ -20,14 +20,15 @@ bool apple(Dim::Cli & cli) {
     return true;
 }
 
-int orange(Dim::Cli & cli) {
+bool orange(Dim::Cli & cli) {
     cout << "It's an orange" << (*yell ? "!!!" : ".");
-    return EX_OK;
+    return true;
 }
 
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
     cli.command("apple").desc("Show apple. No other fruit.").action(apple);
     cli.command("orange").desc("Show orange.").action(orange);
-    return cli.exec(cerr, argc, argv);
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
 }

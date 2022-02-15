@@ -981,9 +981,9 @@ bool apple(Dim::Cli & cli) {
     return true;
 }
 
-int orange(Dim::Cli & cli) {
+bool orange(Dim::Cli & cli) {
     cout << "It's an orange" << (*yell ? "!!!" : ".");
-    return EX_OK;
+    return true;
 }
 
 int main(int argc, char * argv[]) {
@@ -1087,11 +1087,11 @@ as if <<#special-arguments, "--">> had been given.
 
 [source, C++]
 ----
-int unknown(Dim::Cli & cli) {
+bool unknown(Dim::Cli & cli) {
     cout << "Command: " << cli.commandMatched() << endl;
     for (auto&& arg : cli.unknownArgs())
         cout << "Arg: " << arg << endl;
-    return EX_OK;
+    return false;
 }
 
 int main(int argc, char * argv[]) {
