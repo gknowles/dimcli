@@ -2206,8 +2206,8 @@ Options:
 void beforeTests() {
     CliTest cli;
     CliTest(cli).before([](auto & cli, auto & args) {
-        if (args.size() > 1)
-            return cli.fail(Dim::kExitUsage, "Too many args");
+        if (args.size() > 1) 
+            return cli.badUsage("Too many args");
         return true;
     });
     EXPECT_PARSE(cli, "one two", false);
