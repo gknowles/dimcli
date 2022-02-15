@@ -661,10 +661,9 @@ public:
     bool exec(size_t argc, char * argv[]);
     bool exec(std::vector<std::string> & args);
 
-    // Sets exitCode(), errMsg(), errDetail(), and returns false. Intended to
-    // be called from command actions, parsing related failures should use
-    // badUsage() instead.
-    bool fail(
+    // Sets exitCode(), errMsg(), errDetail(). Intended to be called from 
+    // command actions, parsing related failures should use badUsage() instead.
+    void fail(
         int code,
         const std::string & msg,
         const std::string & detail = {}

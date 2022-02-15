@@ -986,12 +986,13 @@ static bool helpOptAction(
 //===========================================================================
 static bool defCmdAction(Cli & cli) {
     if (cli.commandMatched().empty()) {
-        return cli.fail(kExitUsage, "No command given.");
+        return cli.badUsage("No command given.");
     } else {
-        return cli.fail(
+        cli.fail(
             kExitSoftware,
             "Command '" + cli.commandMatched() + "' has not been implemented."
         );
+        return false;
     }
 }
 
@@ -2227,7 +2228,8 @@ bool Cli::badUsage(
         out += ": ";
         out += value;
     }
-    return fail(kExitUsage, out, detail);
+    fail(kExitUsage, out, detail);
+    return false;
 }
 
 //===========================================================================
@@ -2241,11 +2243,10 @@ bool Cli::badUsage(
 }
 
 //===========================================================================
-bool Cli::fail(int code, const string & msg, const string & detail) {
+void Cli::fail(int code, const string & msg, const string & detail) {
     m_cfg->exitCode = code;
     m_cfg->errMsg = format(*m_cfg, msg);
     m_cfg->errDetail = format(*m_cfg, detail);
-    return false;
 }
 
 //===========================================================================
@@ -2739,10 +2740,11 @@ bool Cli::exec() {
     } else {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"command found by parse not defined");
-        return fail(
+        fail(
             kExitSoftware,
             "Command '" + name + "' found by parse not defined."
         );
+        return false;
     }
 }
 
