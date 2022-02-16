@@ -1082,7 +1082,7 @@ in arg0 when you&#8217;re done.</p>
 <p>Call cli.badUsage() with an error message for problems.</p>
 </li>
 <li>
-<p>Return false if the program should stop, otherwise true.</p>
+<p>Call cli.parseExit() if parsing should stop, but there was no error.</p>
 </li>
 </ul>
 </div>
@@ -1134,7 +1134,6 @@ Error: Option 'VALUE' missing value.</code></pre>
         // It's just the program name, add the help option.
         args.push_back("--help");
     }
-    return true;
 });</code></pre>
 </div>
 </div>
@@ -1179,8 +1178,8 @@ push back the additional value for vector arguments).</p>
 <p>Call cli.badUsage() with an error message if there&#8217;s a problem.</p>
 </li>
 <li>
-<p>Return false if the program should stop, otherwise true. You may want to
-stop due to error or just to early out like "--version" and "--help".</p>
+<p>Call cli.parseExit() if the program should stop. This could be due to an
+early out like "--version" and "--help".</p>
 </li>
 </ul>
 </div>
@@ -1216,7 +1215,6 @@ position in argv[].</p>
             if (!opt.parseValue(val)) // parse the new value into opt
                 return cli.badUsage(opt, val);
             *opt *= tmp; // multiply old and new together
-            return true;
         });
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1274,8 +1272,7 @@ usually better done in an <a href="#after-actions">after action</a>.</p>
 <p>Call cli.badUsage() with an error message if there&#8217;s a problem.</p>
 </li>
 <li>
-<p>Return false if the program should stop, otherwise true to let processing
-continue.</p>
+<p>Call cli.parseExit() if the program should stop without an error.</p>
 </li>
 </ul>
 </div>
@@ -1293,7 +1290,6 @@ continue.</p>
         .desc("Number of socks, rounded up to even number.")
         .check([](auto &amp; cli, auto &amp; opt, auto &amp; val) {
             *opt += *opt % 2;
-            return true;
         });
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1350,10 +1346,10 @@ commands are, like the options themselves, ignored.</p>
 <p>Do something interesting.</p>
 </li>
 <li>
-<p>Call cli.badUsage() and return false on error.</p>
+<p>Call cli.badUsage() and return on error.</p>
 </li>
 <li>
-<p>Return true if processing should continue.</p>
+<p>Call cli.parseExit() if processing should stop without error.</p>
 </li>
 </ul>
 </div>
@@ -1368,8 +1364,8 @@ commands are, like the options themselves, ignored.</p>
     auto &amp; high = cli.opt&lt;int&gt;("h")
         .desc("High value, must be greater than or equal to the low.")
         .after([&amp;](auto &amp; cli, auto &amp; opt, auto &amp;) {
-            return (*opt &gt;= *low)
-                || cli.badUsage("High must not be less than the low.");
+            if (*opt &lt; *low)
+                cli.badUsage("High must not be less than the low.");
         });
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);

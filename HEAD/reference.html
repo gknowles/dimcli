@@ -192,10 +192,8 @@ to 50 depending on width of output console.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#subcommands">exec</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Executes the action of the matched command, optionally parsing first,
-returning true if it was attempted, false if usage error or otherwise short
-circuited. On failure it&#8217;s expected to have set exitCode, errMsg, and
-optionally errDetail via fail().</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Executes the action of the matched command, optionally parsing first. The
+action then calls fail(), badUsage(), or parseExit() for abnormal events.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#basic-usage">parse</a></p></td>
@@ -371,15 +369,25 @@ to a minimum of 1 and a maximum of -1 (unlimited).</p></td>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">While parsing</p></th>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.badRange</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Calls cli.badUsage() with "Out of range" message with the allowed low and
+high in the error detail.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#after-actions">badUsage</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Intended for use from return statements in action callbacks. Sets exit code
-(to EX_USAGE) and error msg, then returns false.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error
+message and flags the in progress parse() to return false.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.commandExists</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the named command has been defined, used by the help command
 implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.parseExit</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error
+message and flags the in progress parse() to return false.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.parseValue</p></td>
@@ -523,9 +531,19 @@ any that started with "-", as if "--" had been given.</p></td>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">While executing</p></th>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.badUsage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets exit code (to EX_USAGE) and error message and flags in progress exec()
+to return false.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Sets exitCode(), errMsg(), and errDetail(), intended to be called from
 command actions, parsing related failures normally use cli.badUsage() instead.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.parseExit</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Clears the error state and flags exec() to return false. Used when printing
+help text, etc.</p></td>
 </tr>
 </tbody>
 </table>
