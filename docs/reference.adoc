@@ -70,10 +70,8 @@ to 50 depending on width of output console.
 2+h| Parse and execute
 
 | cli.<<guide.adoc#subcommands, exec>>
-| Executes the action of the matched command, optionally parsing first, 
-returning true if it was attempted, false if usage error or otherwise short 
-circuited. On failure it's expected to have set exitCode, errMsg, and 
-optionally errDetail via fail().
+| Executes the action of the matched command, optionally parsing first. The 
+action then calls fail(), badUsage(), or parseExit() for abnormal events.
 
 | cli.<<guide.adoc#basic-usage, parse>>
 | Parse the command line, populate the options, and set the error and other
@@ -204,14 +202,22 @@ to a minimum of 1 and a maximum of -1 (unlimited).
 
 2+h| While parsing
 
+| cli.badRange
+| Calls cli.badUsage() with "Out of range" message with the allowed low and 
+high in the error detail.
+
 | cli.<<guide.adoc#after-actions, badUsage>>
-| Intended for use from return statements in action callbacks. Sets exit code
-(to EX_USAGE) and error msg, then returns false.
+| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error 
+message and flags the in progress parse() to return false.
 
 | cli.commandExists
 | Returns true if the named command has been defined, used by the help command
 implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.
+
+| cli.parseExit
+| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error 
+message and flags the in progress parse() to return false.
 
 | cli.parseValue
 | Used to populate an option with an arbitrary input string through the
@@ -317,9 +323,17 @@ any that started with "-", as if "--" had been given.
 
 2+h| While executing
 
+| cli.badUsage
+| Sets exit code (to EX_USAGE) and error message and flags in progress exec() 
+to return false.
+
 | cli.fail
 | Sets exitCode(), errMsg(), and errDetail(), intended to be called from
 command actions, parsing related failures normally use cli.badUsage() instead.
+
+| cli.parseExit
+| Clears the error state and flags exec() to return false. Used when printing 
+help text, etc.
 |===
 
 == Help Text

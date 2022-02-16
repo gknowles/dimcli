@@ -379,11 +379,11 @@ void valueTests() {
             .desc("numbers to multiply")
             .parse([](auto & cli, auto & arg, const string & val) {
                 int tmp = *arg;
-                if (!arg.parseValue(val))
-                    return cli.badUsage(
-                        "Bad '" + arg.from() + "' value: " + val);
-                *arg *= tmp;
-                return true;
+                if (!arg.parseValue(val)) {
+                    cli.badUsage("Bad '" + arg.from() + "' value: " + val);
+                } else {
+                    *arg *= tmp;
+                }
             });
         EXPECT_PARSE(cli, "-n2 -n3");
         EXPECT(*sum == 6);
@@ -943,9 +943,8 @@ Options:
             .check([](auto & cli, auto & opt, auto &) {
                 if (*opt) {
                     cli.printHelp(cli.conout(), {}, cli.commandMatched());
-                    return false;
+                    cli.parseExit();
                 }
-                return true;
             });
         out.clear();
         out.str({});
@@ -1063,7 +1062,7 @@ void cmdTests() {
 
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
-        EXPECT(!c1.exec());
+        EXPECT(c1.exec());
         EXPECT(c1.exitCode() == Dim::kExitSoftware);
         EXPECT_ERR(c1, "Error: Command 'one' has not been implemented.\n");
 
@@ -1207,7 +1206,7 @@ Options:
         EXPECT_PARSE(cli, "help help");
         out.str({});
         cli.iostreams(nullptr, &out);
-        EXPECT(cli.exec() == Dim::kExitOk);
+        EXPECT(!cli.exec() && cli.exitCode() == Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
         EXPECT(out.str() == helpText);
         EXPECT_USAGE(cli, "", 1 + R"(
@@ -2193,6 +2192,20 @@ Options:
         EXPECT(out.str() == "Name [jill]: ");
         EXPECT(*ask == "jack");
     }
+
+    // prompt with parse error 
+    {
+        cli = {};
+        auto & cookies = cli.opt<int>("cookies c").prompt();
+        in.clear();
+        in.str("nine");
+        out.str({});
+        cli.iostreams(&in, &out);
+        EXPECT_PARSE(cli, {}, false, Dim::kExitUsage);
+        EXPECT(out.str() == "Cookies [0]: ");
+        EXPECT_ERR(cli, "Error: Invalid '--cookies' value: nine\n");
+        EXPECT(*cookies == 0);
+    }
 }
 
 
@@ -2207,8 +2220,7 @@ void beforeTests() {
     CliTest cli;
     CliTest(cli).before([](auto & cli, auto & args) {
         if (args.size() > 1) 
-            return cli.badUsage("Too many args");
-        return true;
+            cli.badUsage("Too many args");
     });
     EXPECT_PARSE(cli, "one two", false);
     EXPECT_ERR(cli, "Error: Too many args\n");

@@ -707,7 +707,7 @@ individual arguments are parsed. The before action should:
   start out valid, but be careful that it still starts with a program name
   in arg0 when you're done.
 * Call cli.badUsage() with an error message for problems.
-* Return false if the program should stop, otherwise true.
+* Call cli.parseExit() if parsing should stop, but there was no error.
 
 There can be any number of before actions, they are executed in the order
 they are added.
@@ -750,7 +750,6 @@ cli.before([](Dim::Cli &, vector<string> & args) {
         // It's just the program name, add the help option.
         args.push_back("--help");
     }
-    return true;
 });
 ----
 
@@ -782,8 +781,8 @@ to cli, opt, and string as parameters can be used. The function should:
 * Parse the source string and use the result to set the option value (or
   push back the additional value for vector arguments).
 * Call cli.badUsage() with an error message if there's a problem.
-* Return false if the program should stop, otherwise true. You may want to
-  stop due to error or just to early out like "--version" and "--help".
+* Call cli.parseExit() if the program should stop. This could be due to an
+  early out like "--version" and "--help".
 
 Other things to keep in mind:
 
@@ -805,7 +804,6 @@ int main(int argc, char * argv[]) {
             if (!opt.parseValue(val)) // parse the new value into opt
                 return cli.badUsage(opt, val);
             *opt *= tmp; // multiply old and new together
-            return true;
         });
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -850,8 +848,7 @@ The function should:
   they appear on the command line, so comparing with another option is
   usually better done in an <<#after-actions, after action>>.
 * Call cli.badUsage() with an error message if there's a problem.
-* Return false if the program should stop, otherwise true to let processing
-  continue.
+* Call cli.parseExit() if the program should stop without an error.
 
 The opt is fully populated, so *opt, opt.from(), etc are all available.
 
@@ -864,7 +861,6 @@ int main(int argc, char * argv[]) {
         .desc("Number of socks, rounded up to even number.")
         .check([](auto & cli, auto & opt, auto & val) {
             *opt += *opt % 2;
-            return true;
         });
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -910,8 +906,8 @@ commands are, like the options themselves, ignored.
 The function should:
 
 * Do something interesting.
-* Call cli.badUsage() and return false on error.
-* Return true if processing should continue.
+* Call cli.badUsage() and return on error.
+* Call cli.parseExit() if processing should stop without error.
 
 Action to make sure the high is not less than the low:
 [source, C++]
@@ -922,8 +918,8 @@ int main(int argc, char * argv[]) {
     auto & high = cli.opt<int>("h")
         .desc("High value, must be greater than or equal to the low.")
         .after([&](auto & cli, auto & opt, auto &) {
-            return (*opt >= *low)
-                || cli.badUsage("High must not be less than the low.");
+            if (*opt < *low)
+                cli.badUsage("High must not be less than the low.");
         });
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1020,7 +1016,7 @@ int main(int argc, char * argv[]) {
 
 Or if there's some additional argument checks or setup you need to do, the
 exec() call can be separate from parse():
-[source, C++, test alt, test repl 20 1]
+[source, C++, test alt, test repl 20 2]
 ----
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);

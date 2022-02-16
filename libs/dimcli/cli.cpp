@@ -201,6 +201,7 @@ struct Cli::Config {
     shared_ptr<locale> defLoc = make_shared<locale>();
     shared_ptr<locale> numLoc = make_shared<locale>("");
 
+    bool parseExit {false};
     int exitCode {kExitOk};
     string errMsg;
     string errDetail;
@@ -264,8 +265,8 @@ void Dim::doAssert(const char expr[], unsigned line) {
 ***/
 
 // forward declarations
-static bool helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static bool defCmdAction(Cli & cli);
+static void helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
+static void defCmdAction(Cli & cli);
 static void writeChoicesDetail(
     string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
@@ -568,8 +569,10 @@ bool Cli::OptBase::withUnits(
 
     auto pos = val.size();
     for (;;) {
-        if (!pos--)
-            return cli.badUsage(*this, val);
+        if (!pos--) {
+            cli.badUsage(*this, val);
+            return false;
+        }
         if (f.is(f.digit, val[pos]) || val[pos] == '.') {
             pos += 1;
             break;
@@ -578,16 +581,19 @@ bool Cli::OptBase::withUnits(
     auto num = val.substr(0, pos);
     auto unit = val.substr(pos);
 
-    if (!fromString(out, num))
-        return cli.badUsage(*this, val);
+    if (!fromString(out, num)) {
+        cli.badUsage(*this, val);
+        return false;
+    }
     if (unit.empty()) {
         if (~flags & fUnitRequire)
             return true;
-        return cli.badUsage(
+        cli.badUsage(
             *this,
             val,
             "Value requires suffix specifying the units."
         );
+        return false;
     }
 
     if (flags & fUnitInsensitive)
@@ -597,11 +603,12 @@ bool Cli::OptBase::withUnits(
         out *= i->second;
         return true;
     } else {
-        return cli.badUsage(
+        cli.badUsage(
             *this,
             val,
             "Units symbol '" + unit + "' not recognized."
         );
+        return false;
     }
 }
 
@@ -943,73 +950,72 @@ void Cli::OptIndex::indexLongName(
 
 //===========================================================================
 // static
-bool Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
+void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
     if (opt.parseValue(val))
-        return true;
+        return;
 
     string desc;
     writeChoicesDetail(&desc, opt.m_choiceDescs);
-    return cli.badUsage(opt, val, desc);
+    cli.badUsage(opt, val, desc);
 }
 
 //===========================================================================
 // static
-bool Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
-    if (opt)
-        return true;
+void Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
+    if (opt) 
+        return;
+
     const string & name = !opt.defaultFrom().empty()
         ? opt.defaultFrom()
         : "UNKNOWN";
-    return cli.badUsage("No value given for " + name);
+    cli.badUsage("No value given for " + name);
 }
 
 //===========================================================================
-static bool helpBeforeAction(Cli &, vector<string> & args) {
+static void helpBeforeAction(Cli &, vector<string> & args) {
     if (args.size() == 1)
         args.push_back("--help");
-    return true;
 }
 
 //===========================================================================
-static bool helpOptAction(
+static void helpOptAction(
     Cli & cli,
     Cli::Opt<bool> & opt,
     const string & // val
 ) {
     if (*opt) {
         cli.printHelp(cli.conout(), {}, cli.commandMatched());
-        return false;
+        cli.parseExit();
     }
-    return true;
 }
 
 //===========================================================================
-static bool defCmdAction(Cli & cli) {
+static void defCmdAction(Cli & cli) {
     if (cli.commandMatched().empty()) {
-        return cli.badUsage("No command given.");
+        cli.badUsage("No command given.");
     } else {
         cli.fail(
             kExitSoftware,
             "Command '" + cli.commandMatched() + "' has not been implemented."
         );
-        return false;
     }
 }
 
 //===========================================================================
-static bool helpCmdAction(Cli & cli) {
+static void helpCmdAction(Cli & cli) {
     Cli::OptIndex ndx;
     ndx.index(cli, cli.commandMatched(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
-    if (!cli.commandExists(cmd)) {
-        cli.badUsage("Help requested for unknown command", cmd);
-    } else if (usage) {
+    if (!cli.commandExists(cmd)) 
+        return cli.badUsage("Help requested for unknown command", cmd);
+
+    if (usage) {
         cli.printUsageEx(cli.conout(), {}, cmd);
     } else {
         cli.printHelp(cli.conout(), {}, cmd);
     }
-    return false;
+    cli.parseExit();
 }
 
 
@@ -1075,7 +1081,10 @@ Cli & Cli::operator=(Cli && from) noexcept {
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes.")
         .desc("Suppress prompting to allow execution.")
-        .check([](auto &, auto & opt, auto &) { return *opt; })
+        .check([](auto & cli, auto & opt, auto &) { 
+            if (!*opt) 
+                cli.parseExit(); 
+        })
         .prompt(prompt.empty() ? "Are you sure?" : prompt);
     return ask;
 }
@@ -1102,7 +1111,7 @@ Cli::Opt<bool> & Cli::versionOpt(
         if (prog.empty())
             prog = displayName(cli.progName());
         cli.conout() << prog << " version " << version << endl;
-        return false;
+        cli.parseExit();
     };
     return opt<bool>("version.")
         .desc("Show version and exit.")
@@ -1411,6 +1420,11 @@ Cli::OptBase * Cli::findOpt(const void * value) {
         }
     }
     return nullptr;
+}
+
+//===========================================================================
+bool Cli::parseExited() const {
+    return m_cfg->parseExit;
 }
 
 
@@ -2008,16 +2022,21 @@ static bool expandResponseFile(
         ? (fs::path) fn
         : fs::path(ancestors.back()).parent_path() / fn;
     cfn = fs::canonical(cfn, ec);
-    if (ec || !fs::exists(cfn))
-        return cli.badUsage("Invalid response file", fn);
+    if (ec || !fs::exists(cfn)) {
+        cli.badUsage("Invalid response file", fn);
+        return false;
+    }
     for (auto && a : ancestors) {
-        if (a == cfn.string())
-            return cli.badUsage("Recursive response file", fn);
+        if (a == cfn.string()) {
+            cli.badUsage("Recursive response file", fn);
+            return false;
+        }
     }
     ancestors.push_back(cfn.string());
     if (!loadFileUtf8(content, cfn)) {
         string desc = content.empty() ? "Read error" : "Invalid encoding";
-        return cli.badUsage(desc, fn);
+        cli.badUsage(desc, fn);
+        return false;
     }
     auto rargs = cli.toArgv(content);
     if (!expandResponseFiles(cli, rargs, ancestors))
@@ -2114,6 +2133,7 @@ vector<pair<string, double>> Cli::siUnitMapping(
 Cli & Cli::resetValues() & {
     for (auto && opt : m_cfg->opts)
         opt->reset();
+    m_cfg->parseExit = false;
     m_cfg->exitCode = kExitOk;
     m_cfg->errMsg.clear();
     m_cfg->errDetail.clear();
@@ -2129,9 +2149,9 @@ Cli && Cli::resetValues() && {
 }
 
 //===========================================================================
-bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
+void Cli::prompt(OptBase & opt, const string & msg, int flags) {
     if (!opt.from().empty())
-        return true;
+        return;
     auto & is = conin();
     auto & os = conout();
     if (msg.empty()) {
@@ -2178,15 +2198,17 @@ bool Cli::prompt(OptBase & opt, const string & msg, int flags) {
             os << endl;
             consoleEnableEcho(true); // Re-enable when hide and confirm.
         }
-        if (val != again)
-            return badUsage("Confirm failed, entries not the same.");
+        if (val != again) {
+            badUsage("Confirm failed, entries not the same.");
+            return;
+        }
     }
     if (opt.m_bool) {
         // Honor the contract that bool parse functions are only presented
         // with either "0" or "1".
         val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
     }
-    return parseValue(opt, opt.defaultFrom(), 0, val.c_str());
+    (void) parseValue(opt, opt.defaultFrom(), 0, val.c_str());
 }
 
 //===========================================================================
@@ -2200,21 +2222,24 @@ bool Cli::parseValue(
         string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
             + intToString(opt, opt.maxSize()) + ".";
-        return badUsage(prefix, ptr, detail);
+        badUsage(prefix, ptr, detail);
+        return false;
     }
     string val;
     if (ptr) {
         val = ptr;
-        if (!opt.doParseAction(*this, val))
+        opt.doParseAction(*this, val);
+        if (parseExited())
             return false;
     } else {
         opt.assignImplicit();
     }
-    return opt.doCheckActions(*this, val);
+    opt.doCheckActions(*this, val);
+    return !parseExited();
 }
 
 //===========================================================================
-bool Cli::badUsage(
+void Cli::badUsage(
     const string & prefix,
     const string & value,
     const string & detail
@@ -2229,11 +2254,11 @@ bool Cli::badUsage(
         out += value;
     }
     fail(kExitUsage, out, detail);
-    return false;
+    m_cfg->parseExit = true;
 }
 
 //===========================================================================
-bool Cli::badUsage(
+void Cli::badUsage(
     const OptBase & opt,
     const string & value,
     const string & detail
@@ -2243,7 +2268,16 @@ bool Cli::badUsage(
 }
 
 //===========================================================================
+void Cli::parseExit() {
+    m_cfg->parseExit = true;
+    m_cfg->exitCode = kExitOk;
+    m_cfg->errMsg.clear();
+    m_cfg->errDetail.clear();
+}
+
+//===========================================================================
 void Cli::fail(int code, const string & msg, const string & detail) {
+    m_cfg->parseExit = false;
     m_cfg->exitCode = code;
     m_cfg->errMsg = format(*m_cfg, msg);
     m_cfg->errDetail = format(*m_cfg, detail);
@@ -2346,8 +2380,10 @@ static bool assignOperands(
         }
     }
 
-    if (usedPos < numPos)
-        return cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
+    if (usedPos < numPos) {
+        cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
+        return false;
+    }
     if (usedPos != numPos) {
         assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
             "not all operands mapped to variables"); 
@@ -2393,11 +2429,12 @@ static bool badMinMatched(
         detail = "Must have " + intToString(opt, min)
             + " to " + intToString(opt, max) + " values.";
     }
-    return cli.badUsage(
+    cli.badUsage(
         "Option '" + (name.empty() ? opt.from() : name) + "' missing value.",
         {},
         detail
     );
+    return false;
 }
 
 //===========================================================================
@@ -2445,7 +2482,8 @@ bool Cli::parse(vector<string> & args) {
 
     // Before actions
     for (auto && fn : m_cfg->befores) {
-        if (!fn(*this, args))
+        fn(*this, args);
+        if (parseExited())
             return false;
     }
 
@@ -2473,8 +2511,10 @@ bool Cli::parse(vector<string> & args) {
                 auto it = ndx.m_shortNames.find(*ptr);
                 name = '-';
                 name += *ptr;
-                if (it == ndx.m_shortNames.end())
-                    return badUsage("Unknown option", name);
+                if (it == ndx.m_shortNames.end()) {
+                    badUsage("Unknown option", name);
+                    return false;
+                }
                 argName = it->second;
                 if (argName.opt->m_finalOpt)
                     moreOpts = false;
@@ -2512,8 +2552,10 @@ bool Cli::parse(vector<string> & args) {
             auto it = ndx.m_longNames.find(key);
             name = "--";
             name += key;
-            if (it == ndx.m_longNames.end())
-                return badUsage("Unknown option", name);
+            if (it == ndx.m_longNames.end()) {
+                badUsage("Unknown option", name);
+                return false;
+            }
             argName = it->second;
             if (argName.opt->m_finalOpt)
                 moreOpts = false;
@@ -2522,7 +2564,8 @@ bool Cli::parse(vector<string> & args) {
                 if (equal
                     && (argName.opt->m_flagValue || !parseBool(val, ptr))
                 ) {
-                    return badUsage("Invalid '" + name + "' value", ptr);
+                    badUsage("Invalid '" + name + "' value", ptr);
+                    return false;
                 }
                 rawValues.emplace_back(
                     RawValue::kOption,
@@ -2564,7 +2607,8 @@ bool Cli::parse(vector<string> & args) {
                 cmdMode = kUnknown;
                 moreOpts = false;
             } else {
-                return badUsage("Unknown command", cmd);
+                badUsage("Unknown command", cmd);
+                return false;
             }
             m_cfg->command = cmd;
             continue;
@@ -2611,8 +2655,10 @@ bool Cli::parse(vector<string> & args) {
         }
         argPos += 1;
         arg += 1;
-        if (argPos == argc)
-            return badUsage("No value given for " + name);
+        if (argPos == argc) {
+            badUsage("No value given for " + name);
+            return false;
+        }
         rawValues.emplace_back(
             RawValue::kOption,
             argName.opt,
@@ -2672,7 +2718,8 @@ bool Cli::parse(vector<string> & args) {
     for (auto && opt : m_cfg->opts) {
         if (!opt->m_command.empty() && opt->m_command != commandMatched())
             continue;
-        if (!opt->doAfterActions(*this))
+        opt->doAfterActions(*this);
+        if (parseExited())
             return false;
     }
 
@@ -2736,7 +2783,8 @@ bool Cli::exec() {
 
     if (cmdFn) {
         fail(kExitOk, {});
-        return cmdFn(*this);
+        cmdFn(*this);
+        return !parseExited();
     } else {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"command found by parse not defined");

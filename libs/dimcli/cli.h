@@ -302,19 +302,21 @@ public:
     ) &&;
 
     // Function signature of actions that are tied to commands.
-    using ActionFn = bool(Cli & cli);
+    using ActionFn = void(Cli & cli);
 
     // Action that should be taken when the currently selected command is run,
     // which happens when cli.exec() is called by the application. The 
     // command's action function should:
-    //  - Use badUsage() and return false for parsing errors not caught by 
-    //    parse(), such as complex interactions between arguments.
-    //  - Return false if no action was really attempted, as when only printing
-    //    help text or a version string, mirroring what parse() would have 
-    //    returned.
+    //  - For parsing errors not caught by parse(), such as complex 
+    //    interactions between arguments; call cli.badUsage() and return. Also 
+    //    consider an after action instead.
+    //  - If no action was really attempted, as when only printing help text 
+    //    or a version string; call cli.parseExit() and return.
     //  - Do something useful
-    //  - Use fail() on other errors to set exitCode, et al
-    //
+    //  - Call cli.fail() to set exit code and error message for other errors.
+    // Generally, only use badUsage() or parseExit() when responding like an 
+    // extension of parse time processing.
+    // 
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
     // handling in main to wait for it to complete.
@@ -389,13 +391,14 @@ public:
 
     //-----------------------------------------------------------------------
     // Function signature of actions that run before options are populated.
-    using BeforeFn = bool(Cli & cli, std::vector<std::string> & args);
+    using BeforeFn = void(Cli & cli, std::vector<std::string> & args);
 
     // Actions taken after environment variable and response file expansion
     // but before any individual arguments are parsed. The before action
     // function should:
     //  - inspect and possibly modify the raw arguments coming in
-    //  - return false if parsing should stop, via badUsage() for errors
+    //  - call badUsage() for errors
+    //  - call parseExit() if parsing should stop, but there was no error
     Cli & before(std::function<BeforeFn> fn) &;
     Cli && before(std::function<BeforeFn> fn) &&;
 
@@ -548,12 +551,11 @@ public:
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
 
-    // Intended for use in return statements from action callbacks. Sets
-    // exitCode (to EX_USAGE), errMsg, and errDetail. errMsg is set to
-    // "<prefix>: <value>" or "<prefix>" if value.empty(), with an additional
-    // leading prefix of "Command: '<command>'" for subcommands. Always
-    // returns false.
-    bool badUsage(
+    // Intended for use in action callbacks. Sets exitCode (to EX_USAGE), 
+    // errMsg, and errDetail. errMsg is set to "<prefix>: <value>" or 
+    // "<prefix>" if value.empty(), with an additional leading prefix of 
+    // "Command: '<command>'" for subcommands.
+    void badUsage(
         const std::string & prefix,
         const std::string & value = {},
         const std::string & detail = {}
@@ -561,21 +563,26 @@ public:
 
     // Calls badUsage(prefix, value, detail) with prefix set to:
     //  "Invalid '" + opt.from() + "' value"
-    bool badUsage(
+    void badUsage(
         const OptBase & opt,
         const std::string & value,
         const std::string & detail = {}
     );
 
-    // True if low <= rawVal <= high, otherwise calls badUsage with "Out of
-    // range" message and the low and high in the detail.
+    // Calls badUsage with "Out of range" message and the low and high in the 
+    // detail.
     template <typename A, typename T>
-    bool badRange(
+    void badRange(
         A & opt,
         const std::string & val,
         const T & low,
         const T & high
     );
+
+    // Intended for use in action callbacks. Stops parsing, sets exitCode to 
+    // EX_OK, and causes an in progress cli.parse() and cli.exec() to return 
+    // false.
+    void parseExit();
 
     // Used to populate an option with an arbitrary input string through the
     // standard parsing logic. Since it causes the parse and check actions to
@@ -613,7 +620,7 @@ public:
         fPromptConfirm = 2,   // Make the user enter it twice
         fPromptNoDefault = 4, // Don't include default value in prompt
     };
-    [[nodiscard]] bool prompt(
+    void prompt(
         OptBase & opt,
         const std::string & msg,
         int flags // fPrompt* flags
@@ -793,12 +800,12 @@ protected:
     Cli(std::shared_ptr<Config> cfg);
 
 private:
-    static bool defParseAction(
+    static void defParseAction(
         Cli & cli,
         OptBase & opt,
         const std::string & val
     );
-    static bool requireAction(
+    static void requireAction(
         Cli & cli,
         OptBase & opt,
         const std::string & val
@@ -817,6 +824,8 @@ private:
 
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
+
+    bool parseExited() const;
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;
@@ -889,7 +898,7 @@ Cli::OptVec<T> & Cli::optVec(const std::string & names) {
 
 //===========================================================================
 template <typename A, typename T>
-bool Cli::badRange(
+void Cli::badRange(
     A & opt,
     const std::string & val,
     const T & low,
@@ -901,7 +910,7 @@ bool Cli::badRange(
         if (opt.toString(hstr, high))
             detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
     }
-    return badUsage(prefix, val, detail);
+    badUsage(prefix, val, detail);
 }
 
 //===========================================================================
@@ -1253,9 +1262,9 @@ protected:
     virtual bool defaultValueToString(std::string & out) const = 0;
     virtual std::string defaultValueDesc() const = 0;
 
-    virtual bool doParseAction(Cli & cli, const std::string & value) = 0;
-    virtual bool doCheckActions(Cli & cli, const std::string & value) = 0;
-    virtual bool doAfterActions(Cli & cli) = 0;
+    virtual void doParseAction(Cli & cli, const std::string & value) = 0;
+    virtual void doCheckActions(Cli & cli, const std::string & value) = 0;
+    virtual void doAfterActions(Cli & cli) = 0;
     virtual bool assign(const std::string & name, size_t pos) = 0;
     virtual bool assigned() const = 0;
 
@@ -1441,16 +1450,15 @@ public:
     );
 
     // Function signature of actions that are tied to options.
-    using ActionFn = bool(Cli & cli, A & opt, const std::string & val);
+    using ActionFn = void(Cli & cli, A & opt, const std::string & val);
 
     // Change the action to take when parsing this argument. The function
     // should:
     //  - Parse the src string and use the result to set the value (or, for
     //    vectors, push_back the new value).
     //  - Call cli.badUsage() with an error message if there's a problem.
-    //  - Return false if the program should stop, otherwise true. This
-    //    could be due to error or just to early out like "--version" and
-    //    "--help".
+    //  - Call cli.parseExit() if the program should stop without an error. 
+    //    This could be due to an early out like "--version" and "--help".
     //
     // You can use opt.from() and opt.pos() to get the argument name that the
     // value was attached to on the command line and its position in argv[].
@@ -1471,8 +1479,7 @@ public:
     // The function should:
     //  - Check the options new value, possibly in relation to other options.
     //  - Call cli.badUsage() with an error message if there's a problem.
-    //  - Return false if the program should stop, otherwise true to let
-    //    processing continue.
+    //  - Call cli.parseExit() if the program should stop without an error.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn);
@@ -1482,8 +1489,8 @@ public:
     // order they're added. When using subcommands, the after actions bound
     // to unmatched subcommands are not executed. The function should:
     //  - Do something interesting.
-    //  - Call cli.badUsage() and return false on error.
-    //  - Return true if processing should continue.
+    //  - Call cli.badUsage() and return on error.
+    //  - Call cli.parseExit() if processing should stop without error.
     A & after(std::function<ActionFn> fn);
 
     //-----------------------------------------------------------------------
@@ -1494,15 +1501,15 @@ public:
 
 protected:
     std::string defaultValueDesc() const final;
-    bool doParseAction(Cli & cli, const std::string & value) final;
-    bool doCheckActions(Cli & cli, const std::string & value) final;
-    bool doAfterActions(Cli & cli) final;
-    bool inverted() const final;
-    bool act(
+    void doParseAction(Cli & cli, const std::string & value) final;
+    void doCheckActions(Cli & cli, const std::string & value) final;
+    void doAfterActions(Cli & cli) final;
+    void act(
         Cli & cli,
         const std::string & value,
         const std::vector<std::function<ActionFn>> & actions
     );
+    bool inverted() const final;
 
     // If numeric_limits<T>::min & max are defined and 'x' is outside of
     // those limits badRange() is called, otherwise returns true.
@@ -1538,7 +1545,7 @@ inline std::string Cli::OptShim<A, T>::defaultValueDesc() const {
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::doParseAction(
+inline void Cli::OptShim<A, T>::doParseAction(
     Cli & cli,
     const std::string & val
 ) {
@@ -1548,7 +1555,7 @@ inline bool Cli::OptShim<A, T>::doParseAction(
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::doCheckActions(
+inline void Cli::OptShim<A, T>::doCheckActions(
     Cli & cli,
     const std::string & val
 ) {
@@ -1557,8 +1564,23 @@ inline bool Cli::OptShim<A, T>::doCheckActions(
 
 //===========================================================================
 template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
+inline void Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
     return act(cli, {}, m_afters);
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline void Cli::OptShim<A, T>::act(
+    Cli & cli,
+    const std::string & val,
+    const std::vector<std::function<ActionFn>> & actions
+) {
+    auto self = static_cast<A *>(this);
+    for (auto && fn : actions) {
+        fn(cli, *self, val);
+        if (cli.parseExited())
+            break;
+    }
 }
 
 //===========================================================================
@@ -1578,21 +1600,6 @@ inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     if (this->m_flagValue)
         return this->m_flagDefault;
     return this->defaultValue();
-}
-
-//===========================================================================
-template <typename A, typename T>
-inline bool Cli::OptShim<A, T>::act(
-    Cli & cli,
-    const std::string & val,
-    const std::vector<std::function<ActionFn>> & actions
-) {
-    auto self = static_cast<A *>(this);
-    for (auto && fn : actions) {
-        if (!fn(cli, *self, val))
-            return false;
-    }
-    return true;
 }
 
 //===========================================================================
@@ -1784,9 +1791,13 @@ auto Cli::OptShim<A, T>::checkLimits(
     constexpr auto high = std::numeric_limits<T>::max();
     if (!std::is_arithmetic<T>::value)
         return true;
-    return (long double) x >= (long double) low
-            && (long double) x <= (long double) high
-        || cli.badRange(*this, val, low, high);
+    if ((long double) x >= (long double) low
+        && (long double) x <= (long double) high
+    ) {
+        return true;
+    }
+    cli.badRange(*this, val, low, high);
+    return false;
 }
 
 //===========================================================================
@@ -1825,9 +1836,9 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
         long double dval;
         bool success = true;
         if (!opt.withUnits(dval, cli, val, units, flags))
-            return false;
+            return;
         if (!opt.checkLimits(cli, val, dval, 0))
-            return false;
+            return;
         std::string sval;
         if (std::is_integral<T>::value)
             dval = std::round(dval);
@@ -1842,8 +1853,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
             }
         }
         if (!opt.parseValue(sval))
-            return cli.badUsage(opt, val);
-        return success;
+            cli.badUsage(opt, val);
     });
 }
 
@@ -1868,8 +1878,9 @@ A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
     if (high < low)
         assert(!"bad range, low greater than high");
     return check([low, high](auto & cli, auto & opt, auto & val) {
-        return (*opt >= low && *opt <= high)
-            || cli.badRange(opt, val, low, high);
+        if (*opt >= low && *opt <= high)
+            return;
+        cli.badRange(opt, val, low, high);
     });
 }
 
@@ -1883,7 +1894,7 @@ A & Cli::OptShim<A, T>::prompt(int flags) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
     return after([=](auto & cli, auto & opt, auto & /* val */) {
-        return cli.prompt(opt, msg, flags);
+        cli.prompt(opt, msg, flags);
     });
 }
 
