@@ -87,7 +87,189 @@ set(tmp "${LINK_STATIC_RUNTIME}")   # not used by clang or gcc builds
 
 #############################################################################
 #
-#   Functions
+#   Compiler and general project settings
+#
+####
+
+get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
+if("${parent}" STREQUAL "")
+    set(ROOT_PROJECT true)
+else()
+    set(ROOT_PROJECT false)
+endif()
+
+if(BUILD_PROJECT_NAME AND ROOT_PROJECT)
+    project(${BUILD_PROJECT_NAME})
+else()
+    # Get name of project from containing directory. Strip version suffixes
+    # such as "-1.2.3-2" from the name.
+    get_filename_component(prjname "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+    string(REGEX REPLACE "(-[\.0-9\-]*)$" "" prjname ${prjname})
+    project(${prjname})
+endif()
+string(TOUPPER "${PROJECT_NAME}" DEFINE_PREFIX)
+
+# OUT_OF_TREE is 0 if binary dir is a subdirectory of source dir, else
+# non-zero.
+string(FIND "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/"
+    OUT_OF_TREE)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER cmake)
+
+set(CMAKE_CONFIGURATION_TYPES Debug Release)
+if(NOT OUT_OF_TREE)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin)
+endif()
+
+if(MSVC)
+    # "/EHsc" - exceptions from c++ only (not from structured or "C")
+    # "/GF" - string pooling
+    # "/GR-" (UNUSED) - disable RTTI
+    # "/guard:cf" (UNUSED) - control flow guard
+    # "/nologo" - suppress startup banner and informational messages
+    # "/std:c++latest" - allow constructs still pending standardization
+    # "/utf-8" - sets source code character set to utf-8
+    # "/W4" - warning level 4
+    # "/WX" - treat warnings as errors
+    # "/Zc:inline" - all inline functions must have definition available
+    # "/Zc:rvalueCast" - enforce type conversion rules
+    # "/Zc:strictStrings" - disable string literal type conversion to non-const
+    # "/Fa[dir]" - assembly listing location, the CMake default puts it right
+    #    under the solution tree, and we want it in under /build
+    set(CMAKE_CXX_FLAGS "\
+        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX \
+        /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
+        /Fa$(IntDir)")
+    if(NOT MSVC_VERSION LESS 1910)
+        # /permissive-  // reject non-conforming backward compatibility-isms
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
+    endif()
+
+    # "/Od" - disables optimization
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od")
+    if(FALSE AND NOT MSVC_VERSION LESS 1928)
+        # "/fsanitize=address" - enables ASAN memory error detector
+        # "/Zi" - debug info (not present would be no info)
+        set(CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi")
+    else()
+        # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
+        # "/ZI" - debug with edit and continue (disables some optimizations)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /RTC1 /ZI")
+    endif()
+    if(LINK_STATIC_RUNTIME)
+        # "/MTd" - multithread debug static runtime
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+    else()
+        # "/MDd" - multithread debug dll runtime
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    endif()
+
+    # "/O2" - maximize speed
+    # "/Zi" - debug info format (not present would be no info)
+    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2 /Zi")
+    if(LINK_STATIC_RUNTIME)
+        # "/MT" - multithread release static runtime
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    else()
+        # "/MD" - multithread release dll runtime
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+    endif()
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b")
+    endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
+        # The libstdc++6 library, as of 2021-06-15, no longer works with
+        # Clang++-6 in c++2a mode, failing with a reference to the unknown
+        # std::is_constant_evaluated().
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b")
+    endif()
+endif()
+if(BUILD_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL GNU
+            OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+            -fprofile-arcs -ftest-coverage -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+            -fprofile-arcs")
+    endif()
+endif()
+
+if(BUILD_UNICODE)
+    add_definitions(/D_UNICODE)
+endif()
+if(BUILD_COVERAGE)
+    add_definitions(/D${DEFINE_PREFIX}_LIB_BUILD_COVERAGE)
+endif()
+
+# set list of defines that need to go in config.h
+if(BUILD_SHARED_LIBS)
+    list(APPEND config_defines ${DEFINE_PREFIX}_LIB_DYN_LINK)
+endif()
+if(WINDOWS_STORE)
+    list(APPEND config_defines ${DEFINE_PREFIX}_LIB_WINAPI_FAMILY_APP)
+endif()
+foreach(var ${config_defines})
+    add_definitions(/D${var})
+endforeach()
+
+# Setting source_group to a single space is weird and relies on Visual Studio
+# treating it as no group, ideally we'd set it to the empty string to mean
+# no group, but - just for regexes (bug?) - that causes CMake to use defaults.
+source_group(" " REGULAR_EXPRESSION ".*")
+source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
+source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
+
+if(ROOT_PROJECT)
+    include_directories(libs)
+endif()
+
+
+#############################################################################
+#
+#   Vendor submodules
+#
+####
+
+if(ROOT_PROJECT)
+    file(GLOB allnames vendor/*)
+    foreach(var ${allnames})
+        if(IS_DIRECTORY "${var}")
+            list(APPEND deps "${var}")
+            get_filename_component(prjname "${var}" NAME)
+            if(EXISTS "${var}/CMakeLists.txt")
+                list(APPEND submodules "${var}")
+                include_directories(${var}/libs)
+            endif()
+        endif()
+    endforeach()
+    foreach(var ${submodules})
+        add_subdirectory("${var}")
+    endforeach()
+endif()
+
+
+#############################################################################
+#
+#   Functions for generating local projects
+#
+#   Because function definitions are global the ones defined for use in this
+#   file (to generate local projects) are defined after all vendor subprojects
+#   have been included, otherwise they could be replaced by same named 
+#   functions defined by the vendor cmake scripts.
 #
 ####
 
@@ -126,7 +308,7 @@ function(update_deps_file)
             if (dir)
                 set(name "${dir}/${name}")
             endif()
-            message(STATUS "${name} dependency skipped because ${name} exists.")
+            message(STATUS "${name} dependency skipped because ${dep} exists.")
             list(REMOVE_ITEM rel_deps "${name}")
         endif()
     endforeach()
@@ -309,171 +491,9 @@ endfunction()
 
 #############################################################################
 #
-#   Main
+#   Local projects
 #
 ####
-
-get_property(parent DIRECTORY PROPERTY PARENT_DIRECTORY)
-if("${parent}" STREQUAL "")
-    set(ROOT_PROJECT true)
-else()
-    set(ROOT_PROJECT false)
-endif()
-
-if(BUILD_PROJECT_NAME AND ROOT_PROJECT)
-    project(${BUILD_PROJECT_NAME})
-else()
-    # Get name of project from containing directory. Strip version suffixes
-    # such as "-1.2.3-2" from the name.
-    get_filename_component(prjname "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
-    string(REGEX REPLACE "(-[\.0-9\-]*)$" "" prjname ${prjname})
-    project(${prjname})
-endif()
-string(TOUPPER "${PROJECT_NAME}" DEFINE_PREFIX)
-
-# OUT_OF_TREE is 0 if binary dir is a subdirectory of source dir, else
-# non-zero.
-string(FIND "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/"
-    OUT_OF_TREE)
-
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER cmake)
-
-set(CMAKE_CONFIGURATION_TYPES Debug Release)
-if(NOT OUT_OF_TREE)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin)
-endif()
-
-if(MSVC)
-    # "/EHsc" - exceptions from c++ only (not from structured or "C")
-    # "/GF" - string pooling
-    # "/GR-" (UNUSED) - disable RTTI
-    # "/guard:cf" (UNUSED) - control flow guard
-    # "/nologo" - suppress startup banner and informational messages
-    # "/std:c++latest" - allow constructs still pending standardization
-    # "/utf-8" - sets source code character set to utf-8
-    # "/W4" - warning level 4
-    # "/WX" - treat warnings as errors
-    # "/Zc:inline" - all inline functions must have definition available
-    # "/Zc:rvalueCast" - enforce type conversion rules
-    # "/Zc:strictStrings" - disable string literal type conversion to non-const
-    # "/Fa[dir]" - assembly listing location, the CMake default puts it right
-    #    under the solution tree, and we want it in under /build
-    set(CMAKE_CXX_FLAGS "\
-        /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX \
-        /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /Fa$(IntDir)")
-    if(NOT MSVC_VERSION LESS 1910)
-        # /permissive-  // reject non-conforming backward compatibility-isms
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
-    endif()
-
-    # "/Od" - disables optimization
-    set(CMAKE_CXX_FLAGS_DEBUG "/Od")
-    if(FALSE AND NOT MSVC_VERSION LESS 1928)
-        # "/fsanitize=address" - enables ASAN memory error detector
-        # "/Zi" - debug info (not present would be no info)
-        set(CMAKE_CXX_FLAGS_DEBUG
-            "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi")
-    else()
-        # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
-        # "/ZI" - debug with edit and continue (disables some optimizations)
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /RTC1 /ZI")
-    endif()
-    if(LINK_STATIC_RUNTIME)
-        # "/MTd" - multithread debug static runtime
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-    else()
-        # "/MDd" - multithread debug dll runtime
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-    endif()
-
-    # "/O2" - maximize speed
-    # "/Zi" - debug info format (not present would be no info)
-    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2 /Zi")
-    if(LINK_STATIC_RUNTIME)
-        # "/MT" - multithread release static runtime
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-    else()
-        # "/MD" - multithread release dll runtime
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-    endif()
-elseif(CMAKE_COMPILER_IS_GNUCXX)
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
-    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "11")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b")
-    endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
-        # The libstdc++6 library, as of 2021-06-15, no longer works with
-        # Clang++-6 in c++2a mode, failing with a reference to the unknown
-        # std::is_constant_evaluated().
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
-    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b")
-    endif()
-endif()
-if(BUILD_COVERAGE)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL GNU
-            OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-            -fprofile-arcs -ftest-coverage -fsanitize=address")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-            -fprofile-arcs")
-    endif()
-endif()
-
-if(BUILD_UNICODE)
-    add_definitions(/D_UNICODE)
-endif()
-if(BUILD_COVERAGE)
-    add_definitions(/D${DEFINE_PREFIX}_LIB_BUILD_COVERAGE)
-endif()
-
-# set list of defines that need to go in config.h
-if(BUILD_SHARED_LIBS)
-    list(APPEND config_defines ${DEFINE_PREFIX}_LIB_DYN_LINK)
-endif()
-if(WINDOWS_STORE)
-    list(APPEND config_defines ${DEFINE_PREFIX}_LIB_WINAPI_FAMILY_APP)
-endif()
-foreach(var ${config_defines})
-    add_definitions(/D${var})
-endforeach()
-
-# Setting source_group to a single space is weird and relies on Visual Studio
-# treating it as no group, ideally we'd set it to the empty string to mean
-# no group, but - just for regexs (bug?) - that causes cmake to use defaults.
-source_group(" " REGULAR_EXPRESSION ".*")
-source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
-source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
-
-if(ROOT_PROJECT)
-    include_directories(libs)
-
-    # vendor dependencies
-    file(GLOB allnames vendor/*)
-    foreach(var ${allnames})
-        if(IS_DIRECTORY "${var}")
-            list(APPEND deps "${var}")
-            get_filename_component(prjname "${var}" NAME)
-            if(EXISTS "${var}/CMakeLists.txt")
-                list(APPEND submodules "${var}")
-                include_directories(${var}/libs)
-            endif()
-        endif()
-    endforeach()
-    foreach(var ${submodules})
-        add_subdirectory("${var}")
-    endforeach()
-endif()
 
 # lib targets
 file(GLOB allnames libs/*)
