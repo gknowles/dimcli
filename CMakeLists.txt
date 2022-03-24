@@ -11,6 +11,7 @@
 #   /<project_name>
 #   /<project_name>/CMakeLists.txt - this file
 #   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
+#   /<project_name>/*.user.props - properties included in MSVC projects
 #   /<project_name>/conf/**
 #   /<project_name>/conf/**/<basename>.sample - causes .../<basename> to be 
 #       excluded from dependencies
@@ -326,6 +327,7 @@ function(update_deps_file)
 endfunction()
 
 # Available options:
+#   "ifNotExists" - writes file only if it doesn't already exist
 #   "debug" - include default debugger settings
 #   "props" - import global and project specific *.user.props files
 function(write_user_file prjname opts)
@@ -333,10 +335,14 @@ function(write_user_file prjname opts)
         return()
     endif()
     set(user_file "${CMAKE_CURRENT_BINARY_DIR}/${prjname}.vcxproj.user")
+    list(FIND opts ifNotExists hasOpt)
+    if(NOT ${hasOpt} EQUAL -1 AND EXISTS ${user_file})
+        return()
+    endif()
     file(WRITE ${user_file} [=[
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0"
-        xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 ]=])
     list(FIND opts debug hasOpt)
     if(NOT ${hasOpt} EQUAL -1)
@@ -348,11 +354,11 @@ function(write_user_file prjname opts)
             endif()
             set(cfgplat "${cfgname}|${MSVC_CXX_ARCHITECTURE_ID}")
             file(APPEND ${user_file} [=[
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'==']=] "${cfgplat}" [=['">
-        <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
-        <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-        <VcpkgLibPath>]=] "${libpath}" [=[</VcpkgLibPath>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'==']=] "${cfgplat}" [=['">
+    <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <VcpkgLibPath>]=] "${libpath}" [=[</VcpkgLibPath>
+  </PropertyGroup>
 ]=])
         endforeach()
     endif()
@@ -369,7 +375,7 @@ function(write_user_file prjname opts)
         endif()
         foreach(propfile ${props})
             file(APPEND ${user_file} [=[
-    <Import Project="]=] "${propfile}" [=["/>
+  <Import Project="]=] "${propfile}" [=["/>
 ]=])
         endforeach()
     endif()
@@ -433,7 +439,7 @@ function(add_exec_project tgt srcdir)
             AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
         target_link_libraries(${tgt} "stdc++fs")
     endif()
-    write_user_file(${tgt} "debug;props")
+    write_user_file(${tgt} "debug;props;ifNotExists")
 endfunction()
 
 function(add_lib_project tgt srcdir)
