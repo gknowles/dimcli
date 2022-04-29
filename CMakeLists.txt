@@ -24,6 +24,7 @@
 #   /<project_name>/tools/<tool_project_name>/**
 #   /<project_name>/vendor/<vendor_project_name>/ - only if
 #       /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
+#   /<project_name>/web/** - web UI for server projects (html, images, etc)
 #
 # Code files:
 # Source files are expected to be "*.cpp" and "*.h".
@@ -544,6 +545,11 @@ endif()
 file(GLOB_RECURSE sources docs/*)
 if(sources)
     add_file_project(docs ${sources})
+endif()
+
+file(GLOB_RECURSE sources web/*)
+if(sources)
+    add_file_project(web ${sources})
 endif()
 
 # tool targets
