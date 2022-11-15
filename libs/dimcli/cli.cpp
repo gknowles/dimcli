@@ -962,7 +962,7 @@ void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
 //===========================================================================
 // static
 void Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
-    if (opt) 
+    if (opt)
         return;
 
     const string & name = !opt.defaultFrom().empty()
@@ -1007,7 +1007,7 @@ static void helpCmdAction(Cli & cli) {
     ndx.index(cli, cli.commandMatched(), false);
     auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
-    if (!cli.commandExists(cmd)) 
+    if (!cli.commandExists(cmd))
         return cli.badUsage("Help requested for unknown command", cmd);
 
     if (usage) {
@@ -1081,9 +1081,9 @@ Cli & Cli::operator=(Cli && from) noexcept {
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes.")
         .desc("Suppress prompting to allow execution.")
-        .check([](auto & cli, auto & opt, auto &) { 
-            if (!*opt) 
-                cli.parseExit(); 
+        .check([](auto & cli, auto & opt, auto &) {
+            if (!*opt)
+                cli.parseExit();
         })
         .prompt(prompt.empty() ? "Are you sure?" : prompt);
     return ask;
@@ -2386,7 +2386,7 @@ static bool assignOperands(
     }
     if (usedPos != numPos) {
         assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "not all operands mapped to variables"); 
+            "not all operands mapped to variables");
     }
 
     int ipos = 0;       // Operand being matched.
@@ -2440,7 +2440,7 @@ static bool badMinMatched(
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
     // The 0th (name of this program) opt must always be present.
-    assert(!args.empty() 
+    assert(!args.empty()
         && "at least one argument (the program name) required");
 
     Config::touchAllCmds(*this);

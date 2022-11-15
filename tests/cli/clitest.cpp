@@ -2193,7 +2193,7 @@ Options:
         EXPECT(*ask == "jack");
     }
 
-    // prompt with parse error 
+    // prompt with parse error
     {
         cli = {};
         auto & cookies = cli.opt<int>("cookies c").prompt();
@@ -2219,7 +2219,7 @@ Options:
 void beforeTests() {
     CliTest cli;
     CliTest(cli).before([](auto & cli, auto & args) {
-        if (args.size() > 1) 
+        if (args.size() > 1)
             cli.badUsage("Too many args");
     });
     EXPECT_PARSE(cli, "one two", false);
