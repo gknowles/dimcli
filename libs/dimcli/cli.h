@@ -305,18 +305,18 @@ public:
     using ActionFn = void(Cli & cli);
 
     // Action that should be taken when the currently selected command is run,
-    // which happens when cli.exec() is called by the application. The 
+    // which happens when cli.exec() is called by the application. The
     // command's action function should:
-    //  - For parsing errors not caught by parse(), such as complex 
-    //    interactions between arguments; call cli.badUsage() and return. Also 
+    //  - For parsing errors not caught by parse(), such as complex
+    //    interactions between arguments; call cli.badUsage() and return. Also
     //    consider an after action instead.
-    //  - If no action was really attempted, as when only printing help text 
+    //  - If no action was really attempted, as when only printing help text
     //    or a version string; call cli.parseExit() and return.
     //  - Do something useful
     //  - Call cli.fail() to set exit code and error message for other errors.
-    // Generally, only use badUsage() or parseExit() when responding like an 
+    // Generally, only use badUsage() or parseExit() when responding like an
     // extension of parse time processing.
-    // 
+    //
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
     // handling in main to wait for it to complete.
@@ -482,7 +482,7 @@ public:
     // Parse the command line, populate the options, and set the error and
     // other miscellaneous state. Returns true if processing should continue.
     //
-    // Error information can also be extracted after parse() completes, see 
+    // Error information can also be extracted after parse() completes, see
     // errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
 
@@ -551,9 +551,9 @@ public:
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
 
-    // Intended for use in action callbacks. Sets exitCode (to EX_USAGE), 
-    // errMsg, and errDetail. errMsg is set to "<prefix>: <value>" or 
-    // "<prefix>" if value.empty(), with an additional leading prefix of 
+    // Intended for use in action callbacks. Sets exitCode (to EX_USAGE),
+    // errMsg, and errDetail. errMsg is set to "<prefix>: <value>" or
+    // "<prefix>" if value.empty(), with an additional leading prefix of
     // "Command: '<command>'" for subcommands.
     void badUsage(
         const std::string & prefix,
@@ -569,7 +569,7 @@ public:
         const std::string & detail = {}
     );
 
-    // Calls badUsage with "Out of range" message and the low and high in the 
+    // Calls badUsage with "Out of range" message and the low and high in the
     // detail.
     template <typename A, typename T>
     void badRange(
@@ -579,8 +579,8 @@ public:
         const T & high
     );
 
-    // Intended for use in action callbacks. Stops parsing, sets exitCode to 
-    // EX_OK, and causes an in progress cli.parse() and cli.exec() to return 
+    // Intended for use in action callbacks. Stops parsing, sets exitCode to
+    // EX_OK, and causes an in progress cli.parse() and cli.exec() to return
     // false.
     void parseExit();
 
@@ -649,17 +649,17 @@ public:
     // had been given.
     const std::vector<std::string> & unknownArgs() const;
 
-    // Executes the action of the matched command and propagates it's return 
-    // value back to he caller. On failure the action is expected to have set 
-    // exitCode, errMsg, and optionally errDetail by calling fail(). If no 
-    // command was matched the action of the empty "" command is run, which 
-    // defaults to failing with "No command given." but can be set using 
+    // Executes the action of the matched command and propagates it's return
+    // value back to he caller. On failure the action is expected to have set
+    // exitCode, errMsg, and optionally errDetail by calling fail(). If no
+    // command was matched the action of the empty "" command is run, which
+    // defaults to failing with "No command given." but can be set using
     // cli.action() like any other command.
     //
     // To be consistent with cli.parse() the action should return false if it
-    // ends immediately, such as a usage error, printing help text, or a version 
+    // ends immediately, such as a usage error, printing help text, or a version
     // string. Otherwise, if the action was really attempted, return true.
-    // 
+    //
     // It is assumed that a prior call to parse() has already been made to set
     // the matched command.
     bool exec();
@@ -668,7 +668,7 @@ public:
     bool exec(size_t argc, char * argv[]);
     bool exec(std::vector<std::string> & args);
 
-    // Sets exitCode(), errMsg(), errDetail(). Intended to be called from 
+    // Sets exitCode(), errMsg(), errDetail(). Intended to be called from
     // command actions, parsing related failures should use badUsage() instead.
     void fail(
         int code,
@@ -1457,7 +1457,7 @@ public:
     //  - Parse the src string and use the result to set the value (or, for
     //    vectors, push_back the new value).
     //  - Call cli.badUsage() with an error message if there's a problem.
-    //  - Call cli.parseExit() if the program should stop without an error. 
+    //  - Call cli.parseExit() if the program should stop without an error.
     //    This could be due to an early out like "--version" and "--help".
     //
     // You can use opt.from() and opt.pos() to get the argument name that the
