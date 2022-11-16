@@ -3622,8 +3622,10 @@ unsigned Cli::consoleWidth(bool queryWidth) {
             || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
             || ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1
         ) {
-            if (w.ws_col)
-                return w.ws_col;
+            // Some CI platforms (Github Actions) run unix test scripts without
+            // a console attached, making it impossible to get coverage for
+            // this line in those environments.
+            if (w.ws_col) return w.ws_col;  // LCOV_EXCL_LINE
         }
 #if !defined(DIMCLI_LIB_NO_ENV)
         if (auto val = getenv("COLUMNS")) {
