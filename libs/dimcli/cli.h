@@ -1104,7 +1104,7 @@ bool Cli::Convert::fromString_impl(
     //          MyType & out, const std::string & src) const { ... }
     //  - parse action attached to the Opt<T> instance that does NOT call
     //    opt.parseValue(), such as opt.choice().
-    assert(!"unusable type, no conversion from string exists");
+    assert(!"Unusable type, no conversion from string exists.");
     return false;
 }
 
@@ -1594,8 +1594,8 @@ template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     // bool options are always marked as bool
     if (!this->m_bool) {
-        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "bool option not marked bool");
+        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+            "bool option not marked bool.");
     }
     if (this->m_flagValue)
         return this->m_flagDefault;
@@ -1660,7 +1660,7 @@ template <typename A, typename T>
 A & Cli::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // bools don't have separate values, just their presence/absence
-        assert(!"bool argument values can't be implicit");
+        assert(!"Boolean argument values can't be implicit.");
     } else {
         m_implicitValue = val;
     }
@@ -1704,7 +1704,7 @@ A & Cli::OptShim<A, T>::choice(
     // The empty string isn't a valid choice because it can't be specified on
     // the command line, where unspecified picks the default instead.
     if (key.empty())
-        assert(!"an empty string can't be a choice");
+        assert(!"An empty string can't be a choice.");
     auto & cd = m_choiceDescs[key];
     cd.pos = m_choices.size();
     cd.desc = desc;
@@ -1848,8 +1848,8 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
         } else {
             success = opt.toString(sval, dval);
             if (!success) {
-                assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-                    "convert double to string failed");
+                assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+                    "convert double to string failed.");
             }
         }
         if (!opt.parseValue(sval))
@@ -1861,7 +1861,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
     if (high < low)
-        assert(!"bad clamp, low greater than high");
+        assert(!"Bad clamp, low greater than high.");
     return check([low, high](auto & /* cli */, auto & opt, auto & /* val */) {
         if (*opt < low) {
             *opt = low;
@@ -1876,7 +1876,7 @@ A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
     if (high < low)
-        assert(!"bad range, low greater than high");
+        assert(!"Bad range, low greater than high.");
     return check([low, high](auto & cli, auto & opt, auto & val) {
         if (*opt >= low && *opt <= high)
             return;
@@ -2012,8 +2012,8 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         if (value == "1") {
             tmp = this->defaultValue();
         } else if (value != "0") {
-            assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-                "flagValue not parsed from 0 or 1");
+            assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+                "flagValue not parsed from 0 or 1.");
         }
         return true;
     }
@@ -2158,7 +2158,7 @@ Cli::OptVec<T>::OptVec(
 template <typename T>
 inline Cli::OptVec<T> & Cli::OptVec<T>::size(int exact) {
     if (exact < 0) {
-        assert(!"bad optVec size, minimum must be >= 0");
+        assert(!"Bad optVec size, minimum must be >= 0.");
     } else {
         this->m_minVec = this->m_maxVec = exact;
     }
@@ -2169,11 +2169,11 @@ inline Cli::OptVec<T> & Cli::OptVec<T>::size(int exact) {
 template <typename T>
 inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
     if (min < 0) {
-        assert(!"bad optVec size, minimum must be >= 0");
+        assert(!"Bad optVec size, minimum must be >= 0.");
     } else if (max < -1) {
-        assert(!"bad optVec size, maximum must be >= 0 or -1 (unlimited)");
+        assert(!"Bad optVec size, maximum must be >= 0 or -1 (unlimited).");
     } else if (max != -1 && min > max) {
-        assert(!"bad optVec size, min greater than max");
+        assert(!"Bad optVec size, min greater than max.");
     } else {
         this->m_minVec = min;
         this->m_maxVec = max;
@@ -2192,8 +2192,8 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
             *back = this->defaultValue();
         } else {
             if (value != "0") {
-                assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-                    "flagValue not parsed from 0 or 1");
+                assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+                    "flagValue not parsed from 0 or 1.");
             }
             m_proxy->m_values->pop_back();
             m_proxy->m_matches.pop_back();

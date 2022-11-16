@@ -422,8 +422,8 @@ const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
     if (i == cmds.end()) {
-        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "uninitialized command context");
+        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+            "uninitialized command context.");
     }
     return i->second;
 }
@@ -461,8 +461,8 @@ GroupConfig & Cli::Config::findCmdGrpOrDie(const Cli & cli) {
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
     if (i == grps.end()) {
-        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "uninitialized command group context");
+        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+            "uninitialized command group context.");
     }
     return i->second;
 }
@@ -493,8 +493,8 @@ const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
     if (i == grps.end()) {
-        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "uninitialized group context");
+        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+            "uninitialized group context.");
     }
     return i->second;
 }
@@ -692,8 +692,8 @@ static bool includeName(
 
         // includeName is always called with a filter (i.e. not kNameAll).
         if (type != kNameNonDefault) {
-            assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-                "unknown NameListType");
+            assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+                "unknown NameListType.");
         }
         return inverted == name.invert;
     }
@@ -795,9 +795,9 @@ void Cli::OptIndex::index(OptBase & opt) {
             ptr += 1;
         }
         if (hasEqual && close == ' ') {
-            assert(!"bad argument name, contains '='");
+            assert(!"Bad argument name, contains '='.");
         } else if (hasPos && close != ' ') {
-            assert(!"argument with multiple operand names");
+            assert(!"Argument with multiple operand names.");
         } else {
             if (close == ' ') {
                 name = string(b, ptr - b);
@@ -821,7 +821,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
 
     switch (name[0]) {
     case '-':
-        assert(!"bad argument name, contains '-'");
+        assert(!"Bad argument name, contains '-'.");
         return;
     case '[':
         optional = true;
@@ -840,7 +840,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
         }
 
         if (m_final == Final::kOpt && !optional) {
-            assert(!"required operand after optional operand w/finalOpt.");
+            assert(!"Required operand after optional operand w/finalOpt.");
             return;
         }
         if (!opt.m_finalOpt) {
@@ -849,11 +849,11 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
             if (m_final < Final::kNonOpt && optional)
                 m_final = Final::kNonOpt;
         } else if (m_final == Final::kNonVar) {
-            assert(!"operand w/finalOpt after variable size operand.");
+            assert(!"Operand w/finalOpt after variable size operand.");
             return;
         } else if (m_final == Final::kNonOpt) {
             if (!optional) {
-                assert(!"required operand w/finalOpt after optional operand.");
+                assert(!"Required operand w/finalOpt after optional operand.");
                 return;
             } else {
                 m_final = Final::kOpt;
@@ -890,7 +890,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
             if (opt.m_bool) {
                 // Bool options don't have values, only their presences or
                 // absence, therefore they can't have optional values.
-                assert(!"bad modifier '?' for bool argument");
+                assert(!"Bad modifier '?' for bool argument.");
                 return;
             }
             prefix = 1;
@@ -930,7 +930,7 @@ void Cli::OptIndex::indexLongName(
     if (key.back() == '.') {
         allowNo = false;
         if (key.size() == 2) {
-            assert(!"bad modifier '.' for short name");
+            assert(!"Bad modifier '.' for short name.");
             return;
         }
         key.pop_back();
@@ -1452,7 +1452,7 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     for (unsigned i = 0; i < argc && argv[i]; ++i)
         out.push_back(argv[i]);
     assert(argc == out.size() && !argv[argc]
-        && "bad arguments, argc and null terminator don't agree");
+        && "Bad arguments, argc and null terminator don't agree.");
     return out;
 }
 
@@ -1473,7 +1473,7 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
         out.push_back(move(tmp));
     }
     assert(argc == out.size() && !argv[argc]
-        && "bad arguments, argc and null terminator don't agree");
+        && "Bad arguments, argc and null terminator don't agree.");
     return out;
 }
 
@@ -2385,8 +2385,8 @@ static bool assignOperands(
         return false;
     }
     if (usedPos != numPos) {
-        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "not all operands mapped to variables");
+        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+            "not all operands mapped to variables.");
     }
 
     int ipos = 0;       // Operand being matched.
@@ -2441,7 +2441,7 @@ static bool badMinMatched(
 bool Cli::parse(vector<string> & args) {
     // The 0th (name of this program) opt must always be present.
     assert(!args.empty()
-        && "at least one argument (the program name) required");
+        && "At least one argument (the program name) required.");
 
     Config::touchAllCmds(*this);
     OptIndex ndx;
@@ -2459,7 +2459,7 @@ bool Cli::parse(vector<string> & args) {
     // look ahead to match, command processing requires that the command be
     // unambiguously identifiable.
     assert((ndx.m_allowCommands || !cmdMode)
-        && "mixing top level operands with commands");
+        && "Mixing top level operands with commands.");
 
     resetValues();
 
@@ -2592,8 +2592,8 @@ bool Cli::parse(vector<string> & args) {
             // Number of assigned operands should always exactly match the
             // count, since it's equal to the calculated minimum.
             if (!noExtras) {
-                assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-                    "operand count mismatch");
+                assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+                    "operand count mismatch.");
             }
 
             rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
@@ -2787,7 +2787,7 @@ bool Cli::exec() {
         return !parseExited();
     } else {
         // Most likely parse failed, was never run, or "this" was reset.
-        assert(!"command found by parse not defined");
+        assert(!"Command found by parse not defined.");
         fail(
             kExitSoftware,
             "Command '" + name + "' found by parse not defined."
@@ -2935,8 +2935,8 @@ static size_t formatCol(
     auto & out = *outPtr;
     auto width = (col.width == -1) ? lineWidth : col.width;
     if (!width) {
-        assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "unknown column width");
+        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
+            "unknown column width.");
     }
 
     if (startPos && col.textLen) {
@@ -3554,7 +3554,7 @@ int Cli::printError(ostream & os) {
 
 //===========================================================================
 void Cli::consoleEnableEcho(bool enable) {
-    assert(enable && "disabling echo requires console support enabled");
+    assert(enable && "Disabling echo requires console support enabled.");
 }
 
 //===========================================================================
@@ -3587,10 +3587,12 @@ void Cli::consoleEnableEcho(bool enable) {
 
 //===========================================================================
 unsigned Cli::consoleWidth(bool queryWidth) {
-    HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO info;
-    if (queryWidth && GetConsoleScreenBufferInfo(hOutput, &info))
-        return info.dwSize.X;
+    if (queryWidth) {
+        HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO info;
+        if (GetConsoleScreenBufferInfo(hOutput, &info))
+            return info.dwSize.X;
+    }
     return kDefaultConsoleWidth;
 }
 
