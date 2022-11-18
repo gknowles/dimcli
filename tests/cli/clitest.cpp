@@ -197,59 +197,59 @@ void assertTests() {
     EXPECT_PARSE(cli, "-v x", false);
     EXPECT_ERR(cli, "Error: Invalid '-v' value: x\n");
     EXPECT_ASSERT(1 + R"(
-!"unusable type, no conversion from string exists"
+!"Unusable type, no conversion from string exists."
 )");
     cli.opt<bool>("t").implicitValue(false);
     EXPECT_ASSERT(1 + R"(
-!"bool argument values can't be implicit"
+!"Bad modifier (implicit) for bool argument."
 )");
 
     // bad argument name
     cli = {};
     cli.opt<bool>("a=");
     EXPECT_ASSERT(1 + R"(
-!"bad argument name, contains '='"
+!"Bad argument name, contains '='."
 )");
     cli.opt<int>("[B] [C]");
     EXPECT_ASSERT(1 + R"(
-!"argument with multiple operand names"
+!"Argument with multiple operand names."
 )");
     cli.opt<int>("-d");
     EXPECT_ASSERT(1 + R"(
-!"bad argument name, contains '-'"
+!"Bad argument name, contains '-'."
 )");
     cli.opt<bool>("?e");
     EXPECT_ASSERT(1 + R"(
-!"bad modifier '?' for bool argument"
+!"Bad modifier '?' for bool argument."
 )");
     cli.opt<bool>("f.");
     EXPECT_ASSERT(1 + R"(
-!"bad modifier '.' for short name"
+!"Bad modifier '.' for short name."
 )");
     EXPECT_USAGE(cli, "", 1 + R"(
 Usage: test [--help] [B]
 )");
     EXPECT_ASSERT(1 + R"(
-!"bad argument name, contains '='"
-!"argument with multiple operand names"
-!"bad argument name, contains '-'"
-!"bad modifier '?' for bool argument"
-!"bad modifier '.' for short name"
+!"Bad argument name, contains '='."
+!"Argument with multiple operand names."
+!"Bad argument name, contains '-'."
+!"Bad modifier '?' for bool argument."
+!"Bad modifier '.' for short name."
 )");
 
     // bad choices
     cli = {};
     cli.opt<string>("g").choice("none", "", "No choice");
     EXPECT_ASSERT(1 + R"(
-!"an empty string can't be a choice"
+!"An empty string can't be a choice."
 )");
 
     // bad low/high
     cli = {};
     cli.opt<int>("h").range(5, 1).clamp(4, 2);
     EXPECT_ASSERT(1 + R"(
-!"bad range, low greater than high"
-!"bad clamp, low greater than high"
+!"Bad range, low greater than high."
+!"Bad clamp, low greater than high."
 )");
 
     // bad vector size
@@ -261,10 +261,10 @@ Usage: test [--help] [B]
             .size(0, -10)
             .size(1, 0);
         EXPECT_ASSERT(1 + R"RAW(
-!"bad optVec size, minimum must be >= 0"
-!"bad optVec size, minimum must be >= 0"
-!"bad optVec size, maximum must be >= 0 or -1 (unlimited)"
-!"bad optVec size, min greater than max"
+!"Bad optVec size, minimum must be >= 0."
+!"Bad optVec size, minimum must be >= 0."
+!"Bad optVec size, maximum must be >= 0 or -1 (unlimited)."
+!"Bad optVec size, min greater than max."
 )RAW");
     }
 
@@ -279,7 +279,7 @@ Usage: test [--help] [B]
             "Error: Command 'empty' found by parse not defined.\n"
         );
         EXPECT_ASSERT(1 + R"(
-!"command found by parse not defined"
+!"Command found by parse not defined."
 )");
     }
 
@@ -290,7 +290,7 @@ Usage: test [--help] [B]
         cli.opt<int>("<B>");
         EXPECT_PARSE(cli, "1");
         EXPECT_ASSERT(1 + R"(
-!"required operand after optional operand w/finalOpt."
+!"Required operand after optional operand w/finalOpt."
 )");
 
         cli = {};
@@ -298,7 +298,7 @@ Usage: test [--help] [B]
         cli.opt<bool>("<B>").finalOpt();
         EXPECT_PARSE(cli, "1");
         EXPECT_ASSERT(1 + R"(
-!"operand w/finalOpt after variable size operand."
+!"Operand w/finalOpt after variable size operand."
 )");
 
         cli = {};
@@ -306,7 +306,7 @@ Usage: test [--help] [B]
         cli.opt<int>("<B>").finalOpt();
         EXPECT_PARSE(cli, "1");
         EXPECT_ASSERT(1 + R"(
-!"required operand w/finalOpt after optional operand."
+!"Required operand w/finalOpt after optional operand."
 )");
     }
 }

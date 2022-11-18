@@ -1660,7 +1660,7 @@ template <typename A, typename T>
 A & Cli::OptShim<A, T>::implicitValue(const T & val) {
     if (m_bool) {
         // bools don't have separate values, just their presence/absence
-        assert(!"Boolean argument values can't be implicit.");
+        assert(!"Bad modifier (implicit) for bool argument.");
     } else {
         m_implicitValue = val;
     }
