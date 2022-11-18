@@ -20,8 +20,9 @@ Distributed under the Boost Software License, Version 1.0.
 9. Draft a new release on github.
     1. Goto Releases, click on "Draft a new release"
     2. Select "Choose a tag" and create the new tag "v{major}.{minor}.{patch}".
-    3. Write brief description and publish the release.
+    3. Set title to the same as the new tag.
+    4. Write brief description and publish the release.
 10. Publish the docs
-    1. Run "docgen site"
-    2. Goto vendor\gh-pages directory
-    3. Review and push the new docs with description of "Update docs"
+    1. Run "docgen site".
+    2. Goto vendor\gh-pages directory.
+    3. Review, commit, and push the new docs with description of "Update docs".
