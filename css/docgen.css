@@ -22,17 +22,11 @@ nav.navbar span.badge {
     margin-left: .25rem;
 }
 nav.navbar .dropdown-menu {
-    font-size: .875em;
     min-width: unset;
-    max-height: calc(100vh - 3rem);
-    overflow-y: auto;
 }
 nav.navbar .dropdown-menu .dropdown-item:hover {
     background-color: steelblue;
     color: white;
-}
-nav.navbar .dropdown-item {
-    padding: 0 1rem;
 }
 
 nav#toc {
@@ -55,7 +49,6 @@ nav#toc .nav-link:hover {
 }
 nav#toc .nav-link.active {
     color: black;
-    font-weight: bold;
 }
 nav#toc .nav-link.toc-2 {
     padding-left: 2rem;
