@@ -7,6 +7,7 @@
 # configure.bat
 # docs/docgen.xml
 # docs/guide.adoc
+# docs/howto.md
 # docs/reference.adoc
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
