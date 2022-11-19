@@ -2350,7 +2350,7 @@ int main(int argc, char * argv[]) {
     _set_error_mode(_OUT_TO_MSGBOX);
 #endif
 
-    CliTest cli;
+    Dim::CliLocal cli;
     cli.helpNoArgs();
     cli.footer("On parsing failures, lists arguments from command line.");
     cli.opt<bool>("test").desc("Run tests.");
