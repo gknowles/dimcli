@@ -3573,7 +3573,7 @@ unsigned Cli::consoleWidth(bool /* queryWidth */) {
 #pragma pack(pop)
 
 //===========================================================================
-void Cli::consoleEnableEcho(bool enable) {
+bool Cli::consoleEnableEcho(bool enable) {
     auto hInput = GetStdHandle(STD_INPUT_HANDLE);
     DWORD mode = 0;
     GetConsoleMode(hInput, &mode);
@@ -3582,7 +3582,7 @@ void Cli::consoleEnableEcho(bool enable) {
     } else {
         mode &= ~ENABLE_ECHO_INPUT;
     }
-    SetConsoleMode(hInput, mode);
+    return SetConsoleMode(hInput, mode);
 }
 
 //===========================================================================
@@ -3603,25 +3603,23 @@ unsigned Cli::consoleWidth(bool queryWidth) {
 #include <unistd.h>
 
 //===========================================================================
-void Cli::consoleEnableEcho(bool enable) {
+bool Cli::consoleEnableEcho(bool enable) {
     termios tty;
-    tcgetattr(STDIN_FILENO, &tty);
+    if (tcgetattr(STDIN_FILENO, &tty))
+        return false;
     if (enable) {
         tty.c_lflag |= ECHO;
     } else {
         tty.c_lflag &= ~ECHO;
     }
-    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+    return !tcsetattr(STDIN_FILENO, TCSANOW, &tty);
 }
 
 //===========================================================================
 unsigned Cli::consoleWidth(bool queryWidth) {
     winsize w;
     if (queryWidth) {
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1
-            || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
-            || ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1
-        ) {
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1) {
             // Some CI platforms (Github Actions) run unix test scripts without
             // a console attached, making it impossible to get coverage for
             // this line in those environments.

@@ -792,7 +792,8 @@ public:
     //-----------------------------------------------------------------------
     // HELPERS
 
-    static void consoleEnableEcho(bool enable = true);
+    // Returns false if echo was unable to be set.
+    static bool consoleEnableEcho(bool enable = true);
     // Returns the default when queryWidth is false.
     static unsigned consoleWidth(bool queryWidth = true);
 

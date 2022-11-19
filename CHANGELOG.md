@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unreleased (2022-11-19)
+- Added - cli.consoleEnableEcho() return indicating if echo could be changed.
+
 ## dimcli 7.0.0 (2022-11-17)
 - Changed - cli.exec() returns was work attempted, instead of exit code
 - Removed - cli.parse() and cli.exec() variants taking an ostream. Use
