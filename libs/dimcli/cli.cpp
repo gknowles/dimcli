@@ -3582,7 +3582,7 @@ bool Cli::consoleEnableEcho(bool enable) {
     } else {
         mode &= ~ENABLE_ECHO_INPUT;
     }
-    return SetConsoleMode(hInput, mode);
+    return SetConsoleMode(hInput, mode) == TRUE;
 }
 
 //===========================================================================
@@ -3605,7 +3605,7 @@ unsigned Cli::consoleWidth(bool queryWidth) {
 //===========================================================================
 bool Cli::consoleEnableEcho(bool enable) {
     termios tty;
-    if (tcgetattr(STDIN_FILENO, &tty))
+    if (tcgetattr(STDIN_FILENO, &tty) != 0)
         return false;
     if (enable) {
         tty.c_lflag |= ECHO;
