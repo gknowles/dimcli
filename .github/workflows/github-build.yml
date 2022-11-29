@@ -35,7 +35,7 @@ jobs:
         shell: cmd
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
 
@@ -82,7 +82,7 @@ jobs:
     runs-on: ${{matrix.image}}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
 
@@ -125,7 +125,7 @@ jobs:
       run: |
         find . -type f -regex '.*\.\(gc.*\|o\|cpp\|h\)'
         find . -type f -name '*.gcno' -exec gcov -pa {} +
-        #bash <(curl -s https://codecov.io/bash) 
+        #bash <(curl -s https://codecov.io/bash)
         curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
         curl -Os https://uploader.codecov.io/latest/linux/codecov
         curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
