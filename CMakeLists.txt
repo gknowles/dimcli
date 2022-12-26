@@ -13,7 +13,7 @@
 #   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
 #   /<project_name>/*.user.props - properties included in MSVC projects
 #   /<project_name>/conf/**
-#   /<project_name>/conf/**/<basename>.sample - causes .../<basename> to be 
+#   /<project_name>/conf/**/<basename>.sample - causes .../<basename> to be
 #       excluded from dependencies
 #   /<project_name>/docs/**
 #   /<project_name>/libs/<lib_project_name>/**
@@ -234,6 +234,7 @@ endforeach()
 source_group(" " REGULAR_EXPRESSION ".*")
 source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
 source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
+source_group("vendor" REGULAR_EXPRESSION "web/(.*/)+vendor/.*")
 
 if(ROOT_PROJECT)
     include_directories(libs)
@@ -270,7 +271,7 @@ endif()
 #
 #   Because function definitions are global the ones defined for use in this
 #   file (to generate local projects) are defined after all vendor subprojects
-#   have been included, otherwise they could be replaced by same named 
+#   have been included, otherwise they could be replaced by same named
 #   functions defined by the vendor cmake scripts.
 #
 ####
@@ -432,7 +433,7 @@ function(add_exec_project tgt srcdir)
         get_filename_component(libname "${var}" NAME)
         target_link_libraries(${tgt} ${libname})
     endforeach()
-    if(CMAKE_COMPILER_IS_GNUCXX 
+    if(CMAKE_COMPILER_IS_GNUCXX
             AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
         # required for #include <experimental/filesystem>
         target_link_libraries(${tgt} "stdc++fs")
@@ -498,7 +499,7 @@ endfunction()
 
 #############################################################################
 #
-#   Local projects
+#   Local projects for import
 #
 ####
 
@@ -514,11 +515,28 @@ foreach(var ${allnames})
     endif()
 endforeach()
 
+# web file targets
+file(GLOB_RECURSE sources web/*)
+if(sources)
+    set(prjname web)
+    if (NOT ROOT_PROJECT)
+        set(prjname web-${PROJECT_NAME})
+    endif()
+    add_file_project(${prjname} ${sources})
+endif()
+
 if(NOT ROOT_PROJECT)
     set(deps ${deps} PARENT_SCOPE)
     set(libnames ${libnames} PARENT_SCOPE)
     return()
 endif()
+
+
+#############################################################################
+#
+#   Local projects (root only)
+#
+####
 
 # file targets
 file(GLOB sources
@@ -536,20 +554,13 @@ list(APPEND sources ${allnames})
 if(sources)
     add_file_project(about ${sources})
 endif()
-
 file(GLOB_RECURSE sources conf/*)
 if(sources)
     add_file_project(conf ${sources})
 endif()
-
 file(GLOB_RECURSE sources docs/*)
 if(sources)
     add_file_project(docs ${sources})
-endif()
-
-file(GLOB_RECURSE sources web/*)
-if(sources)
-    add_file_project(web ${sources})
 endif()
 
 # tool targets
@@ -593,6 +604,13 @@ foreach(var ${allnames})
         set_target_properties(${prjname} PROPERTIES FOLDER testlibs)
     endif()
 endforeach()
+
+
+#############################################################################
+#
+#   Miscellaneous (root only)
+#
+####
 
 # update deps file
 update_deps_file(${deps})
