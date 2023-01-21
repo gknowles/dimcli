@@ -1,4 +1,4 @@
-# Copyright Glen Knowles 2016 - 2022.
+# Copyright Glen Knowles 2016 - 2023.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # CMakeLists.txt - general project generator
@@ -139,12 +139,9 @@ if(MSVC)
     # "/Zc:inline" - all inline functions must have definition available
     # "/Zc:rvalueCast" - enforce type conversion rules
     # "/Zc:strictStrings" - disable string literal type conversion to non-const
-    # "/Fa[dir]" - assembly listing location, the CMake default puts it right
-    #    under the solution tree, and we want it in under /build
     set(CMAKE_CXX_FLAGS "\
         /EHsc /GF /nologo /std:c++latest /utf-8 /W4 /WX \
-        /Zc:inline /Zc:rvalueCast /Zc:strictStrings \
-        /Fa$(IntDir)")
+        /Zc:inline /Zc:rvalueCast /Zc:strictStrings")
     if(NOT MSVC_VERSION LESS 1910)
         # /permissive-  // reject non-conforming backward compatibility-isms
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
@@ -180,7 +177,7 @@ if(MSVC)
         # "/MD" - multithread release dll runtime
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     endif()
-elseif(CMAKE_COMPILER_IS_GNUCXX)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
     elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "11")
@@ -188,7 +185,7 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b")
     endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
         # The libstdc++6 library, as of 2021-06-15, no longer works with
         # Clang++-6 in c++2a mode, failing with a reference to the unknown
@@ -201,8 +198,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     endif()
 endif()
 if(BUILD_COVERAGE)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL GNU
-            OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU"
+            OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
             -fprofile-arcs -ftest-coverage -fsanitize=address")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
@@ -579,21 +576,21 @@ endforeach()
 # test targets
 if(BUILD_TESTING)
     enable_testing()
-endif()
-file(GLOB allnames tests/*)
-foreach(var ${allnames})
-    if(IS_DIRECTORY "${var}")
-        get_filename_component(prjname "${var}" NAME)
-        add_exec_project(${prjname} "${var}")
-        target_compile_definitions(${prjname}
-            PRIVATE ${DEFINE_PREFIX}_LIB_KEEP_MACROS)
-        set_target_properties(${prjname} PROPERTIES FOLDER tests)
-        add_test(NAME ${prjname} COMMAND ${prjname} --test)
-        if(INSTALL_TESTS)
-            install(TARGETS ${prjname} RUNTIME DESTINATION bin)
+    file(GLOB allnames tests/*)
+    foreach(var ${allnames})
+        if(IS_DIRECTORY "${var}")
+            get_filename_component(prjname "${var}" NAME)
+            add_exec_project(${prjname} "${var}")
+            target_compile_definitions(${prjname}
+                PRIVATE ${DEFINE_PREFIX}_LIB_KEEP_MACROS)
+            set_target_properties(${prjname} PROPERTIES FOLDER tests)
+            add_test(NAME ${prjname} COMMAND ${prjname} --test)
+            if(INSTALL_TESTS)
+                install(TARGETS ${prjname} RUNTIME DESTINATION bin)
+            endif()
         endif()
-    endif()
-endforeach()
+    endforeach()
+endif()
 
 # test lib targets - use for compile only tests, never linked
 file(GLOB allnames testlibs/*)
