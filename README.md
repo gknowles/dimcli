@@ -1,20 +1,23 @@
 ﻿<!--
-Copyright Glen Knowles 2016 - 2021.
+Copyright Glen Knowles 2016 - 2023.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
+| Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 6, 11, 12, 13 / GCC 7, 10, 11 | Test Coverage |
+| :----: | :---------------------------------------------------------------: | :-----------: |
+| master | [![Build][gh-image-master]][gh-link-master] | [![Codecov][cc-image-master]][cc-link-master] |
+| dev    | [![Build][gh-image-dev]][gh-link-dev] | [![Codecov][cc-image-dev]][cc-link-dev] |
+
+[gh-image-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg?branch=master "GitHub Actions"
+[gh-link-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Amaster
+[cc-image-master]: https://img.shields.io/badge/dynamic/json?color=success&label=coverage&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fmaster "Codecov"
+[cc-link-master]: https://app.codecov.io/gh/gknowles/dimcli/branch/master
+[gh-image-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg?branch=dev "GitHub Actions"
+[gh-link-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Adev
+[cc-image-dev]: https://img.shields.io/badge/dynamic/json?color=success&label=coverage&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fdev "Codecov"
+[cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/branch/dev
+
 # dimcli
-
-| MSVC 2015, 2017, 2019, 2022 / CLANG 6, 11, 12, 13 / GCC 7, 10, 11 | Test Coverage |
-| :---------------------------------------------------------------: | :-----------: |
-| [![Build][gh-image]][gh-link] | [![Codecov][cc-image]][cc-link] |
-
-[gh-image]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg "GitHub Actions"
-[gh-link]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml
-[av-image]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
-[av-link]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
-[cc-image]: https://img.shields.io/badge/dynamic/json?color=success&label=codecov&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fmaster "Codecov"
-[cc-link]: https://codecov.io/gh/gknowles/dimcli
 
 C++ command line parser toolkit for kids of all ages.
 
@@ -51,7 +54,7 @@ int main(int argc, char * argv[]) {
     cli.opt(&count, "c n count", 1).desc("Times to say hello.");
 
     // Or, define option without referencing an existing variable. The variable
-    // to populate is then implicitly allocated and the returned object is used 
+    // to populate is then implicitly allocated and the returned object is used
     // like a smart pointer to access it.
     auto & name = cli.opt<string>("name", "Unknown")
         .desc("Who to greet.");
