@@ -3604,15 +3604,14 @@ unsigned Cli::consoleWidth(bool queryWidth) {
 
 //===========================================================================
 bool Cli::consoleEnableEcho(bool enable) {
-    termios tty;
-    if (tcgetattr(STDIN_FILENO, &tty) != 0)
-        return false;
+    termios tty = {};
+    bool got = !tcgetattr(STDIN_FILENO, &tty);
     if (enable) {
         tty.c_lflag |= ECHO;
     } else {
         tty.c_lflag &= ~ECHO;
     }
-    return !tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+    return got && !tcsetattr(STDIN_FILENO, TCSANOW, &tty);
 }
 
 //===========================================================================
