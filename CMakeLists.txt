@@ -392,10 +392,10 @@ function(install_archive_pdb tgt dstdir)
         # Special handling required to get PDBs of static libraries installed.
         # I would hope that there's a better way to do this, but I don't know
         # what it may be...
-        if(MSVC_VERSION LESS 1920)
-            set(src "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir")
-        else()
+        if(MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS_EQUAL 1927)
             set(src "${CMAKE_CURRENT_BINARY_DIR}")
+        else()
+            set(src "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir")
         endif()
         foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
             install(
