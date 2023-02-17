@@ -3,6 +3,8 @@ Copyright Glen Knowles 2016 - 2023.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
+# dimcli
+
 | Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 6, 11, 12, 13 / GCC 7, 10, 11 | Test Coverage |
 | :----: | :---------------------------------------------------------------: | :-----------: |
 | master | [![Build Status][gh-image-master]][gh-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
@@ -16,8 +18,6 @@ Distributed under the Boost Software License, Version 1.0.
 [gh-link-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Adev
 [cc-image-dev]: https://img.shields.io/badge/dynamic/json?color=success&label=coverage&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fdev "Codecov"
 [cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/branch/dev
-
-# dimcli
 
 C++ command line parser toolkit for kids of all ages.
 
