@@ -48,6 +48,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     </Code>
     <Script>
       <Lang name="shell session"/>
+      <Lang name="console"/>
       <ShellPrefix value="$ "/>
       <CommentPrefix value="$ #"/>
       <SetEnv regex="^\$\sexport\s([^=&quot;]+)=(.*)$"/>
@@ -63,16 +64,17 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Page name="User's Guide" file="guide.adoc" default="true"/>
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <Page name="ReadMe" file="../README.md" site="false"/>
   </Layout>
   <Layout name="v6">
-    <!--
-    Patch 5 ='s down to 4 to suppress warning.
-
-    Without this patch Asciidoctor complains (correctly according to the
-    AsciiDoc spec) that there's a jump from "===" to "=====" without an
-    intervening "====" section.
-    -->
     <Page name="User's Guide" file="guide.adoc" default="true">
+      <!--
+      Patch 5 ='s down to 4 to suppress warning.
+
+      Without this patch Asciidoctor complains (correctly according to the
+      AsciiDoc spec) that there's a jump from "===" to "=====" without an
+      intervening "====" section.
+      -->
       <Patch>
         <![CDATA[
 diff --git a/docs/guide.adoc b/docs/guide.adoc

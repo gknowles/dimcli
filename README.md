@@ -41,7 +41,7 @@ Check out the complete [documentation](https://gknowles.github.io/dimcli/),
 you'll be glad you did! With many examples and
 [reference](https://gknowles.github.io/dimcli/reference.html).
 
-~~~ C++
+~~~ C++, source
 #include "dimcli/cli.h"
 #include <iostream>
 using namespace std;
@@ -74,7 +74,7 @@ int main(int argc, char * argv[]) {
 
 What it does when run:
 
-~~~ console
+~~~ console, source
 $ a.out -x
 Error: Unknown option: -x
 $ a.out --help
