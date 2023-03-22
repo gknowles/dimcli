@@ -12,11 +12,12 @@ Distributed under the Boost Software License, Version 1.0.
 
 [gh-image-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg?branch=master "GitHub Actions"
 [gh-link-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Amaster
-[cc-image-master]: https://img.shields.io/badge/dynamic/json?color=success&label=coverage&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fmaster "Codecov"
+[cc-image-master]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
 [cc-link-master]: https://app.codecov.io/gh/gknowles/dimcli/branch/master
+
 [gh-image-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg?branch=dev "GitHub Actions"
 [gh-link-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Adev
-[cc-image-dev]: https://img.shields.io/badge/dynamic/json?color=success&label=coverage&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fdev "Codecov"
+[cc-image-dev]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
 [cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/branch/dev
 
 C++ command line parser toolkit for kids of all ages.
