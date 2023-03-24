@@ -29,7 +29,7 @@ namespace fs = DIMCLI_LIB_FILESYSTEM;
 // wstring_convert triggers the visual c++ security warning
 #if (_MSC_VER >= 1400)
 #pragma warning(disable : 4996) // this function or variable may be unsafe.
-#elif defined(__clang__)
+#elif __clang_major__ >= 15
 #pragma clang diagnostic ignored "-Wunqualified-std-cast-call"
 #endif
 
