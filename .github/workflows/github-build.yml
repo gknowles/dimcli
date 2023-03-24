@@ -66,7 +66,6 @@ jobs:
         configuration: [Debug, Release]
         env:
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-          - CXX=clang++-7.1 CC=clang-7.1 INSTALL_LLVM_BIONIC=7.1
           - CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-10 CC=clang-10
@@ -100,8 +99,10 @@ jobs:
       run: |
         export ${{matrix.env}}
         if [ -n "$INSTALL_LLVM_BIONIC" ]; then
-            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-            sudo add-apt-repository "deb  http://apt.llvm.org/bionic/  llvm-toolchain-bionic-$INSTALL_LLVM_BIONIC  main"
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | \
+                sudo apt-key add -
+            sudo add-apt-repository "deb  http://apt.llvm.org/bionic/  \
+                llvm-toolchain-bionic-$INSTALL_LLVM_BIONIC  main"
             export INSTALL_APT=${INSTALL_LLVM_BIONIC}
         fi
         if [ -n "$INSTALL_LLVM" ]; then
@@ -136,7 +137,9 @@ jobs:
         find . -type f -regex '.*\.\(gc.*\|o\|cpp\|h\)'
         find . -type f -name '*.gcno' -exec gcov -pa {} +
         #bash <(curl -s https://codecov.io/bash)
-        curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import # One-time step
+        curl https://keybase.io/codecovsecurity/pgp_keys.asc | \
+            gpg --no-default-keyring --keyring trustedkeys.gpg --import \
+            # One-time step
         curl -Os https://uploader.codecov.io/latest/linux/codecov
         curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
         curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
