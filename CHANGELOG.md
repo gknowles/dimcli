@@ -10,8 +10,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unreleased
+- Cosmetic - Expand automated testing to samples embedded in README.md
+- Fixed - Unqualified call to std::move() in some opt methods
+
 ## dimcli 7.1.0 (2023-1-21)
-- Added - cli.consoleEnableEcho() return indicating if echo could be changed.
+- Added - cli.consoleEnableEcho() return indicating if echo could be changed
 
 ## dimcli 7.0.0 (2022-11-17)
 - Changed - cli.exec() returns was work attempted, instead of exit code
@@ -19,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
     with cli.printError() instead.
 - Changed - cli.fail() and cli.badUsage() now return void instead of false
 - Added - cli.parseExit() for aborting parsing w/o error
-- Changed - all types of application actions now return void
+- Changed - All types of application actions now return void
 
 ## dimcli 6.2.1 (2022-02-07)
 - Fixed - minWidth of 0 rejected in text columns
