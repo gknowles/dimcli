@@ -66,14 +66,22 @@ jobs:
         configuration: [Debug, Release]
         env:
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
+          - CXX=clang++-6 CC=clang-6 INSTALL_LLVM_BIONIC=6
+          - CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
+          - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
+          - CXX=clang++-10 CC=clang-10
           - CXX=clang++-11 CC=clang-11
-          - CXX=clang++-12 CC=clang-12 INSTALL_APT=12
+          - CXX=clang++-12 CC=clang-12
           - CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+          - CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
           - CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
           - CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
           - CXX=g++-7 CC=gcc-7 INSTALL_APT=7
+          - CXX=g++-8 CC=gcc-8 INSTALL_APT=8
+          - CXX=g++-9 CC=gcc-9
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11 INSTALL_APT=11
+          - CXX=g++-12 CC=gcc-12 INSTALL_APT=12
         image: [ubuntu-20.04]
         include:
           - env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
