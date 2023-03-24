@@ -1718,21 +1718,21 @@ A & Cli::OptShim<A, T>::choice(
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
-    this->m_parse = move(fn);
+    this->m_parse = std::move(fn);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
-    this->m_checks.push_back(move(fn));
+    this->m_checks.push_back(std::move(fn));
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
-    this->m_afters.push_back(move(fn));
+    this->m_afters.push_back(std::move(fn));
     return static_cast<A &>(*this);
 }
 
