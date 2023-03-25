@@ -66,7 +66,7 @@ jobs:
         configuration: [Debug, Release]
         env:
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-          - CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8.0
+          - CXX=clang++-8 CC=clang-8 INSTALL_APT=8
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-10 CC=clang-10
           - CXX=clang++-11 CC=clang-11
