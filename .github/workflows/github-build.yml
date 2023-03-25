@@ -90,6 +90,8 @@ jobs:
             env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
             image: ubuntu-22.04
             coverage: true
+        exclude:
+          - configuration: Release
 
     runs-on: ${{matrix.image}}
     steps:
@@ -107,6 +109,7 @@ jobs:
             sudo add-apt-repository "deb  http://apt.llvm.org/bionic/  \
                 llvm-toolchain-bionic-$INSTALL_LLVM_BIONIC  main"
             export INSTALL_APT=${INSTALL_LLVM_BIONIC}
+            export APT_OPTS=--install-suggests
         fi
         if [ -n "$INSTALL_LLVM" ]; then
             wget https://apt.llvm.org/llvm.sh
