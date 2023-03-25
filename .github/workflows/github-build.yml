@@ -87,6 +87,10 @@ jobs:
             image: ubuntu-20.04
           - env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
             image: ubuntu-18.04
+          - env: CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8
+            image: ubuntu-18.04
+          - env: CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
+            image: ubuntu-20.04
           - env: CXX=g++-7 CC=gcc-7 INSTALL_APT=7
             image: ubuntu-20.04
           - env: CXX=g++-8 CC=gcc-8 INSTALL_APT=8
