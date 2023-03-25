@@ -84,7 +84,7 @@ jobs:
           - image: ubuntu-22.04
           - image: ubuntu-20.04
             env: CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-          - image: ubuntu-20.04
+          - image: ubuntu-18.04
             env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
             apt-get: llvm-7-dev
           - configuration: Debug
