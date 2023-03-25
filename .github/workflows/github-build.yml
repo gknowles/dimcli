@@ -86,6 +86,7 @@ jobs:
             env: CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
           - image: ubuntu-20.04
             env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
+            apt-get: llvm-7-dev
           - configuration: Debug
             env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
             image: ubuntu-22.04
@@ -109,7 +110,6 @@ jobs:
             sudo add-apt-repository "deb  http://apt.llvm.org/bionic/  \
                 llvm-toolchain-bionic-$INSTALL_LLVM_BIONIC  main"
             export INSTALL_APT=${INSTALL_LLVM_BIONIC}
-            export APT_OPTS=--install-suggests
         fi
         if [ -n "$INSTALL_LLVM" ]; then
             wget https://apt.llvm.org/llvm.sh
@@ -117,7 +117,7 @@ jobs:
             sudo ./llvm.sh $INSTALL_LLVM
         elif [ -n "$INSTALL_APT" ]; then
             sudo apt-get update
-            sudo apt-get install -y ${CC} ${CXX}
+            sudo apt-get install -y ${CC} ${CXX} ${{matrix.apt-get}}
         fi
 
     - name: Build
