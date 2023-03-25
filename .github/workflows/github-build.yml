@@ -80,12 +80,14 @@ jobs:
           - CXX=g++-9 CC=gcc-9
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11 INSTALL_APT=11
-          - CXX=g++-12 CC=gcc-12 INSTALL_APT=12
-        image: [ubuntu-20.04]
+          - CXX=g++-12 CC=gcc-12
         include:
+          - image: ubuntu-20.04
+          - env: CXX=g++-12 CC=gcc-12
+            image: ubuntu-22.04
           - env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
-            configuration: Debug
             image: ubuntu-20.04
+            configuration: Debug
             coverage: true
 
     runs-on: ${{matrix.image}}
