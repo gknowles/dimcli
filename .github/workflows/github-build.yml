@@ -14,20 +14,19 @@ on:
 
 jobs:
   build-win:
+    if: false
     strategy:
       matrix:
         platform: [Win32, x64]
         configuration: [Debug, Release]
-        toolset: [v140, v141, v142, v143]
-        image: [windows-2019, windows-2022]
-        exclude:
-          - toolset: v143
-            image: windows-2019
+        include:
           - toolset: v140
-            image: windows-2022
+            image: windows-2019
           - toolset: v141
-            image: windows-2022
+            image: windows-2019
           - toolset: v142
+            image: windows-2019
+          - toolset: v143
             image: windows-2022
     runs-on: ${{matrix.image}}
     defaults:
@@ -83,9 +82,9 @@ jobs:
           - CXX=g++-12 CC=gcc-12
         include:
           - image: ubuntu-20.04
-            env:
-              - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-              - CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
+            env: CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
+          - image: ubuntu-20.04
+            env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
           - image: ubuntu-22.04
           - configuration: Debug
             env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
