@@ -66,6 +66,7 @@ jobs:
         env:
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
           - CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
+          - CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-10 CC=clang-10 INSTALL_LLVM=10
           - CXX=clang++-11 CC=clang-11 INSTALL_LLVM=11
@@ -82,14 +83,17 @@ jobs:
           - CXX=g++-12 CC=gcc-12
         include:
           - image: ubuntu-22.04
-          - image: ubuntu-20.04
-            env: CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-          - image: ubuntu-18.04
-            env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
-            apt-get: llvm-7-dev
-          - configuration: Debug
-            env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
+          - env: CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
+            image: ubuntu-20.04
+          - env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
+            image: ubuntu-18.04
+          - env: CXX=g++-7 CC=gcc-7 INSTALL_APT=7
+            image: ubuntu-20.04
+          - env: CXX=g++-8 CC=gcc-8 INSTALL_APT=8
+            image: ubuntu-20.04
+          - env: CXX=g++-10 CC=gcc-10 BUILD_COVERAGE=ON
             image: ubuntu-22.04
+            configuration: Debug
             coverage: true
         exclude:
           - configuration: Release
