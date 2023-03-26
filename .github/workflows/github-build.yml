@@ -1,4 +1,4 @@
-# Copyright Glen Knowles 2021 - 2022.
+# Copyright Glen Knowles 2021 - 2023.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # github-build.yml
@@ -14,7 +14,6 @@ on:
 
 jobs:
   build-win:
-    if: false
     strategy:
       matrix:
         platform: [Win32, x64]
@@ -65,8 +64,6 @@ jobs:
         configuration: [Debug, Release]
         env:
           - CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
-          - CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
-#          - CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-10 CC=clang-10
           - CXX=clang++-11 CC=clang-11
@@ -85,10 +82,6 @@ jobs:
           - image: ubuntu-22.04
           - env: CXX=clang++-6.0 CC=clang-6.0 INSTALL_LLVM_BIONIC=6.0
             image: ubuntu-20.04
-          - env: CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
-            image: ubuntu-18.04
-#          - env: CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8
-#            image: ubuntu-18.04
           - env: CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
             image: ubuntu-20.04
           - env: CXX=clang++-10 CC=clang-10
@@ -103,8 +96,6 @@ jobs:
             image: ubuntu-22.04
             configuration: Debug
             coverage: true
-        exclude:
-          - configuration: Release
 
     runs-on: ${{matrix.image}}
     steps:
