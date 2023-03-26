@@ -68,8 +68,8 @@ jobs:
           - CXX=clang++-7 CC=clang-7 INSTALL_LLVM_BIONIC=7
           - CXX=clang++-8 CC=clang-8 INSTALL_LLVM_BIONIC=8
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
-          - CXX=clang++-10 CC=clang-10 INSTALL_LLVM=10
-          - CXX=clang++-11 CC=clang-11 INSTALL_LLVM=11
+          - CXX=clang++-10 CC=clang-10
+          - CXX=clang++-11 CC=clang-11
           - CXX=clang++-12 CC=clang-12
           - CXX=clang++-13 CC=clang-13
           - CXX=clang++-14 CC=clang-14
@@ -91,9 +91,9 @@ jobs:
             image: ubuntu-18.04
           - env: CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
             image: ubuntu-20.04
-          - env: CXX=clang++-10 CC=clang-10 INSTALL_LLVM=10
+          - env: CXX=clang++-10 CC=clang-10
             image: ubuntu-20.04
-          - env: CXX=clang++-11 CC=clang-11 INSTALL_LLVM=11
+          - env: CXX=clang++-11 CC=clang-11
             image: ubuntu-20.04
           - env: CXX=g++-7 CC=gcc-7 INSTALL_APT=7
             image: ubuntu-20.04
