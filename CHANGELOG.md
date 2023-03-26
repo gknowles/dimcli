@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 7.1.1 (2023-3-25)
 - Cosmetic - Expand automated testing to samples embedded in README.md
 - Fixed - Unqualified call to std::move() in some opt methods
 
