@@ -10,11 +10,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## dimcli 7.1.1 (2023-3-25)
+## dimcli 7.1.1 (2023-03-25)
 - Cosmetic - Expand automated testing to samples embedded in README.md
 - Fixed - Unqualified call to std::move() in some opt methods
 
-## dimcli 7.1.0 (2023-1-21)
+## dimcli 7.1.0 (2023-01-21)
 - Added - cli.consoleEnableEcho() return indicating if echo could be changed
 
 ## dimcli 7.0.0 (2022-11-17)
