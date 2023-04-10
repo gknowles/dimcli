@@ -142,7 +142,6 @@ jobs:
 
     - name: Report Coverage
       if: matrix.coverage
-      working-directory: ${{github.workspace}}
       uses: codecov/codecov-action@v3
       with:
         gcov: true
