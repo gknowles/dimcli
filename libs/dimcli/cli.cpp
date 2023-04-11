@@ -423,7 +423,7 @@ CommandConfig & Cli::Config::findCmdAlways(
 const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
-    if (i == cmds.end()) {
+    if (i == cmds.end()) {                  // LCOV_EXCL_BR_LINE
         assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
             "uninitialized command context.");
     }
@@ -462,7 +462,7 @@ GroupConfig & Cli::Config::findCmdGrpOrDie(const Cli & cli) {
     auto & name = cli.cmdGroup();
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
-    if (i == grps.end()) {
+    if (i == grps.end()) {                  // LCOV_EXCL_BR_LINE
         assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
             "uninitialized command group context.");
     }
@@ -494,7 +494,7 @@ GroupConfig & Cli::Config::findGrpAlways(
 const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
-    if (i == grps.end()) {
+    if (i == grps.end()) {                  // LCOV_EXCL_BR_LINE
         assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
             "uninitialized group context.");
     }
@@ -693,7 +693,7 @@ static bool includeName(
             return name.invert;
 
         // includeName is always called with a filter (i.e. not kNameAll).
-        if (type != kNameNonDefault) {
+        if (type != kNameNonDefault) {          // LCOV_EXCL_BR_LINE
             assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
                 "unknown NameListType.");
         }
@@ -823,7 +823,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
 
     switch (name[0]) {
     case '-':
-        assert(!"Bad argument name, contains '-'.");
+        assert(!"Bad argument name, starts with '-'.");
         return;
     case '[':
         optional = true;
@@ -854,14 +854,18 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
             assert(!"Operand w/finalOpt after variable size operand.");
             return;
         } else if (m_final == Final::kNonOpt) {
-            if (!optional) {
+            if (optional) {
+                m_final = Final::kOpt;
+            } else {
                 assert(!"Required operand w/finalOpt after optional operand.");
                 return;
-            } else {
-                m_final = Final::kOpt;
             }
         } else if (m_final == Final::kUnset) {
-            m_final = optional ? Final::kOpt : Final::kReq;
+            if (optional) {
+                m_final = Final::kOpt;
+            } else {
+                m_final = Final::kReq;
+            }
         }
         if (m_final < Final::kOpt)
             m_finalOpr += opt.minSize();
@@ -1453,8 +1457,10 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     out.reserve(argc);
     for (unsigned i = 0; i < argc && argv[i]; ++i)
         out.push_back(argv[i]);
-    assert(argc == out.size() && !argv[argc]
-        && "Bad arguments, argc and null terminator don't agree.");
+    if (argc != out.size() || argv[argc]) {
+        assert(!"Bad arguments, "   // LCOV_EXCL_LINE
+            "argc and null terminator don't agree.");
+    }
     return out;
 }
 
@@ -1474,8 +1480,10 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
         auto tmp = (string) wcvt.to_bytes(argv[i]);
         out.push_back(move(tmp));
     }
-    assert(argc == out.size() && !argv[argc]
-        && "Bad arguments, argc and null terminator don't agree.");
+    if (argc != out.size() || argv[argc]) {
+        assert(!"Bad arguments, "   // LCOV_EXCL_LINE
+            "argc and null terminator don't agree.");
+    }
     return out;
 }
 
@@ -2593,7 +2601,7 @@ bool Cli::parse(vector<string> & args) {
             );
             // Number of assigned operands should always exactly match the
             // count, since it's equal to the calculated minimum.
-            if (!noExtras) {
+            if (!noExtras) {                        // LCOV_EXCL_BR_LINE
                 assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
                     "operand count mismatch.");
             }
@@ -2925,7 +2933,7 @@ static int wrapIndent(int indent, size_t width) {
 
 //===========================================================================
 // Appends formatted text to *outPtr, adds the number of formatted lines to
-// *lines, and returns the new output pos (column).
+// *lines, and returns the new output column position.
 static size_t formatCol(
     string * outPtr,
     int * lines,
@@ -2936,7 +2944,7 @@ static size_t formatCol(
 ) {
     auto & out = *outPtr;
     auto width = (col.width == -1) ? lineWidth : col.width;
-    if (!width) {
+    if (!width) {                           // LCOV_EXCL_BR_LINE
         assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
             "unknown column width.");
     }

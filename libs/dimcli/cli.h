@@ -1594,7 +1594,7 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     // bool options are always marked as bool
-    if (!this->m_bool) {
+    if (!this->m_bool) {                    // LCOV_EXCL_BR_LINE
         assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
             "bool option not marked bool.");
     }
@@ -2192,7 +2192,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         if (value == "1") {
             *back = this->defaultValue();
         } else {
-            if (value != "0") {
+            if (value != "0") {                     // LCOV_EXCL_BR_LINE
                 assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
                     "flagValue not parsed from 0 or 1.");
             }

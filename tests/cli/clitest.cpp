@@ -191,7 +191,16 @@ void assertTest(int line, const char text[]) {
 void assertTests() {
     CliTest cli;
 
-    // bad usage
+    // No assert handler
+    Dim::Cli::assertHandler(nullptr);
+    cli.opt<bool>("t").implicitValue(false);
+    EXPECT_ASSERT("");
+
+    // Enable assert handler
+    Dim::Cli::assertHandler(assertHandler);
+
+    // Bad usage
+    cli = {};
     enum MyType {} mval;
     cli.opt(&mval, "v");
     EXPECT_PARSE(cli, "-v x", false);
@@ -204,7 +213,7 @@ void assertTests() {
 !"Bad modifier (implicit) for bool argument."
 )");
 
-    // bad argument name
+    // Bad argument name
     cli = {};
     cli.opt<bool>("a=");
     EXPECT_ASSERT(1 + R"(
@@ -216,7 +225,7 @@ void assertTests() {
 )");
     cli.opt<int>("-d");
     EXPECT_ASSERT(1 + R"(
-!"Bad argument name, contains '-'."
+!"Bad argument name, starts with '-'."
 )");
     cli.opt<bool>("?e");
     EXPECT_ASSERT(1 + R"(
@@ -237,14 +246,14 @@ Usage: test [--help] [B]
 !"Bad modifier '.' for short name."
 )");
 
-    // bad choices
+    // Bad choices.
     cli = {};
     cli.opt<string>("g").choice("none", "", "No choice");
     EXPECT_ASSERT(1 + R"(
 !"An empty string can't be a choice."
 )");
 
-    // bad low/high
+    // Bad low/high in range/clamp.
     cli = {};
     cli.opt<int>("h").range(5, 1).clamp(4, 2);
     EXPECT_ASSERT(1 + R"(
@@ -252,7 +261,7 @@ Usage: test [--help] [B]
 !"Bad clamp, low greater than high."
 )");
 
-    // bad vector size
+    // Bad vector size.
     {
         cli = {};
         cli.optVec<string>("i")
@@ -268,7 +277,7 @@ Usage: test [--help] [B]
 )RAW");
     }
 
-    // exec usage
+    // Bad exec usage
     {
         cli = {};
         cli.command("empty").action({});
@@ -467,9 +476,9 @@ Options:
 
 //===========================================================================
 void parseTests() {
-    //int line = 0;
     CliTest cli;
 
+    cli = {};
     EXPECT_PARSE(cli, "-x", false);
     EXPECT_ERR(cli, "Error: Unknown option: -x\n");
     EXPECT_PARSE(cli, "--x", false);
@@ -1899,12 +1908,37 @@ void basicTests() {
     }
 
     {
+        // Unnamed argument
+        cli = {};
+        cli.opt("", 1);
+        EXPECT_USAGE(cli, {}, 1 + R"(
+Usage: test [--help]
+)");
+        EXPECT_PARSE(cli, "");
+        EXPECT_PARSE(cli, "1", false);
+        EXPECT_ERR(cli, "Error: Unexpected argument: 1\n");
+    }
+    {
+        // Unnamed operand
         cli = {};
         cli.opt("[]", 1);
         EXPECT_USAGE(cli, {}, 1 + R"(
 Usage: test [--help] [ARG1]
 )");
+        EXPECT_PARSE(cli, {});
+        EXPECT_PARSE(cli, "1");
     }
+    {
+        // Dash named operand
+        cli = {};
+        cli.opt("[-]", 1);
+        EXPECT_USAGE(cli, {}, 1 + R"(
+Usage: test [--help] [-]
+)");
+        EXPECT_PARSE(cli, {});
+        EXPECT_PARSE(cli, "1");
+    }
+
 }
 
 
@@ -2206,6 +2240,19 @@ Options:
         EXPECT_ERR(cli, "Error: Invalid '--cookies' value: nine\n");
         EXPECT(*cookies == 0);
     }
+
+    // prompt with unnamed operand
+    {
+        cli = {};
+        auto & ask = cli.opt<string>("[]").prompt();
+        in.clear();
+        in.str("jack\n");
+        out.str({});
+        cli.iostreams(&in, &out);
+        EXPECT_PARSE(cli);
+        EXPECT(out.str() == ": ");
+        EXPECT(*ask == "jack");
+    }
 }
 
 
@@ -2309,12 +2356,11 @@ static int runTests(bool prompt) {
     cli.maxWidth(80);
 
 #ifdef DIMCLI_LIB_BUILD_COVERAGE
-    Dim::setAssertHandler(assertHandler);
     assertTests();
 #endif
 
-    valueTests();
     parseTests();
+    valueTests();
     choiceTests();
     helpTests();
     helpTextTests();
