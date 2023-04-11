@@ -113,8 +113,8 @@ All you need is:
 == Basics
 
 === Terminology
-Following POSIX, this document uses the terms "*options*" to refer to named
-arguments, some times known as switches or flags. And "*operands*" for
+Following POSIX conventions, this document uses the terms "*options*" to refer
+to named arguments, some times known as switches or flags. And "*operands*" for
 positional arguments that are distinguished only by the order they appear on
 the command line after the options have been removed.
 
@@ -122,7 +122,7 @@ For example:
 
 `prog FILE1 -v --help -f FILE --file=FILE FILE2`
 
-Might (depending on how -f is defined) map to:
+Might (depending on how -f and --file are defined) map to:
 [%autowidth]
 |===
 h| Options | -v, --help, -f FILE, --file=FILE
