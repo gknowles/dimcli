@@ -241,7 +241,7 @@ Usage: test [--help] [B]
     EXPECT_ASSERT(1 + R"(
 !"Bad argument name, contains '='."
 !"Argument with multiple operand names."
-!"Bad argument name, contains '-'."
+!"Bad argument name, starts with '-'."
 !"Bad modifier '?' for bool argument."
 !"Bad modifier '.' for short name."
 )");
