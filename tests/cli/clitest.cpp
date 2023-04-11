@@ -192,12 +192,12 @@ void assertTests() {
     CliTest cli;
 
     // No assert handler
-    Dim::Cli::assertHandler(nullptr);
+    Dim::setAssertHandler(nullptr);
     cli.opt<bool>("t").implicitValue(false);
     EXPECT_ASSERT("");
 
     // Enable assert handler
-    Dim::Cli::assertHandler(assertHandler);
+    Dim::setAssertHandler(assertHandler);
 
     // Bad usage
     cli = {};
