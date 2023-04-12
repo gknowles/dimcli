@@ -2593,6 +2593,7 @@ bool Cli::parse(vector<string> & args) {
             // count, since it's equal to the calculated minimum.
             assert(noExtras // LCOV_EXCL_LINE
                 && "Internal dimcli error: operand count mismatch.");
+            noExtras = true;
 
             rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
             precmdValues = rawValues.size();
