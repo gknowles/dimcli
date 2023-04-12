@@ -1594,10 +1594,8 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 template <>
 inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
     // bool options are always marked as bool
-    if (!this->m_bool) {                    // LCOV_EXCL_BR_LINE
-        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-            "bool option not marked bool.");
-    }
+    assert(this->m_bool // LCOV_EXCL_LINE
+        && "Internal dimcli error: bool option not marked bool.");
     if (this->m_flagValue)
         return this->m_flagDefault;
     return this->defaultValue();
@@ -1845,16 +1843,18 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
             dval = std::round(dval);
         auto ival = (int64_t) dval;
         if (ival == dval) {
-            sval = std::to_string(ival);
+            success = opt.toString(sval, ival);
+            assert(success // LCOV_EXCL_LINE
+                && "Internal dimcli error: convert int64_t to string failed.");
         } else {
             success = opt.toString(sval, dval);
-            if (!success) {
-                assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-                    "convert double to string failed.");
-            }
+            assert(success // LCOV_EXCL_LINE
+                && "Internal dimcli error: convert double to string failed.");
         }
-        if (!opt.parseValue(sval))
+        if (!opt.parseValue(sval)) {
+            success = false;
             cli.badUsage(opt, val);
+        }
     });
 }
 
@@ -2012,9 +2012,9 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         // internally and will be 0 or 1.
         if (value == "1") {
             tmp = this->defaultValue();
-        } else if (value != "0") {
-            assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-                "flagValue not parsed from 0 or 1.");
+        } else {
+            assert(value == "0" // LCOV_EXCL_LINE
+                && "Internal dimcli error: flagValue not parsed from 0 or 1.");
         }
         return true;
     }
@@ -2192,10 +2192,8 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         if (value == "1") {
             *back = this->defaultValue();
         } else {
-            if (value != "0") {                     // LCOV_EXCL_BR_LINE
-                assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-                    "flagValue not parsed from 0 or 1.");
-            }
+            assert(value == "0" // LCOV_EXCL_LINE
+                && "Internal dimcli error: flagValue not parsed from 0 or 1.");
             m_proxy->m_values->pop_back();
             m_proxy->m_matches.pop_back();
         }

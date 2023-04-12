@@ -423,10 +423,8 @@ CommandConfig & Cli::Config::findCmdAlways(
 const CommandConfig & Cli::Config::findCmdOrDie(const Cli & cli) {
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(cli.command());
-    if (i == cmds.end()) {                  // LCOV_EXCL_BR_LINE
-        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-            "uninitialized command context.");
-    }
+    assert(i != cmds.end() // LCOV_EXCL_LINE
+        && "Internal dimcli error: uninitialized command context.");
     return i->second;
 }
 
@@ -462,10 +460,8 @@ GroupConfig & Cli::Config::findCmdGrpOrDie(const Cli & cli) {
     auto & name = cli.cmdGroup();
     auto & grps = cli.m_cfg->cmdGroups;
     auto i = grps.find(name);
-    if (i == grps.end()) {                  // LCOV_EXCL_BR_LINE
-        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-            "uninitialized command group context.");
-    }
+    assert(i != grps.end() // LCOV_EXCL_LINE
+        && "Internal dimcli error: uninitialized command group context.");
     return i->second;
 }
 
@@ -494,10 +490,8 @@ GroupConfig & Cli::Config::findGrpAlways(
 const GroupConfig & Cli::Config::findGrpOrDie(const Cli & cli) {
     auto & grps = Config::findCmdOrDie(cli).groups;
     auto i = grps.find(cli.group());
-    if (i == grps.end()) {                  // LCOV_EXCL_BR_LINE
-        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-            "uninitialized group context.");
-    }
+    assert(i != grps.end() // LCOV_EXCL_LINE
+        && "Internal dimcli error: uninitialized group context.");
     return i->second;
 }
 
@@ -693,10 +687,8 @@ static bool includeName(
             return name.invert;
 
         // includeName is always called with a filter (i.e. not kNameAll).
-        if (type != kNameNonDefault) {          // LCOV_EXCL_BR_LINE
-            assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-                "unknown NameListType.");
-        }
+        assert(type == kNameNonDefault // LCOV_EXCL_LINE
+            && "Internal dimcli error: unknown NameListType.");
         return inverted == name.invert;
     }
     return true;
@@ -1458,7 +1450,7 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     for (unsigned i = 0; i < argc && argv[i]; ++i)
         out.push_back(argv[i]);
     if (argc != out.size() || argv[argc]) {
-        assert(!"Bad arguments, "   // LCOV_EXCL_LINE
+        assert(!"Bad arguments, "
             "argc and null terminator don't agree.");
     }
     return out;
@@ -1481,7 +1473,7 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
         out.push_back(move(tmp));
     }
     if (argc != out.size() || argv[argc]) {
-        assert(!"Bad arguments, "   // LCOV_EXCL_LINE
+        assert(!"Bad arguments, "
             "argc and null terminator don't agree.");
     }
     return out;
@@ -2394,10 +2386,8 @@ static bool assignOperands(
         cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
         return false;
     }
-    if (usedPos != numPos) {
-        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-            "not all operands mapped to variables.");
-    }
+    assert(usedPos == numPos // LCOV_EXCL_LINE
+        && "Internal dimcli error: not all operands mapped to variables.");
 
     int ipos = 0;       // Operand being matched.
     int imatch = 0;     // Values already been matched to this opt.
@@ -2601,10 +2591,8 @@ bool Cli::parse(vector<string> & args) {
             );
             // Number of assigned operands should always exactly match the
             // count, since it's equal to the calculated minimum.
-            if (!noExtras) {                        // LCOV_EXCL_BR_LINE
-                assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-                    "operand count mismatch.");
-            }
+            assert(noExtras // LCOV_EXCL_LINE
+                && "Internal dimcli error: operand count mismatch.");
 
             rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
             precmdValues = rawValues.size();
@@ -2944,10 +2932,8 @@ static size_t formatCol(
 ) {
     auto & out = *outPtr;
     auto width = (col.width == -1) ? lineWidth : col.width;
-    if (!width) {                           // LCOV_EXCL_BR_LINE
-        assert(!"Internal dimcli error: "   // LCOV_EXCL_LINE
-            "unknown column width.");
-    }
+    assert(width // LCOV_EXCL_LINE
+        && "Internal dimcli error: unknown column width.");
 
     if (startPos && col.textLen) {
         if (pos + 1 < startPos) {

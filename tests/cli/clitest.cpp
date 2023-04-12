@@ -2118,12 +2118,12 @@ Must be between '0' and '65,535'.
         auto & length = cli.opt<double>("l length")
             .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001}})
             .desc("Length, in inches");
-        EXPECT_PARSE(cli, "-l 1yd");
-        EXPECT(*length == 36);
-        EXPECT_PARSE(cli, "-l 3ft");
-        EXPECT(*length == 36);
-        EXPECT_PARSE(cli, "-l 36");
-        EXPECT(*length == 36);
+        EXPECT_PARSE(cli, "-l 100yd");
+        EXPECT(*length == 3600);
+        EXPECT_PARSE(cli, "-l 300ft");
+        EXPECT(*length == 3600);
+        EXPECT_PARSE(cli, "-l 3600");
+        EXPECT(*length == 3600);
     }
 }
 
