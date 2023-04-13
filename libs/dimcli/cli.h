@@ -1101,7 +1101,7 @@ bool Cli::Convert::fromString_impl(
     //  - constructor of T accepting const std::string&
     //  - std::istream extraction operator for T
     //  - specialization of Cli::Convert::fromString template for T, such as:
-    //      template<> bool Cli::Convert::fromString<MyType>::(
+    //      template<> bool Cli::Convert::fromString<MyType>(
     //          MyType & out, const std::string & src) const { ... }
     //  - parse action attached to the Opt<T> instance that does NOT call
     //    opt.parseValue(), such as opt.choice().

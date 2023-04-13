@@ -1329,6 +1329,46 @@ c\d)", {"ab$c\\d"});
 *
 ***/
 
+enum class Abc {
+    invalid,
+    first,
+    a,
+    b,
+    c,
+    last,
+};
+
+//===========================================================================
+template<>
+bool Dim::Cli::Convert::fromString<Abc>(Abc & out, const string & src) const {
+    if (src == "first") {
+        out = Abc::first;
+    } else if (src == "a") {
+        out = Abc::a;
+    } else if (src == "b") {
+        out = Abc::b;
+    } else if (src == "c") {
+        out = Abc::c;
+    } else if (src == "last") {
+        out = Abc::last;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+//===========================================================================
+template<>
+bool Dim::Cli::Convert::toString<Abc>(string & out, const Abc & src) const {
+    switch (src) {
+    case Abc::a: out = "a"; break;
+    case Abc::b: out = "b"; break;
+    case Abc::c: out = "c"; break;
+    default: return false;
+    }
+    return true;
+}
+
 //===========================================================================
 void optCheckTests() {
     int line = 0;
@@ -1370,6 +1410,35 @@ Must be between 'a' and 'z'.
         EXPECT_PARSE(cli, "-- -5", false);
         EXPECT(*count == 1);
         EXPECT_ERR(cli, "Error: Option 'letter' missing value.\n");
+    }
+    // range error with no detail
+    {
+        cli = {};
+        auto & x = cli.opt<Abc>("<x>").range(Abc::a, Abc::c);
+        auto & y = cli.opt<Abc>("<y>").range(Abc::first, Abc::c);
+        auto & z = cli.opt<Abc>("<z>").range(Abc::a, Abc::last);
+        EXPECT_PARSE(cli, "first last first", false);
+        EXPECT(*x == Abc::first);
+        EXPECT(*y == Abc::invalid);
+        EXPECT(*z == Abc::invalid);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Out of range 'x' value: first
+Must be between 'a' and 'c'.
+)");
+        EXPECT_PARSE(cli, "a last first", false);
+        EXPECT(*x == Abc::a);
+        EXPECT(*y == Abc::last);
+        EXPECT(*z == Abc::invalid);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Out of range 'y' value: last
+)");
+        EXPECT_PARSE(cli, "a a first", false);
+        EXPECT(*x == Abc::a);
+        EXPECT(*y == Abc::a);
+        EXPECT(*z == Abc::first);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Out of range 'z' value: first
+)");
     }
 }
 
