@@ -126,8 +126,8 @@ struct Cli::OptIndex {
     enum class Final {
         // In order of priority
         kUnset,     // nothing interesting found
-        kNonOpt,    // found an optional operand
-        kNonVar,    // found variable size operand
+        kUnsetOpt,  // found an optional operand w/o final
+        kUnsetVar,  // found variable size operand w/o final
         kOpt,       // found final on an optional operand
         kReq,       // found final on required operand
     } m_final {};
@@ -824,14 +824,14 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
             return;
         }
         if (!opt.m_finalOpt) {
-            if (m_final < Final::kNonVar && opt.minSize() != opt.maxSize())
-                m_final = Final::kNonVar;
-            if (m_final < Final::kNonOpt && optional)
-                m_final = Final::kNonOpt;
-        } else if (m_final == Final::kNonVar) {
+            if (m_final < Final::kUnsetVar && opt.minSize() != opt.maxSize())
+                m_final = Final::kUnsetVar;
+            if (m_final < Final::kUnsetOpt && optional)
+                m_final = Final::kUnsetOpt;
+        } else if (m_final == Final::kUnsetVar) {
             assert(!"Operand w/finalOpt after variable size operand.");
             return;
-        } else if (m_final == Final::kNonOpt) {
+        } else if (m_final == Final::kUnsetOpt) {
             if (optional) {
                 m_final = Final::kOpt;
             } else {
@@ -1435,10 +1435,8 @@ vector<string> Cli::toArgv(size_t argc, char * argv[]) {
     out.reserve(argc);
     for (unsigned i = 0; i < argc && argv[i]; ++i)
         out.push_back(argv[i]);
-    if (argc != out.size() || argv[argc]) {
-        assert(!"Bad arguments, "
-            "argc and null terminator don't agree.");
-    }
+    if (argc != out.size() || argv[argc])
+        assert(!"Bad arguments, argc and null terminator don't agree.");
     return out;
 }
 
@@ -1458,10 +1456,8 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
         auto tmp = (string) wcvt.to_bytes(argv[i]);
         out.push_back(move(tmp));
     }
-    if (argc != out.size() || argv[argc]) {
-        assert(!"Bad arguments, "
-            "argc and null terminator don't agree.");
-    }
+    if (argc != out.size() || argv[argc])
+        assert(!"Bad arguments, argc and null terminator don't agree.");
     return out;
 }
 
@@ -2437,11 +2433,9 @@ static bool badMinMatched(
 
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
-    // The 0th (name of this program) opt must always be present.
-    assert(!args.empty()
-        && "At least one argument (the program name) required.");
-
     Config::touchAllCmds(*this);
+    resetValues();
+
     OptIndex ndx;
     ndx.index(*this, "", false);
     enum {
@@ -2453,36 +2447,44 @@ bool Cli::parse(vector<string> & args) {
         ? kPending
         : kNone;
 
-    // Commands can't be added when the top level has an operand that requires
-    // look ahead to match, command processing requires that the command be
-    // unambiguously identifiable.
-    assert((ndx.m_allowCommands || !cmdMode)
-        && "Mixing top level operands with commands.");
+    // Command processing requires that the command be unambiguously
+    // identifiable and can't be used when the top level has an operand that
+    // requires look ahead to match. Caused by the first operand being either
+    // optional or a variable length vector.
+    if (cmdMode && !ndx.m_allowCommands)
+        assert(!"Mixing top level operands with commands.");
 
-    resetValues();
-
+    // Preprocess arguments and verify that at least one exists.
+    if (!args.empty()) {
 #if !defined(DIMCLI_LIB_NO_ENV)
-    // Insert environment options
-    if (m_cfg->envOpts.size()) {
-        if (auto val = getenv(m_cfg->envOpts.c_str()))
-            replace(args, 1, 0, toArgv(val));
-    }
+        // Insert environment options
+        if (m_cfg->envOpts.size()) {
+            if (auto val = getenv(m_cfg->envOpts.c_str()))
+                replace(args, 1, 0, toArgv(val));
+        }
 #endif
-
-    // Expand response files
 #ifdef DIMCLI_LIB_FILESYSTEM
-    if (m_cfg->responseFiles) {
-        vector<string> ancestors;
-        if (!expandResponseFiles(*this, args, ancestors))
-            return false;
-    }
+        // Expand response files
+        if (m_cfg->responseFiles) {
+            vector<string> ancestors;
+            if (!expandResponseFiles(*this, args, ancestors))
+                return false;
+        }
 #endif
-
-    // Before actions
-    for (auto && fn : m_cfg->befores) {
-        fn(*this, args);
-        if (parseExited())
-            return false;
+        // Before actions
+        for (auto && fn : m_cfg->befores) {
+            fn(*this, args);
+            if (parseExited())
+                return false;
+            if (args.empty())
+                break;
+        }
+    }
+    // The 0th argument (name of this program) must always be present.
+    if (args.empty()) {
+        assert(!"At least one argument (the program name) required.");
+        fail(kExitSoftware, "No arguments (not even program name) provided.");
+        return false;
     }
 
     // Extract raw values and assign non-positional values to opts.
@@ -3548,8 +3550,10 @@ int Cli::printError(ostream & os) {
 #if defined(DIMCLI_LIB_NO_CONSOLE)
 
 //===========================================================================
-void Cli::consoleEnableEcho(bool enable) {
-    assert(enable && "Disabling echo requires console support enabled.");
+bool Cli::consoleEnableEcho(bool enable) {
+    if (!enable)
+        assert(!"Disabling echo requires console support enabled.");
+    return false;
 }
 
 //===========================================================================
