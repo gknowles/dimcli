@@ -199,6 +199,48 @@ void assertTests() {
     // Enable assert handler
     Dim::setAssertHandler(assertHandler);
 
+    // Bad argv list
+    const char * argv1[] = {"a", nullptr};
+    const char * argv3[] = {"a", "b", "c", nullptr};
+    const wchar_t * wargv1[] = {L"a", nullptr};
+    const wchar_t * wargv3[] = {L"a", L"b", L"c", nullptr};
+
+    Dim::Cli::toArgv(2, argv1);
+    EXPECT_ASSERT(1 + R"(
+!"Bad arguments, argc and null terminator don't agree."
+)");
+    Dim::Cli::toArgv(2, argv3);
+    EXPECT_ASSERT(1 + R"(
+!"Bad arguments, argc and null terminator don't agree."
+)");
+    Dim::Cli::toArgv(2, wargv1);
+    EXPECT_ASSERT(1 + R"(
+!"Bad arguments, argc and null terminator don't agree."
+)");
+    Dim::Cli::toArgv(2, wargv3);
+    EXPECT_ASSERT(1 + R"(
+!"Bad arguments, argc and null terminator don't agree."
+)");
+
+    // Bad arguments
+    cli = {};
+    cli.before([](auto &, auto & args) {
+        args.erase(args.begin()); // remove command name
+        return true;
+    });
+    EXPECT_PARSE(cli, "", false, Dim::kExitSoftware);
+    EXPECT_ERR(cli, "Error: No arguments (not even program name) provided.\n");
+    EXPECT_ASSERT(1 + R"(
+!"At least one argument (the program name) required."
+)");
+    cli = {};
+    cli.opt<int>("[A]");
+    cli.command("subcmd");
+    EXPECT_PARSE(cli, "", true);
+    EXPECT_ASSERT(1 + R"(
+!"Mixing top level operands with commands."
+)");
+
     // Bad usage
     cli = {};
     enum MyType {} mval;
@@ -2387,6 +2429,22 @@ void finalOptTests() {
         cli = {};
         cli.opt<int>("[A]");
         auto & b = cli.optVec<int>("[B]").finalOpt();
+        EXPECT_PARSE(cli, "1 2 3");
+        EXPECT(*b == vector<int>{2, 3});
+    }
+    // optional finalOpt operand after required operand
+    {
+        cli = {};
+        cli.opt<int>("<A>");
+        auto & b = cli.optVec<int>("[B]").finalOpt();
+        EXPECT_PARSE(cli, "1 2 3");
+        EXPECT(*b == vector<int>{2, 3});
+    }
+    // required finalOpt operand after required operand
+    {
+        cli = {};
+        cli.opt<int>("<A>");
+        auto & b = cli.optVec<int>("<B>").finalOpt();
         EXPECT_PARSE(cli, "1 2 3");
         EXPECT(*b == vector<int>{2, 3});
     }
