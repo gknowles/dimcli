@@ -145,4 +145,5 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         gcov: true
+        gcov_args: -p
         fail_ci_if_error: true
