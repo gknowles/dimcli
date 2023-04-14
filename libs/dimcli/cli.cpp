@@ -113,20 +113,6 @@ struct RawValue {
     string name;
     size_t pos;
     const char * ptr;
-
-    RawValue(
-        Type type,
-        Cli::OptBase * opt,
-        string name,
-        size_t pos = 0,
-        const char * ptr = nullptr
-    )
-        : type(type)
-        , opt(opt)
-        , name(name)
-        , pos(pos)
-        , ptr(ptr)
-    {}
 };
 
 } // namespace
@@ -2531,13 +2517,13 @@ bool Cli::parse(vector<string> & args) {
                 if (argName.opt->m_finalOpt)
                     moreOpts = false;
                 if (argName.opt->m_bool) {
-                    rawValues.emplace_back(
+                    rawValues.push_back({
                         RawValue::kOption,
                         argName.opt,
                         name,
                         argPos,
                         argName.invert ? "0" : "1"
-                    );
+                    });
                     continue;
                 }
                 ptr += 1;
@@ -2579,13 +2565,13 @@ bool Cli::parse(vector<string> & args) {
                     badUsage("Invalid '" + name + "' value", ptr);
                     return false;
                 }
-                rawValues.emplace_back(
+                rawValues.push_back({
                     RawValue::kOption,
                     argName.opt,
                     name,
                     argPos,
                     argName.invert == val ? "0" : "1"
-                );
+                });
                 continue;
             }
             goto OPTION_VALUE;
@@ -2607,7 +2593,7 @@ bool Cli::parse(vector<string> & args) {
                 && "Internal dimcli error: operand count mismatch.");
             noExtras = true;
 
-            rawValues.emplace_back(RawValue::kCommand, nullptr, cmd);
+            rawValues.push_back({RawValue::kCommand, nullptr, cmd});
             precmdValues = rawValues.size();
             numPos = 0;
 
@@ -2632,36 +2618,36 @@ bool Cli::parse(vector<string> & args) {
         if (numPos == ndx.m_finalOpr)
             moreOpts = false;
 
-        rawValues.emplace_back(
+        rawValues.push_back({
             RawValue::kOperand,
             nullptr,
             string{},
             argPos,
             ptr
-        );
+        });
 
         numPos += 1;
         continue;
 
     OPTION_VALUE:
         if (*ptr || equal) {
-            rawValues.emplace_back(
+            rawValues.push_back({
                 RawValue::kOption,
                 argName.opt,
                 name,
                 argPos,
                 ptr
-            );
+            });
             continue;
         }
         if (argName.optional) {
-            rawValues.emplace_back(
+            rawValues.push_back({
                 RawValue::kOption,
                 argName.opt,
                 name,
                 argPos,
                 nullptr
-            );
+            });
             continue;
         }
         argPos += 1;
@@ -2670,13 +2656,13 @@ bool Cli::parse(vector<string> & args) {
             badUsage("No value given for " + name);
             return false;
         }
-        rawValues.emplace_back(
+        rawValues.push_back({
             RawValue::kOption,
             argName.opt,
             name,
             argPos,
             arg->c_str()
-        );
+        });
     }
 
     if (cmdMode != kUnknown) {
