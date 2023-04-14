@@ -2072,9 +2072,38 @@ static bool expandResponseFiles(
 
 /****************************************************************************
 *
-*   Parse command line
+*   SI Units
 *
 ***/
+
+static vector<pair<string, double>> s_siBinExplicit = {
+    {"ki", double(1ull << 10)},
+    {"Mi", double(1ull << 20)},
+    {"Gi", double(1ull << 30)},
+    {"Ti", double(1ull << 40)},
+    {"Pi", double(1ull << 50)},
+};
+static vector<pair<string, double>> s_siBin({
+    {"k", double(1ull << 10)},
+    {"M", double(1ull << 20)},
+    {"G", double(1ull << 30)},
+    {"T", double(1ull << 40)},
+    {"P", double(1ull << 50)},
+});
+static vector<pair<string, double>> s_siDec({
+    {"k", 1e+3},
+    {"M", 1e+6},
+    {"G", 1e+9},
+    {"T", 1e+12},
+    {"P", 1e+15},
+});
+static vector<pair<string, double>> s_siSmall({
+    {"m", 1e-3},
+    {"u", 1e-6},
+    {"n", 1e-9},
+    {"p", 1e-12},
+    {"f", 1e-15},
+});
 
 //===========================================================================
 // static
@@ -2082,37 +2111,13 @@ vector<pair<string, double>> Cli::siUnitMapping(
     const string & symbol,
     int flags
 ) {
-    vector<pair<string, double>> units({
-        {"ki", double(1ull << 10)},
-        {"Mi", double(1ull << 20)},
-        {"Gi", double(1ull << 30)},
-        {"Ti", double(1ull << 40)},
-        {"Pi", double(1ull << 50)},
-    });
+    vector<pair<string, double>> units = s_siBinExplicit;
     if (flags & fUnitBinaryPrefix) {
-        units.insert(units.end(), {
-            {"k", double(1ull << 10)},
-            {"M", double(1ull << 20)},
-            {"G", double(1ull << 30)},
-            {"T", double(1ull << 40)},
-            {"P", double(1ull << 50)},
-        });
+        units.insert(units.end(), s_siBin.begin(), s_siBin.end());
     } else {
-        units.insert(units.end(), {
-            {"k", 1e+3},
-            {"M", 1e+6},
-            {"G", 1e+9},
-            {"T", 1e+12},
-            {"P", 1e+15},
-        });
+        units.insert(units.end(), s_siDec.begin(), s_siDec.end());
         if (~flags & fUnitInsensitive) {
-            units.insert(units.end(), {
-                {"m", 1e-3},
-                {"u", 1e-6},
-                {"n", 1e-9},
-                {"p", 1e-12},
-                {"f", 1e-15},
-            });
+            units.insert(units.end(), s_siSmall.begin(), s_siSmall.end());
         }
     }
     if (!symbol.empty()) {
@@ -2130,6 +2135,13 @@ vector<pair<string, double>> Cli::siUnitMapping(
     }
     return units;
 }
+
+
+/****************************************************************************
+*
+*   Parse command line
+*
+***/
 
 //===========================================================================
 Cli & Cli::resetValues() & {
