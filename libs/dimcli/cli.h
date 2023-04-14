@@ -486,7 +486,8 @@ public:
     // errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
 
-    // "args" is non-const so response files can be expanded in place.
+    // "args" is non-const so that response files can be expanded in place and
+    // before actions can modify it.
     [[nodiscard]] bool parse(std::vector<std::string> & args);
     [[nodiscard]] bool parse(std::vector<std::string> && args);
 
