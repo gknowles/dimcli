@@ -526,10 +526,14 @@ locale Cli::OptBase::imbue(const locale & loc) {
 //===========================================================================
 string Cli::OptBase::defaultPrompt() const {
     auto name = (string) m_fromName;
-    while (name.size() && name[0] == '-')
+
+    while (name.size()) {
+        if (name[0] != '-') {
+            name[0] = (char)toupper(name[0]);
+            break;
+        }
         name.erase(0, 1);
-    if (name.size())
-        name[0] = (char)toupper(name[0]);
+    }
     return name;
 }
 
