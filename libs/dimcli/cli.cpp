@@ -288,7 +288,7 @@ static string displayName(const string & file) {
 }
 #else
 #include <libgen.h>
-static string displayName(string file) {
+static string displayName(const string & file) {
     return basename((char *) file.data());
 }
 #endif
@@ -993,7 +993,7 @@ static void defCmdAction(Cli & cli) {
 static void helpCmdAction(Cli & cli) {
     Cli::OptIndex ndx;
     ndx.index(cli, cli.commandMatched(), false);
-    auto cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
+    auto & cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_argNames[0].opt);
     auto usage = *static_cast<Cli::Opt<bool> &>(*ndx.m_shortNames['u'].opt);
     if (!cli.commandExists(cmd))
         return cli.badUsage("Help requested for unknown command", cmd);
@@ -2780,7 +2780,7 @@ const vector<string> & Cli::unknownArgs() const {
 //===========================================================================
 bool Cli::exec() {
     auto & name = commandMatched();
-    auto cmdFn = commandExists(name)
+    auto & cmdFn = commandExists(name)
         ? m_cfg->cmds[name].action
         : m_cfg->unknownCmd;
 
