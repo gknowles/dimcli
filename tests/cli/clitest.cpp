@@ -1294,12 +1294,11 @@ Usage: test help [-u, --usage] [--help] [COMMAND]
 void argvTests() {
     int line = 0;
     CliTest cli;
-    using CmdFn = string(size_t, char**);
-    using CmdFnPtr = CmdFn * const;
+    using CmdFnPtr = string(*)(size_t, char**);
 
     // windows style argument parsing
     {
-        auto fn = static_cast<CmdFnPtr>(cli.toWindowsCmdline);
+        auto fn = static_cast<const CmdFnPtr>(cli.toWindowsCmdline);
         auto fnv = cli.toWindowsArgv;
         EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
         EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
@@ -1318,7 +1317,7 @@ void argvTests() {
 
     // gnu style
     {
-        auto fn = static_cast<CmdFnPtr>(cli.toGnuCmdline);
+        auto fn = static_cast<const CmdFnPtr>(cli.toGnuCmdline);
         auto fnv = cli.toGnuArgv;
         EXPECT_ARGV(fnv, R"(\a'\b'  'c')", {"ab", "c"});
         EXPECT_ARGV(fnv, "a 'b", {"a", "b"});
@@ -1330,7 +1329,7 @@ void argvTests() {
 
     // glib style
     {
-        auto fn = static_cast<CmdFnPtr>(cli.toGlibCmdline);
+        auto fn = static_cast<const CmdFnPtr>(cli.toGlibCmdline);
         auto fnv = cli.toGlibArgv;
         EXPECT_ARGV(fnv, 1 + R"(
 \a\
