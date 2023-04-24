@@ -1298,7 +1298,7 @@ void argvTests() {
 
     // windows style argument parsing
     {
-        auto fn = static_cast<CmdFnPtr>(cli.toWindowsCmdline);
+        auto fn = static_cast<CmdFnPtr>(Dim::Cli::toWindowsCmdline);
         auto fnv = cli.toWindowsArgv;
         EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
         EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
@@ -1317,7 +1317,7 @@ void argvTests() {
 
     // gnu style
     {
-        auto fn = static_cast<const CmdFnPtr>(cli.toGnuCmdline);
+        auto fn = static_cast<const CmdFnPtr>(Dim::Cli::toGnuCmdline);
         auto fnv = cli.toGnuArgv;
         EXPECT_ARGV(fnv, R"(\a'\b'  'c')", {"ab", "c"});
         EXPECT_ARGV(fnv, "a 'b", {"a", "b"});
@@ -1329,7 +1329,7 @@ void argvTests() {
 
     // glib style
     {
-        auto fn = static_cast<const CmdFnPtr>(cli.toGlibCmdline);
+        auto fn = static_cast<const CmdFnPtr>(Dim::Cli::toGlibCmdline);
         auto fnv = cli.toGlibArgv;
         EXPECT_ARGV(fnv, 1 + R"(
 \a\
