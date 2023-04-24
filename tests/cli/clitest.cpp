@@ -1294,11 +1294,11 @@ Usage: test help [-u, --usage] [--help] [COMMAND]
 void argvTests() {
     int line = 0;
     CliTest cli;
-    using CmdFnPtr = string(*)(size_t, char**);
+    using CmdFnPtr = string(*const)(size_t, char**);
 
     // windows style argument parsing
     {
-        auto fn = static_cast<const CmdFnPtr>(cli.toWindowsCmdline);
+        auto fn = static_cast<CmdFnPtr>(cli.toWindowsCmdline);
         auto fnv = cli.toWindowsArgv;
         EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
         EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
