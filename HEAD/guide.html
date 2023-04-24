@@ -195,6 +195,9 @@ Cli::Convert::fromString&lt;T&gt;()</p>
 <p>Response files (requires <code>&lt;filesystem&gt;</code> support).</p>
 </li>
 <li>
+<p>Convert argv to/from command line with Windows, Posix, or GNU semantics.</p>
+</li>
+<li>
 <p>Works whether or not exceptions and RTTI are disabled.</p>
 </li>
 <li>
@@ -328,8 +331,8 @@ build to c:\dimcli on a windows machine):</p>
 <div class="sect2">
 <h3 id="terminology">Terminology</h3>
 <div class="paragraph">
-<p>Following POSIX, this document uses the terms "<strong>options</strong>" to refer to named
-arguments, some times known as switches or flags. And "<strong>operands</strong>" for
+<p>Following POSIX conventions, this document uses the terms "<strong>options</strong>" to refer
+to named arguments, some times known as switches or flags. And "<strong>operands</strong>" for
 positional arguments that are distinguished only by the order they appear on
 the command line after the options have been removed.</p>
 </div>
@@ -340,7 +343,7 @@ the command line after the options have been removed.</p>
 <p><code>prog FILE1 -v --help -f FILE --file=FILE FILE2</code></p>
 </div>
 <div class="paragraph">
-<p>Might (depending on how -f is defined) map to:</p>
+<p>Might (depending on how -f and --file are defined) map to:</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -2290,10 +2293,10 @@ Must be between 'a' and 'z'.</code></pre>
 <h3 id="units-of-measure">Units of Measure</h3>
 <div class="paragraph">
 <p>The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
-parser actions and provide a way to support unit suffixes on numerical
-values. The value has the units are removed, is parsed as a double, multiplied
-by the associated factor, rounded to an integer (unless the target is a
-floating point type), converted back to a string, and then finally passed to
+parser actions and provide a way to support unit suffixes on numerical values.
+The value has the units removed, is parsed as a double, multiplied by the
+associated factor, rounded to an integer (unless the target is a floating point
+type), converted back to a string, and then finally passed to
 opt.fromString&lt;T&gt;().</p>
 </div>
 <div class="paragraph">
