@@ -1,5 +1,5 @@
 ////
-Copyright Glen Knowles 2016 - 2022.
+Copyright Glen Knowles 2016 - 2023.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -21,6 +21,7 @@ C++ command line parser toolkit for kids of all ages.
 * Option definitions can be scattered across multiple files.
 * Git style subcommands.
 * Response files (requires `<filesystem>` support).
+* Convert argv to/from command line with Windows, Posix, or GNU semantics.
 * Works whether or not exceptions and RTTI are disabled.
 * Distributed under the Boost Software License, Version 1.0.
 
@@ -1741,10 +1742,10 @@ Must be between 'a' and 'z'.
 
 === Units of Measure
 The opt.siUnits(), opt.timeUnits(), and opt.anyUnits() are implemented as
-parser actions and provide a way to support unit suffixes on numerical
-values. The value has the units are removed, is parsed as a double, multiplied
-by the associated factor, rounded to an integer (unless the target is a
-floating point type), converted back to a string, and then finally passed to
+parser actions and provide a way to support unit suffixes on numerical values.
+The value has the units removed, is parsed as a double, multiplied by the
+associated factor, rounded to an integer (unless the target is a floating point
+type), converted back to a string, and then finally passed to
 opt.fromString&lt;T>().
 
 The behavior can be customized with the following flags:

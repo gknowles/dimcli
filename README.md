@@ -26,13 +26,13 @@ C++ command line parser toolkit for kids of all ages.
 - Parses directly to any supplied (or implicitly created) variable that is:
   - Default constructible
   - Copyable
-  - Either assignable from string, constructible from string, has an istream
-    extraction operator, or has a specialization of
-    Cli&#58;:Convert::fromString&lt;T>().
+  - Either assignable or constructible from string, has an istream extraction
+    operator, or has a specialization of Cli&#58;:Convert::fromString&lt;T>().
 - Help generation.
 - Option definitions can be scattered across multiple files.
 - Git style subcommands.
 - Response files (requires `<filesystem>` support).
+- Convert argv to/from command line with Windows, Posix, or GNU semantics.
 - Works whether or not exceptions and RTTI are disabled.
 - Distributed under the Boost Software License, Version 1.0.
 

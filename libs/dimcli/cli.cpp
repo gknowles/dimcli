@@ -1838,6 +1838,13 @@ string Cli::toCmdline(size_t argc, const wchar_t * argv[]) {
 
 //===========================================================================
 // static
+string Cli::toGlibCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toGlibCmdline(ptrs.size(), (char **) ptrs.data());
+}
+
+//===========================================================================
+// static
 string Cli::toGlibCmdline(size_t, char * argv[]) {
     string out;
     if (!*argv)
@@ -1864,6 +1871,13 @@ string Cli::toGlibCmdline(size_t, char * argv[]) {
 
 //===========================================================================
 // static
+string Cli::toGnuCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toGnuCmdline(ptrs.size(), (char **) ptrs.data());
+}
+
+//===========================================================================
+// static
 string Cli::toGnuCmdline(size_t, char * argv[]) {
     string out;
     if (!*argv)
@@ -1881,6 +1895,13 @@ string Cli::toGnuCmdline(size_t, char * argv[]) {
             return out;
         out += ' ';
     }
+}
+
+//===========================================================================
+// static
+string Cli::toWindowsCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toWindowsCmdline(ptrs.size(), (char **) ptrs.data());
 }
 
 //===========================================================================

@@ -70,7 +70,7 @@ to 50 depending on width of output console.
 2+h| Parse and execute
 
 | cli.<<guide.adoc#subcommands, exec>>
-| Executes the action of the matched command, optionally parsing first. The 
+| Executes the action of the matched command, optionally parsing first. The
 action then calls fail(), badUsage(), or parseExit() for abnormal events.
 
 | cli.<<guide.adoc#basic-usage, parse>>
@@ -103,10 +103,10 @@ empty.
 2+| Create
 
 | cli.<<guide.adoc#options, opt<T{gt}>>
-| Add command line option, flag, or argument
+| Add command line option, flag, or operand.
 
 | cli.<<guide.adoc#vector-options, optVec<T{gt}>>
-| Add multivalued option, flag, or argument
+| Add multivalued option, flag, or operand.
 
 | cli.<<guide.adoc#confirm-option, confirmOpt>>
 | Add -y, --yes option that exits early when false and has an "are you sure?"
@@ -151,16 +151,16 @@ set of possible values.
 to the low, if higher than high it's made merely high.
 
 | opt.<<guide.adoc#subcommands, command>>
-| Set subcommand for which this is an option.
+| Change subcommand for which this is an option.
 
 | opt.defaultValue
-| Allows the default to be changed after the opt has been created.
+| Query or change the default value of an opt after it has been created.
 
 | opt.<<guide.adoc#final-option, finalOpt>>
 | Interpret all following arguments as positional operands.
 
 | opt.<<guide.adoc#feature-switches, flagValue>>
-| Turns the argument into a feature switch. There are normally multiple
+| Turns the option into a feature switch. There are normally multiple
 switches pointed at a single external value, each of which sets it to a
 different value, with one flagged as the default.
 
@@ -170,7 +170,7 @@ user's preferred locale (aka locale("")) for arithmetic types and the "C"
 locale for everything else.
 
 | opt.<<guide.adoc#optional-values, implicitValue>>
-| The implicit value is used for arguments with optional values when the
+| The implicit value is used for options with optional values when the
 argument was specified in the command line without a value, defaults to T{}.
 
 | opt.<<guide.adoc#parse-actions, parse>>
@@ -200,14 +200,14 @@ to a minimum of 1 and a maximum of -1 (unlimited).
 | Adjusts the value to seconds when time units are present: removes the units
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
 
-2+h| While parsing
+2+h| While parsing (called from within parse, check, and after actions)
 
 | cli.badRange
-| Calls cli.badUsage() with "Out of range" message with the allowed low and 
+| Calls cli.badUsage() with "Out of range" message with the allowed low and
 high in the error detail.
 
 | cli.<<guide.adoc#after-actions, badUsage>>
-| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error 
+| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error
 message and flags the in progress parse() to return false.
 
 | cli.commandExists
@@ -216,7 +216,7 @@ implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.
 
 | cli.parseExit
-| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error 
+| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error
 message and flags the in progress parse() to return false.
 
 | cli.parseValue
@@ -229,6 +229,9 @@ actions. Can be used from after actions to simulate a value.
 | Prompt sends a prompt message to cout and read a response from cin (unless
 cli.iostreams() changed the streams to use), the response is then passed to
 cli.parseValue() to set the value and run any actions.
+
+| opt.<<guide.adoc#optional-values, assignImplicit>>
+| Set option to (or add to option vector) the value for missing optionals.
 
 | opt.defaultFrom
 | Get default from to use when populating the option from an action that's not
@@ -243,9 +246,6 @@ tied to a command line argument.
 | opt.reset
 | Set option to its default value.
 
-| opt.<<guide.adoc#optional-values, implicitValue>>
-| Set option to (or add to option vector) the value for missing optionals.
-
 2+h| After parsing
 
 | opt.<<guide.adoc#life-after-parsing, operator bool>>
@@ -258,8 +258,8 @@ value is the same as the default is immaterial.
 | opt.<<guide.adoc#life-after-parsing, operator -{gt}>>
 | Pointer to underlying value or value vector.
 
-| opt.<<guide.adoc#vector-options, operator []>>
-| Array access to members of value vector (OptVec&lt;T> only).
+| optVec.<<guide.adoc#vector-options, operator []>>
+| Array access to members of value vector.
 
 | opt.<<guide.adoc#life-after-parsing, from>>
 | Name of the last argument to populated the value, or an empty string if it
@@ -324,7 +324,7 @@ any that started with "-", as if "--" had been given.
 2+h| While executing
 
 | cli.badUsage
-| Sets exit code (to EX_USAGE) and error message and flags in progress exec() 
+| Sets exit code (to EX_USAGE) and error message and flags in progress exec()
 to return false.
 
 | cli.fail
@@ -332,8 +332,74 @@ to return false.
 command actions, parsing related failures normally use cli.badUsage() instead.
 
 | cli.parseExit
-| Clears the error state and flags exec() to return false. Used when printing 
+| Clears the error state and flags exec() to return false. Used when printing
 help text, etc.
+|===
+
+== Conversions
+
+[%autowidth]
+|===
+2+| Argv to Argv
+
+| Cli::toArgv(string)
+| Parse command line into argument vector of strings (args), using default
+conventions (Gnu or Windows) of the platform.
+
+| Cli::toArgv(argc, argv)
+| Copy array of pointers to argument vector of strings (args).
+
+| Cli::toArgvL(arg0, ...)
+| Copy arguments to vector of strings. Uses cvt.toString to convert arguments.
+
+| Cli::toPtrArgv(args)
+| Create vector of pointers suitable for use with argc/argv APIs, has a
+trailing null that is not included in size(). The return values point into the
+source vector of strings and are only valid until that vector is resized or
+destroyed.
+
+2+| Argv to/from Command Line
+
+| Cli::toGlibArgv(string)
+| Parse according to glib conventions, based on the UNIX98 shell spec.
+
+| Cli::toGnuArgv(string)
+| Parse using GNU conventions, same rules as buildargv().
+
+| Cli::toWindowsArgv(string)
+| Parse using Windows conventions.
+
+| Cli::toCmdline(argc, argv) +
+Cli::toCmdline(args)
+| Join arguments into a single command line, escaping as needed, that will
+parse back into those same arguments. Uses the default conventions (Gnu or
+Windows).
+
+| Cli::toCmdlineL(arg0, ...)
+| Join discrete arguments into a single command line. Uses cvt.toString to
+convert arguments.
+
+| Cli::toGlibCmdline +
+Cli::toGlibCmdlineL
+| Join according to glib conventions, based on UNIX98 shell specification.
+
+| Cli::toGnuCmdline +
+Cli::toGnuCmdlineL
+| Join using GNU conventions, same rules as buildargv().
+
+| Cli::toWindowsCmdline +
+Cli::toWindowsCmdlineL
+| Join using Windows conventions.
+
+2+h| Value to/from String
+
+| opt.fromString<T> +
+cvt.fromString<T>
+| Parses string into any supported type.
+
+| opt.toString<T> +
+cvt.toString<T>
+| Converts value of any supported type into a string.
 |===
 
 == Help Text
@@ -446,65 +512,4 @@ Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
 
 | cli.<<guide.adoc#value-description, valueDesc>><T>
 | Default friendly name for type, such as NUM, FLOAT, or STRING.
-|===
-
-== Conversions
-
-[%autowidth]
-|===
-2+| Argv
-
-| Cli::toArgv(string)
-| Parse command line into argument vector of strings (args), using default
-conventions (Gnu or Windows) of the platform.
-
-| Cli::toArgv(argc, argv)
-| Copy array of pointers to argument vector of strings (args).
-
-| Cli::toArgvL(arg0, ...)
-| Copy arguments to vector of strings. Uses cvt.toString to convert arguments.
-
-| Cli::toPtrArgv(args)
-| Create vector of pointers suitable for use with argc/argv APIs, has a
-trailing null that is not included in size(). The return values point into the
-source vector of strings and are only valid until that vector is resized or
-destroyed.
-
-| Cli::toGlibArgv(string)
-| Parse according to glib conventions, based on the UNIX98 shell spec.
-
-| Cli::toGnuArgv(string)
-| Parse using GNU conventions, same rules as buildargv().
-
-| Cli::toWindowsArgv(string)
-| Parse using Windows conventions.
-
-| Cli::toCmdline(argc, argv) +
-Cli::toCmdline(args)
-| Join arguments into a single command line, escaping as needed, that will
-parse back into those same arguments. Uses the default conventions (Gnu or
-Windows).
-
-| Cli::toCmdlineL(arg0, ...)
-| Join discrete arguments into a single command line. Uses cvt.toString to
-convert arguments.
-
-| Cli::toGlibCmdline
-| Join according to glib conventions, based on UNIX98 shell spec.
-
-| Cli::toGnuCmdline
-| Join using GNU conventions, same rules as buildargv().
-
-| Cli::toWindowsCmdline
-| Join using Windows conventions.
-
-2+h| Value
-
-| opt.fromString<T> +
-cvt.fromString<T>
-| Parses string into any supported type.
-
-| opt.toString<T> +
-cvt.toString<T>
-| Converts value of any supported type into a string.
 |===

@@ -436,17 +436,18 @@ public:
     //-----------------------------------------------------------------------
     // RENDERING HELP TEXT
     //
-    // NOTE: The print*() family of methods may return incomplete or
-    //       meaningless results if used before parse() has been called to
-    //       supply the program name and finalize the configuration. Except
-    //       printText(), which only references console width.
+    // NOTE: The print*() family of methods return incomplete or meaningless
+    //       results when used before parse() has been called to supply the
+    //       program name and finalize the configuration. The exception is
+    //       printText(), which only uses console width, and is safe to use
+    //       without first calling parse().
 
-    // If exitCode() is not EX_OK, prints the errMsg and errDetail (if
-    // present), otherwise prints nothing. Returns exitCode(). Only makes sense
-    // after parsing has completed.
+    // If exitCode() is not EX_OK, prints errMsg and errDetail (if present),
+    // otherwise prints nothing. Returns exitCode(). Only makes sense after
+    // parsing has completed.
     int printError(std::ostream & os);
 
-    // printHelp & printUsage return the current exitCode().
+    // printHelp() & printUsage() return the current exitCode().
     int printHelp(
         std::ostream & os,
         const std::string & progName = {},
@@ -465,12 +466,12 @@ public:
         const std::string & cmd = {}
     );
 
+    void printCommands(std::ostream & os);
     void printOperands(
         std::ostream & os,
         const std::string & cmd = {}
     );
     void printOptions(std::ostream & os, const std::string & cmd = {});
-    void printCommands(std::ostream & os);
 
     // Friendly name for type used in help text, such as NUM, VALUE, or FILE.
     template <typename T>
@@ -543,11 +544,20 @@ public:
     static std::string toCmdlineL(Args &&... args);
 
     // Join according to glib conventions, based on the UNIX98 shell spec.
+    static std::string toGlibCmdline(const std::vector<std::string> & args);
     static std::string toGlibCmdline(size_t argc, char * argv[]);
+    template <typename ...Args>
+    static std::string toGlibCmdlineL(Args &&... args);
     // Join using GNU conventions, same rules as buildargv().
+    static std::string toGnuCmdline(const std::vector<std::string> & args);
     static std::string toGnuCmdline(size_t argc, char * argv[]);
+    template <typename ...Args>
+    static std::string toGnuCmdlineL(Args &&... args);
     // Join using Windows conventions.
+    static std::string toWindowsCmdline(const std::vector<std::string> & args);
     static std::string toWindowsCmdline(size_t argc, char * argv[]);
+    template <typename ...Args>
+    static std::string toWindowsCmdlineL(Args &&... args);
 
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
@@ -1173,6 +1183,24 @@ std::vector<std::string> Cli::toArgvL(Args &&... args) {
 template <typename ...Args>
 std::string Cli::toCmdlineL(Args &&... args) {
     return toCmdline(toArgvL(std::forward<Args>(args)...));
+}
+
+//===========================================================================
+template <typename ...Args>
+std::string Cli::toGlibCmdlineL(Args &&... args) {
+    return toGlibCmdline(toArgvL(std::forward<Args>(args)...));
+}
+
+//===========================================================================
+template <typename ...Args>
+std::string Cli::toGnuCmdlineL(Args &&... args) {
+    return toGnuCmdline(toArgvL(std::forward<Args>(args)...));
+}
+
+//===========================================================================
+template <typename ...Args>
+std::string Cli::toWindowsCmdlineL(Args &&... args) {
+    return toWindowsCmdline(toArgvL(std::forward<Args>(args)...));
 }
 
 
@@ -2209,8 +2237,8 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
     }
 
     // Parsed indirectly through temporary for cases like vector<bool> where
-    // *last returns a proxy object instead of a reference to T.
-    T tmp;
+    // *back returns a proxy object instead of a reference to T.
+    T tmp{};
     bool result = this->fromString(tmp, value);
     *back = std::move(tmp);
     return result;

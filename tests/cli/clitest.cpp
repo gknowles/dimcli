@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2022.
+// Copyright Glen Knowles 2016 - 2023.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // clitest.cpp - dimcli test cli
@@ -142,7 +142,6 @@ void toCmdlineTest(
     EXPECT(argv == fnv(cmdline));
     if (tmp != cmdline || argv != fnv(cmdline))
         cerr << tmp << endl;
-
 }
 
 namespace {
@@ -1298,7 +1297,7 @@ void argvTests() {
 
     // windows style argument parsing
     {
-        auto fn = cli.toWindowsCmdline;
+        auto fn = static_cast<string(*)(size_t, char**)>(cli.toWindowsCmdline);
         auto fnv = cli.toWindowsArgv;
         EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
         EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
@@ -1317,7 +1316,7 @@ void argvTests() {
 
     // gnu style
     {
-        auto fn = cli.toGnuCmdline;
+        auto fn = static_cast<string(*)(size_t, char**)>(cli.toGnuCmdline);
         auto fnv = cli.toGnuArgv;
         EXPECT_ARGV(fnv, R"(\a'\b'  'c')", {"ab", "c"});
         EXPECT_ARGV(fnv, "a 'b", {"a", "b"});
@@ -1329,7 +1328,7 @@ void argvTests() {
 
     // glib style
     {
-        auto fn = cli.toGlibCmdline;
+        auto fn = static_cast<string(*)(size_t, char**)>(cli.toGlibCmdline);
         auto fnv = cli.toGlibArgv;
         EXPECT_ARGV(fnv, 1 + R"(
 \a\
@@ -1362,6 +1361,9 @@ c\d)", {"ab$c\\d"});
     EXPECT(c1 == cmdline);
 
     EXPECT(cli.toCmdlineL("a", 'b', "c"s) == cmdline);
+    EXPECT(cli.toGlibCmdlineL("a", 'b', "c"s) == cmdline);
+    EXPECT(cli.toGnuCmdlineL("a", 'b', "c"s) == cmdline);
+    EXPECT(cli.toWindowsCmdlineL("a", 'b', "c"s) == cmdline);
 }
 
 
