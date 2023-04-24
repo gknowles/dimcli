@@ -1294,7 +1294,7 @@ Usage: test help [-u, --usage] [--help] [COMMAND]
 void argvTests() {
     int line = 0;
     CliTest cli;
-    using CmdFnPtr = string(*const)(size_t, char**);
+    using CmdFnPtr = string(*)(size_t, char**);
 
     // windows style argument parsing
     {
@@ -1329,7 +1329,7 @@ void argvTests() {
 
     // glib style
     {
-        auto fn = static_cast<const CmdFnPtr>(Dim::Cli::toGlibCmdline);
+        auto fn = static_cast<CmdFnPtr>(Dim::Cli::toGlibCmdline);
         auto fnv = cli.toGlibArgv;
         EXPECT_ARGV(fnv, 1 + R"(
 \a\
