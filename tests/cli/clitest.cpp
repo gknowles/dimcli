@@ -1298,7 +1298,12 @@ void argvTests() {
 
     // windows style argument parsing
     {
+        // Clang gives a compile error for casting from f.toWindowsCmdline,
+        // casting from Dim::Cli::toWindowsCmdline as a workaround. This
+        // doesn't happen unless it's overloaded. Reported as
+        // https://github.com/llvm/llvm-project/issues/62388
         auto fn = static_cast<CmdFnPtr>(Dim::Cli::toWindowsCmdline);
+
         auto fnv = cli.toWindowsArgv;
         EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
         EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
@@ -1317,7 +1322,7 @@ void argvTests() {
 
     // gnu style
     {
-        auto fn = static_cast<const CmdFnPtr>(Dim::Cli::toGnuCmdline);
+        auto fn = static_cast<CmdFnPtr>(Dim::Cli::toGnuCmdline);
         auto fnv = cli.toGnuArgv;
         EXPECT_ARGV(fnv, R"(\a'\b'  'c')", {"ab", "c"});
         EXPECT_ARGV(fnv, "a 'b", {"a", "b"});
