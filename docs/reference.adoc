@@ -336,72 +336,6 @@ command actions, parsing related failures normally use cli.badUsage() instead.
 help text, etc.
 |===
 
-== Conversions
-
-[%autowidth]
-|===
-2+| Argv to Argv
-
-| Cli::toArgv(string)
-| Parse command line into argument vector of strings (args), using default
-conventions (Gnu or Windows) of the platform.
-
-| Cli::toArgv(argc, argv)
-| Copy array of pointers to argument vector of strings (args).
-
-| Cli::toArgvL(arg0, ...)
-| Copy arguments to vector of strings. Uses cvt.toString to convert arguments.
-
-| Cli::toPtrArgv(args)
-| Create vector of pointers suitable for use with argc/argv APIs, has a
-trailing null that is not included in size(). The return values point into the
-source vector of strings and are only valid until that vector is resized or
-destroyed.
-
-2+| Argv to/from Command Line
-
-| Cli::toGlibArgv(string)
-| Parse according to glib conventions, based on the UNIX98 shell spec.
-
-| Cli::toGnuArgv(string)
-| Parse using GNU conventions, same rules as buildargv().
-
-| Cli::toWindowsArgv(string)
-| Parse using Windows conventions.
-
-| Cli::toCmdline(argc, argv) +
-Cli::toCmdline(args)
-| Join arguments into a single command line, escaping as needed, that will
-parse back into those same arguments. Uses the default conventions (Gnu or
-Windows).
-
-| Cli::toCmdlineL(arg0, ...)
-| Join discrete arguments into a single command line. Uses cvt.toString to
-convert arguments.
-
-| Cli::toGlibCmdline +
-Cli::toGlibCmdlineL
-| Join according to glib conventions, based on UNIX98 shell specification.
-
-| Cli::toGnuCmdline +
-Cli::toGnuCmdlineL
-| Join using GNU conventions, same rules as buildargv().
-
-| Cli::toWindowsCmdline +
-Cli::toWindowsCmdlineL
-| Join using Windows conventions.
-
-2+h| Value to/from String
-
-| opt.fromString<T> +
-cvt.fromString<T>
-| Parses string into any supported type.
-
-| opt.toString<T> +
-cvt.toString<T>
-| Converts value of any supported type into a string.
-|===
-
 == Help Text
 
 [%autowidth]
@@ -512,4 +446,70 @@ Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
 
 | cli.<<guide.adoc#value-description, valueDesc>><T>
 | Default friendly name for type, such as NUM, FLOAT, or STRING.
+|===
+
+== Conversions
+
+[%autowidth]
+|===
+2+| To Argv
+
+| Cli::toArgv(argc, argv)
+| Copy array of pointers to argument vector of strings (args).
+
+| Cli::toArgvL(arg0, ...)
+| Copy arguments to vector of strings. Uses cvt.toString to convert arguments.
+
+| Cli::toPtrArgv(args)
+| Create vector of pointers suitable for use with argc/argv APIs, has a
+trailing null that is not included in size(). The return values point into the
+source vector of strings and are only valid until that vector is resized or
+destroyed.
+
+| Cli::toArgv(string)
+| Parse command line into argument vector of strings (args), using default
+conventions (Gnu or Windows) of the platform.
+
+| Cli::toGlibArgv(string)
+| Parse according to glib conventions, based on the UNIX98 shell spec.
+
+| Cli::toGnuArgv(string)
+| Parse using GNU conventions, same rules as buildargv().
+
+| Cli::toWindowsArgv(string)
+| Parse using Windows conventions.
+
+2+h| To Command Line
+
+| Cli::toCmdline(argc, argv) +
+Cli::toCmdline(args)
+| Join arguments into a single command line, escaping as needed, that will
+parse back into those same arguments. Uses the default conventions (Gnu or
+Windows).
+
+| Cli::toCmdlineL(arg0, ...)
+| Join discrete arguments into a single command line. Uses cvt.toString to
+convert arguments.
+
+| Cli::toGlibCmdline +
+Cli::toGlibCmdlineL
+| Join according to glib conventions, based on UNIX98 shell specification.
+
+| Cli::toGnuCmdline +
+Cli::toGnuCmdlineL
+| Join using GNU conventions, same rules as buildargv().
+
+| Cli::toWindowsCmdline +
+Cli::toWindowsCmdlineL
+| Join using Windows conventions.
+
+2+h| Value to/from String
+
+| opt.fromString<T> +
+cvt.fromString<T>
+| Parses string into any supported type.
+
+| opt.toString<T> +
+cvt.toString<T>
+| Converts value of any supported type into a string.
 |===

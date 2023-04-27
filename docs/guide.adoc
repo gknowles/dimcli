@@ -2300,6 +2300,7 @@ $ a.out --help
 ++++
 ++++
 
+
 === Option Groups
 Option groups are used to collect related options together in the help text. In
 addition to name, groups have a title and sort key that determine section
@@ -2519,6 +2520,7 @@ work:
 * cli.printOptions
 * cli.printCommands
 * cli.printText
+
 
 == Arbitrary Text
 The cli.printText() function is used to word wrap paragraphs and columnize
