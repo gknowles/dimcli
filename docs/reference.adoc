@@ -37,7 +37,7 @@ Cli::OptVec&lt;T>.
 2+| Configure
 
 | cli.<<guide.adoc#before-actions, before>>
-| Actions taken after environment variable and response file expansion but
+| Add action taken after environment variable and response file expansion but
 before any individual arguments are parsed.
 
 | cli.conin
@@ -129,7 +129,7 @@ exits. An empty progName defaults to argv[0].
 2+h| Configure
 
 | opt.<<guide.adoc#after-actions, after>>
-| Action to run after all arguments have been parsed, any number of after
+| Add action to run after all arguments have been parsed, any number of after
 actions can be added and will, for each option, be called in the order they're
 added.
 
@@ -138,8 +138,9 @@ added.
 names removed and are multiplied by the factor.
 
 | opt.<<guide.adoc#check-actions, check>>
-| Action to take immediately after each value is parsed, unlike parsing itself
-where there can only be one action, any number of check actions can be added.
+| Add action to take immediately after each value is parsed, unlike parsing
+itself where there can only be one action, any number of check actions can be
+added.
 
 | opt.<<guide.adoc#choice, choice>>
 | Adds a choice, when choices have been added only values that match one of the
@@ -192,13 +193,13 @@ badUsage() if it wasn't.
 | Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are
 present, multiplies by the corresponding factor.
 
-| optVec.<<guide.adoc#vector-options, size>>
-| Change the number of values that can be assigned to a vector option. Defaults
-to a minimum of 1 and a maximum of -1 (unlimited).
-
 | opt.<<guide.adoc#time-units, timeUnits>>
 | Adjusts the value to seconds when time units are present: removes the units
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
+
+| optVec.<<guide.adoc#vector-options, size>>
+| Change the number of values that can be assigned to a vector option. Defaults
+to a minimum of 1 and a maximum of -1 (unlimited).
 
 2+h| While parsing (called from within parse, check, and after actions)
 

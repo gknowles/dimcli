@@ -2530,8 +2530,9 @@ as either a paragraph (if there are no '\t' chars) or table row (if there are
 text.
 
 === Paragraphs
-A Paragraph consist of a preamble followed by the body. The preamble contains
-any of the following and ends at the first character that doesn't match:
+A paragraph consists of a preamble followed by the body. The preamble contains
+any number of the following and ends at the first character that is something
+else:
 
 [%autowidth, cols="^,<"]
 |===

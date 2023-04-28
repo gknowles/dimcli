@@ -529,9 +529,9 @@ public:
     // Parse using Windows conventions.
     static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
 
-    // Join args into a single command line, escaping as needed, that parses
-    // back into those same args. Uses the default conventions (Gnu or Windows)
-    // of the platform.
+    // Join arguments into a single command line, escaping as needed, that
+    // parses back into those same arguments. Uses the default conventions (Gnu
+    // or Windows) of the platform.
     static std::string toCmdline(const std::vector<std::string> & args);
     // Join array of pointers into command line, escaping as needed.
     static std::string toCmdline(size_t argc, char * argv[]);
@@ -705,9 +705,9 @@ public:
     // is modified by embedding special characters in the text.
     //
     // PARAGRAPHS
-    // A Paragraph consist of a preamble followed by the body. The preamble
-    // contains any of the following and ends at the first character that
-    // doesn't match:
+    // A paragraph consists of a preamble followed by the body. The preamble
+    // contains any number of the following and ends at the first character
+    // that is something else:
     //  - \r    Decrease indent of wrapped text.
     //  - \v    Increase indent of wrapped text.
     //  - SP    Increase indent of paragraph or column text.
