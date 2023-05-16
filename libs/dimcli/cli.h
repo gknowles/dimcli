@@ -413,12 +413,15 @@ public:
     // Change the column at which errors and help text wraps. When there is a
     // second column for descriptions (the first being argument, command, or
     // option names) it's position is equal to the length needed for the
-    // longest name clamped to within the given descCol min/max.
+    // longest name clamped to within the given description column min/max.
     //
-    // By default min(max)DescCol are derived from maxWidth, and maxWidth
-    // defaults to the width of the console clamped from 50 to 80 columns.
-    Cli & maxWidth(int maxWidth, int minDescCol = 0, int maxDescCol = 0) &;
-    Cli && maxWidth(int maxW, int minDescCol = 0, int maxDescCol = 0) &&;
+    // The width cannot be set to less than 20, and out of range values of
+    // min(max)DescCol are ignored.
+    //
+    // By default min(max)DescCol are derived from width, and width defaults to
+    // the width of the console clamped to be within 50 to 80 columns.
+    Cli & maxWidth(int width, int minDescCol = 0, int maxDescCol = 0) &;
+    Cli && maxWidth(int width, int minDescCol = 0, int maxDescCol = 0) &&;
 
     // Enabled by default, response file expansion replaces arguments of the
     // form "@file" with the contents of the named file.
@@ -1484,7 +1487,7 @@ public:
 
     // Change the action to take when parsing this argument. The function
     // should:
-    //  - Parse the src string and use the result to set the value (or, for
+    //  - Parse the val string and use the result to set the value (or, for
     //    vectors, push_back the new value).
     //  - Call cli.badUsage() with an error message if there's a problem.
     //  - Call cli.parseExit() if the program should stop without an error.
@@ -1495,7 +1498,7 @@ public:
     // For bool arguments the source value string will always be either "0"
     // or "1".
     //
-    // If you just need support for a new type you can provide a istream
+    // If you just need support for a new type you can provide an istream
     // extraction (>>) or assignment from string operator and the default
     // parse action will pick it up.
     A & parse(std::function<ActionFn> fn);
@@ -1521,6 +1524,9 @@ public:
     //  - Do something interesting.
     //  - Call cli.badUsage() and return on error.
     //  - Call cli.parseExit() if processing should stop without error.
+    //
+    // Because after actions are not tied to a specific argument, the val
+    // parameter passed to the function is always empty.
     A & after(std::function<ActionFn> fn);
 
     //-----------------------------------------------------------------------

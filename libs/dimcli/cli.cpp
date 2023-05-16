@@ -76,7 +76,7 @@ struct CommandConfig {
     string footer;
     function<Cli::ActionFn> action;
     string cmdGroup;
-    Cli::Opt<bool> * helpOpt{};
+    Cli::Opt<bool> * helpOpt = {};
     unordered_map<string, GroupConfig> groups;
 };
 
@@ -91,7 +91,7 @@ struct OptName {
 struct OptKey {
     string sort;    // sort key
     string list;    // name list
-    Cli::OptBase * opt{};
+    Cli::OptBase * opt = {};
 };
 
 // Option name filters for opts that are externally bool
@@ -121,7 +121,7 @@ struct Cli::OptIndex {
     unordered_map<char, OptName> m_shortNames;
     unordered_map<string, OptName> m_longNames;
     vector<OptName> m_argNames;
-    bool m_allowCommands {};
+    bool m_allowCommands = {};
 
     enum class Final {
         // In order of priority
@@ -131,8 +131,8 @@ struct Cli::OptIndex {
         kOpt,       // found final on an optional operand
         kReq,       // found final on required operand
     } m_final {};
-    int m_minOprs {0};
-    int m_finalOpr {0};
+    int m_minOprs = 0;
+    int m_finalOpr = 0;
 
     void index(
         const Cli & cli,
@@ -182,25 +182,25 @@ struct Cli::Config {
     unordered_map<string, CommandConfig> cmds;
     unordered_map<string, GroupConfig> cmdGroups;
     list<unique_ptr<OptBase>> opts;
-    bool responseFiles {true};
+    bool responseFiles = true;
     string envOpts;
-    istream * conin {&cin};
-    ostream * conout {&cout};
+    istream * conin = &cin;
+    ostream * conout = &cout;
     shared_ptr<locale> defLoc = make_shared<locale>();
     shared_ptr<locale> numLoc = make_shared<locale>("");
 
-    bool parseExit {false};
-    int exitCode {kExitOk};
+    bool parseExit = false;
+    int exitCode = kExitOk;
     string errMsg;
     string errDetail;
     string progName;
     string command;
     vector<string> unknownArgs;
 
-    size_t maxWidth {kDefaultConsoleWidth};
-    float minKeyWidth {kDefaultMinKeyWidth};
-    float maxKeyWidth {kDefaultMaxKeyWidth};
-    size_t maxLineWidth {kDefaultMaxLineWidth};
+    size_t maxWidth = kDefaultConsoleWidth;
+    float minKeyWidth = kDefaultMinKeyWidth;    // as percentage of width
+    float maxKeyWidth = kDefaultMaxKeyWidth;    // as percentage of width
+    size_t maxLineWidth = kDefaultMaxLineWidth;
 
     static void touchAllCmds(Cli & cli);
     static Config & get(Cli & cli);
@@ -495,10 +495,22 @@ Cli::Config::Config() {
 void Cli::Config::updateWidth(size_t width) {
     this->maxWidth = width;
     this->maxLineWidth = width - 1;
+    this->maxKeyWidth = kDefaultMaxKeyWidth;
+
+    // Adjust the min key width to be proportional, but not too proportional,
+    // to the width.
+    //
+    // With default console width of 80, and default min key width of 15%, this
+    // formula generates the following min key width values:
+    //      Width   MinKeyWidth
+    //        40         9
+    //        80        12
+    //       120        15
+    //       160        18
+    //       200        21
     this->minKeyWidth = kDefaultMinKeyWidth
         * (kDefaultConsoleWidth + width) / 2
         / width;
-    this->maxKeyWidth = kDefaultMaxKeyWidth;
 }
 
 
@@ -866,7 +878,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
                 // Inversion doesn't make any sense for non-bool options and
                 // will be ignored for them. But it is allowed to be specified
                 // because they might be turned into flagValues, and flagValues
-                // act like bools syntacticly.
+                // act like bools syntactically.
                 //
                 // And the case of an inverted bool converted to a flagValue
                 // has to be handled anyway.
@@ -1380,18 +1392,32 @@ ostream & Cli::conout() {
 }
 
 //===========================================================================
-Cli & Cli::maxWidth(int maxWidth, int minDescCol, int maxDescCol) & {
-    m_cfg->updateWidth(maxWidth);
-    if (minDescCol)
-        m_cfg->minKeyWidth = 100.0f * minDescCol / maxWidth;
-    if (maxDescCol)
-        m_cfg->maxKeyWidth = 100.0f * maxDescCol / maxWidth;
+Cli & Cli::maxWidth(int width, int minDescCol, int maxDescCol) & {
+    // Make sure the width is at least 20 characters.
+    if (width < 20)
+        width = 20;
+
+    // Set default values for min/max key width.
+    m_cfg->updateWidth(width);
+
+    if (minDescCol && minDescCol < width) {
+        // Update minKeyWidth if minDescCol is set and valid.
+        m_cfg->minKeyWidth = 100.0f * minDescCol / width;
+    }
+    if (maxDescCol
+        && (!minDescCol || maxDescCol >= minDescCol)
+        && maxDescCol < width
+    ) {
+        // Update maxKeyWidth if maxDescCol is set and valid.
+        m_cfg->maxKeyWidth = 100.0f * maxDescCol / width;
+    }
+
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::maxWidth(int maxW, int minDescCol, int maxDescCol) && {
-    return move(maxWidth(maxW, minDescCol, maxDescCol));
+Cli && Cli::maxWidth(int width, int minDescCol, int maxDescCol) && {
+    return move(maxWidth(width, minDescCol, maxDescCol));
 }
 
 //===========================================================================
@@ -2370,8 +2396,8 @@ static int numMatches(
     if (cat == OprCat::kMinReq && !op && !vec
         || cat == OprCat::kOpt && op && !vec
     ) {
-        // Min required with required non-vector; or
-        // all optional with optional non-vector.
+        // Min required with required non-vector; or all optional with optional
+        // non-vector.
         return min(avail, 1);
     }
 

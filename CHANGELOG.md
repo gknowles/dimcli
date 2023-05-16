@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
-- Added - More cli.to*Cmdline() and cli.to*CmdlineL() overloads
+- Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads
+- Fixed - Divide by zero when cli.maxWidth() set to out of range value
 
 ## dimcli 7.1.1 (2023-03-25)
 - Cosmetic - Expand automated testing to samples embedded in README.md
