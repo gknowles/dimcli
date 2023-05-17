@@ -130,7 +130,7 @@ struct Cli::OptIndex {
         kUnsetVar,  // found variable size operand w/o final
         kOpt,       // found final on an optional operand
         kReq,       // found final on required operand
-    } m_final {};
+    } m_final = {};
     int m_minOprs = 0;
     int m_finalOpr = 0;
 
@@ -177,7 +177,7 @@ private:
 
 struct Cli::Config {
     vector<function<BeforeFn>> befores;
-    bool allowUnknown {false};
+    bool allowUnknown = false;
     function<ActionFn> unknownCmd;
     unordered_map<string, CommandConfig> cmds;
     unordered_map<string, GroupConfig> cmdGroups;
@@ -522,8 +522,8 @@ void Cli::Config::updateWidth(size_t width) {
 
 //===========================================================================
 Cli::OptBase::OptBase(const string & names, bool flag)
-    : m_bool{flag}
-    , m_names{names}
+    : m_bool(flag)
+    , m_names(names)
 {
     // Set m_fromName and assert if names is malformed.
     OptIndex ndx;
@@ -1107,7 +1107,7 @@ Cli::Opt<bool> & Cli::versionOpt(
     const string & progName
 ) {
     auto act = [version, progName](auto & cli, auto &/*opt*/, auto &/*val*/) {
-        auto prog = string{progName};
+        auto prog = string(progName);
         if (prog.empty())
             prog = displayName(cli.progName());
         cli.conout() << prog << " version " << version << endl;
@@ -1245,7 +1245,7 @@ const string & Cli::footer() const {
 Cli & Cli::helpCmd() & {
     // Use new instance so the current context (command and option group) is
     // preserved.
-    Cli cli{*this};
+    Cli cli(*this);
     cli.command("help")
         .cmdGroup(kInternalOptionGroup)
         .desc("Show help for individual commands and exit. If no command is "
@@ -2880,13 +2880,13 @@ struct ChoiceKey {
 };
 
 struct RawCol {
-    int indent {};
-    int childIndent {};
-    const char * text {};
-    int textLen {};
-    int width {-1};         // chars
-    float minWidth {-1};    // percentage
-    float maxWidth {-1};    // percentage
+    int indent = {};
+    int childIndent = {};
+    const char * text = {};
+    int textLen = {};
+    int width = -1;         // chars
+    float minWidth = -1;    // percentage
+    float maxWidth = -1;    // percentage
 };
 
 struct RawLine {

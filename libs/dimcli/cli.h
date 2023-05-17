@@ -1228,8 +1228,8 @@ public:
     struct ChoiceDesc {
         std::string desc;
         std::string sortKey;
-        size_t pos{};
-        bool def{};
+        size_t pos = {};
+        bool def = {};
     };
 
 public:
@@ -1326,7 +1326,7 @@ protected:
     std::string m_command;
     std::string m_group;
 
-    bool m_visible{true};
+    bool m_visible = true;
     std::string m_desc;
     std::string m_valueDesc;
 
@@ -1336,18 +1336,18 @@ protected:
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
     // Whether this option has one value or a vector of values.
-    bool m_vector {};
+    bool m_vector = {};
 
     // Whether only operands appear after this value, or if more options are
     // still allowed.
-    bool m_finalOpt {};
+    bool m_finalOpt = {};
 
     // Whether the value is a bool on the command line (no separate value). Set
     // for flag values and true bools.
-    bool m_bool {};
+    bool m_bool = {};
 
-    bool m_flagValue {};
-    bool m_flagDefault {};
+    bool m_flagValue = {};
+    bool m_flagDefault = {};
 
 private:
     friend class Cli;
@@ -1559,8 +1559,8 @@ protected:
     std::vector<std::function<ActionFn>> m_checks;
     std::vector<std::function<ActionFn>> m_afters;
 
-    T m_implicitValue{};
-    T m_defValue{};
+    T m_implicitValue = {};
+    T m_defValue = {};
     std::vector<T> m_choices;
 };
 
@@ -1949,7 +1949,7 @@ struct Cli::ArgMatch {
     std::string name;
 
     // Member of argv[] that populated the value or 0 if it wasn't.
-    int pos{};
+    int pos = {};
 };
 
 
@@ -1965,13 +1965,13 @@ struct Cli::Value {
     ArgMatch m_match;
 
     // Whether the value was explicitly set.
-    bool m_explicit{};
+    bool m_explicit = {};
 
     // Points to the opt with the default flag value.
-    Opt<T> * m_defFlagOpt{};
+    Opt<T> * m_defFlagOpt = {};
 
-    T * m_value{};
-    T m_internal{};
+    T * m_value = {};
+    T m_internal = {};
 
     Value(T * value) : m_value(value ? value : &m_internal) {}
 };
@@ -2024,8 +2024,8 @@ Cli::Opt<T>::Opt(
     std::shared_ptr<Value<T>> value,
     const std::string & names
 )
-    : OptShim<Opt, T>{names, std::is_same<T, bool>::value}
-    , m_proxy{value}
+    : OptShim<Opt, T>(names, std::is_same<T, bool>::value)
+    , m_proxy(value)
 {}
 
 //===========================================================================
@@ -2097,9 +2097,9 @@ struct Cli::ValueVec {
     std::vector<ArgMatch> m_matches;
 
     // Points to the opt with the default flag value.
-    OptVec<T> * m_defFlagOpt{};
+    OptVec<T> * m_defFlagOpt = {};
 
-    std::vector<T> * m_values{};
+    std::vector<T> * m_values = {};
     std::vector<T> m_internal;
 
     ValueVec(std::vector<T> * value)
@@ -2172,8 +2172,8 @@ private:
     std::string m_empty;
 
     // Minimum and maximum number of values allowed in vector.
-    int m_minVec {1};
-    int m_maxVec {1};
+    int m_minVec = 1;
+    int m_maxVec = 1;
 };
 
 //===========================================================================
@@ -2182,7 +2182,7 @@ Cli::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
     const std::string & names
 )
-    : OptShim<OptVec, T>{names, std::is_same<T, bool>::value}
+    : OptShim<OptVec, T>(names, std::is_same<T, bool>::value)
     , m_proxy(values)
 {
     this->m_vector = true;
