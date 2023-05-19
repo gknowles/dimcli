@@ -385,7 +385,7 @@ endfunction()
 
 function(install_archive_pdb tgt dstdir)
     if(NOT MSVC)
-        # do nothing
+        # Do nothing
     elseif(BUILD_SHARED_LIBS)
         install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
     else()
@@ -406,14 +406,36 @@ function(install_archive_pdb tgt dstdir)
     endif()
 endfunction()
 
-function(set_pch tgt srcdir)
-    if(MSVC AND EXISTS "${srcdir}/pch.h")
-        # use pch.cpp to create precompiled header
-        set_property(SOURCE "${srcdir}/pch.cpp"
-            APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
-        # use pch.h as precompiled header
-        set_property(TARGET ${tgt} APPEND PROPERTY COMPILE_FLAGS "/Yupch.h")
+function(set_pch tgt)
+    if (NOT MSVC)
+        return()
     endif()
+    set(sources ${ARGN})
+    foreach(var ${sources})
+        get_filename_component(name "${var}" NAME)
+        if(name STREQUAL "pch.h")
+            set(found TRUE)
+            break()
+        endif()
+    endforeach()
+    if(NOT found)
+        return()
+    endif()
+    foreach(var ${sources})
+        get_filename_component(ext "${var}" EXT)
+        if(ext STREQUAL ".cpp")
+            get_filename_component(basename "${var}" NAME_WLE)
+            if(basename STREQUAL "pch")
+                # Use pch.cpp to create precompiled header.
+                set_property(SOURCE "${var}"
+                    APPEND PROPERTY COMPILE_FLAGS "/Ycpch.h")
+            else()
+                # Use pch.h as precompiled header.
+                set_property(SOURCE ${var}
+                    APPEND PROPERTY COMPILE_FLAGS "/Yupch.h")
+            endif()
+        endif()
+    endforeach()
 endfunction()
 
 function(add_exec_project tgt srcdir)
@@ -422,7 +444,7 @@ function(add_exec_project tgt srcdir)
     list(APPEND deps ${sources})
     set(deps ${deps} PARENT_SCOPE)
     add_executable(${tgt} ${sources})
-    set_pch(${tgt} ${srcdir})
+    set_pch(${tgt} ${sources})
     if(MSVC)
         set_target_properties(${tgt} PROPERTIES LINK_FLAGS /Debug)
     endif()
@@ -432,7 +454,7 @@ function(add_exec_project tgt srcdir)
     endforeach()
     if(CMAKE_COMPILER_IS_GNUCXX
             AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
-        # required for #include <experimental/filesystem>
+        # Required for #include <experimental/filesystem>.
         target_link_libraries(${tgt} "stdc++fs")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang
             AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
@@ -466,7 +488,7 @@ function(add_lib_project tgt srcdir)
         set_target_properties(${tgt} PROPERTIES EXCLUDE_FROM_ALL false)
     endif()
     set_target_properties(${tgt} PROPERTIES FOLDER libs)
-    set_pch(${tgt} ${srcdir})
+    set_pch(${tgt} ${sources})
     if(INSTALL_LIBS)
         file(GLOB incls LIST_DIRECTORIES false
             RELATIVE "${srcdir}" "${srcdir}/*.h")
@@ -630,7 +652,7 @@ if(EXISTS "${path}")
     endif()
 endif()
 
-# Add settings for predefined cmake targets
+# Add settings for predefined cmake targets.
 foreach(tgt ALL_BUILD PACKAGE ZERO_CHECK INSTALL RUN_TESTS)
     write_user_file("${tgt}" "props")
 endforeach()
