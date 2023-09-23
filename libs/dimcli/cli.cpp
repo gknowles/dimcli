@@ -157,6 +157,12 @@ struct Cli::OptIndex {
         const OptBase & opt
     );
 
+    bool parseToRawValues(
+        vector<RawValue> * out,
+        vector<string> & args,
+        Cli & cli
+    );
+
 private:
     void indexName(OptBase & opt, const string & name, int pos);
     void indexShortName(
@@ -2456,6 +2462,218 @@ static bool assignOperands(
 }
 
 //===========================================================================
+static bool commandRequired(const Cli::Config & cfg) {
+    return cfg.allowUnknown || cfg.cmds.size() > 1;
+}
+
+//===========================================================================
+bool Cli::OptIndex::parseToRawValues(
+    vector<RawValue> * out,
+    vector<string> & args,
+    Cli & cli
+) {
+    enum {
+        kNone,
+        kPending,
+        kFound,
+        kUnknown
+    } cmdMode = commandRequired(*cli.m_cfg)
+        ? kPending
+        : kNone;
+
+    auto arg = args.data();
+    auto argc = args.size();
+
+    string name;
+    bool moreOpts = true;
+    int numPos = 0;
+    size_t precmdValues = 0;
+    cli.m_cfg->progName = *arg;
+    size_t argPos = 1;
+    arg += 1;
+
+    for (; argPos < argc; ++argPos, ++arg) {
+        OptName argName;
+        const char * equal = nullptr;
+        auto ptr = arg->c_str();
+        if (*ptr == '-' && ptr[1] && moreOpts) {
+            ptr += 1;
+            for (; *ptr && *ptr != '-'; ++ptr) {
+                auto it = m_shortNames.find(*ptr);
+                name = '-';
+                name += *ptr;
+                if (it == m_shortNames.end()) {
+                    cli.badUsage("Unknown option", name);
+                    return false;
+                }
+                argName = it->second;
+                if (argName.opt->m_finalOpt)
+                    moreOpts = false;
+                if (argName.opt->m_bool) {
+                    out->push_back({
+                        RawValue::kOption,
+                        argName.opt,
+                        name,
+                        argPos,
+                        argName.invert ? "0" : "1"
+                    });
+                    continue;
+                }
+                ptr += 1;
+                goto OPTION_VALUE;
+            }
+            if (!*ptr)
+                continue;
+
+            ptr += 1;
+            if (!*ptr) {
+                // Bare "--" found, all remaining args are operands.
+                moreOpts = false;
+                continue;
+            }
+            string key;
+            equal = strchr(ptr, '=');
+            if (equal) {
+                key.assign(ptr, equal);
+                ptr = equal + 1;
+            } else {
+                key = ptr;
+                ptr = "";
+            }
+            auto it = m_longNames.find(key);
+            name = "--";
+            name += key;
+            if (it == m_longNames.end()) {
+                cli.badUsage("Unknown option", name);
+                return false;
+            }
+            argName = it->second;
+            if (argName.opt->m_finalOpt)
+                moreOpts = false;
+            if (argName.opt->m_bool) {
+                auto val = true;
+                if (equal
+                    && (argName.opt->m_flagValue || !parseBool(val, ptr))
+                ) {
+                    cli.badUsage("Invalid '" + name + "' value", ptr);
+                    return false;
+                }
+                out->push_back({
+                    RawValue::kOption,
+                    argName.opt,
+                    name,
+                    argPos,
+                    argName.invert == val ? "0" : "1"
+                });
+                continue;
+            }
+            goto OPTION_VALUE;
+        }
+
+        // Positional value
+        if (cmdMode == kPending && numPos == m_minOprs) {
+            auto cmd = (string) ptr;
+            bool noExtras = assignOperands(
+                out->data(),
+                out->size(),
+                cli,
+                *this,
+                numPos
+            );
+            // Number of assigned operands should always exactly match the
+            // count, since it's equal to the calculated minimum.
+            assert(noExtras // LCOV_EXCL_LINE
+                && "Internal dimcli error: operand count mismatch.");
+            noExtras = true;
+
+            out->push_back({RawValue::kCommand, nullptr, cmd});
+            precmdValues = out->size();
+            numPos = 0;
+
+            if (cli.commandExists(cmd)) {
+                cmdMode = kFound;
+                index(cli, cmd, false);
+            } else if (cli.m_cfg->allowUnknown) {
+                cmdMode = kUnknown;
+                moreOpts = false;
+            } else {
+                cli.badUsage("Unknown command", cmd);
+                return false;
+            }
+            cli.m_cfg->command = cmd;
+            continue;
+        }
+        if (cmdMode == kUnknown) {
+            cli.m_cfg->unknownArgs.push_back(ptr);
+            continue;
+        }
+
+        if (numPos == m_finalOpr)
+            moreOpts = false;
+
+        out->push_back({
+            RawValue::kOperand,
+            nullptr,
+            string{},
+            argPos,
+            ptr
+        });
+
+        numPos += 1;
+        continue;
+
+    OPTION_VALUE:
+        if (*ptr || equal) {
+            out->push_back({
+                RawValue::kOption,
+                argName.opt,
+                name,
+                argPos,
+                ptr
+            });
+            continue;
+        }
+        if (argName.optional) {
+            out->push_back({
+                RawValue::kOption,
+                argName.opt,
+                name,
+                argPos,
+                nullptr
+            });
+            continue;
+        }
+        argPos += 1;
+        arg += 1;
+        if (argPos == argc) {
+            cli.badUsage("No value given for " + name);
+            return false;
+        }
+        out->push_back({
+            RawValue::kOption,
+            argName.opt,
+            name,
+            argPos,
+            arg->c_str()
+        });
+    }
+
+    if (cmdMode != kUnknown) {
+        if (!assignOperands(
+            out->data() + precmdValues,
+            out->size() - precmdValues,
+            cli,
+            *this,
+            numPos
+        )) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//===========================================================================
 static bool badMinMatched(
     Cli & cli,
     const Cli::OptBase & opt,
@@ -2489,20 +2707,12 @@ bool Cli::parse(vector<string> & args) {
 
     OptIndex ndx;
     ndx.index(*this, "", false);
-    enum {
-        kNone,
-        kPending,
-        kFound,
-        kUnknown
-    } cmdMode = m_cfg->allowUnknown || m_cfg->cmds.size() > 1
-        ? kPending
-        : kNone;
 
     // Command processing requires that the command be unambiguously
     // identifiable and can't be used when the top level has an operand that
     // requires look ahead to match. Caused by the first operand being either
     // optional or a variable length vector.
-    if (cmdMode && !ndx.m_allowCommands)
+    if (commandRequired(*m_cfg) && !ndx.m_allowCommands)
         assert(!"Mixing top level operands with commands.");
 
     // Preprocess arguments and verify that at least one exists.
@@ -2540,195 +2750,8 @@ bool Cli::parse(vector<string> & args) {
 
     // Extract raw values and assign non-positional values to opts.
     vector<RawValue> rawValues;
-
-    auto arg = args.data();
-    auto argc = args.size();
-
-    string name;
-    bool moreOpts = true;
-    int numPos = 0;
-    size_t precmdValues = 0;
-    m_cfg->progName = *arg;
-    size_t argPos = 1;
-    arg += 1;
-
-    for (; argPos < argc; ++argPos, ++arg) {
-        OptName argName;
-        const char * equal = nullptr;
-        auto ptr = arg->c_str();
-        if (*ptr == '-' && ptr[1] && moreOpts) {
-            ptr += 1;
-            for (; *ptr && *ptr != '-'; ++ptr) {
-                auto it = ndx.m_shortNames.find(*ptr);
-                name = '-';
-                name += *ptr;
-                if (it == ndx.m_shortNames.end()) {
-                    badUsage("Unknown option", name);
-                    return false;
-                }
-                argName = it->second;
-                if (argName.opt->m_finalOpt)
-                    moreOpts = false;
-                if (argName.opt->m_bool) {
-                    rawValues.push_back({
-                        RawValue::kOption,
-                        argName.opt,
-                        name,
-                        argPos,
-                        argName.invert ? "0" : "1"
-                    });
-                    continue;
-                }
-                ptr += 1;
-                goto OPTION_VALUE;
-            }
-            if (!*ptr)
-                continue;
-
-            ptr += 1;
-            if (!*ptr) {
-                // Bare "--" found, all remaining args are operands.
-                moreOpts = false;
-                continue;
-            }
-            string key;
-            equal = strchr(ptr, '=');
-            if (equal) {
-                key.assign(ptr, equal);
-                ptr = equal + 1;
-            } else {
-                key = ptr;
-                ptr = "";
-            }
-            auto it = ndx.m_longNames.find(key);
-            name = "--";
-            name += key;
-            if (it == ndx.m_longNames.end()) {
-                badUsage("Unknown option", name);
-                return false;
-            }
-            argName = it->second;
-            if (argName.opt->m_finalOpt)
-                moreOpts = false;
-            if (argName.opt->m_bool) {
-                auto val = true;
-                if (equal
-                    && (argName.opt->m_flagValue || !parseBool(val, ptr))
-                ) {
-                    badUsage("Invalid '" + name + "' value", ptr);
-                    return false;
-                }
-                rawValues.push_back({
-                    RawValue::kOption,
-                    argName.opt,
-                    name,
-                    argPos,
-                    argName.invert == val ? "0" : "1"
-                });
-                continue;
-            }
-            goto OPTION_VALUE;
-        }
-
-        // Positional value
-        if (cmdMode == kPending && numPos == ndx.m_minOprs) {
-            auto cmd = (string) ptr;
-            bool noExtras = assignOperands(
-                rawValues.data(),
-                rawValues.size(),
-                *this,
-                ndx,
-                numPos
-            );
-            // Number of assigned operands should always exactly match the
-            // count, since it's equal to the calculated minimum.
-            assert(noExtras // LCOV_EXCL_LINE
-                && "Internal dimcli error: operand count mismatch.");
-            noExtras = true;
-
-            rawValues.push_back({RawValue::kCommand, nullptr, cmd});
-            precmdValues = rawValues.size();
-            numPos = 0;
-
-            if (commandExists(cmd)) {
-                cmdMode = kFound;
-                ndx.index(*this, cmd, false);
-            } else if (m_cfg->allowUnknown) {
-                cmdMode = kUnknown;
-                moreOpts = false;
-            } else {
-                badUsage("Unknown command", cmd);
-                return false;
-            }
-            m_cfg->command = cmd;
-            continue;
-        }
-        if (cmdMode == kUnknown) {
-            m_cfg->unknownArgs.push_back(ptr);
-            continue;
-        }
-
-        if (numPos == ndx.m_finalOpr)
-            moreOpts = false;
-
-        rawValues.push_back({
-            RawValue::kOperand,
-            nullptr,
-            string{},
-            argPos,
-            ptr
-        });
-
-        numPos += 1;
-        continue;
-
-    OPTION_VALUE:
-        if (*ptr || equal) {
-            rawValues.push_back({
-                RawValue::kOption,
-                argName.opt,
-                name,
-                argPos,
-                ptr
-            });
-            continue;
-        }
-        if (argName.optional) {
-            rawValues.push_back({
-                RawValue::kOption,
-                argName.opt,
-                name,
-                argPos,
-                nullptr
-            });
-            continue;
-        }
-        argPos += 1;
-        arg += 1;
-        if (argPos == argc) {
-            badUsage("No value given for " + name);
-            return false;
-        }
-        rawValues.push_back({
-            RawValue::kOption,
-            argName.opt,
-            name,
-            argPos,
-            arg->c_str()
-        });
-    }
-
-    if (cmdMode != kUnknown) {
-        if (!assignOperands(
-            rawValues.data() + precmdValues,
-            rawValues.size() - precmdValues,
-            *this,
-            ndx,
-            numPos
-        )) {
-            return false;
-        }
-    }
+    if (!ndx.parseToRawValues(&rawValues, args, *this))
+        return false;
 
     // Parse values and assign them to arguments.
     m_cfg->command = "";

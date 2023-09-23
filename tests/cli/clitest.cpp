@@ -2228,7 +2228,9 @@ Must be between '0' and '65,535'.
             && dbls[5] == 365 * dbls[3]
         );
         EXPECT_PARSE(cli, "-v1ms -v1us -v1ns");
-        EXPECT(dbls[0] == 1e-3 && dbls[1] == 1e-6 && dbls[2] == 1e-9);
+        EXPECT(dbls[0] == 1e-3);
+        EXPECT(dbls[1] == 1e-6);
+        EXPECT(dbls[2] == 1e-9);
     }
 
     // any units
