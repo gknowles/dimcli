@@ -7,8 +7,8 @@
 # configure.bat
 # docs/docgen.xml
 # docs/guide.adoc
-# docs/howto.md
 # docs/reference.adoc
+# docs/release-checklist.md
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
 # tests/cli/clitest.cpp
