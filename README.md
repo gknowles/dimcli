@@ -153,7 +153,7 @@ Things that were harder than expected:
 - Password prompting - there's no standard way to disable console echo :(
 - Build system - you can do a lot with CMake, but it's not always easy
 
-Other interesting c++ command line parsers:
+Other interesting C++ command line parsers:
 
 - [program_options](http://www.boost.org/doc/libs/release/libs/program_options/)
   \- from boost

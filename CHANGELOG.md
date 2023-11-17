@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Renamed cli.printPositionals() to cli.printOperands()
 
 ## dimcli 5.0.2 (2020-01-14)
-- Fixed - Name conflict with c++20 std::boolean
+- Fixed - Name conflict with C++20 std::boolean
 
 ## dimcli 5.0.1 (2019-08-26)
 - Added - Support and automated testing for VS2019
