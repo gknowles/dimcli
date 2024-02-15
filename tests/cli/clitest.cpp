@@ -855,6 +855,7 @@ Name options:
         EXPECT(tmp == "");
 
         // with maxWidth of 70
+        cli.maxWidth(15);         // for coverage of maxWidth < 20
         cli.maxWidth(70, 10, 20); // for coverage of explicit desc col
         cli.maxWidth(70);
         EXPECT_HELP(cli, {}, 1 + R"(
