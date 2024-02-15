@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2023.
+// Copyright Glen Knowles 2016 - 2024.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // clitest.cpp - dimcli test cli
