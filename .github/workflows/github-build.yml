@@ -15,6 +15,7 @@ on:
 jobs:
   build-win:
     strategy:
+      fail-fast: false
       matrix:
         platform: [Win32, x64]
         configuration: [Debug, Release]
@@ -61,6 +62,7 @@ jobs:
 
   build-unix:
     strategy:
+      fail-fast: false
       matrix:
         configuration: [Debug, Release]
         env:
