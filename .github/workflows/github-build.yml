@@ -156,6 +156,5 @@ jobs:
       if: matrix.coverage
       uses: codecov/codecov-action@v4
       with:
-        gcov: true
-        gcov_args: -p
+        plugins: gcov -p
         fail_ci_if_error: true
