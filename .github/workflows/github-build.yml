@@ -70,9 +70,9 @@ jobs:
           - CXX=clang++-9 CC=clang-9 INSTALL_LLVM=9
           - CXX=clang++-10 CC=clang-10
           - CXX=clang++-11 CC=clang-11
-          - CXX=clang++-12 CC=clang-12
-          - CXX=clang++-13 CC=clang-13
-          - CXX=clang++-14 CC=clang-14
+          - CXX=clang++-12 CC=clang-12 INSTALL_LLVM=12
+          - CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+          - CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
           - CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
           - CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
           - CXX=g++-7 CC=gcc-7 INSTALL_APT=7
