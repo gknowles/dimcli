@@ -75,12 +75,14 @@ jobs:
           - CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
           - CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
           - CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
+          - CXX=clang++-17 CC=clang-17 INSTALL_LLVM=17
           - CXX=g++-7 CC=gcc-7 INSTALL_APT=7
           - CXX=g++-8 CC=gcc-8 INSTALL_APT=8
           - CXX=g++-9 CC=gcc-9
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11
           - CXX=g++-12 CC=gcc-12
+          - CXX=g++-13 CC=gcc-13
         include:
           - env: CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON
             image: ubuntu-22.04
@@ -94,6 +96,14 @@ jobs:
           - env: CXX=clang++-10 CC=clang-10
             image: ubuntu-20.04
           - env: CXX=clang++-11 CC=clang-11
+            image: ubuntu-20.04
+          - env: CXX=clang++-12 CC=clang-12 INSTALL_LLVM=12
+            image: ubuntu-20.04
+          - env: CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+            image: ubuntu-20.04
+          - env: CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
+            image: ubuntu-20.04
+          - env: CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
             image: ubuntu-20.04
           - env: CXX=g++-7 CC=gcc-7 INSTALL_APT=7
             image: ubuntu-20.04
