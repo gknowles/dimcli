@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2023.
+// Copyright Glen Knowles 2016 - 2024.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.h - dimcli
@@ -1388,12 +1388,12 @@ public:
     // Set description to associate with the argument in help text.
     A & desc(const std::string & val);
 
-    // Set name of meta-variable in help text. For example, in "--count NUM"
-    // this is used to change "NUM" to something else.
+    // Set name of meta-variable in help text. For example, would change the
+    // "NUM" in "--count NUM" to something else.
     A & valueDesc(const std::string & val);
 
-    // Set text to appear in the default clause of this options the help text.
-    // Can change the "0" in "(default: 0)" to something else, or use an empty
+    // Set text to appear in the default clause of this options help text. Can
+    // change the "0" in "(default: 0)" to something else, or use an empty
     // string to suppress the entire clause.
     A & defaultDesc(const std::string & val);
 
@@ -1404,10 +1404,10 @@ public:
     // the argument was specified in the command line without a value.
     A & implicitValue(const T & val);
 
-    // Turns the argument into a feature switch, there are normally multiple
-    // switches pointed at a single external value, one of which should be
-    // flagged as the default. If none (or many) are set marked as the default
-    // one will be chosen for you.
+    // Turns the argument into a feature switch. If there are multiple switches
+    // pointed at a single external value one of them should be flagged as the
+    // default. If none (or many) are marked as the default one will be chosen
+    // for you.
     A & flagValue(bool isDefault = false);
 
     // All following arguments are treated as operands (positional) rather

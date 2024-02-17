@@ -1,5 +1,5 @@
 ﻿////
-Copyright Glen Knowles 2019 - 2023.
+Copyright Glen Knowles 2019 - 2024.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -393,11 +393,11 @@ previous one.
 | Set description to associate with the argument in help text.
 
 | opt.<<guide.adoc#page-layout, valueDesc>>
-| Set name of meta-variable in help text. For example, in "--count NUM" this is
-used to change "NUM" to something else.
+| Set name of meta-variable in help text. For example, would change the "NUM"
+in "--count NUM" to something else.
 
 | opt.<<guide.adoc#page-layout, defaultDesc>>
-| Set text to appear in the default clause of this options the help text. Can
+| Set text to appear in the default clause of this options help text. Can
 change the "0" in "(default: 0)" to something else, or use an empty string to
 suppress the entire clause.
 
