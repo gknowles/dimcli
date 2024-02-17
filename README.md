@@ -1,11 +1,11 @@
 ﻿<!--
-Copyright Glen Knowles 2016 - 2023.
+Copyright Glen Knowles 2016 - 2024.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
 # dimcli
 
-| Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 6, 9-16 / GCC 7-12 | Test Coverage |
+| Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 6, 9-17 / GCC 7-13 | Test Coverage |
 | :----: | :----------------------------------------------------: | :-----------: |
 | master | [![Build Status][gh-image-master]][gh-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
 | dev    | [![Build Status][gh-image-dev]][gh-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
