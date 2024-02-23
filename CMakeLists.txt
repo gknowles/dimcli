@@ -1,4 +1,4 @@
-# Copyright Glen Knowles 2016 - 2023.
+# Copyright Glen Knowles 2016 - 2024.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # CMakeLists.txt - general project generator
@@ -393,9 +393,9 @@ function(install_archive_pdb tgt dstdir)
         # I would hope that there's a better way to do this, but I don't know
         # what it may be...
         if(MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS_EQUAL 1927)
-            set(src "${CMAKE_CURRENT_BINARY_DIR}")
-        else()
             set(src "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir")
+        else()
+            set(src "${CMAKE_CURRENT_BINARY_DIR}")
         endif()
         foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
             install(
