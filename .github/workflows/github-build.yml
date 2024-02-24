@@ -19,7 +19,7 @@ jobs:
       matrix:
         platform: [Win32, x64]
         configuration: [Debug, Release]
-        toolset: [v140, v141, v142]
+        toolset: [v140, v141, v142, v143]
         include:
           - toolset: v140
             image: windows-2019
