@@ -1,5 +1,5 @@
 ﻿<!--
-Copyright Glen Knowles 2016 - 2023.
+Copyright Glen Knowles 2016 - 2024.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads
 - Fixed - Divide by zero when cli.maxWidth() set to out of range value
 
