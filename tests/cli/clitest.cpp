@@ -2230,8 +2230,12 @@ Must be between '0' and '65,535'.
         );
         EXPECT_PARSE(cli, "-v1ms -v1us -v1ns");
         EXPECT(dbls[0] == 1e-3);
+#if defined(_MSC_VER) && _MSC_VER != 1938
+        // Exclude these from MSVC 2022 17.8 because of bug in it's stream
+        // library.
         EXPECT(dbls[1] == 1e-6);
         EXPECT(dbls[2] == 1e-9);
+#endif
     }
 
     // any units

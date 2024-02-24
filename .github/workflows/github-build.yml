@@ -27,8 +27,8 @@ jobs:
             image: windows-2019
           - toolset: v142
             image: windows-2019
-#         - toolset: v143
-#           image: windows-2022
+          - toolset: v143
+            image: windows-2022
     runs-on: ${{matrix.image}}
     defaults:
       run:
