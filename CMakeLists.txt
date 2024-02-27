@@ -598,6 +598,7 @@ endforeach()
 # test targets
 if(BUILD_TESTING)
     enable_testing()
+    # test binaries - use to execute runtime tests
     file(GLOB allnames tests/*)
     foreach(var ${allnames})
         if(IS_DIRECTORY "${var}")
@@ -612,17 +613,16 @@ if(BUILD_TESTING)
             endif()
         endif()
     endforeach()
+    # test lib targets - use for compile only tests, never linked
+    file(GLOB allnames testlibs/*)
+    foreach(var ${allnames})
+        if(IS_DIRECTORY "${var}")
+            get_filename_component(prjname "${var}" NAME)
+            add_lib_project(${prjname} "${var}")
+            set_target_properties(${prjname} PROPERTIES FOLDER testlibs)
+        endif()
+    endforeach()
 endif()
-
-# test lib targets - use for compile only tests, never linked
-file(GLOB allnames testlibs/*)
-foreach(var ${allnames})
-    if(IS_DIRECTORY "${var}")
-        get_filename_component(prjname "${var}" NAME)
-        add_lib_project(${prjname} "${var}")
-        set_target_properties(${prjname} PROPERTIES FOLDER testlibs)
-    endif()
-endforeach()
 
 
 #############################################################################
