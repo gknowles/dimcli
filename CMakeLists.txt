@@ -149,16 +149,6 @@ if(MSVC)
 
     # "/Od" - disables optimization
     set(CMAKE_CXX_FLAGS_DEBUG "/Od")
-    if(FALSE AND NOT MSVC_VERSION LESS 1928)
-        # "/fsanitize=address" - enables ASAN memory error detector
-        # "/Zi" - debug info (not present would be no info)
-        set(CMAKE_CXX_FLAGS_DEBUG
-            "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi")
-    else()
-        # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
-        # "/ZI" - debug with edit and continue (disables some optimizations)
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /RTC1 /ZI")
-    endif()
     if(LINK_STATIC_RUNTIME)
         # "/MTd" - multithread debug static runtime
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
@@ -169,13 +159,40 @@ if(MSVC)
 
     # "/O2" - maximize speed
     # "/Zi" - debug info format (not present would be no info)
-    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2 /Zi")
+    set(CMAKE_CXX_FLAGS_RELEASE "/DNDEBUG /O2")
     if(LINK_STATIC_RUNTIME)
         # "/MT" - multithread release static runtime
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     else()
         # "/MD" - multithread release dll runtime
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+    endif()
+
+    # Debug symbol format
+    if(INSTALL_LIBS)
+        # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
+        # "/Z7" - debug info embedded in obj files (no separate PDB)
+        #
+        # Debug info embedded in obj files is used because there doesn't seem
+        # to be any rational way to find the associated PDB and install it
+        # along with a static library. Having a separate PDB would take less
+        # disk space and allow edit and continue, but that doesn't seem to be
+        # the world we live in.
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /RTC1 /Z7")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Z7")
+    else()
+        if(FALSE AND NOT MSVC_VERSION LESS 1928)
+            # "/fsanitize=address" - enables ASAN memory error detector
+            # "/Zi" - debug info (not present would be no info)
+            set(CMAKE_CXX_FLAGS_DEBUG
+                "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi")
+        else()
+            # "/RTC1" - runtime checks (stack frame over/under run and uninit use)
+            # "/ZI" - debug with edit and continue (disables some optimizations)
+            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /RTC1 /ZI")
+        endif()
+        # "/Zi" - debug info (not present would be no info)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8")
@@ -383,29 +400,6 @@ function(write_user_file prjname opts)
 ]=])
 endfunction()
 
-function(install_archive_pdb tgt dstdir)
-    if(NOT MSVC)
-        # Do nothing
-    elseif(BUILD_SHARED_LIBS)
-        install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
-    else()
-        # Special handling required to get PDBs of static libraries installed.
-        # I would hope that there's a better way to do this, but I don't know
-        # what it may be...
-        if(MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS_EQUAL 1927)
-            set(src "${CMAKE_CURRENT_BINARY_DIR}/${tgt}.dir")
-        else()
-            set(src "${CMAKE_CURRENT_BINARY_DIR}")
-        endif()
-        foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-            install(
-                FILES "${src}/${cfg}/${tgt}.pdb"
-                DESTINATION ${dstdir}
-                CONFIGURATIONS ${cfg})
-        endforeach()
-    endif()
-endfunction()
-
 function(set_pch tgt)
     if (NOT MSVC)
         return()
@@ -481,7 +475,9 @@ function(add_lib_project tgt srcdir)
             install(TARGETS ${tgt}
                 ARCHIVE DESTINATION lib
                 RUNTIME DESTINATION bin)
-            install_archive_pdb(${tgt} lib)
+            if(BUILD_SHARED_LIBS)
+                install(FILES "$<TARGET_PDB_FILE:${tgt}>" DESTINATION bin)
+            endif()
         endif()
     else()
         add_custom_target(${tgt} SOURCES ${sources})
