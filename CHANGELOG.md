@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads
+- Fixed - Compile error in Clang 16+ casting from cli.toWindowsCmdline
 - Fixed - Divide by zero when cli.maxWidth() set to out of range value
 
 ## dimcli 7.1.1 (2023-03-25)
