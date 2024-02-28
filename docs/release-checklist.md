@@ -50,10 +50,4 @@ Distributed under the Boost Software License, Version 1.0.
     3. Run "vcpkg x-add-version dimcli"
 
 # Outstanding Issues
-Fix these failures called out in vcpkg's scripts/ci.baseline.txt and remove the
-exceptions from that file.
-  # VS2019 version 16.9.4's project system changes where PDBs are placed in a way that breaks the
-  # upstream build script of this port.
-  # See https://developercommunity.visualstudio.com/t/Toolset-169-regression-vcxproj-producin/1356639
-  dimcli:x64-windows-static-md=fail
-  dimcli:x64-windows-static=fail
+None
