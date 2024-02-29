@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unreleased
+- Unchanged
+
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads
 - Fixed - Compile error in Clang 16 casting from cli.toWindowsCmdline
