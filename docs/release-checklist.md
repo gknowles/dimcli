@@ -1,5 +1,5 @@
 <!--
-Copyright Glen Knowles 2022 - 2023.
+Copyright Glen Knowles 2022 - 2024.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
@@ -31,9 +31,10 @@ Distributed under the Boost Software License, Version 1.0.
     3. Set title to the same as the new tag.
     4. Write brief description and publish the release.
 13. Publish the docs
-    1. Run "docgen site".
-    2. Go to vendor\gh-pages directory.
-    3. Review, commit, and push the new docs with description of "Update docs".
+    1. Run "git pull" to get the new tag created in 12.4.
+    2. Run "docgen site".
+    3. Go to vendor\gh-pages directory.
+    4. Review, commit, and push the new docs with description of "Update docs".
 14. Publish to vcpkg
     1. Update version
         - version-semver and license in ports/dimcli/vcpkg.json
@@ -47,7 +48,7 @@ Distributed under the Boost Software License, Version 1.0.
             3. Set SHA512 to the "Actual hash"
             4. Run "vcpkg install dimcli" again, it should pass.
     2. Commit ports/dimcli/** files to local repository.
-    3. Run "vcpkg x-add-version dimcli"
+    3. Run "vcpkg x-add-version dimcli" and commit its changes.
 
 # Outstanding Issues
 None
