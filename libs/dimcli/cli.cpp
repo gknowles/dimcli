@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2023.
+// Copyright Glen Knowles 2016 - 2024.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.cpp - dimcli
@@ -31,6 +31,15 @@ namespace fs = DIMCLI_LIB_FILESYSTEM;
 #pragma warning(disable : 4996) // this function or variable may be unsafe.
 #elif __clang_major__ >= 15
 #pragma clang diagnostic ignored "-Wunqualified-std-cast-call"
+#endif
+
+#ifdef __has_cpp_attribute
+#if __has_cpp_attribute(fallthrough)
+#define FALLTHROUGH [[fallthrough]]
+#endif
+#endif
+#ifndef FALLTHROUGH
+#define FALLTHROUGH
 #endif
 
 
@@ -827,7 +836,7 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
         return;
     case '[':
         optional = true;
-        // fallthrough
+        FALLTHROUGH;
     case '<':
         if (!opt.maxSize())
             return;
