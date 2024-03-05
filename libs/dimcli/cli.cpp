@@ -1459,7 +1459,7 @@ bool Cli::parseExited() const {
 
 /****************************************************************************
 *
-*   Parse argv
+*   Command line and argv conversions
 *
 ***/
 
@@ -1525,25 +1525,70 @@ vector<const char *> Cli::toPtrArgv(const vector<string> & args) {
 }
 
 //===========================================================================
-// These rules where gleaned by inspecting glib's g_shell_parse_argv which
-// takes its rules from the "Shell Command Language" section of the UNIX98
-// spec -- but ignoring parameter expansion ("$()" and "${}"), command
-// substitution (back quote `), operators as separators, etc.
-//
-// Arguments are split on whitespace (" \t\r\n\f\v") unless the whitespace
-// is escaped, quoted, or in a comment.
-// - unquoted: any char following a backslash is replaced by that char,
-//   except newline, which is removed. An unquoted '#' starts a comment.
-// - comment: everything up to, but not including, the next newline is ignored
-// - single quotes: preserve the string exactly, no escape sequences, not
-//   even \'
-// - double quotes: some chars ($ ' " \ and newline) are escaped when
-//   following a backslash, a backslash not followed one of those five chars
-//   is preserved. All other chars are preserved.
-//
-// When escaping it's simplest to not quote and just escape the following:
-//   Must: | & ; < > ( ) $ ` \ " ' SP TAB CR LF FF VTAB
-//   Should: * ? [ # ~ = %
+// static
+string Cli::toCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toCmdline(ptrs.size(), ptrs.data());
+}
+
+//===========================================================================
+// static
+string Cli::toCmdline(size_t argc, char * argv[]) {
+#if defined(_WIN32)
+    return toWindowsCmdline(argc, argv);
+#else
+    return toGnuCmdline(argc, argv);
+#endif
+}
+
+//===========================================================================
+// static
+string Cli::toCmdline(size_t argc, const char * argv[]) {
+    return toCmdline(argc, (char **) argv);
+}
+
+//===========================================================================
+// static
+string Cli::toCmdline(size_t argc, wchar_t * argv[]) {
+    return toCmdline(toArgv(argc, argv));
+}
+
+//===========================================================================
+// static
+string Cli::toCmdline(size_t argc, const wchar_t * argv[]) {
+    return toCmdline(argc, (wchar_t **) argv);
+}
+
+
+/****************************************************************************
+*
+*   GLib command line and argv conversions
+*
+*   These rules where gleaned by inspecting GLib's g_shell_parse_argv which
+*   takes its rules from the "Shell Command Language" section of the UNIX98
+*   spec -- but ignoring parameter expansion ("$()" and "${}"), command
+*   substitution (back quote `), operators as separators, etc.
+*
+*   Arguments are split on whitespace (" \t\r\n\f\v") unless the whitespace is
+*   escaped, quoted, or in a comment.
+*   - unquoted: any char following a backslash is escaped (replaced by that
+*     char), except newline, which is removed. An unquoted '#' starts a
+*     comment.
+*   - comment: everything up to, but not including, the next newline is
+*     ignored.
+*   - single quotes: preserve the string exactly, no escape sequences allowed,
+*     not even \'.
+*   - double quotes: some chars ($ ' " \ and newline) are escaped when
+*     following a backslash, a backslash not followed one of those five chars
+*     is preserved. All other chars are preserved.
+*
+*   When combining args into a command line it's simplest to not quote and just
+*   escape the following:
+*     Must: | & ; < > ( ) $ ` \ " ' SP TAB CR LF FF VTAB
+*     Should: * ? [ # ~ = %
+*
+***/
+
 //===========================================================================
 // static
 vector<string> Cli::toGlibArgv(const string & cmdline) {
@@ -1655,11 +1700,51 @@ IN_DQUOTE:
 }
 
 //===========================================================================
-// Rules from libiberty's buildargv().
-//
-// Arguments are split on whitespace (" \t\r\n\f\v") unless quoted or escaped
-//  - backslashes: always escapes the following character.
-//  - single quotes and double quotes: escape each other and whitespace.
+// static
+string Cli::toGlibCmdline(size_t, char * argv[]) {
+    string out;
+    if (!*argv)
+        return out;
+    for (;;) {
+        for (auto ptr = *argv; *ptr; ++ptr) {
+            switch (*ptr) {
+                // Must escape
+            case '|': case '&': case ';': case '<': case '>': case '(':
+            case ')': case '$': case '`': case '\\': case '"': case '\'':
+            case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
+                // Should escape
+            case '*': case '?': case '[': case '#': case '~': case '=':
+            case '%':
+                out += '\\';
+            }
+            out += *ptr;
+        }
+        if (!*++argv)
+            return out;
+        out += ' ';
+    }
+}
+
+//===========================================================================
+// static
+string Cli::toGlibCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toGlibCmdline(ptrs.size(), (char**)ptrs.data());
+}
+
+
+/****************************************************************************
+*
+*   Gnu command line and argv conversions
+*
+*   Rules from libiberty's buildargv().
+*
+*   Arguments are split on whitespace (" \t\r\n\f\v") unless quoted or escaped
+*    - backslashes: always escapes the following character.
+*    - single quotes and double quotes: escape each other and whitespace.
+*
+***/
+
 //===========================================================================
 // static
 vector<string> Cli::toGnuArgv(const string & cmdline) {
@@ -1733,17 +1818,52 @@ IN_QUOTED:
 }
 
 //===========================================================================
-// Rules defined in the "Parsing C++ Command-Line Arguments" article on MSDN.
-//
-// Arguments are split on whitespace (" \t") unless the whitespace is quoted.
-// - double quotes: preserves whitespace that would otherwise end the
-//   argument, can occur in the midst of an argument.
-// - backslashes:
-//   - an even number followed by a double quote adds one backslash for each
-//     pair and the quote is a delimiter.
-//   - an odd number followed by a double quote adds one backslash for each
-//     pair, the last one is tossed, and the quote is added to the argument.
-//   - any number not followed by a double quote are literals.
+// static
+string Cli::toGnuCmdline(size_t, char * argv[]) {
+    string out;
+    if (!*argv)
+        return out;
+    for (;;) {
+        for (auto ptr = *argv; *ptr; ++ptr) {
+            switch (*ptr) {
+            case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
+            case '\\': case '\'': case '"':
+                out += '\\';
+            }
+            out += *ptr;
+        }
+        if (!*++argv)
+            return out;
+        out += ' ';
+    }
+}
+
+//===========================================================================
+// static
+string Cli::toGnuCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toGnuCmdline(ptrs.size(), (char**)ptrs.data());
+}
+
+
+/****************************************************************************
+*
+*   Windows command line and argv conversions
+*
+*   Rules defined in the "Parsing C++ Command-Line Arguments" article on MSDN.
+*
+*   Arguments are split on whitespace (" \t") unless the whitespace is quoted.
+*   - double quotes: preserves whitespace that would otherwise end the
+*     argument, can occur in the midst of an argument.
+*   - backslashes:
+*     - an even number followed by a double quote adds one backslash for each
+*       pair and the quote is a delimiter.
+*     - an odd number followed by a double quote adds one backslash for each
+*       pair, the last one is tossed, and the quote is added to the argument.
+*     - any number not followed by a double quote are literals.
+*
+***/
+
 //===========================================================================
 // static
 vector<string> Cli::toWindowsArgv(const string & cmdline) {
@@ -1835,116 +1955,6 @@ IN_QUOTED:
     return out;
 }
 
-
-/****************************************************************************
-*
-*   Join argv to form a command line
-*
-***/
-
-//===========================================================================
-// static
-string Cli::toCmdline(const vector<string> & args) {
-    auto ptrs = toPtrArgv(args);
-    return toCmdline(ptrs.size(), ptrs.data());
-}
-
-//===========================================================================
-// static
-string Cli::toCmdline(size_t argc, char * argv[]) {
-#if defined(_WIN32)
-    return toWindowsCmdline(argc, argv);
-#else
-    return toGnuCmdline(argc, argv);
-#endif
-}
-
-//===========================================================================
-// static
-string Cli::toCmdline(size_t argc, const char * argv[]) {
-    return toCmdline(argc, (char **) argv);
-}
-
-//===========================================================================
-// static
-string Cli::toCmdline(size_t argc, wchar_t * argv[]) {
-    return toCmdline(toArgv(argc, argv));
-}
-
-//===========================================================================
-// static
-string Cli::toCmdline(size_t argc, const wchar_t * argv[]) {
-    return toCmdline(argc, (wchar_t **) argv);
-}
-
-//===========================================================================
-// static
-string Cli::toGlibCmdline(const vector<string> & args) {
-    auto ptrs = toPtrArgv(args);
-    return toGlibCmdline(ptrs.size(), (char **) ptrs.data());
-}
-
-//===========================================================================
-// static
-string Cli::toGlibCmdline(size_t, char * argv[]) {
-    string out;
-    if (!*argv)
-        return out;
-    for (;;) {
-        for (auto ptr = *argv; *ptr; ++ptr) {
-            switch (*ptr) {
-            // Must escape
-            case '|': case '&': case ';': case '<': case '>': case '(':
-            case ')': case '$': case '`': case '\\': case '"': case '\'':
-            case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
-            // Should escape
-            case '*': case '?': case '[': case '#': case '~': case '=':
-            case '%':
-                out += '\\';
-            }
-            out += *ptr;
-        }
-        if (!*++argv)
-            return out;
-        out += ' ';
-    }
-}
-
-//===========================================================================
-// static
-string Cli::toGnuCmdline(const vector<string> & args) {
-    auto ptrs = toPtrArgv(args);
-    return toGnuCmdline(ptrs.size(), (char **) ptrs.data());
-}
-
-//===========================================================================
-// static
-string Cli::toGnuCmdline(size_t, char * argv[]) {
-    string out;
-    if (!*argv)
-        return out;
-    for (;;) {
-        for (auto ptr = *argv; *ptr; ++ptr) {
-            switch (*ptr) {
-            case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
-            case '\\': case '\'': case '"':
-                out += '\\';
-            }
-            out += *ptr;
-        }
-        if (!*++argv)
-            return out;
-        out += ' ';
-    }
-}
-
-//===========================================================================
-// static
-string Cli::toWindowsCmdline(const vector<string> & args) {
-    auto ptrs = toPtrArgv(args);
-    return toWindowsCmdline(ptrs.size(), (char **) ptrs.data());
-}
-
 //===========================================================================
 // static
 string Cli::toWindowsCmdline(size_t, char * argv[]) {
@@ -1993,6 +2003,13 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
             return out;
         out += ' ';
     }
+}
+
+//===========================================================================
+// static
+string Cli::toWindowsCmdline(const vector<string> & args) {
+    auto ptrs = toPtrArgv(args);
+    return toWindowsCmdline(ptrs.size(), (char **)ptrs.data());
 }
 
 
@@ -2764,7 +2781,7 @@ bool Cli::parse(vector<string> & args) {
 
     // Parse values and assign them to arguments.
     m_cfg->command = "";
-    for (auto&& val : rawValues) {
+    for (auto && val : rawValues) {
         switch (val.type) {
         case RawValue::kCommand:
             m_cfg->command = val.name;
@@ -2777,7 +2794,7 @@ bool Cli::parse(vector<string> & args) {
     }
 
     // Report options with too few values.
-    for (auto&& argName : ndx.m_argNames) {
+    for (auto && argName : ndx.m_argNames) {
         auto & opt = *argName.opt;
         if (!argName.optional) {
             // Report required operands that are missing.
@@ -2785,7 +2802,7 @@ bool Cli::parse(vector<string> & args) {
                 return badMinMatched(*this, opt, argName.name);
         }
     }
-    for (auto&& nv : ndx.m_shortNames) {
+    for (auto && nv : ndx.m_shortNames) {
         auto & opt = *nv.second.opt;
         if (!nv.second.pos && opt && opt.size() < (size_t) opt.minSize())
             return badMinMatched(*this, opt);
@@ -3096,7 +3113,7 @@ static int formatLine(
     auto lines = 0;
     size_t pos = 0;
     size_t startPos = 0;
-    for (auto&& col : raw.cols) {
+    for (auto && col : raw.cols) {
         pos = formatCol(&out, &lines, col, startPos, pos, lineWidth);
         startPos += col.width;
     }
@@ -3118,7 +3135,7 @@ static string format(const Cli::Config & cfg, const string & text) {
         vector<int> rows;
 
         void apply(vector<RawLine> * raws) {
-            for (auto&& line : this->rows) {
+            for (auto && line : this->rows) {
                 auto & cols = (*raws)[line].cols;
                 for (unsigned i = 0; i < cols.size(); ++i) {
                     if (this->width[i])
@@ -3158,7 +3175,7 @@ static string format(const Cli::Config & cfg, const string & text) {
                 tab.width[icol] = min(width, maxWidth);
         }
     }
-    for (auto&& kv : tables)
+    for (auto && kv : tables)
         kv.second.apply(&raws);
 
     int cnt = 0;
