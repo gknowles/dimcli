@@ -857,7 +857,7 @@ The maximum number of values is 2.</code></pre>
 </div>
 <div class="paragraph">
 <p>While the * and -&gt; operators get you full access to the underlying vector,
-size() and [] are also available directly on the OptVec&lt;T&gt;. Which may
+size() and [] are also available directly on OptVec&lt;T&gt;. Which may
 occasionally save a little bit of typing.</p>
 </div>
 <div class="listingblock">
@@ -2247,17 +2247,13 @@ around&#8230;&#8203;</p>
 <pre lang="C++"><code>auto &amp; file = cli.opt&lt;string&gt;("f file").require();</code></pre>
 </div>
 </div>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>it will complain about '-f' instead of '--file'.</p>
-</li>
-</ol>
+<div class="paragraph">
+<p>... it will complain about '-f' instead of '--file'.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ a.out
-Error: No value given for -f</pre>
+<pre lang="shell session"><code>$ a.out
+Error: No value given for -f</code></pre>
 </div>
 </div>
 </div>
