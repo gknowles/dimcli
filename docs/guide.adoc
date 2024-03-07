@@ -516,7 +516,7 @@ The maximum number of values is 2.
 ----
 
 While the * and \-> operators get you full access to the underlying vector,
-size() and [] are also available directly on the OptVec&lt;T>. Which may
+size() and [] are also available directly on OptVec&lt;T>. Which may
 occasionally save a little bit of typing.
 
 [source, C++]
@@ -1704,7 +1704,7 @@ around...
 auto & file = cli.opt<string>("f file").require();
 ----
 
-... it will complain about '-f' instead of '--file'.
+\... it will complain about '-f' instead of '--file'.
 [source, shell session]
 ----
 $ a.out
