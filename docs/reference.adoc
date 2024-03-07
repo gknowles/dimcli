@@ -267,11 +267,11 @@ value is the same as the default is immaterial.
 wasn't populated. For vectors, it's what populated the last value.
 
 | opt.maxSize
-| Maximum values required for option, non-vectors are always 1. Vectors default
+| Maximum values required for option, always 1 for non-vectors. Vectors default
 to -1 (for unlimited).
 
 | opt.minSize
-| Minimum values required for option, non-vectors are always 1. Vectors default
+| Minimum values required for option, always 1 for non-vectors. Vectors default
 to 1.
 
 | opt.<<guide.adoc#life-after-parsing, pos>>
@@ -281,7 +281,7 @@ the value wasn't populated from the command line or wasn't populated at all,
 check from() to tell the difference.
 
 | opt.<<guide.adoc#counting, size>>
-| Number of values, non-vectors are always 1.
+| Number of values, always 1 for non-vectors.
 |===
 
 == Subcommands

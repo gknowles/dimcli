@@ -1267,8 +1267,8 @@ public:
     // Number of values, non-vectors are always 1.
     virtual size_t size() const { return 1; }
 
-    // Number of allowed values, non-vectors are always 1, maxSize of -1 for
-    // unlimited.
+    // Number of allowed values, maxSize of -1 for unlimited. Both minSize and
+    // maxSize are always 1 for non-vectors.
     virtual int minSize() const { return 1; }
     virtual int maxSize() const { return 1; }
 
