@@ -237,7 +237,7 @@ void assertTests() {
     cli.command("subcmd");
     EXPECT_PARSE(cli, "", true);
     EXPECT_ASSERT(1 + R"(
-!"Mixing top level operands with commands."
+!"Mixing top level optional operands with commands."
 )");
 
     // Bad usage
@@ -254,23 +254,23 @@ void assertTests() {
 !"Bad modifier (implicit) for bool argument."
 )");
 
-    // Bad argument name
+    // Bad option name
     cli = {};
     cli.opt<bool>("a=");
     EXPECT_ASSERT(1 + R"(
-!"Bad argument name, contains '='."
+!"Bad option name, contains '='."
 )");
     cli.opt<int>("[B] [C]");
     EXPECT_ASSERT(1 + R"(
-!"Argument with multiple operand names."
+!"Option with multiple operand names."
 )");
     cli.opt<int>("-d");
     EXPECT_ASSERT(1 + R"(
-!"Bad argument name, starts with '-'."
+!"Bad option name, starts with '-'."
 )");
     cli.opt<bool>("?e");
     EXPECT_ASSERT(1 + R"(
-!"Bad modifier '?' for bool argument."
+!"Bad modifier '?' for bool option."
 )");
     cli.opt<bool>("f.");
     EXPECT_ASSERT(1 + R"(
@@ -280,10 +280,10 @@ void assertTests() {
 Usage: test [--help] [B]
 )");
     EXPECT_ASSERT(1 + R"(
-!"Bad argument name, contains '='."
-!"Argument with multiple operand names."
-!"Bad argument name, starts with '-'."
-!"Bad modifier '?' for bool argument."
+!"Bad option name, contains '='."
+!"Option with multiple operand names."
+!"Bad option name, starts with '-'."
+!"Bad modifier '?' for bool option."
 !"Bad modifier '.' for short name."
 )");
 
