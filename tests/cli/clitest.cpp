@@ -2456,12 +2456,13 @@ void finalOptTests() {
         EXPECT(*b == vector<int>{2, 3});
     }
     // required finalOpt operand after required operand
+    // trailing option looking argument interpreted as operand
     {
         cli = {};
         cli.opt<int>("<A>");
         auto & b = cli.optVec<int>("<B>").finalOpt();
-        EXPECT_PARSE(cli, "1 2 3");
-        EXPECT(*b == vector<int>{2, 3});
+        EXPECT_PARSE(cli, "1 2 -1");
+        EXPECT(*b == vector<int>{2, -1});
     }
 
     // finalOpt option
