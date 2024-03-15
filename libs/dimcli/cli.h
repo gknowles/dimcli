@@ -443,7 +443,8 @@ public:
     //       results when used before parse() has been called to supply the
     //       program name and finalize the configuration. The exception is
     //       printText(), which only uses console width, and is safe to use
-    //       without first calling parse().
+    //       without first calling parse(). To learn about printText(), see
+    //       the section on rendering arbitrary text.
 
     // If exitCode() is not EX_OK, prints errMsg and errDetail (if present),
     // otherwise prints nothing. Returns exitCode(). Only makes sense after
@@ -646,8 +647,8 @@ public:
     int exitCode() const;
     const std::string & errMsg() const;
 
-    // Additional information that may help the user correct their mistake,
-    // may be empty.
+    // Additional information to help the user correct their mistake, may be
+    // empty.
     const std::string & errDetail() const;
 
     // Program name received in argv[0]

@@ -86,8 +86,7 @@ miscellaneous state. Returns true if processing should continue.
 | Error message, only meaningful when exitCode() != EX_OK
 
 | cli.errDetail
-| Additional information that may help the user correct their mistake, may be
-empty.
+| Additional information to help the user correct their mistake, may be empty.
 
 | cli.<<guide.adoc#basic-usage, exitCode>>
 | EX_OK (0), EX_USAGE, or any value set by user defined actions.
