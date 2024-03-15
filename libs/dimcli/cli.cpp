@@ -2673,34 +2673,35 @@ bool Cli::OptIndex::parseToRawValues(
                 st.optName = it->second;
                 if (st.optName.opt->m_finalOpt)
                     st.moreOpts = false;
-                if (st.optName.opt->m_bool) {
-                    // Found bool short name, record and continue processing
-                    // any additional short names in this same argument.
-                    out->push_back({
-                        RawValue::kOption,
-                        st.optName.opt,
-                        st.name,
-                        st.argPos,
-                        st.optName.invert ? "0" : "1"
-                    });
-                    continue;
+
+                if (!st.optName.opt->m_bool) {
+                    // Short name option that needs a value, which might be
+                    // attached as the rest of the argument. Adjust pointer to
+                    // the attached value, or set it to null if none.
+                    st.ptr += 1;
+                    if (!*st.ptr)
+                        st.ptr = nullptr;
+                    // Since that value consumes the rest of the argument,
+                    // process it and then advance to next argument.
+                    if (!parseOptionValue(out, st, cli, args))
+                        return false;
+                    // Set st.ptr to null to trigger advancing to the next
+                    // argument after breaking out of this loop.
+                    st.ptr = nullptr;
+                    break;
                 }
 
-                // Short name option that needs a value, which might be
-                // attached as the rest of the argument. Adjust pointer to the
-                // attached value, or set it to null if value is not attached.
-                st.ptr += 1;
-                if (!*st.ptr)
-                    st.ptr = nullptr;
-                // Since that value consumes the rest of the argument, process
-                // it and then advance to next argument.
-                if (!parseOptionValue(out, st, cli, args))
-                    return false;
-                // Set st.ptr to "" to exit this loop and continue to the next
-                // argument.
-                st.ptr = "";
+                // Found bool short name, record and continue processing any
+                // additional short names in this same argument.
+                out->push_back({
+                    RawValue::kOption,
+                    st.optName.opt,
+                    st.name,
+                    st.argPos,
+                    st.optName.invert ? "0" : "1"
+                });
             }
-            if (!*st.ptr) {
+            if (!st.ptr || !*st.ptr) {
                 // Reached end of this argument, continue to next argument.
                 continue;
             }
@@ -2732,31 +2733,33 @@ bool Cli::OptIndex::parseToRawValues(
             st.optName = it->second;
             if (st.optName.opt->m_finalOpt)
                 st.moreOpts = false;
-            if (st.optName.opt->m_bool) {
-                // Found bool long name.
-                auto val = true;
-                if (st.ptr
-                    && (st.optName.opt->m_flagValue || !parseBool(val, st.ptr))
-                ) {
-                    // Only regular bool opts support values, and those values
-                    // must be valid: true, false, 1, 0, y, n, etc.
-                    cli.badUsage("Invalid '" + st.name + "' value", st.ptr);
+
+            if (!st.optName.opt->m_bool) {
+                // Long option with (possibly empty) value, process it and advance
+                // to next argument.
+                if (!parseOptionValue(out, st, cli, args))
                     return false;
-                }
-                // Record and advance to the next argument.
-                out->push_back({
-                    RawValue::kOption,
-                    st.optName.opt,
-                    st.name,
-                    st.argPos,
-                    st.optName.invert == val ? "0" : "1"
-                });
                 continue;
             }
-            // Long option with (possibly empty) value, process it and advance
-            // to next argument.
-            if (!parseOptionValue(out, st, cli, args))
+
+            // Found bool long name.
+            auto val = true;
+            if (st.ptr
+                && (st.optName.opt->m_flagValue || !parseBool(val, st.ptr))
+            ) {
+                // Only regular bool opts support values, and those values
+                // must be valid: true, false, 1, 0, y, n, etc.
+                cli.badUsage("Invalid '" + st.name + "' value", st.ptr);
                 return false;
+            }
+            // Record and advance to the next argument.
+            out->push_back({
+                RawValue::kOption,
+                st.optName.opt,
+                st.name,
+                st.argPos,
+                st.optName.invert == val ? "0" : "1"
+            });
             continue;
         }
 
