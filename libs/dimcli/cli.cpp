@@ -1212,8 +1212,7 @@ const string & Cli::sortKey() const {
 Cli & Cli::command(const string & name, const string & grpName) & {
     Config::findCmdAlways(*this, name);
     m_command = name;
-    m_group = grpName;
-    return *this;
+    return group(grpName);
 }
 
 //===========================================================================

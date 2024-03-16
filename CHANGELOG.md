@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
-- None
+- Fixed - Assert calling cli.title() immediately after creating new option
+          group via cli.command(...).
 
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads
@@ -29,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## dimcli 7.0.0 (2022-11-17)
 - Changed - cli.exec() returns was work attempted, instead of exit code
 - Removed - cli.parse() and cli.exec() variants taking an ostream. Use
-    with cli.printError() instead.
+            with cli.printError() instead.
 - Changed - cli.fail() and cli.badUsage() now return void instead of false
 - Added - cli.parseExit() for aborting parsing w/o error
 - Changed - All types of application actions now return void
