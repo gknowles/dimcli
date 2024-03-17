@@ -1206,7 +1206,7 @@ Options:
 Usage: test unknown [ARGS...]
 )");
 
-    // unknownCommand
+    // unknownCmd
     {
         cli = {};
         CliTest(cli).unknownCmd();
@@ -2542,18 +2542,30 @@ int main(int argc, char * argv[]) {
     Dim::CliLocal cli;
     cli.helpNoArgs();
     cli.footer("On parsing failures, lists arguments from command line.");
-    cli.opt<bool>("test").desc("Run tests.");
-    auto & prompt = cli.opt<bool>("prompt").desc("Run tests with prompting.");
-    if (cli.parse(argc, argv))
+    auto & test = cli.opt<bool>("test.").desc("Run tests.");
+    auto & prompt = cli.opt<bool>("prompt.").desc("Run tests with prompting.");
+
+    auto & echo = cli.optVec<string>("e")
+        .desc("List arguments from the command line.")
+        .valueDesc("[ANY...]")
+        .finalOpt();
+    cli.optVec<string>("[ANY]")
+        .desc("Additional arguments to echo.")
+        .show(false);
+
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    if (!cli.commandMatched().empty() && !cli.exec())
+        return cli.printError(cerr);
+
+    if (*test || *prompt)
         return runTests(*prompt);
 
-    // Exiting without error (i.e. help or version)?
-    if (!cli.exitCode())
-        return 0;
-
-    cout << "Number of args: " << argc << "\n";
-    for (auto i = 0; i < argc; ++i)
-        cout << i << ": {" << argv[i] << "}\n";
-    cout << "Line: " << cli.toCmdline(argc, argv) << '\n';
+    if (echo) {
+        cout << "Number of args: " << argc << "\n";
+        for (auto i = 0; i < argc; ++i)
+            cout << i << ": {" << argv[i] << "}\n";
+        cout << "Line: " << cli.toCmdline(argc, argv) << '\n';
+    }
     return 0;
 }
