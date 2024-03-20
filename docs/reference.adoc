@@ -305,6 +305,10 @@ to run "prog help command" in addition to the more awkward "prog command
 | Action that should be taken when the currently selected command is run.
 Actions are executed when cli.exec() is called by the application.
 
+| cli.<<guide.adoc#external-commands, unknownArgs(bool)>>
+| Makes all arguments following the command appear in cli.unknownArgs() instead
+of populating any defined options, operands, or subcommands.
+
 | cli.<<guide.adoc#external-commands, unknownCmd>>
 | Allows unknown subcommands, and sets the action to run when they occur. After
 parsing cli.commandMatched() and cli.unknownArgs() can be used to get the
@@ -317,9 +321,10 @@ command and it's arguments.
 commands defined or none were matched.
 
 | cli.<<guide.adoc#external-commands, unknownArgs>>
-| If commands are defined, and the matched command is unknown, the unknownArgs
-vector is populated with the all arguments that follow the command. Including
-any that started with "-", as if "--" had been given.
+| If commands are defined, and the matched command is unknown or configured to
+have unknown arguments, the unknownArgs vector is populated with the all
+arguments that follow the command. Including any that started with "-", as if
+"--" had been given.
 
 2+h| While executing
 

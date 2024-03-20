@@ -345,6 +345,12 @@ public:
     const std::string & desc() const;
     const std::string & footer() const;
 
+    // Makes all arguments following the command appear in cli.unknownArgs()
+    // instead of populating any defined options/operands. At the top level it
+    // also supercedes subcommands.
+    Cli & unknownArgs(bool enable) &;
+    Cli && unknownArgs(bool enable) &&;
+
     // Add "help" command that shows the help text for other commands. Allows
     // users to run "prog help command" instead of the slightly more awkward
     // "prog command --help".
@@ -358,7 +364,8 @@ public:
     Cli & unknownCmd(std::function<ActionFn> fn = {}) &;
     Cli && unknownCmd(std::function<ActionFn> fn = {}) &&;
 
-    // Adds before action that replaces the empty command line with "--help".
+    // Adds before action that replaces the command line with "--help" when
+    // it's empty.
     Cli & helpNoArgs() &;
     Cli && helpNoArgs() &&;
 

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## Unreleased
 - Fixed - Assert calling cli.title() immediately after creating new option
           group via cli.command(...).
+- Added - Support populating unknownArgs from any command.
 
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads

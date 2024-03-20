@@ -1235,6 +1235,18 @@ Usage: test unknown [ARGS...]
 )");
     }
 
+    // unknownArgs
+    {
+        cli = {};
+        cli.unknownArgs(true);
+        EXPECT_PARSE(cli, "a b c");
+        EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
+        cli = {};
+        cli.command("echo").unknownArgs(true);
+        EXPECT_PARSE(cli, "echo a b c");
+        EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
+    }
+
     // helpCmd
     {
         cli = {};

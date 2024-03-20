@@ -84,6 +84,7 @@ struct CommandConfig {
     string desc;
     string footer;
     function<Cli::ActionFn> action;
+    bool unknownArgs = {};
     string cmdGroup;
     Cli::Opt<bool> * helpOpt = {};
     unordered_map<string, GroupConfig> groups;
@@ -121,7 +122,7 @@ struct ParseState {
         kNone,      // no defined subcommands
         kPending,   // subcommand (if any) not yet determined
         kFound,     // processing subcommand's arguments
-        kUnknown    // unknown subcommand, processing unknown arguments
+        kUnknown    // processing unknown arguments of subcommand
     } cmdMode = kNone;
     OptName optName;
     string name; // Name that was found, includes leading dashes.
@@ -687,133 +688,6 @@ void Cli::OptIndex::index(
 }
 
 //===========================================================================
-vector<OptKey> Cli::OptIndex::findNamedOpts(
-    const Cli & cli,
-    CommandConfig & cmd,
-    NameListType type,
-    bool flatten
-) const {
-    vector<OptKey> out;
-    for (auto && opt : cli.m_cfg->opts) {
-        auto list = nameList(cli, *opt, type);
-        if (list.size()) {
-            OptKey key;
-            key.opt = opt.get();
-            key.list = list;
-
-            // Sort by group sort key followed by name list with leading
-            // dashes removed.
-            key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
-            if (flatten && key.sort != kInternalOptionGroup)
-                key.sort.clear();
-            key.sort += '\0';
-            key.sort += list.substr(list.find_first_not_of('-'));
-            out.push_back(key);
-        }
-    }
-    sort(out.begin(), out.end(), [](auto & a, auto & b) {
-        return a.sort < b.sort;
-    });
-    return out;
-}
-
-//===========================================================================
-static bool includeName(
-    const OptName & name,
-    NameListType type,
-    const Cli::OptBase & opt,
-    bool flag,
-    bool inverted
-) {
-    if (name.opt != &opt)
-        return false;
-    if (flag) {
-        if (type == kNameEnable)
-            return !name.invert;
-        if (type == kNameDisable)
-            return name.invert;
-
-        // includeName is always called with a filter (i.e. not kNameAll).
-        assert(type == kNameNonDefault // LCOV_EXCL_LINE
-            && "Internal dimcli error: unknown NameListType.");
-        return inverted == name.invert;
-    }
-    return true;
-}
-
-//===========================================================================
-string Cli::OptIndex::nameList(
-    const Cli & cli,
-    const Cli::OptBase & opt,
-    NameListType type
-) const {
-    string list;
-
-    if (type == kNameAll) {
-        list = nameList(cli, opt, kNameEnable);
-        if (opt.m_bool) {
-            auto invert = nameList(cli, opt, kNameDisable);
-            if (!invert.empty()) {
-                list += list.empty() ? "/ " : " / ";
-                list += invert;
-            }
-        }
-        return list;
-    }
-
-    bool foundLong = false;
-    bool optional = false;
-
-    // Names
-    vector<const decltype(m_shortNames)::value_type *> snames;
-    for (auto & sn : m_shortNames)
-        snames.push_back(&sn);
-    sort(snames.begin(), snames.end(), [](auto & a, auto & b) {
-        return a->second.pos < b->second.pos;
-    });
-    for (auto && sn : snames) {
-        if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        optional = sn->second.optional;
-        if (!list.empty())
-            list += ", ";
-        list += '-';
-        list += sn->first;
-    }
-    vector<const decltype(m_longNames)::value_type *> lnames;
-    for (auto & ln : m_longNames)
-        lnames.push_back(&ln);
-    sort(lnames.begin(), lnames.end(), [](auto & a, auto & b) {
-        return a->second.pos < b->second.pos;
-    });
-    for (auto && ln : lnames) {
-        if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        optional = ln->second.optional;
-        if (!list.empty())
-            list += ", ";
-        foundLong = true;
-        list += "--";
-        list += ln->first;
-    }
-    if (opt.m_bool || list.empty())
-        return list;
-
-    // Value
-    auto valDesc = opt.m_valueDesc.empty()
-        ? opt.defaultValueDesc()
-        : opt.m_valueDesc;
-    if (optional) {
-        list += foundLong ? "[=" : " [";
-        list += valDesc + "]";
-    } else {
-        list += foundLong ? '=' : ' ';
-        list += valDesc;
-    }
-    return list;
-}
-
-//===========================================================================
 void Cli::OptIndex::index(OptBase & opt) {
     auto ptr = opt.m_names.c_str();
     string name;
@@ -984,6 +858,133 @@ void Cli::OptIndex::indexLongName(
     m_longNames[key] = {&opt, invert, optional, {}, pos};
     if (allowNo && opt.m_bool && !opt.m_flagValue)
         m_longNames["no-" + key] = {&opt, !invert, optional, {}, pos + 1};
+}
+
+//===========================================================================
+vector<OptKey> Cli::OptIndex::findNamedOpts(
+    const Cli & cli,
+    CommandConfig & cmd,
+    NameListType type,
+    bool flatten
+) const {
+    vector<OptKey> out;
+    for (auto && opt : cli.m_cfg->opts) {
+        auto list = nameList(cli, *opt, type);
+        if (list.size()) {
+            OptKey key;
+            key.opt = opt.get();
+            key.list = list;
+
+            // Sort by group sort key followed by name list with leading
+            // dashes removed.
+            key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
+            if (flatten && key.sort != kInternalOptionGroup)
+                key.sort.clear();
+            key.sort += '\0';
+            key.sort += list.substr(list.find_first_not_of('-'));
+            out.push_back(key);
+        }
+    }
+    sort(out.begin(), out.end(), [](auto & a, auto & b) {
+        return a.sort < b.sort;
+    });
+    return out;
+}
+
+//===========================================================================
+static bool includeName(
+    const OptName & name,
+    NameListType type,
+    const Cli::OptBase & opt,
+    bool flag,
+    bool inverted
+) {
+    if (name.opt != &opt)
+        return false;
+    if (flag) {
+        if (type == kNameEnable)
+            return !name.invert;
+        if (type == kNameDisable)
+            return name.invert;
+
+        // includeName is always called with a filter (i.e. not kNameAll).
+        assert(type == kNameNonDefault // LCOV_EXCL_LINE
+            && "Internal dimcli error: unknown NameListType.");
+        return inverted == name.invert;
+    }
+    return true;
+}
+
+//===========================================================================
+string Cli::OptIndex::nameList(
+    const Cli & cli,
+    const Cli::OptBase & opt,
+    NameListType type
+) const {
+    string list;
+
+    if (type == kNameAll) {
+        list = nameList(cli, opt, kNameEnable);
+        if (opt.m_bool) {
+            auto invert = nameList(cli, opt, kNameDisable);
+            if (!invert.empty()) {
+                list += list.empty() ? "/ " : " / ";
+                list += invert;
+            }
+        }
+        return list;
+    }
+
+    bool foundLong = false;
+    bool optional = false;
+
+    // Names
+    vector<const decltype(m_shortNames)::value_type *> snames;
+    for (auto & sn : m_shortNames)
+        snames.push_back(&sn);
+    sort(snames.begin(), snames.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && sn : snames) {
+        if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
+            continue;
+        optional = sn->second.optional;
+        if (!list.empty())
+            list += ", ";
+        list += '-';
+        list += sn->first;
+    }
+    vector<const decltype(m_longNames)::value_type *> lnames;
+    for (auto & ln : m_longNames)
+        lnames.push_back(&ln);
+    sort(lnames.begin(), lnames.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && ln : lnames) {
+        if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
+            continue;
+        optional = ln->second.optional;
+        if (!list.empty())
+            list += ", ";
+        foundLong = true;
+        list += "--";
+        list += ln->first;
+    }
+    if (opt.m_bool || list.empty())
+        return list;
+
+    // Value
+    auto valDesc = opt.m_valueDesc.empty()
+        ? opt.defaultValueDesc()
+        : opt.m_valueDesc;
+    if (optional) {
+        list += foundLong ? "[=" : " [";
+        list += valDesc + "]";
+    } else {
+        list += foundLong ? '=' : ' ';
+        list += valDesc;
+    }
+    return list;
 }
 
 
@@ -1283,6 +1284,17 @@ const string & Cli::desc() const {
 //===========================================================================
 const string & Cli::footer() const {
     return Config::findCmdOrDie(*this).footer;
+}
+
+//===========================================================================
+Cli & Cli::unknownArgs(bool enable) & {
+    Config::findCmdAlways(*this).unknownArgs = enable;
+    return *this;
+}
+
+//===========================================================================
+Cli && Cli::unknownArgs(bool enable) && {
+    return move(unknownArgs(enable));
 }
 
 //===========================================================================
@@ -2549,17 +2561,22 @@ bool Cli::OptIndex::parseOperandValue(
         st.precmdValues = out->size();
         st.numOprs = 0;
 
-        if (cli.commandExists(cmd)) {
+        bool exists = cli.commandExists(cmd);
+        if (exists && !cli.m_cfg->cmds[cmd].unknownArgs) {
+            // Command exists and it's args are to be processed normally
             st.cmdMode = ParseState::kFound;
             index(cli, cmd, false);
-        } else if (cli.m_cfg->allowUnknown) {
+        } else if (exists || cli.m_cfg->allowUnknown) {
+            // Known command marked for unknown argument processing or allowed
+            // unknown command.
             st.cmdMode = ParseState::kUnknown;
             st.moreOpts = false;
         } else {
+            // Unknown command and unknown commands are not allowed.
             cli.badUsage("Unknown command", cmd);
             return false;
         }
-        // Record command after we're sure it's allowed usage.
+        // Record command after we're sure it's usage is allowed.
         cli.m_cfg->command = cmd;
         return true;
     }
@@ -2651,8 +2668,12 @@ bool Cli::OptIndex::parseToRawValues(
 ) {
     cli.m_cfg->progName = args[0];
     ParseState st;
-    if (commandRequired(*cli.m_cfg))
+    if (cli.m_cfg->cmds[""].unknownArgs) {
+        st.cmdMode = ParseState::kUnknown;
+        st.moreOpts = false;
+    } else if (commandRequired(*cli.m_cfg)) {
         st.cmdMode = ParseState::kPending;
+    }
 
     for (; st.argPos < args.size(); ++st.argPos) {
         st.ptr = args[st.argPos].c_str();
@@ -2768,8 +2789,8 @@ bool Cli::OptIndex::parseToRawValues(
     }
 
     if (st.cmdMode == ParseState::kUnknown) {
-        // Since an unknown subcommand was matched all remaining arguments have
-        // already been copied to the unknownArgs vector.
+        // Since unknown was detected all remaining arguments have already been
+        // copied to the unknownArgs vector.
     } else {
         // If there was no subcommand precmdValues is 0, and all operands are
         // assigned in the context of the top level. If there was a subcommand,

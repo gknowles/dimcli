@@ -1110,6 +1110,29 @@ Arg: 2
 Arg: 3
 ----
 
+An regular command can also be configured to populate the unknownArgs vector
+instead of normal options/operands via cli.unknownArgs(bool enable)
+
+[source, C++, test repl 7 6]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.command("echo").action(unknown).unknownArgs(true);
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
+}
+----
+
+[source, shell session]
+----
+$ a.out test 1 2 3
+Error: Unknown command: test
+$ a.out echo a b c
+Command: echo
+Arg: a
+Arg: b
+Arg: c
+----
 
 === Multiple Source Files
 Options don't have to be defined all in one source file. Separate source
