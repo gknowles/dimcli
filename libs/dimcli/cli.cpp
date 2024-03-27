@@ -2626,8 +2626,8 @@ bool Cli::OptIndex::parseOptionValue(
         return true;
     }
     if (st.optName.optional) {
-        // Option has optional value but no value attached. Treat the value
-        // as not present.
+        // Option allows optional value and has no value attached. Treat the
+        // value as not present.
         out->push_back({
             RawValue::kOption,
             st.optName.opt,
@@ -2638,8 +2638,8 @@ bool Cli::OptIndex::parseOptionValue(
         return true;
     }
 
-    // Option has required value but no value attached. Use next argument as
-    // the value.
+    // Option has required value but has no value attached. Use next argument
+    // as the value.
     st.argPos += 1;
     if (st.argPos == args.size()) {
         cli.badUsage("No value given for " + st.name);

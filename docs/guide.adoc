@@ -284,16 +284,16 @@ like these:
 
 [%autowidth]
 |===
-| Type of name                        | Example
+| Type of name                              | Example
 
-| short name (single character)       | f
-| long name (more than one character) | file
-| optional operand                    | [file name]
-| required operand                    | &lt;file>
+| short name (single character)             | f
+| long name (more than one character)       | file
+| optional operand (within square brackets) | [file name]
+| required operand (within angle brackets)  | &lt;file>
 |===
 
 Names for operands (inside angled or square brackets) may contain spaces, and
-all names may have modifier flags:
+names may have modifying flags:
 
 [%autowidth, cols="^,^,<"]
 |===

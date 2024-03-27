@@ -216,11 +216,30 @@ public:
     //-----------------------------------------------------------------------
     // CONFIGURATION
 
+    // The names parameter is a space seperated list of option and operand
+    // names, names take one of four forms and may have prefix/suffix
+    // modifiers.
+    //
+    //      Type of name                            Example
+    // short name (single character)                f
+    // long name (more than one character)          file
+    // optional operand (within square brackets)    [file name]
+    // required operand (within angled brackets)    <file>
+    //
+    // Names of operands (inside angled or square brackets) may contain spaces.
+    //
+    // Prefix modifiers
+    //  !   For boolean options, when setting the value it is first inverted.
+    //  ?   For non-boolean options, makes the value optional.
+    //
+    // Suffix modifiers
+    //  .   For boolean options with long names, suppresses the addition of the
+    //      "no-" version.
     template <typename T>
     Opt<T> & opt(const std::string & names, const T & def = {});
 
-    template <typename T, typename = typename
-        std::enable_if<!std::is_const<T>::value>::type>
+    template <typename T,
+        typename = typename std::enable_if<!std::is_const<T>::value>::type>
     Opt<T> & opt(T * value, const std::string & names);
 
     template <typename T, typename U,
@@ -1387,13 +1406,13 @@ public:
     // Set subcommand for which this is an option.
     A & command(const std::string & val);
 
-    // Set group under which this argument will show up in the help text.
+    // Set group under which this opt will show up in the help text.
     A & group(const std::string & val);
 
-    // Controls whether or not the option appears in help pages.
+    // Controls whether or not the opt appears in help text.
     A & show(bool visible = true);
 
-    // Set description to associate with the argument in help text.
+    // Set description to associate with the opt in help text.
     A & desc(const std::string & val);
 
     // Set name of meta-variable in help text. For example, would change the
