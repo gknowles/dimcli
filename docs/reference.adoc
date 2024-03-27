@@ -95,6 +95,38 @@ miscellaneous state. Returns true if processing should continue.
 | Program name received in argv[0]
 |===
 
+== Option Names
+
+Names are passed in as a space separated list where the individual names look
+like these:
+
+[%autowidth]
+|===
+| Type of name                              | Example
+
+| short name (single character)             | f
+| long name (more than one character)       | file
+| optional operand (within square brackets) | [file name]
+| required operand (within angle brackets)  | &lt;file>
+|===
+
+Names for operands (inside angled or square brackets) may contain spaces, and
+names may have modifying flags:
+
+[%autowidth, cols="^,^,<"]
+|===
+| Flag | Type   | Description
+
+| !    | Prefix
+| For boolean options, when setting the value it is first inverted.
+
+| ?    | Prefix
+| For non-boolean options, makes the value <<#optional-values, optional>>.
+
+| .    | Suffix
+| For boolean options with long names, suppresses the implicit "no-" version.
+|===
+
 == Options
 
 [%autowidth]
@@ -200,7 +232,8 @@ present, multiplies by the corresponding factor.
 | Change the number of values that can be assigned to a vector option. Defaults
 to a minimum of 1 and a maximum of -1 (unlimited).
 
-2+h| While parsing (called from within parse, check, and after actions)
+2+h| While parsing (called from application defined parse, check, and after
+actions)
 
 | cli.badRange
 | Calls cli.badUsage() with "Out of range" message with the allowed low and
@@ -498,15 +531,16 @@ convert arguments.
 
 | Cli::toGlibCmdline +
 Cli::toGlibCmdlineL
-| Join according to glib conventions, based on UNIX98 shell specification.
+| Join arguments according to glib conventions, based on UNIX98 shell
+specification.
 
 | Cli::toGnuCmdline +
 Cli::toGnuCmdlineL
-| Join using GNU conventions, same rules as buildargv().
+| Join arguments using GNU conventions, same rules as buildargv().
 
 | Cli::toWindowsCmdline +
 Cli::toWindowsCmdlineL
-| Join using Windows conventions.
+| Join arguments using Windows conventions.
 
 2+h| Value to/from String
 
