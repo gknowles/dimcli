@@ -2916,12 +2916,12 @@ bool Cli::parse(vector<string> & args) {
     }
     for (auto && nv : ndx.m_shortNames) {
         auto & opt = *nv.second.opt;
-        if (!nv.second.pos && opt && opt.size() < (size_t) opt.minSize())
+        if (opt && opt.size() < (size_t) opt.minSize())
             return badMinMatched(*this, opt);
     }
     for (auto && nv : ndx.m_longNames) {
         auto & opt = *nv.second.opt;
-        if (!nv.second.pos && opt && opt.size() < (size_t) opt.minSize())
+        if (opt && opt.size() < (size_t) opt.minSize())
             return badMinMatched(*this, opt);
     }
 

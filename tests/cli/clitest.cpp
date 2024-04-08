@@ -1903,6 +1903,14 @@ Must have 2 values.
 Error: Option '--fourth' missing value.
 Must have 2 to 3 values.
 )");
+
+        cli = {};
+        cli.optVec<int>("[FIFTH] f").size(2, -1);
+        EXPECT_PARSE(cli, "-f 1", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Option '-f' missing value.
+Must have 2 or more values.
+)");
     }
 
     // required vector operand with size
