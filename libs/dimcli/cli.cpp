@@ -201,25 +201,25 @@ struct Cli::OptIndex {
 
 private:
     void indexName(OptBase & opt, const string & name, int pos);
-    void indexOperandName(
+    bool indexOperandName(
         OptBase & opt,
         const string & name,
         unsigned flags,
         int pos
     );
-    void indexShortName(
+    bool indexShortName(
         OptBase & opt,
         char name,
         unsigned flags,
         int pos
     );
-    void indexLongName(
+    bool indexLongName(
         OptBase & opt,
         const string & name,
         unsigned flags,
         int pos
     );
-    void indexOptName(OptBase & opt, const string & name);
+    bool indexOptName(OptBase & opt, const string & name);
 
     bool parseOperandValue(
         vector<RawValue> * out,
@@ -714,6 +714,8 @@ void Cli::OptIndex::index(OptBase & opt) {
     const char * suffix;
     size_t nameLen;
     unsigned char ch;
+    bool added;
+    bool hasOpr = false;
 
 IN_GAP:
     while (cur < last) {
@@ -837,11 +839,17 @@ IN_SUFFIX:
     goto ADD_NAME;
 
 ADD_NAME:
+    added = false;
     if (flags & fNameError)
         goto IN_GAP;
     auto pos = int(cur - base);
     if (flags & fNameOperand) {
-        indexOperandName(opt, trim(name), flags, pos);
+        if (hasOpr) {
+            assert(!"Opt with multiple operand names.");
+        } else {
+            added = indexOperandName(opt, trim(name), flags, pos);
+            hasOpr = added;
+        }
     } else {
         if (opt.m_bool) {
             if (flags & fNameOptional) {
@@ -862,17 +870,21 @@ ADD_NAME:
             }
         }
         if (name.size() == 1) {
-            indexShortName(opt, name[0], flags, pos);
+            added = indexShortName(opt, name[0], flags, pos);
         } else {
             assert(name.size() >= 2);
-            indexLongName(opt, name, flags, pos);
+            added = indexLongName(opt, name, flags, pos);
         }
+    }
+    if (added) {
+        if (m_opts.empty() || m_opts.back() != &opt)
+            m_opts.push_back(&opt);
     }
     goto IN_GAP;
 }
 
 //===========================================================================
-void Cli::OptIndex::indexOperandName(
+bool Cli::OptIndex::indexOperandName(
     OptBase & opt,
     const string & name,
     unsigned flags,
@@ -880,10 +892,10 @@ void Cli::OptIndex::indexOperandName(
 ) {
     if (flags & fNameExcludeNo) {
         assert(!"Bad suffix modifier '.' for operand name.");
-        return;
+        return false;
     }
     if (!opt.maxSize())
-        return;
+        return false;
     if (~flags & fNameOptional)
         m_minOprs += opt.minSize();
     if (opt.m_command.empty()
@@ -896,7 +908,7 @@ void Cli::OptIndex::indexOperandName(
 
     if (m_final == Final::kOpt && (~flags & fNameOptional)) {
         assert(!"Required operand after optional operand w/finalOpt.");
-        return;
+        return false;
     }
     if (!opt.m_finalOpt) {
         if (m_final < Final::kUnsetVar && opt.minSize() != opt.maxSize())
@@ -905,13 +917,13 @@ void Cli::OptIndex::indexOperandName(
             m_final = Final::kUnsetOpt;
     } else if (m_final == Final::kUnsetVar) {
         assert(!"Operand w/finalOpt after variable size operand.");
-        return;
+        return false;
     } else if (m_final == Final::kUnsetOpt) {
         if (flags & fNameOptional) {
             m_final = Final::kOpt;
         } else {
             assert(!"Required operand w/finalOpt after optional operand.");
-            return;
+            return false;
         }
     } else if (m_final == Final::kUnset) {
         if (flags & fNameOptional) {
@@ -924,11 +936,12 @@ void Cli::OptIndex::indexOperandName(
         m_finalOpr += opt.minSize();
 
     m_oprNames.push_back({&opt, flags, name, pos});
-    indexOptName(opt, name);
+    opt.setNameIfEmpty(name);
+    return true;
 }
 
 //===========================================================================
-void Cli::OptIndex::indexShortName(
+bool Cli::OptIndex::indexShortName(
     OptBase & opt,
     char name,
     unsigned flags,
@@ -936,18 +949,19 @@ void Cli::OptIndex::indexShortName(
 ) {
     if (name == '-' || name == '=') {
         assert(!"Bad option short name, '-' or '='.");
-        return;
+        return false;
     }
     if (flags & fNameExcludeNo) {
-        assert(!"Bad modifier '.' for short name.");
-        return;
+        assert(!"Bad suffix modifier '.' for short name.");
+        return false;
     }
     m_shortNames[name] = {&opt, flags, {}, pos};
-    indexOptName(opt, "-"s + name);
+    opt.setNameIfEmpty("-"s + name);
+    return true;
 }
 
 //===========================================================================
-void Cli::OptIndex::indexLongName(
+bool Cli::OptIndex::indexLongName(
     OptBase & opt,
     const string & name,
     unsigned flags,
@@ -958,14 +972,14 @@ void Cli::OptIndex::indexLongName(
         flags ^= fNameInvert;
         m_longNames["no-" + name] = {&opt, flags, {}, pos + 1};
     }
-    indexOptName(opt, "--" + name);
+    opt.setNameIfEmpty("--" + name);
+    return true;
 }
 
 //===========================================================================
-void Cli::OptIndex::indexOptName(OptBase & opt, const string & name) {
+bool Cli::OptIndex::indexOptName(OptBase & opt, const string & name) {
     opt.setNameIfEmpty(name);
-    if (m_opts.empty() || m_opts.back() != &opt)
-        m_opts.push_back(&opt);
+    return true;
 }
 
 //===========================================================================

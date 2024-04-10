@@ -256,35 +256,35 @@ void assertTests() {
 
     // Bad option name
     cli = {};
-    cli.opt<bool>("a=");
+    cli.opt<bool>("a=b");
     EXPECT_ASSERT(1 + R"(
 !"Bad option name, contains '='."
 )");
     cli.opt<int>("[B] [C]");
     EXPECT_ASSERT(1 + R"(
-!"Option with multiple operand names."
+!"Opt with multiple operand names."
 )");
     cli.opt<int>("-d");
     EXPECT_ASSERT(1 + R"(
-!"Bad option name, starts with '-'."
+!"Unknown prefix modifier for name."
 )");
     cli.opt<bool>("?e");
     EXPECT_ASSERT(1 + R"(
-!"Bad modifier '?' for bool option."
+!"Bad prefix modifier '?' for bool option."
 )");
     cli.opt<bool>("f.");
     EXPECT_ASSERT(1 + R"(
-!"Bad modifier '.' for short name."
+!"Bad suffix modifier '.' for short name."
 )");
     EXPECT_USAGE(cli, "", 1 + R"(
 Usage: test [--help] [B]
 )");
     EXPECT_ASSERT(1 + R"(
 !"Bad option name, contains '='."
-!"Option with multiple operand names."
-!"Bad option name, starts with '-'."
-!"Bad modifier '?' for bool option."
-!"Bad modifier '.' for short name."
+!"Opt with multiple operand names."
+!"Unknown prefix modifier for name."
+!"Bad prefix modifier '?' for bool option."
+!"Bad suffix modifier '.' for short name."
 )");
 
     // Bad choices.
