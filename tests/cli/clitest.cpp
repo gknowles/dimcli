@@ -1076,6 +1076,36 @@ Three:
 
 /****************************************************************************
 *
+*   Name parsing
+*
+***/
+
+//===========================================================================
+void nameTests() {
+    int line = 0;
+    CliTest cli;
+
+    {
+        cli = {};
+        int val;
+        cli.opt(&val, "a ?b (c) ?(d) ?(?e). ())) gg ?hh.");
+        EXPECT_PARSE(cli, "-a 1 -b -c3 -d --?e -)6");
+        EXPECT(val == 6);
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS]
+
+Options:
+  -a, -b, -c, -d, -), --?e, --gg, --hh[=NUM]
+            (default: 0)
+
+  --help    Show this message and exit.
+)");
+    }
+}
+
+
+/****************************************************************************
+*
 *   Subcommands
 *
 ***/
@@ -2529,6 +2559,7 @@ static int runTests(bool prompt) {
     assertTests();
 #endif
 
+    nameTests();
     parseTests();
     valueTests();
     choiceTests();

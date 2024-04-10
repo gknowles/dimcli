@@ -97,8 +97,8 @@ miscellaneous state. Returns true if processing should continue.
 
 == Option Names
 
-Names are passed in as a space separated list where the individual names look
-like these:
+Names are passed in as a whitespace separated list where the individual names,
+with optional prefix/suffix modifiers, take one of four types:
 
 [%autowidth]
 |===
@@ -110,21 +110,15 @@ like these:
 | required operand (within angle brackets)  | &lt;file>
 |===
 
-Names for operands (inside angled or square brackets) may contain spaces, and
-names may have modifying flags:
-
-[%autowidth, cols="^,^,<"]
+[%autowidth, cols="^,<"]
 |===
-| Flag | Type   | Description
+<h| Prefixes |
+| ! | For boolean options, when setting the value it is first inverted.
+| ? | For non-boolean options, makes the value <<#optional-values, optional>>.
 
-| !    | Prefix
-| For boolean options, when setting the value it is first inverted.
-
-| ?    | Prefix
-| For non-boolean options, makes the value <<#optional-values, optional>>.
-
-| .    | Suffix
-| For boolean options with long names, suppresses the implicit "no-" version.
+2+<h| Suffixes
+| . | For boolean options with long names, suppresses the addition of the "no-"
+version.
 |===
 
 == Options

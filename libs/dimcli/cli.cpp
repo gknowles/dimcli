@@ -92,8 +92,11 @@ struct CommandConfig {
 };
 
 enum NameFlags {
-    fNameInvert = 1,    // set to false instead of true (only for bools)
-    fNameOptional = 2,  // value need not be present? (non-bools only)
+    fNameError = 1,     // parsing of this name failed in some way
+    fNameOperand = 2,   // opt is for an operand, not an option
+    fNameInvert = 4,    // set to false instead of true (only for bools)
+    fNameOptional = 8,  // value need not be present? (non-bools only)
+    fNameExcludeNo = 16, // don't add --no-* version (only for long name bools)
 };
 struct OptName {
     Cli::OptBase * opt;
@@ -150,6 +153,7 @@ struct RawValue {
 } // namespace
 
 struct Cli::OptIndex {
+    vector<OptBase *> m_opts;
     unordered_map<char, OptName> m_shortNames;
     unordered_map<string, OptName> m_longNames;
     vector<OptName> m_oprNames;
@@ -197,6 +201,12 @@ struct Cli::OptIndex {
 
 private:
     void indexName(OptBase & opt, const string & name, int pos);
+    void indexOperandName(
+        OptBase & opt,
+        const string & name,
+        unsigned flags,
+        int pos
+    );
     void indexShortName(
         OptBase & opt,
         char name,
@@ -209,6 +219,7 @@ private:
         unsigned flags,
         int pos
     );
+    void indexOptName(OptBase & opt, const string & name);
 
     bool parseOperandValue(
         vector<RawValue> * out,
@@ -691,110 +702,156 @@ void Cli::OptIndex::index(
 
 //===========================================================================
 void Cli::OptIndex::index(OptBase & opt) {
-    auto ptr = opt.m_names.c_str();
+    auto base = opt.m_names.c_str();
+    auto last = base + opt.m_names.size();
+    auto cur = base;
+
+    auto nameptr = cur;
+    unsigned flags;
     string name;
     char close;
-    bool hasPos = false;
-    int pos = 0;
-    for (;; ++ptr) {
-        switch (*ptr) {
-        case 0: return;
-        case ' ': continue;
-        case '[': close = ']'; break;
-        case '<': close = '>'; break;
-        default: close = ' '; break;
-        }
-        auto b = ptr;
-        bool hasEqual = false;
-        while (*ptr && *ptr != close) {
-            if (*ptr == '=')
-                hasEqual = true;
-            ptr += 1;
-        }
-        if (hasEqual && close == ' ') {
-            assert(!"Bad option name, contains '='.");
-        } else if (hasPos && close != ' ') {
-            assert(!"Option with multiple operand names.");
-        } else {
-            if (close == ' ') {
-                name = string(b, ptr - b);
-            } else {
-                hasPos = true;
-                name = string(b, 1);
-                name += trim(string(b + 1, ptr - b - 1));
-            }
-            indexName(opt, name, pos);
-            pos += 2;
-        }
-        if (!*ptr)
-            return;
+
+    const char * suffix;
+    size_t nameLen;
+    unsigned char ch;
+
+IN_GAP:
+    while (cur < last) {
+        ch = *cur++;
+        if (!isspace(ch))
+            goto IN_PREFIX;
     }
-}
+    return;
 
-//===========================================================================
-void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
-    unsigned flags = 0;
+IN_PREFIX:
+    nameptr = cur - 1;
+    flags = 0;
+    name.clear();
+    close = 0;
 
-    switch (name[0]) {
-    case '-':
-        assert(!"Bad option name, starts with '-'.");
-        return;
-    case '[':
-        flags |= fNameOptional;
-        FALLTHROUGH;
-    case '<':
-        if (!opt.maxSize())
-            return;
-        if (~flags & fNameOptional)
-            m_minOprs += opt.minSize();
-        if (opt.m_command.empty()
-            && ((flags & fNameOptional) || opt.minSize() != opt.maxSize())
-        ) {
-            // Operands that cause potential subcommand names to be ambiguous
-            // are not allowed to be combined with them.
-            m_allowCommands = false;
+    for (;; ch = *cur++) {
+        if (isspace(ch)) {
+            if (cur - nameptr == 2)
+                goto ADD_SHORT_NAME;
+            break;
         }
-
-        if (m_final == Final::kOpt && (~flags & fNameOptional)) {
-            assert(!"Required operand after optional operand w/finalOpt.");
-            return;
-        }
-        if (!opt.m_finalOpt) {
-            if (m_final < Final::kUnsetVar && opt.minSize() != opt.maxSize())
-                m_final = Final::kUnsetVar;
-            if (m_final < Final::kUnsetOpt && (flags & fNameOptional))
-                m_final = Final::kUnsetOpt;
-        } else if (m_final == Final::kUnsetVar) {
-            assert(!"Operand w/finalOpt after variable size operand.");
-            return;
-        } else if (m_final == Final::kUnsetOpt) {
-            if (flags & fNameOptional) {
-                m_final = Final::kOpt;
-            } else {
-                assert(!"Required operand w/finalOpt after optional operand.");
-                return;
-            }
-        } else if (m_final == Final::kUnset) {
-            if (flags & fNameOptional) {
-                m_final = Final::kOpt;
-            } else {
-                m_final = Final::kReq;
-            }
-        }
-        if (m_final < Final::kOpt)
-            m_finalOpr += opt.minSize();
-
-        OptName oname = {&opt, flags, name.data() + 1, pos};
-        m_oprNames.push_back(oname);
-        opt.setNameIfEmpty(m_oprNames.back().name);
-        return;
-    }
-
-    auto prefix = 0;
-    if (name.size() > 1) {
-        switch (name[0]) {
+        if (isalnum(ch))
+            goto IN_UNQUOTED_NAME;
+        switch (ch) {
+        case '?':
+            flags |= fNameOptional;
+            break;
         case '!':
-            if (!opt.m_bool) {
+            flags |= fNameInvert;
+            break;
+        case '(':
+            close = ')';
+            goto IN_QUOTED_NAME;
+        case '[':
+            flags |= fNameOperand;
+            flags |= fNameOptional;
+            close = ']';
+            goto IN_QUOTED_NAME;
+        case '<':
+            flags |= fNameOperand;
+            close = '>';
+            goto IN_QUOTED_NAME;
+        default:
+            assert(!"Unknown prefix modifier for name.");
+            flags |= fNameError;
+            break;
+        }
+        if (cur == last) {
+            if (cur - nameptr == 1)
+                goto ADD_SHORT_NAME;
+            break;
+        }
+    }
+    assert(!"Prefix modifiers without option name.");
+    goto IN_GAP;
+
+ADD_SHORT_NAME:
+    name = *nameptr;
+    flags = 0;
+    goto ADD_NAME;
+
+IN_UNQUOTED_NAME:
+    name = ch;
+    nameLen = name.size();
+    suffix = cur;
+    while (cur < last) {
+        ch = *cur++;
+        if (isspace(ch))
+            break;
+        if (ch == '=') {
+            assert(!"Bad option name, contains '='.");
+            flags |= fNameError;
+        }
+        name += ch;
+        if (isalnum(ch)) {
+            suffix = cur;
+            nameLen = name.size();
+        }
+    }
+    cur = suffix;
+    name.resize(nameLen);
+    goto IN_SUFFIX;
+
+IN_QUOTED_NAME:
+    while (cur < last) {
+        ch = *cur++;
+        if (ch == close) {
+            if (cur == last || *cur != close)
+                goto IN_SUFFIX;
+            ch = *cur++;
+        } else if (~flags & fNameOperand) {
+            if (ch == '=') {
+                assert(!"Bad option name, contains '='.");
+                flags |= fNameError;
+            } else if (isspace(ch)) {
+                assert(!"Bad option name, contains white space");
+                flags |= fNameError;
+            }
+        }
+        name += ch;
+    }
+    assert(!"Bad name, unmatched '(', '[', or '<'.");
+    flags |= fNameError;
+    goto IN_SUFFIX;
+
+IN_SUFFIX:
+    while (cur < last) {
+        ch = *cur++;
+        if (isspace(ch))
+            break;
+        switch (ch) {
+        case '.':
+            flags |= fNameExcludeNo;
+            break;
+        default:
+            assert(!"Unknown suffix modifier for name.");
+            flags |= fNameError;
+            break;
+        }
+    }
+    goto ADD_NAME;
+
+ADD_NAME:
+    if (flags & fNameError)
+        goto IN_GAP;
+    auto pos = int(cur - base);
+    if (flags & fNameOperand) {
+        indexOperandName(opt, trim(name), flags, pos);
+    } else {
+        if (opt.m_bool) {
+            if (flags & fNameOptional) {
+                // Bool options don't have values, only their presences or
+                // absence, therefore they can't have optional values.
+                assert(!"Bad prefix modifier '?' for bool option.");
+                goto IN_GAP;
+            }
+        } else {
+            if (flags & fNameInvert) {
                 // Inversion doesn't make any sense for non-bool options and
                 // will be ignored for them. But it is allowed to be specified
                 // because they might be turned into flagValues, and flagValues
@@ -803,26 +860,71 @@ void Cli::OptIndex::indexName(OptBase & opt, const string & name, int pos) {
                 // And the case of an inverted bool converted to a flagValue
                 // has to be handled anyway.
             }
-            prefix = 1;
-            flags |= fNameInvert;
-            break;
-        case '?':
-            if (opt.m_bool) {
-                // Bool options don't have values, only their presences or
-                // absence, therefore they can't have optional values.
-                assert(!"Bad modifier '?' for bool option.");
-                return;
-            }
-            prefix = 1;
-            flags |= fNameOptional;
-            break;
+        }
+        if (name.size() == 1) {
+            indexShortName(opt, name[0], flags, pos);
+        } else {
+            assert(name.size() >= 2);
+            indexLongName(opt, name, flags, pos);
         }
     }
-    if (name.size() - prefix == 1) {
-        indexShortName(opt, name[prefix], flags, pos);
-    } else {
-        indexLongName(opt, name.substr(prefix), flags, pos);
+    goto IN_GAP;
+}
+
+//===========================================================================
+void Cli::OptIndex::indexOperandName(
+    OptBase & opt,
+    const string & name,
+    unsigned flags,
+    int pos
+) {
+    if (flags & fNameExcludeNo) {
+        assert(!"Bad suffix modifier '.' for operand name.");
+        return;
     }
+    if (!opt.maxSize())
+        return;
+    if (~flags & fNameOptional)
+        m_minOprs += opt.minSize();
+    if (opt.m_command.empty()
+        && ((flags & fNameOptional) || opt.minSize() != opt.maxSize())
+    ) {
+        // Operands that cause potential subcommand names to be ambiguous
+        // are not allowed to be combined with them.
+        m_allowCommands = false;
+    }
+
+    if (m_final == Final::kOpt && (~flags & fNameOptional)) {
+        assert(!"Required operand after optional operand w/finalOpt.");
+        return;
+    }
+    if (!opt.m_finalOpt) {
+        if (m_final < Final::kUnsetVar && opt.minSize() != opt.maxSize())
+            m_final = Final::kUnsetVar;
+        if (m_final < Final::kUnsetOpt && (flags & fNameOptional))
+            m_final = Final::kUnsetOpt;
+    } else if (m_final == Final::kUnsetVar) {
+        assert(!"Operand w/finalOpt after variable size operand.");
+        return;
+    } else if (m_final == Final::kUnsetOpt) {
+        if (flags & fNameOptional) {
+            m_final = Final::kOpt;
+        } else {
+            assert(!"Required operand w/finalOpt after optional operand.");
+            return;
+        }
+    } else if (m_final == Final::kUnset) {
+        if (flags & fNameOptional) {
+            m_final = Final::kOpt;
+        } else {
+            m_final = Final::kReq;
+        }
+    }
+    if (m_final < Final::kOpt)
+        m_finalOpr += opt.minSize();
+
+    m_oprNames.push_back({&opt, flags, name, pos});
+    indexOptName(opt, name);
 }
 
 //===========================================================================
@@ -832,8 +934,16 @@ void Cli::OptIndex::indexShortName(
     unsigned flags,
     int pos
 ) {
+    if (name == '-' || name == '=') {
+        assert(!"Bad option short name, '-' or '='.");
+        return;
+    }
+    if (flags & fNameExcludeNo) {
+        assert(!"Bad modifier '.' for short name.");
+        return;
+    }
     m_shortNames[name] = {&opt, flags, {}, pos};
-    opt.setNameIfEmpty("-"s + name);
+    indexOptName(opt, "-"s + name);
 }
 
 //===========================================================================
@@ -843,22 +953,19 @@ void Cli::OptIndex::indexLongName(
     unsigned flags,
     int pos
 ) {
-    bool allowNo = true;
-    auto key = string{name};
-    if (key.back() == '.') {
-        allowNo = false;
-        if (key.size() == 2) {
-            assert(!"Bad modifier '.' for short name.");
-            return;
-        }
-        key.pop_back();
-    }
-    opt.setNameIfEmpty("--" + key);
-    m_longNames[key] = {&opt, flags, {}, pos};
-    if (allowNo && opt.m_bool && !opt.m_flagValue) {
+    m_longNames[name] = {&opt, flags, {}, pos};
+    if ((~flags & fNameExcludeNo) && opt.m_bool && !opt.m_flagValue) {
         flags ^= fNameInvert;
-        m_longNames["no-" + key] = {&opt, flags, {}, pos + 1};
+        m_longNames["no-" + name] = {&opt, flags, {}, pos + 1};
     }
+    indexOptName(opt, "--" + name);
+}
+
+//===========================================================================
+void Cli::OptIndex::indexOptName(OptBase & opt, const string & name) {
+    opt.setNameIfEmpty(name);
+    if (m_opts.empty() || m_opts.back() != &opt)
+        m_opts.push_back(&opt);
 }
 
 //===========================================================================
@@ -2339,7 +2446,7 @@ bool Cli::parseValue(
     size_t pos,
     const char ptr[]
 ) {
-    if (!opt.assign(name, pos)) {
+    if (!opt.match(name, pos)) {
         string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
             + intToString(opt, opt.maxSize()) + ".";
@@ -2482,15 +2589,15 @@ static int numMatches(
 }
 
 //===========================================================================
-static bool assignOperands(
+static bool matchOperands(
     RawValue * rawValues,
     size_t numRawValues,
     Cli & cli,
     const Cli::OptIndex & ndx,
     int numOprs
 ) {
-    // Assign positional values to operands. There must be enough values for
-    // all opts of a category for any of the next category to be eligible.
+    // Match positional values with operands. There must be enough values for
+    // all operands of a category for any of the next category to be eligible.
     vector<int> matched(ndx.m_oprNames.size());
     int usedOprs = 0;
 
@@ -2543,7 +2650,7 @@ bool Cli::OptIndex::parseOperandValue(
         auto cmd = (string)st.ptr;
 
         // Assign all prior operands to their top level definitions.
-        bool noExtras = assignOperands(
+        bool noExtras = matchOperands(
             out->data(),
             out->size(),
             cli,
@@ -2793,12 +2900,12 @@ bool Cli::OptIndex::parseToRawValues(
         // Since unknown was detected all remaining arguments have already been
         // copied to the unknownArgs vector.
     } else {
-        // If there was no subcommand precmdValues is 0, and all operands are
-        // assigned in the context of the top level. If there was a subcommand,
-        // operands that follow it are assigned based on it's configuration,
-        // any operands that may have come before it have already been
-        // processed.
-        if (!assignOperands(
+        // If there was no subcommand, precmdValues is 0 and all operands are
+        // matched in the context of the top level. If there was a subcommand,
+        // operands that follow it are matched based on it's configuration, any
+        // operands that may have preceded it (precmdValues in number) have
+        // already been processed.
+        if (!matchOperands(
             out->data() + st.precmdValues,
             out->size() - st.precmdValues,
             cli,
@@ -2886,7 +2993,7 @@ bool Cli::parse(vector<string> & args) {
         return false;
     }
 
-    // Extract raw values and assign to opts.
+    // Extract raw values and match them to opts.
     vector<RawValue> rawValues;
     if (!ndx.parseToRawValues(&rawValues, args, *this))
         return false;

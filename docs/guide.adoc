@@ -279,38 +279,54 @@ You can also point multiple options at the same variable, as is common with
 
 
 === Option Names
-Names are passed in as a space separated list where the individual names look
-like these:
+Names are passed in as a whitespace separated list where the individual names
+take one of four types:
 
 [%autowidth]
 |===
 | Type of name                              | Example
 
-| short name (single character)             | f
-| long name (more than one character)       | file
+| short name (single character)             | f or (f)
+| long name (more than one character)       | file or (file)
 | optional operand (within square brackets) | [file name]
 | required operand (within angle brackets)  | &lt;file>
 |===
 
-Names for operands (inside angled or square brackets) may contain spaces, and
-names may have modifying flags:
-
-[%autowidth, cols="^,^,<"]
+[%autowidth, cols="^,<"]
 |===
-| Flag | Type   | Description
-
-| !    | Prefix
-| For boolean options, when setting the value it is first inverted.
-
-| ?    | Prefix
-| For non-boolean options, makes the value <<#optional-values, optional>>.
-
-| .    | Suffix
-| For boolean options with long names, suppresses the implicit "no-" version.
+h| Prefixes |
+| ! | For boolean options, when setting the value it is first inverted.
+| ? | For non-boolean options, makes the value <<#optional-values, optional>>.
+2+<h| Suffixes
+| . | For boolean options with long names, suppresses the addition of the "no-"
+version.
 |===
 
-By default, long names for boolean options get a second "no-" version
-implicitly created for them.
+.Additional rules
+* Names of operands (inside angled or square brackets) may contain whitespace.
+* Option names must
+** Start and end with an alpha numeric character; or
+** Be enclosed in parentheses; or
+** Be a single character, other than '[' and '<', without modifiers
+* Within parentheses a ')' pair is treated as a literal ')' and doesn't close
+the parenthetical. Likewise for ']' and '>' within square and angled brackets
+respectively.
+* Long names for boolean options get a second "no-" version implicitly created
+for them.
+
+[%autowidth]
+|===
+| Example | Meaning
+
+| f file    | Short name 'f' and long name "file"
+| f [file]  | Short name 'f' and optional operand
+| !         | Short name '!'
+| ?!<br>!!. | Error - no name, only modifiers
+| ?(!)      | Short name '!' with optional value
+| (!!).     | Long name "!!", without "no-!!" version
+| ?a.b.c.   | Long name "a.b.c" with option value and without "no-"
+| ())) ([)  | Short names ')' and '['
+|===
 
 For example:
 

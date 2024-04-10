@@ -216,17 +216,15 @@ public:
     //-----------------------------------------------------------------------
     // CONFIGURATION
 
-    // The names parameter is a space seperated list of option and operand
-    // names, names take one of four forms and may have prefix/suffix
+    // The 'names' parameter is a whitespace seperated list of option and
+    // operand names, names take one of four forms and may have prefix/suffix
     // modifiers.
     //
     //      Type of name                            Example
-    // short name (single character)                f
-    // long name (more than one character)          file
+    // short name (single character)                f or (f)
+    // long name (more than one character)          file or (file)
     // optional operand (within square brackets)    [file name]
     // required operand (within angled brackets)    <file>
-    //
-    // Names of operands (inside angled or square brackets) may contain spaces.
     //
     // Prefix modifiers
     //  !   For boolean options, when setting the value it is first inverted.
@@ -235,6 +233,28 @@ public:
     // Suffix modifiers
     //  .   For boolean options with long names, suppresses the addition of the
     //      "no-" version.
+    //
+    // Additional rules
+    // - Names of operands (inside angled or square brackets) may contain
+    //   whitespace.
+    // - Option names must start and end with an alpha numeric character, be
+    //   enclosed in parentheses, or be a single character other than '[' and
+    //   '<' without modifiers.
+    // - Within parentheses a ')' pair is treated as a literal ')' and doesn't
+    //   close the parenthetical. Within angled and square brackets the closing
+    //   char (']' or '>') can be escaped in the same way.
+    // - Long names for boolean options get a second "no-" version implicitly
+    //   created for them.
+    //
+    // Examples
+    //  "f file"    Short name 'f' and long name "file"
+    //  "f [file]"  Short name 'f' and optional operand
+    //  "!"         Short name '!'
+    //  "?!", "!!." Error - no name, only modifiers
+    //  "?(!)"      Short name '!' with optional value
+    //  "(!!)."     Long name "!!", without "no-!!" version
+    //  "?a.b.c."   Long name "a.b.c" with option value and without "no-"
+    //  "())) ([)"  Short names ')' and '['
     template <typename T>
     Opt<T> & opt(const std::string & names, const T & def = {});
 
@@ -1276,7 +1296,7 @@ public:
 
     // True if the value was populated from the command line, whether the
     // resulting value is the same as the default is immaterial.
-    explicit operator bool() const { return assigned(); }
+    explicit operator bool() const { return matched(); }
 
     // Name of the last argument to populated the value, or an empty string if
     // it wasn't populated. For vectors, it's what populated the last value.
@@ -1325,8 +1345,10 @@ protected:
     virtual void doParseAction(Cli & cli, const std::string & value) = 0;
     virtual void doCheckActions(Cli & cli, const std::string & value) = 0;
     virtual void doAfterActions(Cli & cli) = 0;
-    virtual bool assign(const std::string & name, size_t pos) = 0;
-    virtual bool assigned() const = 0;
+
+    // Record the command line argument that this opt matched with.
+    virtual bool match(const std::string & name, size_t pos) = 0;
+    virtual bool matched() const = 0;
 
     // Assign the implicit value to the value. Used when an option, with an
     // optional value, is specified without one. The default implicit value is
@@ -2035,8 +2057,8 @@ public:
 private:
     friend class Cli;
     bool defaultValueToString(std::string & out) const final;
-    bool assign(const std::string & name, size_t pos) final;
-    bool assigned() const final { return m_proxy->m_explicit; }
+    bool match(const std::string & name, size_t pos) final;
+    bool matched() const final { return m_proxy->m_explicit; }
     void assignImplicit() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_value;
@@ -2098,7 +2120,7 @@ inline bool Cli::Opt<T>::defaultValueToString(std::string & out) const {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Opt<T>::assign(const std::string & name, size_t pos) {
+inline bool Cli::Opt<T>::match(const std::string & name, size_t pos) {
     m_proxy->m_match.name = name;
     m_proxy->m_match.pos = (int)pos;
     m_proxy->m_explicit = true;
@@ -2188,8 +2210,8 @@ public:
 private:
     friend class Cli;
     bool defaultValueToString(std::string & out) const final;
-    bool assign(const std::string & name, size_t pos) final;
-    bool assigned() const final { return !m_proxy->m_values->empty(); }
+    bool match(const std::string & name, size_t pos) final;
+    bool matched() const final { return !m_proxy->m_values->empty(); }
     void assignImplicit() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_values;
@@ -2293,7 +2315,7 @@ inline void Cli::OptVec<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::OptVec<T>::assign(const std::string & name, size_t pos) {
+inline bool Cli::OptVec<T>::match(const std::string & name, size_t pos) {
     if (this->m_maxVec != -1
         && (size_t) this->m_maxVec == m_proxy->m_matches.size()
     ) {
