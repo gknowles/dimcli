@@ -200,7 +200,6 @@ struct Cli::OptIndex {
     );
 
 private:
-    void indexName(OptBase & opt, const string & name, int pos);
     bool indexOperandName(
         OptBase & opt,
         const string & name,
@@ -219,7 +218,6 @@ private:
         unsigned flags,
         int pos
     );
-    bool indexOptName(OptBase & opt, const string & name);
 
     bool parseOperandValue(
         vector<RawValue> * out,
@@ -973,12 +971,6 @@ bool Cli::OptIndex::indexLongName(
         m_longNames["no-" + name] = {&opt, flags, {}, pos + 1};
     }
     opt.setNameIfEmpty("--" + name);
-    return true;
-}
-
-//===========================================================================
-bool Cli::OptIndex::indexOptName(OptBase & opt, const string & name) {
-    opt.setNameIfEmpty(name);
     return true;
 }
 
