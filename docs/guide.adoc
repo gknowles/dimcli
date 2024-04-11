@@ -275,7 +275,7 @@ Does the apple have a worm? Yes :(
 ----
 
 You can also point multiple options at the same variable, as is common with
-<<#feature-switches, feature switches>>.
+<<#flag-values, flag values>>.
 
 
 === Option Names
@@ -436,7 +436,7 @@ ways:
 ** Explicitly using the "!" modifier
 ** Define a long name and use the implicitly created "no-" prefix version
 * Use opt.flagValue() to set the value, see
-  <<#feature-switches, feature switches>>.
+  <<##flag-values, flag values>>.
 
 [source, C++]
 ----
@@ -1590,12 +1590,11 @@ $ a.out --say 1 --say 2 --do a.out --say three
 ----
 
 
-=== Feature Switches
-Feature switches are implemented by creating multiple options that reference
-the same external variable and marking them as flag values. These flag options
-are then processed on the command line as if they were boolean. But when
-matched, instead of true, they set the variable to default the option was
-created with.
+=== Flag Values
+Flag values are implemented by creating multiple options that reference the
+same external variable and marking them as flag values. These flag options are
+then processed on the command line as if they were boolean. But when matched,
+instead of true, they set the variable to default the option was created with.
 
 To set one of the flag values as the default, pass in a value of true to the
 flagValue() function called for that option.
@@ -1659,7 +1658,7 @@ Sometimes you want an option to have a fixed set of possible values, such as
 for an enum. You use opt.choice() to add legal choices, one at a time, to an
 option.
 
-Choices are similar to <<#feature-switches, feature switches>> but instead of
+Choices are similar to <<#flag-values, flag values>> but instead of
 multiple boolean options populating a single variable it is a single
 non-boolean option setting its variable to one of multiple values.
 

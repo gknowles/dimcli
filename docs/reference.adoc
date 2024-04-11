@@ -185,10 +185,10 @@ to the low, if higher than high it's made merely high.
 | opt.<<guide.adoc#final-option, finalOpt>>
 | Interpret all following arguments as positional operands.
 
-| opt.<<guide.adoc#feature-switches, flagValue>>
-| Turns the option into a feature switch. There are normally multiple
-switches pointed at a single external value, each of which sets it to a
-different value, with one flagged as the default.
+| opt.<<guide.adoc#flag-values, flagValue>>
+| Turns the option into a flag value. There are normally multiple flags pointed
+at a single external value, each of which sets it to a different value, with
+one flagged as the default.
 
 | opt.imbue
 | Change the locale used when parsing values via iostream. Defaults to the
