@@ -92,17 +92,18 @@ struct CommandConfig {
 };
 
 enum NameFlags {
-    fNameError = 1,     // parsing of this name failed in some way
-    fNameOperand = 2,   // opt is for an operand, not an option
-    fNameInvert = 4,    // set to false instead of true (only for bools)
-    fNameOptional = 8,  // value need not be present? (non-bools only)
+    fNameError = 1,      // parsing of this name failed in some way
+    fNameOperand = 2,    // opt is for an operand, not an option
+    fNameInvert = 4,     // set to false instead of true (only for bools)
+    fNameOptional = 8,   // value need not be present? (non-bools only)
     fNameExcludeNo = 16, // don't add --no-* version (only for long name bools)
+    fNameFinal = 32,     // is a final option, rest of args are now operands
 };
 struct OptName {
     Cli::OptBase * opt;
     unsigned flags;
     string name;    // name of argument (only for operands)
-    int pos;        // used to sort an option's names in declaration order
+    int pos;        // used to sort option names in declaration order
 };
 
 struct OptKey {
@@ -725,7 +726,7 @@ IN_GAP:
 
 IN_PREFIX:
     nameptr = cur - 1;
-    flags = 0;
+    flags = opt.m_finalOpt ? fNameFinal : 0;
     name.clear();
     close = 0;
 
@@ -828,6 +829,9 @@ IN_SUFFIX:
         case '.':
             flags |= fNameExcludeNo;
             break;
+        case '!':
+            flags |= fNameFinal;
+            break;
         default:
             assert(!"Unknown suffix modifier for name.");
             flags |= fNameError;
@@ -908,7 +912,7 @@ bool Cli::OptIndex::indexOperandName(
         assert(!"Required operand after optional operand w/finalOpt.");
         return false;
     }
-    if (!opt.m_finalOpt) {
+    if (~flags & fNameFinal) {
         if (m_final < Final::kUnsetVar && opt.minSize() != opt.maxSize())
             m_final = Final::kUnsetVar;
         if (m_final < Final::kUnsetOpt && (flags & fNameOptional))
@@ -2703,8 +2707,8 @@ bool Cli::OptIndex::parseOperandValue(
     }
 
     if (st.numOprs == m_finalOpr) {
-        // Operand marked with finalOpt(), record so that all remaining
-        // arguments are treaded as operands.
+        // Operand marked as finalOpt, record so that all remaining arguments
+        // are treaded as operands.
         st.moreOpts = false;
     }
 
@@ -2805,7 +2809,7 @@ bool Cli::OptIndex::parseToRawValues(
                     return false;
                 }
                 st.optName = it->second;
-                if (st.optName.opt->m_finalOpt)
+                if (st.optName.flags & fNameFinal)
                     st.moreOpts = false;
 
                 if (!st.optName.opt->m_bool) {
@@ -2865,7 +2869,7 @@ bool Cli::OptIndex::parseToRawValues(
                 return false;
             }
             st.optName = it->second;
-            if (st.optName.opt->m_finalOpt)
+            if (st.optName.flags & fNameFinal)
                 st.moreOpts = false;
 
             if (!st.optName.opt->m_bool) {

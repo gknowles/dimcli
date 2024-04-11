@@ -233,13 +233,14 @@ public:
     // Suffix modifiers
     //  .   For boolean options with long names, suppresses the addition of the
     //      "no-" version.
+    //  !   Final option, all following arguments will be positional operands.
     //
     // Additional rules
     // - Names of operands (inside angled or square brackets) may contain
     //   whitespace.
     // - Option names must start and end with an alpha numeric character, be
-    //   enclosed in parentheses, or be a single character other than '[' and
-    //   '<' without modifiers.
+    //   enclosed in parentheses, or be a single character other than '(', '[',
+    //   and '<', without modifiers.
     // - Within parentheses a ')' pair is treated as a literal ')' and doesn't
     //   close the parenthetical. Within angled and square brackets the closing
     //   char (']' or '>') can be escaped in the same way.

@@ -300,6 +300,7 @@ h| Prefixes |
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
 version.
+| ! | Final option, all following arguments will be positional operands.
 |===
 
 .Additional rules
@@ -307,7 +308,7 @@ version.
 * Option names must
 ** Start and end with an alpha numeric character; or
 ** Be enclosed in parentheses; or
-** Be a single character, other than '[' and '<', without modifiers
+** Be a single character, other than '(', '[', and '<', without modifiers
 * Within parentheses a ')' pair is treated as a literal ')' and doesn't close
 the parenthetical. Likewise for ']' and '>' within square and angled brackets
 respectively.
@@ -1568,6 +1569,13 @@ int main(int argc, char * argv[]) {
     }
     return EX_OK;
 }
+----
+
+The sys variable could also have been defined as:
+
+[source, C++, test alt, test repl 5 1]
+----
+    auto & sys = cli.opt<bool>("do!").desc("Do something.");
 ----
 
 Let's try it out.

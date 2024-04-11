@@ -2508,7 +2508,7 @@ void finalOptTests() {
     {
         cli = {};
         cli.opt<int>("<A>");
-        auto & b = cli.optVec<int>("[B]").finalOpt();
+        auto & b = cli.optVec<int>("[B]!");
         EXPECT_PARSE(cli, "1 2 3");
         EXPECT(*b == vector<int>{2, 3});
     }
@@ -2517,7 +2517,7 @@ void finalOptTests() {
     {
         cli = {};
         cli.opt<int>("<A>");
-        auto & b = cli.optVec<int>("<B>").finalOpt();
+        auto & b = cli.optVec<int>("<B>!");
         EXPECT_PARSE(cli, "1 2 -1");
         EXPECT(*b == vector<int>{2, -1});
     }

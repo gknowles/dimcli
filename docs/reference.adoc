@@ -119,6 +119,7 @@ with optional prefix/suffix modifiers, take one of four types:
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
 version.
+| ! | Final option, all following arguments will be positional operands.
 |===
 
 == Options
