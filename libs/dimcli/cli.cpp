@@ -2621,7 +2621,12 @@ static bool matchOperands(
     }
 
     if (usedOprs < numOprs) {
-        cli.badUsage("Unexpected argument", rawValues[usedOprs].ptr);
+        auto val = rawValues;
+        for (int ipos = -1;; ++val) {
+            if (val->type == RawValue::kOperand && ++ipos >= usedOprs)
+                break;
+        }
+        cli.badUsage("Unexpected argument", val->ptr);
         return false;
     }
     assert(usedOprs == numOprs // LCOV_EXCL_LINE
