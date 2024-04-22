@@ -260,6 +260,18 @@ void assertTests() {
     EXPECT_ASSERT(1 + R"(
 !"Bad option name, contains '='."
 )");
+    cli.opt<bool>("(a=b)");  // in quotes
+    EXPECT_ASSERT(1 + R"(
+!"Bad option name, contains '='."
+)");
+    cli.opt<bool>("(a b)");
+    EXPECT_ASSERT(1 + R"(
+!"Bad option name, contains white space."
+)");
+    cli.opt<bool>("[a b");
+    EXPECT_ASSERT(1 + R"(
+!"Bad name, unmatched '(', '[', or '<'."
+)");
     cli.opt<int>("[B] [C]");
     EXPECT_ASSERT(1 + R"(
 !"Opt with multiple operand names."
@@ -268,9 +280,33 @@ void assertTests() {
     EXPECT_ASSERT(1 + R"(
 !"Unknown prefix modifier for name."
 )");
+    cli.opt<int>("d-");
+    EXPECT_ASSERT(1 + R"(
+!"Unknown suffix modifier for name."
+)");
     cli.opt<bool>("?e");
     EXPECT_ASSERT(1 + R"(
 !"Bad prefix modifier '?' for bool option."
+)");
+    cli.opt<bool>("*e");
+    EXPECT_ASSERT(1 + R"(
+!"Bad prefix modifier '*' for bool option."
+)");
+    cli.opt<bool>("!!");
+    EXPECT_ASSERT(1 + R"(
+!"Prefix modifiers without option name."
+)");
+    cli.opt<bool>("*[a]");
+    EXPECT_ASSERT(1 + R"(
+!"Bad prefix modifier '*' for operand name."
+)");
+    cli.opt<bool>("[a].");
+    EXPECT_ASSERT(1 + R"(
+!"Bad suffix modifier '.' for operand name."
+)");
+    cli.opt<bool>("-");
+    EXPECT_ASSERT(1 + R"(
+!"Bad option short name, '-' or '='."
 )");
     cli.opt<bool>("f.");
     EXPECT_ASSERT(1 + R"(
@@ -281,9 +317,18 @@ Usage: test [--help] [B]
 )");
     EXPECT_ASSERT(1 + R"(
 !"Bad option name, contains '='."
+!"Bad option name, contains '='."
+!"Bad option name, contains white space."
+!"Bad name, unmatched '(', '[', or '<'."
 !"Opt with multiple operand names."
 !"Unknown prefix modifier for name."
+!"Unknown suffix modifier for name."
 !"Bad prefix modifier '?' for bool option."
+!"Bad prefix modifier '*' for bool option."
+!"Prefix modifiers without option name."
+!"Bad prefix modifier '*' for operand name."
+!"Bad suffix modifier '.' for operand name."
+!"Bad option short name, '-' or '='."
 !"Bad suffix modifier '.' for short name."
 )");
 
@@ -560,6 +605,11 @@ void parseTests() {
     EXPECT_ERR(cli, "Error: Unexpected argument: 2\n");
     EXPECT_PARSE(cli, "-m 1 2 3", false);
     EXPECT_ERR(cli, "Error: Unexpected argument: 3\n");
+
+    cli = {};
+    cli.opt<int>("long");
+    EXPECT_PARSE(cli, "--long", false);
+    EXPECT_ERR(cli, "Error: No value given for --long\n");
 
     cli = {};
     cli.opt("<n>", 1);
@@ -1265,7 +1315,8 @@ Usage: test unknown [ARGS...]
         });
         EXPECT_PARSE(cli, "unknown a b c");
         EXPECT(cli.commandMatched() == "unknown");
-        EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
+        auto args = CliTest(cli).unknownArgs();
+        EXPECT(args == vector<string>{"a", "b", "c"});
         EXPECT_PARSE(cli, "");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] [COMMAND] [ARGS...]
@@ -1281,7 +1332,7 @@ Usage: test unknown [ARGS...]
     // unknownArgs
     {
         cli = {};
-        cli.unknownArgs(true);
+        CliTest(cli).unknownArgs(true);
         EXPECT_PARSE(cli, "a b c");
         EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
         cli = {};

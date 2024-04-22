@@ -737,13 +737,14 @@ IN_PREFIX:
     close = 0;
 
     for (;; ch = *cur++) {
-        if (isspace(ch)) {
-            if (cur - nameptr == 2)
+        if (isalnum(ch))
+            goto IN_UNQUOTED_NAME;
+        if (cur == last || isspace(ch)) {
+            auto len = cur - nameptr - (cur != last);   // len w/o space
+            if (len == 1)
                 goto ADD_SHORT_NAME;
             break;
         }
-        if (isalnum(ch))
-            goto IN_UNQUOTED_NAME;
         switch (ch) {
         case '?':
             flags |= fNameOptional;
@@ -769,11 +770,6 @@ IN_PREFIX:
         default:
             assert(!"Unknown prefix modifier for name.");
             flags |= fNameError;
-            break;
-        }
-        if (cur == last) {
-            if (cur - nameptr == 1)
-                goto ADD_SHORT_NAME;
             break;
         }
     }
@@ -819,7 +815,7 @@ IN_QUOTED_NAME:
                 assert(!"Bad option name, contains '='.");
                 flags |= fNameError;
             } else if (isspace(ch)) {
-                assert(!"Bad option name, contains white space");
+                assert(!"Bad option name, contains white space.");
                 flags |= fNameError;
             }
         }
