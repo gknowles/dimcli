@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Robust quoting and escaping in names definition strings.
 - Added - New name suffix '!' for final option.
 - Fixed - Wrong argument sometimes reported by "Unknown argument" error.
+- Added - Multivalue options (one option taking multiple arguments).
 
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads

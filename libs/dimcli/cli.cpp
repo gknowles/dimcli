@@ -92,12 +92,13 @@ struct CommandConfig {
 };
 
 enum NameFlags {
-    fNameError = 1,      // parsing of this name failed in some way
-    fNameOperand = 2,    // opt is for an operand, not an option
-    fNameInvert = 4,     // set to false instead of true (only for bools)
-    fNameOptional = 8,   // value need not be present? (non-bools only)
-    fNameExcludeNo = 16, // don't add --no-* version (only for long name bools)
-    fNameFinal = 32,     // is a final option, rest of args are now operands
+    fNameError     = 0x01, // parsing of this name failed in some way
+    fNameOperand   = 0x02, // opt is for an operand, not an option
+    fNameInvert    = 0x04, // set to false instead of true (bools)
+    fNameOptional  = 0x08, // value need not be present? (non-bool options)
+    fNameMulti     = 0x10, // take args up to next option (non-bool options)
+    fNameExcludeNo = 0x20, // don't add --no-* version (long name bools)
+    fNameFinal     = 0x40, // is a final option, rest of args are now operands
 };
 struct OptName {
     Cli::OptBase * opt;
@@ -141,6 +142,11 @@ struct ParseState {
 
     // Next value to process, usually within current arg.
     const char * ptr = nullptr;
+
+    // Number of values matched to options, the count is then used to stop the
+    // consumption of following arguments by multivalued options when the max
+    // size of the vector option is reached.
+    unordered_map<Cli::OptBase *, int> optMatches;
 };
 
 struct RawValue {
@@ -745,6 +751,9 @@ IN_PREFIX:
         case '!':
             flags |= fNameInvert;
             break;
+        case '*':
+            flags |= fNameMulti;
+            break;
         case '(':
             close = ')';
             goto IN_QUOTED_NAME;
@@ -860,6 +869,11 @@ ADD_NAME:
                 assert(!"Bad prefix modifier '?' for bool option.");
                 goto IN_GAP;
             }
+            if (flags & fNameMulti) {
+                // Bool options also can't have multiple values.
+                assert(!"Bad prefix modifier '*' for bool option.");
+                goto IN_GAP;
+            }
         } else {
             if (flags & fNameInvert) {
                 // Inversion doesn't make any sense for non-bool options and
@@ -892,6 +906,10 @@ bool Cli::OptIndex::indexOperandName(
     unsigned flags,
     int pos
 ) {
+    if (flags & fNameMulti) {
+        assert(!"Bad prefix modifier '*' for operand name.");
+        return false;
+    }
     if (flags & fNameExcludeNo) {
         assert(!"Bad suffix modifier '.' for operand name.");
         return false;
@@ -2731,6 +2749,22 @@ bool Cli::OptIndex::parseOperandValue(
 }
 
 //===========================================================================
+static void addOptionMatch(
+    vector<RawValue> * out,
+    ParseState & st,
+    const char * ptr
+) {
+    st.optMatches[st.optName.opt] += 1;
+    out->push_back({
+        RawValue::kOption,
+        st.optName.opt,
+        st.name,
+        st.argPos,
+        ptr
+    });
+}
+
+//===========================================================================
 bool Cli::OptIndex::parseOptionValue(
     vector<RawValue> * out,
     ParseState & st,
@@ -2739,25 +2773,13 @@ bool Cli::OptIndex::parseOptionValue(
 ) {
     if (st.ptr) {
         // Option with attached value (in the same argument).
-        out->push_back({
-            RawValue::kOption,
-            st.optName.opt,
-            st.name,
-            st.argPos,
-            st.ptr
-        });
+        addOptionMatch(out, st, st.ptr);
         return true;
     }
     if (st.optName.flags & fNameOptional) {
         // Option allows optional value and has no value attached. Treat the
         // value as not present.
-        out->push_back({
-            RawValue::kOption,
-            st.optName.opt,
-            st.name,
-            st.argPos,
-            nullptr
-        });
+        addOptionMatch(out, st, nullptr);
         return true;
     }
 
@@ -2768,13 +2790,30 @@ bool Cli::OptIndex::parseOptionValue(
         cli.badUsage("No value given for " + st.name);
         return false;
     }
-    out->push_back({
-        RawValue::kOption,
-        st.optName.opt,
-        st.name,
-        st.argPos,
-        args[st.argPos].c_str()
-    });
+    addOptionMatch(out, st, args[st.argPos].c_str());
+
+    // Option is multivalued, use following arguments up to the next option as
+    // values.
+    if (st.optName.flags & fNameMulti) {
+        while (st.argPos + 1 < args.size()) {
+            auto val = args[st.argPos + 1].c_str();
+            if (*val == '-') {
+                // The next argument looks like an option, so stop taking
+                // arguments.
+                break;
+            }
+            if (st.optName.opt->m_vector
+                && st.optName.opt->maxSize() != -1
+                && st.optMatches[st.optName.opt] >= st.optName.opt->maxSize()
+            ) {
+                // Don't take more arguments as it would push the vector past
+                // it's maximum size.
+                break;
+            }
+            st.argPos += 1;
+            addOptionMatch(out, st, val);
+        }
+    }
     return true;
 }
 
@@ -2818,7 +2857,7 @@ bool Cli::OptIndex::parseToRawValues(
                     st.moreOpts = false;
 
                 if (!st.optName.opt->m_bool) {
-                    // Short name option that needs a value, which might be
+                    // Short name option that takes a value, which might be
                     // attached as the rest of the argument. Adjust pointer to
                     // the attached value, or set it to null if none.
                     st.ptr += 1;
@@ -2828,23 +2867,19 @@ bool Cli::OptIndex::parseToRawValues(
                     // process it and then advance to next argument.
                     if (!parseOptionValue(out, st, cli, args))
                         return false;
-                    // Set st.ptr to null to trigger advancing to the next
-                    // argument after breaking out of this loop.
-                    st.ptr = nullptr;
-                    break;
+                    goto NEXT_ARG;
                 }
 
                 // Found bool short name, record and continue processing any
                 // additional short names in this same argument.
-                out->push_back({
-                    RawValue::kOption,
-                    st.optName.opt,
-                    st.name,
-                    st.argPos,
+                addOptionMatch(
+                    out,
+                    st,
                     (st.optName.flags & fNameInvert) ? "0" : "1"
-                });
+                );
             }
-            if (!st.ptr || !*st.ptr) {
+            if (!*st.ptr) {
+            NEXT_ARG:
                 // Reached end of this argument, continue to next argument.
                 continue;
             }
@@ -2896,13 +2931,11 @@ bool Cli::OptIndex::parseToRawValues(
                 return false;
             }
             // Record and advance to the next argument.
-            out->push_back({
-                RawValue::kOption,
-                st.optName.opt,
-                st.name,
-                st.argPos,
+            addOptionMatch(
+                out,
+                st,
                 val == bool(st.optName.flags & fNameInvert) ? "0" : "1"
-            });
+            );
             continue;
         }
 

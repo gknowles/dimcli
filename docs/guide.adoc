@@ -297,6 +297,8 @@ take one of four types:
 h| Prefixes |
 | ! | For boolean options, when setting the value it is first inverted.
 | ? | For non-boolean options, makes the value <<#optional-values, optional>>.
+| * | For options, makes it <<#multivalues, multivalued>>.
+
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
 version.
@@ -669,14 +671,14 @@ int main(int argc, char * argv[]) {
 
 
 === Optional Values
-You use the '?' <<#option-names, flag>> on an argument name to indicate that
-its value is optional. Long named booleans are generally evaluated on their
+You use the '?' <<#option-names, flag>> on an option name to indicate that its
+value is optional. Long named booleans are generally evaluated on their
 presence or absence, but also allow optional values such as "true", "false",
 "yes", or "1".
 
 For a user to set a value on the command line when it is optional the value
-must be connected (no space) to the argument name, otherwise it is interpreted
-as not present and the arguments implicit value is used instead. If the name
+must be attached (no space) to the option name, otherwise it is interpreted
+as not present and the options implicit value is used instead. If the name
 is not present at all the variable is set to the default given in the
 cli.opt&lt;T>() call.
 
@@ -713,6 +715,49 @@ $ a.out --optional=one --with-implicit two
 v1 = one, v2 = implicit, p = two
 $ a.out --optional one --with-implicit=two
 v1 = , v2 = two, p = one
+----
+
+
+=== Multivalues
+The '*' <<#option-names, flag>> on an option name marks it as multivalue. A
+specific name can't be both optional and multivalue. If a multivalue option has
+an attached value only that value is matched with the option. Otherwise the
+next argument is matched and additional following arguments up to the next
+option are also matched. However, if the option is an optVec, additional
+arguments will stop being matched after opt.maxSize() is reached.
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & words = cli.optVec<string>("*words");
+    cli.opt<bool>("z");
+    auto & extra = cli.opt<string>("[extra]");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Words: ";
+    for (auto && word : *words)
+        cout << word << " ";
+    if (extra)
+        cout << "\nExtra: " << *extra;
+    return EX_OK;
+}
+----
+
+How this works out:
+
+[source, shell session]
+----
+$ a.out
+Words:
+$ a.out --words=one two
+Words: one
+Extra: two
+$ a.out --words one two three
+Words: one two three
+$ a.out --words one two -z three
+Words: one two
+Extra: three
 ----
 
 
@@ -782,8 +827,8 @@ Options:
   --help    Show this message and exit.
 ----
 
-That isn't too complicated, but for this case cli.helpNoArgs() is available
-to do the same thing.
+That isn't too complicated, but since this case is so common cli.helpNoArgs()
+is available to do the same thing.
 
 
 === Parse Actions
@@ -792,7 +837,7 @@ instance, to provide more detailed errors about badly formatted arguments. Or
 to make "--version" print some crazy ASCII artwork and exit the program (for
 a non-crazy --version use <<#version-option, opt.versionOpt()>>).
 
-Parsing actions are attached to options and get invoked when a value becomes
+Parsing actions are bound to options and get invoked when a value becomes
 available for it. Any std::function compatible object that accepts references
 to cli, opt, and string as parameters can be used. The function should:
 
@@ -806,8 +851,7 @@ Other things to keep in mind:
 
 * Options only have one parse action, changing it *replaces* the default.
 * You can use opt.from() and opt.pos() from within the action to get the
-  argument name that the value was attached to on the command line and its
-  position in argv[].
+  option name that the value matched with and its position in argv[].
 * For bool options the source value string will always be either "0" or "1".
 
 Here's an action that multiples multiple values together:

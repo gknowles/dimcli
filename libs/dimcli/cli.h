@@ -229,18 +229,22 @@ public:
     // Prefix modifiers
     //  !   For boolean options, when setting the value it is first inverted.
     //  ?   For non-boolean options, makes the value optional.
+    //  *   For non-boolean options, makes it multivalued. If no attached value
+    //      the following arguments, up to the next option, are included as
+    //      values.
     //
     // Suffix modifiers
     //  .   For boolean options with long names, suppresses the addition of the
     //      "no-" version.
-    //  !   Final option, all following arguments will be positional operands.
+    //  !   For options and operands, final option, all following arguments
+    //      will be positional operands.
     //
     // Additional rules
     // - Names of operands (inside angled or square brackets) may contain
     //   whitespace.
     // - Option names must start and end with an alpha numeric character, be
-    //   enclosed in parentheses, or be a single character other than '(', '[',
-    //   and '<', without modifiers.
+    //   enclosed in parentheses, or be a single character without modifiers
+    //   other than '(', '[', and '<'.
     // - Within parentheses a ')' pair is treated as a literal ')' and doesn't
     //   close the parenthetical. Within angled and square brackets the closing
     //   char (']' or '>') can be escaped in the same way.
@@ -1451,7 +1455,8 @@ public:
     A & defaultValue(const T & val);
 
     // The implicit value is used for arguments with optional values when
-    // the argument was specified in the command line without a value.
+    // the argument was specified in the command line without an attached
+    // value (e.g. -fFILE or --file=FILE).
     A & implicitValue(const T & val);
 
     // Turns the argument into a feature switch. If there are multiple switches
@@ -1543,8 +1548,8 @@ public:
     //  - Call cli.parseExit() if the program should stop without an error.
     //    This could be due to an early out like "--version" and "--help".
     //
-    // You can use opt.from() and opt.pos() to get the argument name that the
-    // value was attached to on the command line and its position in argv[].
+    // You can use opt.from() and opt.pos() to get the option name that the
+    // value was matched with on the command line and its position in argv[].
     // For bool arguments the source value string will always be either "0"
     // or "1".
     //

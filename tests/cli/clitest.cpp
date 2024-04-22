@@ -532,9 +532,13 @@ void parseTests() {
     EXPECT_ERR(cli, "Error: Unknown command: x\n");
 
     cli = {};
+    cli.opt("f", true);
     EXPECT_PARSE(cli, "x", false);
     EXPECT_ERR(cli, "Error: Unexpected argument: x\n");
+    EXPECT_PARSE(cli, "-f y", false);
+    EXPECT_ERR(cli, "Error: Unexpected argument: y\n");
 
+    cli = {};
     cli.opt("n", 1);
     cli.opt("?o", 2).check([](auto & cli, auto & opt, auto & val) {
         return cli.badUsage("Malformed '"s + opt.from() + "' value: " + val);
@@ -547,6 +551,15 @@ void parseTests() {
     EXPECT_ERR(cli, "Error: No value given for -n\n");
     EXPECT_PARSE(cli, "-n a", false);
     EXPECT_ERR(cli, "Error: Invalid '-n' value: a\n");
+
+    cli = {};
+    cli.optVec<int>("*m").size(1, 2);
+    EXPECT_PARSE(cli, "-m", false);
+    EXPECT_ERR(cli, "Error: No value given for -m\n");
+    EXPECT_PARSE(cli, "-m1 2", false);
+    EXPECT_ERR(cli, "Error: Unexpected argument: 2\n");
+    EXPECT_PARSE(cli, "-m 1 2 3", false);
+    EXPECT_ERR(cli, "Error: Unexpected argument: 3\n");
 
     cli = {};
     cli.opt("<n>", 1);
@@ -2019,6 +2032,35 @@ Must have 2 values.
         EXPECT(*v1 == vector<int>{});
         EXPECT(*v2 == vector<int>{3});
         EXPECT(*v3 == vector<int>{4, 5});
+    }
+
+    // multivalue argument matching
+    {
+        cli = {};
+        auto & m = cli.optVec<int>("*m").size(1, 2);
+        auto & x = cli.opt<int>("[x]");
+        EXPECT_PARSE(cli, "-m 1 2");
+        EXPECT(*m == vector<int>{1, 2});
+        EXPECT(!x);
+
+        EXPECT_PARSE(cli, "-m 1 2 3");
+        EXPECT(*m == vector<int>{1, 2});
+        EXPECT(*x == 3);
+
+        EXPECT_PARSE(cli, "3 -m 1 2");
+        EXPECT(*m == vector<int>{1, 2});
+        EXPECT(*x == 3);
+
+        m.size(1, -1);
+        auto & z = cli.opt<bool>("z");
+        EXPECT_PARSE(cli, "-m 1 2 3");
+        EXPECT(*m == vector<int>{1, 2, 3});
+        EXPECT(!x);
+        EXPECT(!*z);
+        EXPECT_PARSE(cli, "-m 1 2 -z 3");
+        EXPECT(*m == vector<int>{1, 2});
+        EXPECT(*x == 3);
+        EXPECT(*z);
     }
 }
 
