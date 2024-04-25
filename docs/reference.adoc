@@ -428,7 +428,7 @@ previous one.
 
 | opt.<<guide.adoc#page-layout, valueDesc>>
 | Set name of meta-variable in help text. For example, would change the "NUM"
-in "--count NUM" to something else.
+in "--count=NUM" to something else.
 
 | opt.<<guide.adoc#page-layout, defaultDesc>>
 | Set text to appear in the default clause of this options help text. Can
