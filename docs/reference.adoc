@@ -194,9 +194,9 @@ at a single external value, each of which sets it to a different value, with
 one flagged as the default.
 
 | opt.imbue
-| Change the locale used when parsing values via iostream. Defaults to the
-user's preferred locale (aka locale("")) for arithmetic types and the "C"
-locale for everything else.
+| Change the locale used when values for this opt are parsed via iostream.
+Defaults to the user's preferred locale (aka locale("")) for arithmetic types
+and the "C" locale for everything else.
 
 | opt.<<guide.adoc#optional-values, implicitValue>>
 | The implicit value is used for options with optional values when the
@@ -436,7 +436,7 @@ change the "0" in "(default: 0)" to something else, or use an empty string to
 suppress the entire clause.
 
 | opt.show
-| Controls whether or not the option appears in help pages.
+| Controls whether or not the option appears in help text.
 
 2+h| Print
 
@@ -446,7 +446,7 @@ otherwise does nothing. Returns exitCode(). Only makes sense after parsing has
 completed.
 
 | cli.<<guide.adoc#going-your-own-way, printHelp>>
-| Write help page for selected command to std::ostream&amp;
+| Write help text for selected command to std::ostream&amp;
 
 | cli.<<guide.adoc#going-your-own-way, printUsage>>
 | Write simple usage.
@@ -476,7 +476,7 @@ Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
 ! \r ! Decrease indent of wrapped text.
 ! \t ! Column separator in table row.
 ! \v ! Increase indent of wrapped text.
-! SP ! Increase indent of paragraph or column text.
+! SP ! Increase indent of first line of paragraph or column text.
 !===
 
 | cli.<<guide.adoc#value-description, valueDesc>><T>

@@ -765,7 +765,7 @@ public:
     // that is something else:
     //  - \r    Decrease indent of wrapped text.
     //  - \v    Increase indent of wrapped text.
-    //  - SP    Increase indent of paragraph or column text.
+    //  - SP    Increase indent of first line of paragraph or column text.
     //
     // cli.maxWidth(50); // These examples assume console width of 50.
     // cli.printText(cout,
