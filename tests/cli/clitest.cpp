@@ -1662,6 +1662,16 @@ Options:
 
   --help     Show this message and exit.
 )");
+        notOn.defaultDesc({});
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS]
+
+Options:
+  / --notOn
+  --on
+
+  --help     Show this message and exit.
+)");
     }
 
     {

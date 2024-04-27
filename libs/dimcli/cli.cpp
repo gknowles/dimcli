@@ -3466,7 +3466,12 @@ string Cli::OptIndex::desc(
     } else if (!opt.m_choiceDescs.empty()) {
         // "default" tag is added to individual choices later.
     } else if (opt.m_flagValue && opt.m_flagDefault) {
-        suffix += "(default)";
+        if (!opt.m_defaultDesc.empty() && !opt.m_defaultDesc[0]) {
+            // Has leading null. This is the internal flag for suppressing the
+            // entire default clause.
+        } else {
+            suffix += "(default)";
+        }
     } else if (opt.m_vector) {
         auto minVec = opt.minSize();
         auto maxVec = opt.maxSize();
