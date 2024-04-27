@@ -761,6 +761,107 @@ Extra: three
 ----
 
 
+=== Flag Values
+Flag values are implemented by creating multiple options that reference the
+same external variable and marking them as flag values. These flag options are
+then processed on the command line as if they were boolean. But when matched,
+instead of true, they set the variable to the default the option was created
+with.
+
+To set one of the flag values as the default, pass in a value of true to the
+flagValue() function called for that option.
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    string fruit;
+    // "~" is the default option group for --help, --version, etc. Give
+    // it a title so it doesn't look like more fruit.
+    cli.group("~").title("Other options");
+    cli.group("Type of fruit");
+    cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
+    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true);
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Does the " << fruit << " have a worm? No!";
+    return EX_OK;
+}
+----
+Which looks like:
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Type of fruit:
+  -a            red fruit (default)
+  -o, --orange  oranges
+
+Other options:
+  --help        Show this message and exit.
+
+$ a.out
+Does the apple have a worm? No!
+$ a.out -o
+Does the orange have a worm? No!
+----
+You can use an inaccessible option (empty string for the names) that doesn't
+show up in the interface (or the help text) to set an explicit default.
+
+[source, C++, test repl 7 2]
+----
+cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
+cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue();
+cli.opt(&fruit, "", "fruit").flagValue(true);
+----
+Now instead of an apple there's a generic fruit default.
+
+[source, shell session]
+----
+$ a.out
+Does the fruit have a worm? No!
+----
+
+Here's an example that uses opt.nameDesc() to make the help text for multiple
+flag values more concise:
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & lvl = cli.opt<int>("1", 1).flagValue(true)
+        .nameDesc("-1, -2, -3")
+        .desc("Level to use. (default: 1)")
+        .defaultDesc("");
+    cli.opt<int>(lvl, "2", 2).flagValue().show(false);
+    cli.opt<int>(lvl, "3", 3).flagValue().show(false);
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Level " << *lvl << " selected.";
+    return EX_OK;
+}
+----
+Which gives you:
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1, -2, -3  Level to use. (default: 1)
+
+  --help      Show this message and exit.
+
+$ a.out
+Level 1 selected.
+$ a.out -2
+Level 2 selected.
+----
+
+
 === Before Actions
 It's unusual to want a before action. They operate on the entire argument
 list, after environment variable and response file expansion, but before any
@@ -1639,106 +1740,6 @@ Options:
 $ # Say "1" and "2" and launch child to say "three".
 $ a.out --say 1 --say 2 --do a.out --say three
 1 2 three
-----
-
-
-=== Flag Values
-Flag values are implemented by creating multiple options that reference the
-same external variable and marking them as flag values. These flag options are
-then processed on the command line as if they were boolean. But when matched,
-instead of true, they set the variable to default the option was created with.
-
-To set one of the flag values as the default, pass in a value of true to the
-flagValue() function called for that option.
-
-[source, C++]
-----
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    string fruit;
-    // "~" is the default option group for --help, --version, etc. Give
-    // it a title so it doesn't look like more fruit.
-    cli.group("~").title("Other options");
-    cli.group("Type of fruit");
-    cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
-    cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue(true);
-    if (!cli.parse(argc, argv))
-        return cli.printError(cerr);
-    cout << "Does the " << fruit << " have a worm? No!";
-    return EX_OK;
-}
-----
-Which looks like:
-
-[source, shell session]
-----
-$ a.out --help
-Usage: a.out [OPTIONS]
-
-Type of fruit:
-  -a            red fruit (default)
-  -o, --orange  oranges
-
-Other options:
-  --help        Show this message and exit.
-
-$ a.out
-Does the apple have a worm? No!
-$ a.out -o
-Does the orange have a worm? No!
-----
-You can use an inaccessible option (empty string for the names) that doesn't
-show up in the interface (or the help text) to set an explicit default.
-
-[source, C++, test repl 7 2]
-----
-cli.opt(&fruit, "o orange", "orange").desc("oranges").flagValue();
-cli.opt(&fruit, "a", "apple").desc("red fruit").flagValue();
-cli.opt(&fruit, "", "fruit").flagValue(true);
-----
-Now instead of an apple there's a generic fruit default.
-
-[source, shell session]
-----
-$ a.out
-Does the fruit have a worm? No!
-----
-
-Here's an example that uses opt.nameDesc() to make the help text for multiple
-flag values more concise:
-
-[source, C++]
-----
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    auto & lvl = cli.opt<int>("1", 1).flagValue(true)
-        .nameDesc("-1, -2, -3")
-        .desc("Level to use. (default: 1)")
-        .defaultDesc("");
-    cli.opt<int>(lvl, "2", 2).flagValue().show(false);
-    cli.opt<int>(lvl, "3", 3).flagValue().show(false);
-    if (!cli.parse(argc, argv))
-        return cli.printError(cerr);
-    cout << "Level " << *lvl << " selected.";
-    return EX_OK;
-}
-----
-Which gives you:
-
-[source, shell session]
-----
-$ a.out --help
-Usage: a.out [OPTIONS]
-
-Options:
-  -1, -2, -3  Level to use. (default: 1)
-
-  --help      Show this message and exit.
-
-$ a.out
-Level 1 selected.
-$ a.out -2
-Level 2 selected.
 ----
 
 
