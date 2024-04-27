@@ -408,9 +408,9 @@ one flagged as the default.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.imbue</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Change the locale used when parsing values via iostream. Defaults to the
-user&#8217;s preferred locale (aka locale("")) for arithmetic types and the "C"
-locale for everything else.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change the locale used when values for this opt are parsed via iostream.
+Defaults to the user&#8217;s preferred locale (aka locale("")) for arithmetic types
+and the "C" locale for everything else.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#optional-values">implicitValue</a></p></td>
@@ -721,9 +721,14 @@ previous one.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set description to associate with the argument in help text.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#flag-values">nameDesc</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set text to appear in the first column of the options list for this opt. The
+entire clause, such as "-c, --count=NUM", will be replace with this text.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#page-layout">valueDesc</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set name of meta-variable in help text. For example, would change the "NUM"
-in "--count NUM" to something else.</p></td>
+in "--count=NUM" to something else.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#page-layout">defaultDesc</a></p></td>
@@ -732,8 +737,8 @@ change the "0" in "(default: 0)" to something else, or use an empty string to
 suppress the entire clause.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.show</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Controls whether or not the option appears in help pages.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#flag-values">show</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Controls whether or not the option appears in help text.</p></td>
 </tr>
 <tr>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Print</p></th>
@@ -746,7 +751,7 @@ completed.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printHelp</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Write help page for selected command to std::ostream&amp;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write help text for selected command to std::ostream&amp;</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#going-your-own-way">printUsage</a></p></td>
@@ -807,7 +812,7 @@ Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().</p><
 </tr>
 <tr>
 <td class="tableblock halign-center valign-top"><p class="tableblock">SP</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Increase indent of paragraph or column text.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Increase indent of first line of paragraph or column text.</p></td>
 </tr>
 </tbody>
 </table></div></td>
