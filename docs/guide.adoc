@@ -1704,6 +1704,43 @@ $ a.out
 Does the fruit have a worm? No!
 ----
 
+Here's an example that uses opt.nameDesc() to make the help text for multiple
+flag values more concise:
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & lvl = cli.opt<int>("1", 1).flagValue(true)
+        .nameDesc("-1, -2, -3")
+        .desc("Level to use. (default: 1)")
+        .defaultDesc("");
+    cli.opt<int>(lvl, "2", 2).flagValue().show(false);
+    cli.opt<int>(lvl, "3", 3).flagValue().show(false);
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Level " << *lvl << " selected.";
+    return EX_OK;
+}
+----
+Which gives you:
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1, -2, -3  Level to use. (default: 1)
+
+  --help      Show this message and exit.
+
+$ a.out
+Level 1 selected.
+$ a.out -2
+Level 2 selected.
+----
+
 
 === Choice
 Sometimes you want an option to have a fixed set of possible values, such as
@@ -2286,12 +2323,13 @@ instead of the operands list.
 any git style subcommands.
 
 | Operands
-| cli.opt(), opt.desc()
+| cli.opt(), opt.desc(), opt.nameDesc()
 | List of operands and their descriptions, omitted if none have
 descriptions.
 
 | Options
-| cli.opt(), opt.desc(), opt.valueDesc(), opt.defaultDesc(), opt.show()
+| cli.opt(), opt.desc(), opt.nameDesc(), opt.valueDesc(), opt.defaultDesc(),
+opt.show()
 | List of named options and descriptions, included if there are any visible
 options.
 
@@ -2301,8 +2339,8 @@ options.
 
 |===
 
-Within text, consecutive spaces are collapsed and words are wrapped at 80
-columns. Newlines should be reserved for paragraph breaks.
+Within text, consecutive spaces are collapsed and words are wrapped (at 80
+columns by default). Newlines should be reserved for paragraph breaks.
 
 [source, C++]
 ////
@@ -2325,6 +2363,11 @@ cli.opt<string>("option").valueDesc("OPT_VAL").desc("About this option.");
 cli.opt<long long>("p", 1).valueDesc("NUM64").desc("Option p.");
 cli.opt<int>("q", 2).desc("Option q.").defaultDesc("two, yes TWO!");
 cli.opt<int>("r", 3).desc("Option r.").defaultDesc("");
+auto & lvl = cli.opt<int>("1", 1).flagValue(true)
+    .nameDesc("-1, -2, -3").desc("Set the level from 1 to 3.")
+    .defaultDesc("");
+cli.opt(lvl, "2", 2).flagValue().show(false);
+cli.opt(lvl, "3", 3).flagValue().show(false);
 cli.footer(
     "Footer at end, usually with where to find more info.\n"
     "- first reference\n"
@@ -2345,6 +2388,7 @@ Description of what the command does, including any general discussion of the
 various aspects of its use.
 
 Options:
+  -1, -2, -3        Set the level from 1 to 3.
   --option=OPT_VAL  About this option.
   -p NUM64          Option p. (default: 1)
   -q NUM            Option q. (default: two, yes TWO!)

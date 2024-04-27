@@ -1055,6 +1055,11 @@ string Cli::OptIndex::nameList(
 ) const {
     string list;
 
+    if (!opt.m_nameDesc.empty()) {
+        list = opt.m_nameDesc;
+        return list;
+    }
+
     if (type == kNameAll) {
         list = nameList(cli, opt, kNameEnable);
         if (opt.m_bool) {
@@ -1106,15 +1111,23 @@ string Cli::OptIndex::nameList(
         return list;
 
     // Value
-    auto valDesc = opt.m_valueDesc.empty()
-        ? opt.defaultValueDesc()
-        : opt.m_valueDesc;
-    if (optional) {
-        list += foundLong ? "[=" : " [";
-        list += valDesc + "]";
+    string valDesc;
+    if (opt.m_valueDesc.empty()) {
+        valDesc = opt.defaultValueDesc();
+    } else if (!opt.m_valueDesc[0]) {
+        // Has leading null. This is the internal flag for suppressing the
+        // value clause.
     } else {
-        list += foundLong ? '=' : ' ';
-        list += valDesc;
+        valDesc = opt.m_valueDesc;
+    }
+    if (!valDesc.empty()) {
+        if (optional) {
+            list += foundLong ? "[=" : " [";
+            list += valDesc + "]";
+        } else {
+            list += foundLong ? '=' : ' ';
+            list += valDesc;
+        }
     }
     return list;
 }
@@ -3489,10 +3502,11 @@ string Cli::OptIndex::desc(
         if (opt.m_defaultDesc.empty()) {
             if (!opt.defaultValueToString(tmp))
                 tmp.clear();
+        } else if (!opt.m_defaultDesc[0]) {
+            // Has leading null. This is the internal flag for suppressing the
+            // entire default clause.
         } else {
             tmp = opt.m_defaultDesc;
-            if (!tmp[0])
-                tmp.clear();
         }
         if (!tmp.empty())
             suffix += "(default: " + tmp + ")";

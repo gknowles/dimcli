@@ -1381,10 +1381,11 @@ protected:
     std::string m_group;
 
     bool m_visible = true;
+    std::string m_nameDesc;
     std::string m_desc;
-    std::string m_valueDesc;
 
     // empty() to use default, size 1 and *data == '\0' to suppress
+    std::string m_valueDesc;
     std::string m_defaultDesc;
 
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
@@ -1442,14 +1443,19 @@ public:
     // Set description to associate with the opt in help text.
     A & desc(const std::string & val);
 
-    // Set name of meta-variable in help text. For example, would change the
-    // "NUM" in "--count NUM" to something else.
-    A & valueDesc(const std::string & val);
-
     // Set text to appear in the default clause of this options help text. Can
     // change the "0" in "(default: 0)" to something else, or use an empty
     // string to suppress the entire clause.
     A & defaultDesc(const std::string & val);
+
+    // Replace this options text in the column of the options list with
+    // arbitrary text. For example, the entire "-c, --count=NUM" clause would
+    // be replaced.
+    A & nameDesc(const std::string & val);
+
+    // Set name of meta-variable in help text. For example, would change the
+    // "NUM" in "--count=NUM" to something else.
+    A & valueDesc(const std::string & val);
 
     // Allows the default to be changed after the opt has been created.
     A & defaultValue(const T & val);
@@ -1723,6 +1729,15 @@ A & Cli::OptShim<A, T>::desc(const std::string & val) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
     m_valueDesc = val;
+    if (val.empty())
+        m_valueDesc.push_back(0);
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::nameDesc(const std::string & val) {
+    m_nameDesc = val;
     return static_cast<A &>(*this);
 }
 
@@ -1731,7 +1746,7 @@ template <typename A, typename T>
 A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
     m_defaultDesc = val;
     if (val.empty())
-        m_defaultDesc.push_back('\0');
+        m_defaultDesc.push_back(0);
     return static_cast<A &>(*this);
 }
 

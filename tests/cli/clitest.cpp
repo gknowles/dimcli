@@ -841,6 +841,10 @@ Usage: test
         cli = {};
         auto & num = cli.opt("n quantity", 1).desc("quantity is an int");
         cli.opt(num, "c").desc("alias for quantity").valueDesc("COUNT");
+        cli.opt(num, "C").desc("quantity alias w/o value desc")
+            .valueDesc({});
+        cli.opt(num, "N").nameDesc("-C, N, c, n")
+            .desc("quantity alias with name desc");
         cli.opt("n2", 2).desc("no defaultDesc").defaultDesc({});
         cli.opt("n3", 3).desc("custom defaultDesc").defaultDesc("three");
         cli.opt<bool>("oversized-for-the-desc-col.")
@@ -863,6 +867,8 @@ Usage: test [OPTIONS] [KEY...]
 
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
+  -C                          quantity alias w/o value desc (default: 0)
+  -C, N, c, n                 quantity alias with name desc (default: 0)
   -c COUNT                    alias for quantity (default: 0)
   -n, --quantity=NUM          quantity is an int (default: 1)
   --n2=NUM                    no defaultDesc
@@ -878,9 +884,9 @@ Name options:
   --help                      Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
-            [--name=STRING] [--oversized-for-the-desc-col] [-s, --special]
-            [--help] [KEY...]
+Usage: test [-C] [-C, N, c, n] [-c COUNT] [-n, --quantity=NUM] [--n2=NUM]
+            [--n3=NUM] [--name=STRING] [--oversized-for-the-desc-col]
+            [-s, --special] [--help] [KEY...]
 )");
         out.str({});
         EXPECT(cli.printUsage(out, kCommand, "") == Dim::kExitOk);
@@ -898,6 +904,8 @@ Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
         EXPECT(tmp == R"(
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
+  -C                          quantity alias w/o value desc (default: 0)
+  -C, N, c, n                 quantity alias with name desc (default: 0)
   -c COUNT                    alias for quantity (default: 0)
   -n, --quantity=NUM          quantity is an int (default: 1)
   --n2=NUM                    no defaultDesc
@@ -928,6 +936,8 @@ Usage: test [OPTIONS] [KEY...]
 
 Long explanation of this very short set of options, it's so long that
 it even wraps around to the next line:
+  -C                  quantity alias w/o value desc (default: 0)
+  -C, N, c, n         quantity alias with name desc (default: 0)
   -c COUNT            alias for quantity (default: 0)
   -n, --quantity=NUM  quantity is an int (default: 1)
   --n2=NUM            no defaultDesc
@@ -944,9 +954,10 @@ Name options:
   --help              Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [-c COUNT] [-n, --quantity=NUM] [--n2=NUM] [--n3=NUM]
-            [--name=STRING] [--oversized-for-the-desc-col]
-            [-s, --special] [--help] [KEY...]
+Usage: test [-C] [-C, N, c, n] [-c COUNT] [-n, --quantity=NUM]
+            [--n2=NUM] [--n3=NUM] [--name=STRING]
+            [--oversized-for-the-desc-col] [-s, --special] [--help]
+            [KEY...]
 )");
 
         // with maxWidth of 50
@@ -960,6 +971,10 @@ Usage: test [OPTIONS] [KEY...]
 Long explanation of this very short set of
 options, it's so long that it even wraps around
 to the next line:
+  -C             quantity alias w/o value desc
+                 (default: 0)
+  -C, N, c, n    quantity alias with name desc
+                 (default: 0)
   -c COUNT       alias for quantity (default: 0)
   -n, --quantity=NUM
                  quantity is an int (default: 1)
@@ -978,8 +993,9 @@ Name options:
   --help         Show this message and exit.
 )");
         EXPECT_USAGE(cli, {}, 1 + R"(
-Usage: test [-c COUNT] [-n, --quantity=NUM]
-            [--n2=NUM] [--n3=NUM] [--name=STRING]
+Usage: test [-C] [-C, N, c, n] [-c COUNT]
+            [-n, --quantity=NUM] [--n2=NUM]
+            [--n3=NUM] [--name=STRING]
             [--oversized-for-the-desc-col]
             [-s, --special] [--help] [KEY...]
 )");

@@ -426,6 +426,10 @@ previous one.
 | opt.<<guide.adoc#page-layout, desc>>
 | Set description to associate with the argument in help text.
 
+| opt.<<guide.adoc#flag-values, nameDesc>>
+| Set text to appear in the first column of the options list for this opt. The
+entire clause, such as "-c, --count=NUM", will be replace with this text.
+
 | opt.<<guide.adoc#page-layout, valueDesc>>
 | Set name of meta-variable in help text. For example, would change the "NUM"
 in "--count=NUM" to something else.
@@ -435,7 +439,7 @@ in "--count=NUM" to something else.
 change the "0" in "(default: 0)" to something else, or use an empty string to
 suppress the entire clause.
 
-| opt.show
+| opt.<<guide.adoc#flag-values, show>>
 | Controls whether or not the option appears in help text.
 
 2+h| Print
