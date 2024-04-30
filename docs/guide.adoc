@@ -22,6 +22,7 @@ C++ command line parser toolkit for kids of all ages.
 * Git style subcommands.
 * Response files (requires `<filesystem>` support).
 * Convert argv to/from command line with Windows, Posix, or GNU semantics.
+* Wordwrap arbitrary paragraphs and simple text tables for console.
 * Works whether or not exceptions and RTTI are disabled.
 * Distributed under the Boost Software License, Version 1.0.
 
@@ -2660,9 +2661,16 @@ work:
 == Arbitrary Text
 The cli.printText() function is used to word wrap paragraphs and columnize
 simple tables. The text is split on '\n' into lines, and each line is processed
-as either a paragraph (if there are no '\t' chars) or table row (if there are
-'\t' chars). Formatting is modified by embedding special characters in the
-text.
+as either a paragraph (if there are no '\t' chars seperating it into columns)
+or table row (if there are '\t' chars). Formatting is modified by embedding
+special characters in the text.
+
+[%autowidth, cols="^,<"]
+|===
+2+<h| Seperators
+| \n | Paragraph or table row seperator.
+| \t | Table column seperator.
+|===
 
 === Paragraphs
 A paragraph consists of a preamble followed by the body. The preamble contains
@@ -2673,8 +2681,8 @@ else:
 |===
 2+<h| Preamble
 | \r | Decrease indent of wrapped text.
-| \v |  Increase indent of wrapped text.
-| SP |  Increase indent of paragraph or column text.
+| \v | Increase indent of wrapped text.
+| SP | Increase indent of paragraph or column text.
 |===
 
 [source, C++]

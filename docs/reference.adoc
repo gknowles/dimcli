@@ -477,6 +477,7 @@ meaning when embedded in the text:
 Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
 ! \b ! Non-breaking space.
 ! \f ! Start of new table.
+! \n ! Paragraph or row (in tables) separator.
 ! \r ! Decrease indent of wrapped text.
 ! \t ! Column separator in table row.
 ! \v ! Increase indent of wrapped text.

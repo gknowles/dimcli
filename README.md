@@ -28,11 +28,12 @@ C++ command line parser toolkit for kids of all ages.
   - Copyable
   - Either assignable or constructible from string, has an istream extraction
     operator, or has a specialization of Cli&#58;:Convert::fromString&lt;T>().
-- Help generation.
+- Render help text
 - Option definitions can be scattered across multiple files.
 - Git style subcommands.
 - Response files (requires `<filesystem>` support).
 - Convert argv to/from command line with Windows, Posix, or GNU semantics.
+- Wordwrap arbitrary paragraphs and simple text tables for console.
 - Works whether or not exceptions and RTTI are disabled.
 - Distributed under the Boost Software License, Version 1.0.
 
