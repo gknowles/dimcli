@@ -818,6 +818,18 @@ one         1           first
 two         2           second
 three       3           third
 )");
+
+    // second row with more columns than first
+    out.str({});
+    raw = "A1\tA2\n"
+        "B1\tB2\tB3\n"
+        "\n";
+    cli.printText(out, raw);
+    tmp = out.str();
+    EXPECT(tmp == 1 + R"(
+A1          A2
+B1          B2          B3
+)");
 }
 
 //===========================================================================

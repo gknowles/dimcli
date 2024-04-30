@@ -3435,6 +3435,8 @@ static string format(const Cli::Config & cfg, const string & text) {
         if (cols.size() > tab.width.size())
             tab.width.resize(cols.size());
         auto & tcols = raws[tab.rows[0]].cols;
+        if (tcols.size() < cols.size())
+            tcols.resize(cols.size());
         for (unsigned icol = 0; icol < cols.size(); ++icol) {
             auto & tcol = tcols[icol];
             if (tcol.maxWidth == -1) {
