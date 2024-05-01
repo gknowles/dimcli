@@ -1112,13 +1112,12 @@ string Cli::OptIndex::nameList(
 
     // Value
     string valDesc;
-    if (opt.m_valueDesc.empty()) {
+    if (!opt.m_valueDesc) {
         valDesc = opt.defaultValueDesc();
-    } else if (!opt.m_valueDesc[0]) {
-        // Has leading null. This is the internal flag for suppressing the
-        // value clause.
+    } else if (opt.m_valueDesc->empty()) {
+        // Explicit and empty value descrtiption, suppress the clause.
     } else {
-        valDesc = opt.m_valueDesc;
+        valDesc = *opt.m_valueDesc;
     }
     if (!valDesc.empty()) {
         if (optional) {
@@ -3481,9 +3480,8 @@ string Cli::OptIndex::desc(
     } else if (!opt.m_choiceDescs.empty()) {
         // "default" tag is added to individual choices later.
     } else if (opt.m_flagValue && opt.m_flagDefault) {
-        if (!opt.m_defaultDesc.empty() && !opt.m_defaultDesc[0]) {
-            // Has leading null. This is the internal flag for suppressing the
-            // entire default clause.
+        if (opt.m_defaultDesc && opt.m_defaultDesc->empty()) {
+            // Explicit and empty default descrtiption, suppress the clause.
         } else {
             suffix += "(default)";
         }
@@ -3501,14 +3499,13 @@ string Cli::OptIndex::desc(
         }
     } else if (!opt.m_bool) {
         string tmp;
-        if (opt.m_defaultDesc.empty()) {
+        if (!opt.m_defaultDesc) {
             if (!opt.defaultValueToString(tmp))
                 tmp.clear();
-        } else if (!opt.m_defaultDesc[0]) {
-            // Has leading null. This is the internal flag for suppressing the
-            // entire default clause.
+        } else if (opt.m_defaultDesc->empty()) {
+            // Explicit and empty default descrtiption, suppress the clause.
         } else {
-            tmp = opt.m_defaultDesc;
+            tmp = *opt.m_defaultDesc;
         }
         if (!tmp.empty())
             suffix += "(default: " + tmp + ")";

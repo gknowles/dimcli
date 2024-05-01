@@ -1380,13 +1380,13 @@ protected:
     std::string m_command;
     std::string m_group;
 
-    bool m_visible = true;
+    bool m_visible = true;  // Whether the opt appears in help text.
     std::string m_nameDesc;
     std::string m_desc;
 
-    // empty() to use default, size 1 and *data == '\0' to suppress
-    std::string m_valueDesc;
-    std::string m_defaultDesc;
+    // No string to use default, empty string to suppress from help text.
+    std::unique_ptr<std::string> m_valueDesc;
+    std::unique_ptr<std::string> m_defaultDesc;
 
     std::unordered_map<std::string, ChoiceDesc> m_choiceDescs;
 
@@ -1728,9 +1728,7 @@ A & Cli::OptShim<A, T>::desc(const std::string & val) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::valueDesc(const std::string & val) {
-    m_valueDesc = val;
-    if (val.empty())
-        m_valueDesc.push_back(0);
+    m_valueDesc = std::make_unique<std::string>(val);
     return static_cast<A &>(*this);
 }
 
@@ -1744,9 +1742,7 @@ A & Cli::OptShim<A, T>::nameDesc(const std::string & val) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::defaultDesc(const std::string & val) {
-    m_defaultDesc = val;
-    if (val.empty())
-        m_defaultDesc.push_back(0);
+    m_defaultDesc = std::make_unique<std::string>(val);
     return static_cast<A &>(*this);
 }
 
@@ -1920,9 +1916,10 @@ bool Cli::OptShim<A, T>::checkLimits(
 template <typename A, typename T>
 template <typename InputIt>
 A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
-    if (m_valueDesc.empty()) {
-        m_valueDesc = defaultValueDesc()
+    if (!m_valueDesc) {
+        auto desc = defaultValueDesc()
             + ((flags & fUnitRequire) ? "<units>" : "[<units>]");
+        m_valueDesc = std::make_unique<std::string>(desc);
     }
     std::unordered_map<std::string, long double> units;
     if (flags & fUnitInsensitive) {
