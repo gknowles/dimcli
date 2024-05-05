@@ -180,7 +180,7 @@ struct Cli::OptIndex {
     void index(
         const Cli & cli,
         const string & cmd,
-        bool requireVisible
+        bool forHelpText
     );
     void index(OptBase & opt);
     vector<OptKey> findNamedOpts(
@@ -195,16 +195,20 @@ struct Cli::OptIndex {
         NameListType type
     ) const;
 
+    static bool includeOptText(OptBase & opt, const string & cmd);
+    static bool includeOptValue(OptBase & opt, const string & cmd);
     static string desc(const OptBase & opt, bool withMarkup = true);
     static const unordered_map<string, OptBase::ChoiceDesc> & choiceDescs(
         const OptBase & opt
     );
 
+    // May completely replace index to new command if one is found.
     bool parseToRawValues(
         vector<RawValue> * out,
         const vector<string> & args,
         Cli & cli
     );
+
 
 private:
     bool indexOperandName(
@@ -682,16 +686,39 @@ bool Cli::OptBase::withUnits(
 ***/
 
 //===========================================================================
+// static
+bool Cli::OptIndex::includeOptText(
+    Cli::OptBase & opt,
+    const string & cmd
+) {
+    // Is this an opt that should appear in the help text of cmd?
+    return opt.m_visible && opt.m_command == cmd;
+}
+
+//===========================================================================
+// static
+bool Cli::OptIndex::includeOptValue(
+    Cli::OptBase & opt,
+    const string & cmd
+) {
+    // Is this an opt that could be assigned if cmd is selected?
+    return opt.m_command.empty() || opt.m_command == cmd;
+}
+
+//===========================================================================
 void Cli::OptIndex::index(
     const Cli & cli,
     const string & cmd,
-    bool requireVisible
+    bool forHelpText
 ) {
     *this = {};
     m_allowCommands = cmd.empty();
 
     for (auto && opt : cli.m_cfg->opts) {
-        if (opt->m_command == cmd && (opt->m_visible || !requireVisible))
+        auto include = forHelpText
+            ? includeOptText(*opt, cmd)
+            : includeOptValue(*opt, cmd);
+        if (include)
             index(*opt);
     }
 
@@ -3090,7 +3117,7 @@ bool Cli::parse(vector<string> & args) {
 
     // After actions
     for (auto && opt : m_cfg->opts) {
-        if (!opt->m_command.empty() && opt->m_command != commandMatched())
+        if (!ndx.includeOptValue(*opt, commandMatched()))
             continue;
         opt->doAfterActions(*this);
         if (parseExited())
