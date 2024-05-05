@@ -215,6 +215,9 @@ public:
 
     //-----------------------------------------------------------------------
     // CONFIGURATION
+    //
+    // Descriptions, new options, and other changes are applied to (or created
+    // within) the selected command and group.
 
     // The 'names' parameter is a whitespace seperated list of option and
     // operand names, names take one of four forms and may have prefix/suffix
@@ -316,8 +319,8 @@ public:
     // always added to a group, either the default group of the cli (or of the
     // selected command), or an explicitly created one.
 
-    // Changes config context to point at the selected option group of the
-    // current command, that you can then start stuffing things into.
+    // Changes the selected option group of the current command, that you can
+    // then start stuffing things into.
     Cli & group(const std::string & name) &;
     Cli && group(const std::string & name) &&;
 
@@ -335,10 +338,10 @@ public:
     const std::string & sortKey() const;
 
     //-----------------------------------------------------------------------
-    // Changes config context to reference an option group of the selected
-    // command. Use an empty string to specify the top level context. If a new
+    // Changes the selected command and option group being configured. Use an
+    // empty string to specify the top level (no command) context. If a new
     // command is selected it is created in the command group of the current
-    // context.
+    // command.
     Cli & command(const std::string & name, const std::string & group = {}) &;
     Cli && command(
         const std::string & name,
