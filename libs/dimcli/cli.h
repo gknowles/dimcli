@@ -1650,7 +1650,7 @@ inline void Cli::OptShim<A, T>::doParseAction(
     const std::string & val
 ) {
     auto self = static_cast<A *>(this);
-    return m_parse(cli, *self, val);
+    m_parse(cli, *self, val);
 }
 
 //===========================================================================
@@ -1659,13 +1659,13 @@ inline void Cli::OptShim<A, T>::doCheckActions(
     Cli & cli,
     const std::string & val
 ) {
-    return act(cli, val, m_checks);
+    act(cli, val, m_checks);
 }
 
 //===========================================================================
 template <typename A, typename T>
 inline void Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
-    return act(cli, {}, m_afters);
+    act(cli, {}, m_afters);
 }
 
 //===========================================================================
