@@ -232,9 +232,9 @@ public:
     // Prefix modifiers
     //  !   For boolean options, when setting the value it is first inverted.
     //  ?   For non-boolean options, makes the value optional.
-    //  *   For non-boolean options, makes it multivalued. If no attached value
-    //      the following arguments, up to the next option, are included as
-    //      values.
+    //  *   For non-boolean options, enables value list. If no attached value
+    //      then the following arguments, up to the next option, are included
+    //      as values.
     //
     // Suffix modifiers
     //  .   For boolean options with long names, suppresses the addition of the

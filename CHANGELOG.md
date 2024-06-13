@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 7.3.0 (2024-06-12)
 - Fixed - Assert calling cli.title() immediately after creating new option
           group via cli.command(...).
 - Added - Support populating unknownArgs from any command.
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Robust quoting and escaping in names definition strings.
 - Added - New name suffix '!' for final option.
 - Fixed - Wrong argument sometimes reported by "Unknown argument" error.
-- Added - Multivalue options (one option taking multiple arguments).
+- Added - Value list (one option followed by multiple arguments).
 - Fixed - opt.defaultDesc("") doesn't suppress a flag value's (default) clause.
 - Added - opt.nameDesc() for overriding first column in options list.
 - Fixed - Crash in cli.printText() processing some custom tables.

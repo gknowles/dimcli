@@ -144,8 +144,8 @@ struct ParseState {
     const char * ptr = nullptr;
 
     // Number of values matched to options, the count is then used to stop the
-    // consumption of following arguments by multivalued options when the max
-    // size of the vector option is reached.
+    // consumption of following arguments for value lists when the max size of
+    // the vector option is reached.
     unordered_map<Cli::OptBase *, int> optMatches;
 };
 
@@ -2827,7 +2827,7 @@ bool Cli::OptIndex::parseOptionValue(
     }
     addOptionMatch(out, st, args[st.argPos].c_str());
 
-    // Option is multivalued, use following arguments up to the next option as
+    // Option has value list, use following arguments up to the next option as
     // values.
     if (st.optName.flags & fNameMulti) {
         while (st.argPos + 1 < args.size()) {

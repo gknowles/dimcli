@@ -2123,7 +2123,7 @@ Must have 2 values.
         EXPECT(*v3 == vector<int>{4, 5});
     }
 
-    // multivalue argument matching
+    // value list argument matching
     {
         cli = {};
         auto & m = cli.optVec<int>("*m").size(1, 2);

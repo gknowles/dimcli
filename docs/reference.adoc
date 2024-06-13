@@ -98,7 +98,7 @@ miscellaneous state. Returns true if processing should continue.
 == Option Names
 
 Names are passed in as a whitespace separated list where the individual names,
-with optional prefix/suffix modifiers, take one of four types:
+with optional prefix/suffix modifiers, take one of four forms:
 
 [%autowidth]
 |===
@@ -116,7 +116,7 @@ with optional prefix/suffix modifiers, take one of four types:
 | ! | For boolean options, when setting the value it is first inverted.
 | ? | For non-boolean options, makes the value
 <<guide.adoc#optional-values, optional>>.
-| * | For options, makes it <<guide.adoc#multivalues, multivalued>>.
+| * | For options, makes it take a <<guide.adoc#value-list, value list>>.
 
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"

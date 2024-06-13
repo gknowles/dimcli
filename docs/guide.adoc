@@ -298,7 +298,7 @@ take one of four types:
 h| Prefixes |
 | ! | For boolean options, when setting the value it is first inverted.
 | ? | For non-boolean options, makes the value <<#optional-values, optional>>.
-| * | For options, makes it <<#multivalues, multivalued>>.
+| * | For options, makes it take a <<#value-list, value list>>.
 
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
@@ -719,13 +719,14 @@ v1 = , v2 = two, p = one
 ----
 
 
-=== Multivalues
-The '*' <<#option-names, flag>> on an option name marks it as multivalue. A
-specific name can't be both optional and multivalue. If a multivalue option has
-an attached value only that value is matched with the option. Otherwise the
-next argument is matched and additional following arguments up to the next
-option are also matched. However, if the option is an optVec, additional
-arguments will stop being matched after opt.maxSize() is reached.
+=== Value List
+The '*' <<#option-names, flag>> on an option name enables value lists. A
+specific name can't have both an optional value and a value list. If an option
+with a value list has an attached value only that value is matched with the
+option. Otherwise the next argument is matched and additional following
+arguments up to the next option are also matched. However, if the option is an
+optVec, additional arguments will stop being matched after opt.maxSize() is
+reached.
 
 [source, C++]
 ----
