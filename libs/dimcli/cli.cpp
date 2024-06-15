@@ -55,8 +55,8 @@ const size_t kMinConsoleWidth = 50;
 const size_t kMaxConsoleWidth = 80;
 
 // column where description text starts
-const auto kDefaultMinKeyWidth = 15.0f;
-const auto kDefaultMaxKeyWidth = 38.0f;
+const auto kDefaultMinNameColPct = 15.0f;
+const auto kDefaultMaxNameColPct = 38.0f;
 
 // maximum help text line length
 const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
@@ -96,7 +96,7 @@ enum NameFlags {
     fNameOperand   = 0x02, // opt is for an operand, not an option
     fNameInvert    = 0x04, // set to false instead of true (bools)
     fNameOptional  = 0x08, // value need not be present? (non-bool options)
-    fNameMulti     = 0x10, // take args up to next option (non-bool options)
+    fNameList      = 0x10, // take args up to next option (non-bool options)
     fNameExcludeNo = 0x20, // don't add --no-* version (long name bools)
     fNameFinal     = 0x40, // is a final option, rest of args are now operands
 };
@@ -266,8 +266,8 @@ struct Cli::Config {
     vector<string> unknownArgs;
 
     size_t maxWidth = kDefaultConsoleWidth;
-    float minKeyWidth = kDefaultMinKeyWidth;    // as percentage of width
-    float maxKeyWidth = kDefaultMaxKeyWidth;    // as percentage of width
+    float minNameColPct = kDefaultMinNameColPct; // as percentage of width
+    float maxNameColPct = kDefaultMaxNameColPct; // as percentage of width
     size_t maxLineWidth = kDefaultMaxLineWidth;
 
     static void touchAllCmds(Cli & cli);
@@ -563,7 +563,7 @@ Cli::Config::Config() {
 void Cli::Config::updateWidth(size_t width) {
     this->maxWidth = width;
     this->maxLineWidth = width - 1;
-    this->maxKeyWidth = kDefaultMaxKeyWidth;
+    this->maxNameColPct = kDefaultMaxNameColPct;
 
     // Adjust the min key width to be proportional, but not too proportional,
     // to the width.
@@ -576,7 +576,7 @@ void Cli::Config::updateWidth(size_t width) {
     //       120        15
     //       160        18
     //       200        21
-    this->minKeyWidth = kDefaultMinKeyWidth
+    this->minNameColPct = kDefaultMinNameColPct
         * (kDefaultConsoleWidth + width) / 2
         / width;
 }
@@ -780,7 +780,7 @@ IN_PREFIX:
             flags |= fNameInvert;
             break;
         case '*':
-            flags |= fNameMulti;
+            flags |= fNameList;
             break;
         case '(':
             close = ')';
@@ -892,7 +892,7 @@ ADD_NAME:
                 assert(!"Bad prefix modifier '?' for bool option.");
                 goto IN_GAP;
             }
-            if (flags & fNameMulti) {
+            if (flags & fNameList) {
                 // Bool options also can't have multiple values.
                 assert(!"Bad prefix modifier '*' for bool option.");
                 goto IN_GAP;
@@ -929,7 +929,7 @@ bool Cli::OptIndex::indexOperandName(
     unsigned flags,
     int pos
 ) {
-    if (flags & fNameMulti) {
+    if (flags & fNameList) {
         assert(!"Bad prefix modifier '*' for operand name.");
         return false;
     }
@@ -1100,7 +1100,7 @@ string Cli::OptIndex::nameList(
     }
 
     bool foundLong = false;
-    bool optional = false;
+    unsigned flags = 0;
 
     // Names
     vector<const decltype(m_shortNames)::value_type *> snames;
@@ -1112,7 +1112,7 @@ string Cli::OptIndex::nameList(
     for (auto && sn : snames) {
         if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
             continue;
-        optional = sn->second.flags & fNameOptional;
+        flags = sn->second.flags;
         if (!list.empty())
             list += ", ";
         list += '-';
@@ -1127,7 +1127,7 @@ string Cli::OptIndex::nameList(
     for (auto && ln : lnames) {
         if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
             continue;
-        optional = ln->second.flags & fNameOptional;
+        flags = ln->second.flags;
         if (!list.empty())
             list += ", ";
         foundLong = true;
@@ -1142,17 +1142,19 @@ string Cli::OptIndex::nameList(
     if (!opt.m_valueDesc) {
         valDesc = opt.defaultValueDesc();
     } else if (opt.m_valueDesc->empty()) {
-        // Explicit and empty value descrtiption, suppress the clause.
+        // Explicit and empty value description, suppress the clause.
     } else {
         valDesc = *opt.m_valueDesc;
     }
     if (!valDesc.empty()) {
-        if (optional) {
+        if (flags & fNameOptional) {
             list += foundLong ? "[=" : " [";
             list += valDesc + "]";
         } else {
             list += foundLong ? '=' : ' ';
             list += valDesc;
+            if (flags & fNameList)
+                list += "...";
         }
     }
     return list;
@@ -1628,15 +1630,15 @@ Cli & Cli::maxWidth(int width, int minDescCol, int maxDescCol) & {
     m_cfg->updateWidth(width);
 
     if (minDescCol && minDescCol < width) {
-        // Update minKeyWidth if minDescCol is set and valid.
-        m_cfg->minKeyWidth = 100.0f * minDescCol / width;
+        // Update minNameColPct if minDescCol is set and valid.
+        m_cfg->minNameColPct = 100.0f * minDescCol / width;
     }
     if (maxDescCol
         && (!minDescCol || maxDescCol >= minDescCol)
         && maxDescCol < width
     ) {
-        // Update maxKeyWidth if maxDescCol is set and valid.
-        m_cfg->maxKeyWidth = 100.0f * maxDescCol / width;
+        // Update maxNameColPct if maxDescCol is set and valid.
+        m_cfg->maxNameColPct = 100.0f * maxDescCol / width;
     }
 
     return *this;
@@ -2829,7 +2831,7 @@ bool Cli::OptIndex::parseOptionValue(
 
     // Option has value list, use following arguments up to the next option as
     // values.
-    if (st.optName.flags & fNameMulti) {
+    if (st.optName.flags & fNameList) {
         while (st.argPos + 1 < args.size()) {
             auto val = args[st.argPos + 1].c_str();
             if (*val == '-') {
@@ -2948,8 +2950,8 @@ bool Cli::OptIndex::parseToRawValues(
                 st.moreOpts = false;
 
             if (!st.optName.opt->m_bool) {
-                // Long option with (possibly empty) value, process it and advance
-                // to next argument.
+                // Long option with (possibly empty) value, process it and
+                // advance to next argument.
                 if (!parseOptionValue(out, st, cli, args))
                     return false;
                 continue;
@@ -3235,9 +3237,9 @@ struct RawCol {
     int childIndent = {};
     const char * text = {};
     int textLen = {};
-    int width = -1;         // chars
-    float minWidth = -1;    // percentage
-    float maxWidth = -1;    // percentage
+    int width = -1;    // chars (-1 for unspecified)
+    float minPct = -1; // width as percentage of line (-1 for unspecified)
+    float maxPct = -1; // width as percentage of line (-1 for unspecified)
 };
 
 struct RawLine {
@@ -3259,17 +3261,21 @@ static size_t parseLine(RawLine * out, const char line[]) {
                 col.indent += 1;
             } else if (*ptr == '\a') {
                 char * eptr;
-                col.minWidth = strtof(ptr + 1, &eptr);
-                col.maxWidth = strtof(eptr, &eptr);
+                col.minPct = strtof(ptr + 1, &eptr);
+                col.maxPct = strtof(eptr, &eptr);
                 if (*eptr == '\a'
-                    && col.minWidth <= col.maxWidth
-                    && col.minWidth >= 0 && col.minWidth <= 100
+                    && col.minPct <= col.maxPct
+                    && col.minPct >= 0 && col.minPct <= 100
                 ) {
-                    col.maxWidth = min(col.maxWidth, 100.0f);
+                    // Valid width spec, use and advance past entire '\a'
+                    // clause.
+                    col.maxPct = min(col.maxPct, 100.0f);
                     ptr = eptr;
                 } else {
-                    col.minWidth = -1;
-                    col.maxWidth = -1;
+                    // Malformed column width given; set width to unspecified
+                    // and ignore the leading '\a'.
+                    col.minPct = -1;
+                    col.maxPct = -1;
                     col.text = ptr;
                     break;
                 }
@@ -3291,8 +3297,9 @@ static size_t parseLine(RawLine * out, const char line[]) {
         // Width limits can only be set when a table is started, this prevents
         // multiply defined column rules.
         if (!out->newTable) {
-            col.minWidth = -1;
-            col.maxWidth = -1;
+            // Not start of table; make key column width unspecified.
+            col.minPct = -1;
+            col.maxPct = -1;
         }
 
         col.textLen = 0;
@@ -3465,14 +3472,16 @@ static string format(const Cli::Config & cfg, const string & text) {
             tcols.resize(cols.size());
         for (unsigned icol = 0; icol < cols.size(); ++icol) {
             auto & tcol = tcols[icol];
-            if (tcol.maxWidth == -1) {
-                tcol.minWidth = cfg.minKeyWidth;
-                tcol.maxWidth = icol ? cfg.minKeyWidth : cfg.maxKeyWidth;
+            if (tcol.maxPct == -1) {
+                // Width unspecified; start with default min to max for first
+                // column and just the default min for all others.
+                tcol.minPct = cfg.minNameColPct;
+                tcol.maxPct = !icol ? cfg.maxNameColPct : cfg.minNameColPct;
             }
             auto & col = cols[icol];
             int width = col.indent + col.textLen + 2;
-            int minWidth = (int) round(tcol.minWidth * cfg.maxLineWidth / 100);
-            int maxWidth = (int) round(tcol.maxWidth * cfg.maxLineWidth / 100);
+            int minWidth = (int) round(tcol.minPct * cfg.maxLineWidth / 100);
+            int maxWidth = (int) round(tcol.maxPct * cfg.maxLineWidth / 100);
             if (width < minWidth || width > maxWidth + 2)
                 width = minWidth;
             if (width > tab.width[icol])
