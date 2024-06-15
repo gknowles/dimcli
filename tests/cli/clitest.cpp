@@ -2131,6 +2131,14 @@ Must have 2 values.
         EXPECT_PARSE(cli, "-m 1 2");
         EXPECT(*m == vector<int>{1, 2});
         EXPECT(!x);
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS] [x]
+
+Options:
+  -m NUM...  (limit: 1 to 2)
+
+  --help     Show this message and exit.
+)");
 
         EXPECT_PARSE(cli, "-m 1 2 3");
         EXPECT(*m == vector<int>{1, 2});

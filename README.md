@@ -40,12 +40,13 @@ C++ command line parser toolkit for kids of all ages.
 ## Sample Usage
 
 Check out the complete [documentation](https://gknowles.github.io/dimcli/),
-you'll be glad you did! With many examples and
+contains many examples, and the quick
 [reference](https://gknowles.github.io/dimcli/reference.html).
 
 ~~~ C++
 #include "dimcli/cli.h"
 #include <iostream>
+#include <string>
 using namespace std;
 
 int main(int argc, char * argv[]) {

@@ -692,8 +692,8 @@ For example:
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & v1 = cli.opt<string>("?o ?optional", "default");
-    auto & v2 = cli.opt<string>("?i ?with-implicit", "default");
+    auto & v1 = cli.opt<string>("?o ?optional", "default").desc("v1");
+    auto & v2 = cli.opt<string>("?i ?with-implicit", "default").desc("v2");
     v2.implicitValue("implicit");
     auto & p = cli.opt<string>("[OPERAND]", "default");
     if (!cli.parse(argc, argv))
@@ -706,6 +706,15 @@ What happens:
 
 [source, shell session]
 ----
+$ a.out --help
+Usage: a.out [OPTIONS] [OPERAND]
+
+Options:
+  -i, --with-implicit[=STRING]  v2 (default: default)
+  -o, --optional[=STRING]     v1 (default: default)
+
+  --help                      Show this message and exit.
+
 $ a.out
 v1 = default, v2 = default, p = default
 $ a.out -oone -i two
@@ -732,8 +741,8 @@ reached.
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
-    auto & words = cli.optVec<string>("*words");
-    cli.opt<bool>("z");
+    auto & words = cli.optVec<string>("*words").desc("Words to process.");
+    cli.opt<bool>("z").desc("Another flag.");
     auto & extra = cli.opt<string>("[extra]");
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -750,6 +759,15 @@ How this works out:
 
 [source, shell session]
 ----
+$ a.out --help
+Usage: a.out [OPTIONS] [extra]
+
+Options:
+  --words=STRING...  Words to process.
+  -z                 Another flag.
+
+  --help             Show this message and exit.
+
 $ a.out
 Words:
 $ a.out --words=one two
