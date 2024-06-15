@@ -649,7 +649,7 @@ public:
     );
 
     // Intended for use in action callbacks. Stops parsing, sets exitCode to
-    // EX_OK, and causes an in progress cli.parse() and cli.exec() to return
+    // EX_OK, and causes an in progress cli.parse() or cli.exec() to return
     // false.
     void parseExit();
 
@@ -745,7 +745,7 @@ public:
         const std::string & detail = {}
     );
 
-    // Returns true if the named command has been defined, used by the help
+    // Returns true if the named command has been defined; used by the help
     // command implementation. Not reliable before cli.parse() has been called
     // and had a chance to update the internal data structures.
     bool commandExists(const std::string & name) const;
@@ -1302,8 +1302,8 @@ public:
     //-----------------------------------------------------------------------
     // QUERIES
 
-    // True if the value was populated from the command line, whether the
-    // resulting value is the same as the default is immaterial.
+    // True if the value was populated from the command line; even if it was
+    // the same as the default.
     explicit operator bool() const { return matched(); }
 
     // Name of the last argument to populated the value, or an empty string if

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed - opt.defaultDesc("") doesn't suppress a flag value's (default) clause.
 - Added - opt.nameDesc() for overriding first column in options list.
 - Fixed - Crash in cli.printText() processing some custom tables.
+- Fixed - Docs for cli.parseExit() wrongly duplicated from cli.fail().
 
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads

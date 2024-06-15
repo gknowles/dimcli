@@ -131,7 +131,7 @@ version.
 2+| Create
 
 | cli.<<guide.adoc#options, opt<T{gt}>>
-| Add command line option, flag, or operand.
+| Add command line option, flag, or operand with a single value.
 
 | cli.<<guide.adoc#vector-options, optVec<T{gt}>>
 | Add multivalued option, flag, or operand.
@@ -241,13 +241,13 @@ high in the error detail.
 message and flags the in progress parse() to return false.
 
 | cli.commandExists
-| Returns true if the named command has been defined, used by the help command
+| Returns true if the named command has been defined; used by the help command
 implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.
 
 | cli.parseExit
-| Intended for use in action callbacks. Sets exit code (to EX_USAGE) and error
-message and flags the in progress parse() to return false.
+| Intended for use in action callbacks. Sets exit code to EX_OK, and causes an
+in progress cli.parse() or cli.exec() to return false.
 
 | cli.parseValue
 | Used to populate an option with an arbitrary input string through the
@@ -279,8 +279,8 @@ tied to a command line argument.
 2+h| After parsing
 
 | opt.<<guide.adoc#life-after-parsing, operator bool>>
-| True if the value was populated from the command line, whether the resulting
-value is the same as the default is immaterial.
+| True if the value was populated from the command line, even if that value
+happens to be the same as the default.
 
 | opt.<<guide.adoc#life-after-parsing, operator *>>
 | Reference to underlying value or, for OptVec&lt;T>, vector of values.
@@ -510,13 +510,13 @@ destroyed.
 | Parse command line into argument vector of strings (args), using default
 conventions (Gnu or Windows) of the platform.
 
-| Cli::toGlibArgv(string)
+| Cli::toGlibArgv
 | Parse according to glib conventions, based on the UNIX98 shell spec.
 
-| Cli::toGnuArgv(string)
+| Cli::toGnuArgv
 | Parse using GNU conventions, same rules as buildargv().
 
-| Cli::toWindowsArgv(string)
+| Cli::toWindowsArgv
 | Parse using Windows conventions.
 
 2+h| To Command Line
