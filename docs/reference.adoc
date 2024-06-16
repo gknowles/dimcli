@@ -93,6 +93,14 @@ miscellaneous state. Returns true if processing should continue.
 
 | cli.progName
 | Program name received in argv[0]
+
+2+h| Helpers
+
+| Cli::consoleEnableEcho
+| Turns console echo on or off.
+
+| Cli::consoleWidth
+| Get the default width or query the console for it.
 |===
 
 == Option Names
