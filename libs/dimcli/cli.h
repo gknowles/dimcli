@@ -1312,11 +1312,14 @@ public:
 
     // Absolute position in argv[] of last the argument that populated the
     // value. For vectors, it refers to where the value on the back came from.
-    // If pos() is 0 the value wasn't populated from the command line or
-    // wasn't populated at all, check from() to tell the difference.
+    // If pos() is 0 the value wasn't populated from the command line or wasn't
+    // populated at all, check from() to tell the difference.
     //
     // It's possible for a value to come from prompt() or some other action
     // (which should set the position to 0) instead of the command args.
+    //
+    // Note that this is the position in argv[] after environment variable and
+    // response file expansion.
     virtual int pos() const = 0;
 
     // Number of values, non-vectors are always 1.
@@ -2208,10 +2211,12 @@ public:
         return const_cast<T *>(this)[index];
     }
 
-    // Information about a specific member of the vector of values at the
-    // time it was parsed. If the value vector has been changed (sort, erase,
-    // insert, etc) by the application these will no longer correspond.
+    // Name of argument that populated the value at the index. Returns empty
+    // string if the index is out of bounds.
     const std::string & from(size_t index) const;
+    // Position in argv[], after its environment variable and response file
+    // expansion, of argument that populated the value. Returns 0 if index is
+    // out of bounds.
     int pos(size_t index) const;
 
     // Inherited via OptBase

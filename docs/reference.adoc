@@ -296,12 +296,9 @@ happens to be the same as the default.
 | opt.<<guide.adoc#life-after-parsing, operator -{gt}>>
 | Pointer to underlying value or value vector.
 
-| optVec.<<guide.adoc#vector-options, operator []>>
-| Array access to members of value vector.
-
 | opt.<<guide.adoc#life-after-parsing, from>>
 | Name of the last argument to populated the value, or an empty string if it
-wasn't populated. For vectors, it's what populated the last value.
+wasn't populated.
 
 | opt.maxSize
 | Maximum values required for option, always 1 for non-vectors. Vectors default
@@ -312,13 +309,26 @@ to -1 (for unlimited).
 to 1.
 
 | opt.<<guide.adoc#life-after-parsing, pos>>
-| Absolute position in argv[] of last the argument that populated the value.
-For vectors, it refers to where the value on the back came from. If pos() is 0
-the value wasn't populated from the command line or wasn't populated at all,
-check from() to tell the difference.
+| Absolute position in expanded argv[] of last the argument that populated the
+value. If pos() is 0 the value wasn't populated from the command line or wasn't
+populated at all, checking from() may help tell the difference. The expanded
+argv is argv after all environment variable and response file expansion has
+been done.
 
 | opt.<<guide.adoc#counting, size>>
 | Number of values, always 1 for non-vectors.
+
+| optVec.<<guide.adoc#vector-options, operator []>>
+| Array access to members of value vector.
+
+| optVec.from(index)
+| Name of the argument that populated the value at the index, or empty string
+if the index is out of bounds.
+
+| optVec.pos
+| Position in argv[], after its environment variable and response file
+expansion, of argument that populated the value. Returns 0 if index is out of
+bounds.
 |===
 
 == Subcommands
