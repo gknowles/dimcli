@@ -2680,15 +2680,15 @@ work:
 == Arbitrary Text
 The cli.printText() function is used to word wrap paragraphs and columnize
 simple tables. The text is split on '\n' into lines, and each line is processed
-as either a paragraph (if there are no '\t' chars seperating it into columns)
+as either a paragraph (if there are no '\t' chars separating it into columns)
 or table row (if there are '\t' chars). Formatting is modified by embedding
 special characters in the text.
 
 [%autowidth, cols="^,<"]
 |===
-2+<h| Seperators
-| \n | Paragraph or table row seperator.
-| \t | Table column seperator.
+2+<h| Separators
+| \n | Paragraph or table row separator.
+| \t | Table column separator.
 |===
 
 === Paragraphs

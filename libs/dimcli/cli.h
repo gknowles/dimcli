@@ -766,9 +766,9 @@ public:
     // A paragraph consists of a preamble followed by the body. The preamble
     // contains any number of the following and ends at the first character
     // that is something else:
+    //  - SP    Increase indent of first line of paragraph or column text.
     //  - \r    Decrease indent of wrapped text.
     //  - \v    Increase indent of wrapped text.
-    //  - SP    Increase indent of first line of paragraph or column text.
     //
     // cli.maxWidth(50); // These examples assume console width of 50.
     // cli.printText(cout,
@@ -787,6 +787,7 @@ public:
     // The body of a paragraph consists of space separated tokens (consecutive
     // spaces are treated as one). Line breaks are added between tokens as
     // needed. The following characters have special meaning in the body:
+    //  - SP    Soft line break.
     //  - \b    Non-breaking space.
     //
     // "The quick brown fox jumped underneath the lazy dog.\n"
@@ -848,8 +849,8 @@ public:
     // be changed with cli.maxWidth().
     //
     // "\f\a10 10\aone\tSet column width to 5 (10% of 50).\n"
-    // "two\tSecond row.\n"
-    // "fifteen\tToo long for column width, pushed down.\n"
+    // "two\tThere is always an extra two space gap between columns.\n"
+    // "seventeen\tToo long for column width, pushed down.\n"
     // ----
     // one    Set column width to 5 (10% of 50).
     // two    There is always an extra two space gap
