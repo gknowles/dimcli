@@ -490,16 +490,20 @@ a| Write text and simple tables, wrapping as needed. Characters with special
 meaning when embedded in the text:
 [%autowidth, cols="^,<"]
 !===
+2+<h! Separators
+! \n ! Paragraph or row (in tables) separator.
+! \t ! Column separator in table row.
+2+<h! Preamble
+! SP ! Increase indent of first line of paragraph or column text.
 ! \a
 ! Set min and max widths of a table column as percentages of console width.
 Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
-! \b ! Non-breaking space.
 ! \f ! Start of new table.
-! \n ! Paragraph or row (in tables) separator.
 ! \r ! Decrease indent of wrapped text.
-! \t ! Column separator in table row.
 ! \v ! Increase indent of wrapped text.
-! SP ! Increase indent of first line of paragraph or column text.
+2+<h! Body
+! SP ! Soft word break.
+! \b ! Non-breaking space.
 !===
 
 | cli.<<guide.adoc#value-description, valueDesc>><T>

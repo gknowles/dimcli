@@ -35,9 +35,9 @@
 // same when building the app as when building the library.
 
 // DIMCLI_LIB_DYN_LINK: Forces all libraries that have separate source, to be
-// linked as dll's rather than static libraries on Microsoft Windows (this
+// linked as DLLs rather than static libraries on Microsoft Windows (this
 // macro is used to turn on __declspec(dllimport) modifiers, so that the
-// compiler knows which symbols to look for in a dll rather than in a static
+// compiler knows which symbols to look for in a DLL rather than in a static
 // library). Note that there may be some libraries that can only be linked in
 // one way (statically or dynamically), in these cases this macro has no
 // effect.
@@ -219,7 +219,7 @@ public:
     // Descriptions, new options, and other changes are applied to (or created
     // within) the selected command and group.
 
-    // The 'names' parameter is a whitespace seperated list of option and
+    // The 'names' parameter is a whitespace separated list of option and
     // operand names, names take one of four forms and may have prefix/suffix
     // modifiers.
     //
@@ -394,7 +394,7 @@ public:
 
     // Makes all arguments following the command appear in cli.unknownArgs()
     // instead of populating any defined options/operands. At the top level it
-    // also supercedes subcommands.
+    // also supersedes subcommands.
     Cli & unknownArgs(bool enable) &;
     Cli && unknownArgs(bool enable) &&;
 
@@ -805,7 +805,8 @@ public:
     // paragraphs with larger indentation. In other words, column width is only
     // used to find the starting position of the next column.
     //
-    // Additional special phrases in column preamble:
+    // In addition to what's allowed in paragraph preambles, a column preamble
+    // may also include the following phrases:
     //  - \a<MIN> <MAX>\a
     //          Set min and max widths of a table column, where MIN and MAX
     //          are percentages of console width encoded as floats. Used in
@@ -1478,7 +1479,7 @@ public:
     A & flagValue(bool isDefault = false);
 
     // All following arguments are treated as operands (positional) rather
-    // than options (positionless), as if "--" had been used.
+    // than options (named), as if "--" had been used.
     //
     // There are restrictions when used on an operand:
     //  - If operand is required, must not be preceded by optional operands.

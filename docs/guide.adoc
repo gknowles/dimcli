@@ -2760,7 +2760,8 @@ the '\f' (new table) flag. Columns are just additional paragraphs with larger
 indentation. In other words, column width is only used to find the starting
 position of the next column.
 
-Additional special phrases in column:
+In addition to what's allowed in paragraph preambles, a column preamble may
+also include the following phrases:
 
 [%autowidth, cols="^,<"]
 |===
