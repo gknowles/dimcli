@@ -498,6 +498,7 @@ meaning when embedded in the text:
 ! \a
 ! Set min and max widths of a table column as percentages of console width.
 Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
+Only for columns in rows that are marked with '\f' (new table).
 ! \f ! Start of new table.
 ! \r ! Decrease indent of wrapped text.
 ! \v ! Increase indent of wrapped text.

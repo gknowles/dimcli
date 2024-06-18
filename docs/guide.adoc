@@ -2769,7 +2769,7 @@ also include the following phrases:
 
 | \a<MIN>{nbsp}<MAX>\a
 | Set min and max widths of a table column, where MIN and MAX are percentages
-of console width encoded as floats. Used in columns of a row that is marked
+of console width encoded as floats. Only in columns of a row that is marked
 with '\f' (new table).
 
 | \f

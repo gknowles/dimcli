@@ -3040,8 +3040,8 @@ bool Cli::parse(vector<string> & args) {
     if (commandRequired(*m_cfg) && !ndx.m_allowCommands) {
         // Command processing requires that the command be unambiguously
         // identifiable and can't be used when the top level has an operand
-        // that requires look ahead to match. Caused by the first operand being
-        // either optional or a variable length vector.
+        // that requires look ahead to match. Which is caused by the first
+        // operand being either optional or a variable length vector.
         assert(!"Mixing top level optional operands with commands.");
     }
 
@@ -3218,28 +3218,20 @@ bool Cli::commandExists(const string & name) const {
 
 /****************************************************************************
 *
-*   Help Text
+*   Arbitrary Text
 *
 ***/
 
 namespace {
-
-struct ChoiceKey {
-    size_t pos;
-    const char * key;
-    const char * desc;
-    const char * sortKey;
-    bool def;
-};
 
 struct RawCol {
     int indent = {};
     int childIndent = {};
     const char * text = {};
     int textLen = {};
-    int width = -1;    // chars (-1 for unspecified)
-    float minPct = -1; // width as percentage of line (-1 for unspecified)
-    float maxPct = -1; // width as percentage of line (-1 for unspecified)
+    int width = -1;    // Chars (-1 for unspecified).
+    float minPct = -1; // Width as percentage of line (-1 for unspecified).
+    float maxPct = -1; // Width as percentage of line (-1 for unspecified).
 };
 
 struct RawLine {
@@ -3247,18 +3239,40 @@ struct RawLine {
     vector<RawCol> cols;
 };
 
+struct TableSize {
+    vector<int> width;  // Width of each table column.
+    vector<int> rows;   // Indexes to RawLines in the table.
+};
+
 } // namespace
 
 //===========================================================================
+// Returns number of characters used by the line.
 static size_t parseLine(RawLine * out, const char line[]) {
     *out = {};
     auto ptr = line;
     for (;;) {
         out->cols.emplace_back();
         auto & col = out->cols.back();
+
+        //--------------------------------------------------------------------
+        // Preamble
+        //
+        // Paragraph or table column:
+        //  SP  Increase indent of first line of paragraph or column text
+        //  \r  Reduced indentation after line wrap by one
+        //  \v  Increase indentation after line wrap by one
+        // Table column only:
+        //  \a<MIN> <MAX>\a
+        //      Set min and max width of column
+        //  \f  Starts a new table, not extending current table at this indent
         for (;; ++ptr) {
             if (*ptr == ' ') {
                 col.indent += 1;
+            } else if (*ptr == '\r') {
+                col.childIndent -= 1;
+            } else if (*ptr == '\v') {
+                col.childIndent += 1;
             } else if (*ptr == '\a') {
                 char * eptr;
                 col.minPct = strtof(ptr + 1, &eptr);
@@ -3279,10 +3293,6 @@ static size_t parseLine(RawLine * out, const char line[]) {
                     col.text = ptr;
                     break;
                 }
-            } else if (*ptr == '\v') {
-                col.childIndent += 1;
-            } else if (*ptr == '\r') {
-                col.childIndent -= 1;
             } else if (*ptr == '\f') {
                 out->newTable = true;
             } else {
@@ -3294,30 +3304,63 @@ static size_t parseLine(RawLine * out, const char line[]) {
         // Don't allow unindent to bleed into previous column.
         col.childIndent = max(col.childIndent, -col.indent);
 
-        // Width limits can only be set when a table is started, this prevents
-        // multiply defined column rules.
-        if (!out->newTable) {
-            // Not start of table; make key column width unspecified.
-            col.minPct = -1;
-            col.maxPct = -1;
-        }
-
+        //--------------------------------------------------------------------
+        // Body
+        //
+        // Separators:
+        //  \n  Paragraph or table row separator
+        //  \t  Table column separator
         col.textLen = 0;
         for (;;) {
             char ch = *ptr++;
             if (!ch) {
-                return ptr - line - 1;
+                ptr -= 1;
+                goto CLEAR_IGNORED_WIDTHS;
             } else if (ch == '\n') {
-                return ptr - line;
+                goto CLEAR_IGNORED_WIDTHS;
             } else if (ch == '\t') {
+                // Next column
                 break;
             } else if (ch == ' ' || ch == '\r') {
-                // skip
+                // Skip potentially trailing spaces and carriage returns.
             } else {
+                // Standard text character. Include everything up to it.
                 col.textLen = int(ptr - col.text);
             }
         }
     }
+
+CLEAR_IGNORED_WIDTHS:
+    // Width limits can only be set on rows that are explicitly starting a
+    // new table (are marked with \f), this prevents multiply defined
+    // column rules.
+    if (!out->newTable) {
+        for (auto&& col : out->cols) {
+            // Not explicit start of table; make column width unspecified.
+            col.minPct = -1;
+            col.maxPct = -1;
+        }
+    }
+    return ptr - line;
+}
+
+//===========================================================================
+// Remove data from TableSize and apply it to the raw lines.
+static void applySize(vector<RawLine> * raws, TableSize * tab) {
+    for (auto && line : tab->rows) {
+        auto & cols = (*raws)[line].cols;
+        for (unsigned i = 0; i < cols.size(); ++i) {
+            if (tab->width[i])
+                cols[i].width = tab->width[i];
+        }
+    }
+}
+
+//===========================================================================
+// Remove data from TableSize and apply it to the raw lines.
+static void reset(TableSize * tab) {
+    tab->width.clear();
+    tab->rows.clear();
 }
 
 //===========================================================================
@@ -3330,8 +3373,12 @@ static int wrapIndent(int indent, size_t width) {
 }
 
 //===========================================================================
-// Appends formatted text to *outPtr, adds the number of formatted lines to
-// *lines, and returns the new output column position.
+// Appends formatted text to *outPtr.
+// Increases *lines by the number of line breaks generated.
+// Returns the new output column position.
+//
+//  SP  Soft word break
+//  \b  non-breaking space
 static size_t formatCol(
     string * outPtr,
     int * lines,
@@ -3401,15 +3448,7 @@ static size_t formatCol(
 }
 
 //===========================================================================
-// Returns number of output lines after formatting.
-//
-// Special characters:
-//  \s  soft word break
-//  \b  non-breaking space
-//  \t  transitions from key to description column
-//  \v  increase indentation after line wrap by one
-//  \r  reduced indentation after line wrap by one
-//  \f  line starts a new table, not extending current table at this indent
+// Returns number of line breaks added by formatting.
 static int formatLine(
     string * outPtr,
     const RawLine & raw,
@@ -3430,8 +3469,9 @@ static int formatLine(
 }
 
 //===========================================================================
-// Returns formatted text and adds lines generated to *lines.
+// Returns formatted text.
 static string format(const Cli::Config & cfg, const string & text) {
+    // Parse into lines and columns.
     vector<RawLine> raws;
     for (auto ptr = text.c_str(); *ptr;) {
         raws.emplace_back();
@@ -3439,37 +3479,28 @@ static string format(const Cli::Config & cfg, const string & text) {
         ptr += parseLine(&raw, ptr);
     }
 
-    struct TableInfo {
-        vector<int> width;
-        vector<int> rows;
-
-        void apply(vector<RawLine> * raws) {
-            for (auto && line : this->rows) {
-                auto & cols = (*raws)[line].cols;
-                for (unsigned i = 0; i < cols.size(); ++i) {
-                    if (this->width[i])
-                        cols[i].width = this->width[i];
-                }
-            }
-            this->width.clear();
-            this->rows.clear();
-        }
-    };
-    unordered_map<int, TableInfo> tables;
+    // Calculate table column widths.
+    unordered_map<int, TableSize> tables;
     for (unsigned i = 0; i < raws.size(); ++i) {
         auto & raw = raws[i];
         auto & cols = raw.cols;
-        if (cols.size() == 1)
+        if (cols.size() == 1) {
+            // Paragraph (not a table because there's only one column), no need
+            // to calculate column widths.
             continue;
+        }
         auto & tab = tables[cols[0].indent];
-        if (raw.newTable)
-            tab.apply(&raws);
+        if (raw.newTable) {
+            // Update prior table at this indent and reset the calculated
+            // widths to start the new table.
+            applySize(&raws, &tab);
+            reset(&tab);
+        }
         tab.rows.push_back(i);
-        if (cols.size() > tab.width.size())
-            tab.width.resize(cols.size());
         auto & tcols = raws[tab.rows[0]].cols;
         if (tcols.size() < cols.size())
             tcols.resize(cols.size());
+        tab.width.resize(tcols.size());
         for (unsigned icol = 0; icol < cols.size(); ++icol) {
             auto & tcol = tcols[icol];
             if (tcol.maxPct == -1) {
@@ -3489,20 +3520,45 @@ static string format(const Cli::Config & cfg, const string & text) {
         }
     }
     for (auto && kv : tables)
-        kv.second.apply(&raws);
+        applySize(&raws, &kv.second);
 
-    int cnt = 0;
+    // Render text.
+    int lineBreaks = 0;
     string out;
     if (auto num = (int) raws.size()) {
-        cnt += num - 1;
-        cnt += formatLine(&out, raws[0], cfg.maxLineWidth);
+        lineBreaks += num - 1; // Number explicitly added in following loop.
+        lineBreaks += formatLine(&out, raws[0], cfg.maxLineWidth);
         for (auto i = 1; i < num; ++i) {
             out += '\n';
-            cnt += formatLine(&out, raws[i], cfg.maxLineWidth);
+            lineBreaks += formatLine(&out, raws[i], cfg.maxLineWidth);
         }
     }
     return out;
 }
+
+//===========================================================================
+void Cli::printText(ostream & os, const string & text) {
+    os << format(*m_cfg, text);
+}
+
+
+/****************************************************************************
+*
+*   Help Text
+*
+***/
+
+namespace {
+
+struct ChoiceKey {
+    size_t pos;
+    const char * key;
+    const char * desc;
+    const char * sortKey;
+    bool def;
+};
+
+} // namespace
 
 //===========================================================================
 // static
@@ -3517,7 +3573,7 @@ string Cli::OptIndex::desc(
         // "default" tag is added to individual choices later.
     } else if (opt.m_flagValue && opt.m_flagDefault) {
         if (opt.m_defaultDesc && opt.m_defaultDesc->empty()) {
-            // Explicit and empty default descrtiption, suppress the clause.
+            // Explicit and empty default description, suppress the clause.
         } else {
             suffix += "(default)";
         }
@@ -3539,7 +3595,7 @@ string Cli::OptIndex::desc(
             if (!opt.defaultValueToString(tmp))
                 tmp.clear();
         } else if (opt.m_defaultDesc->empty()) {
-            // Explicit and empty default descrtiption, suppress the clause.
+            // Explicit and empty default description, suppress the clause.
         } else {
             tmp = *opt.m_defaultDesc;
         }
@@ -3938,11 +3994,6 @@ void Cli::printCommands(ostream & os) {
     string raw;
     writeCommands(&raw, *this);
     os << format(*m_cfg, raw);
-}
-
-//===========================================================================
-void Cli::printText(ostream & os, const string & text) {
-    os << format(*m_cfg, text);
 }
 
 //===========================================================================

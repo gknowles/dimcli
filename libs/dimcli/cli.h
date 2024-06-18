@@ -810,8 +810,9 @@ public:
     // may also include the following phrases:
     //  - \a<MIN> <MAX>\a
     //          Set min and max widths of a table column, where MIN and MAX
-    //          are percentages of console width encoded as floats. Used in
-    //          columns of a row that is marked with \f (new table).
+    //          are percentages of console width encoded as floats. Only in
+    //          columns of a row that is marked with \f (new table), otherwise
+    //          ignored.
     //  - \f    Start of new table, allowed in preamble of any or all columns.
     //
     // Tables can be interleaved.
