@@ -569,13 +569,14 @@ void Cli::Config::updateWidth(size_t width) {
     // to the width.
     //
     // With default console width of 80, and default min key width of 15%, this
-    // formula generates the following min key width values:
-    //      Width   MinKeyWidth
-    //        40         9
-    //        80        12
-    //       120        15
-    //       160        18
-    //       200        21
+    // formula generates the following name width values:
+    //              Name Width
+    //  Line Width   Min  Max
+    //        40       9   15
+    //        80      12   30
+    //       120      15   46
+    //       160      18   61
+    //       200      21   76
     this->minNameColPct = kDefaultMinNameColPct
         * (kDefaultConsoleWidth + width) / 2
         / width;
@@ -3233,15 +3234,21 @@ struct RawCol {
     float minPct = -1; // Width as percentage of line (-1 for unspecified).
     float maxPct = -1; // Width as percentage of line (-1 for unspecified).
 };
-
 struct RawLine {
     bool newTable {};
     vector<RawCol> cols;
 };
 
+struct ColumnSize {
+    int width = -1;
+    int softMax = 0;
+    bool hardMax = false;
+    int minWidth = -1;
+    int maxWidth = -1;
+};
 struct TableSize {
-    vector<int> width;  // Width of each table column.
-    vector<int> rows;   // Indexes to RawLines in the table.
+    vector<ColumnSize> cols;    // Width of each table column.
+    vector<int> rows;           // Indexes to RawLines in the table.
 };
 
 } // namespace
@@ -3314,10 +3321,9 @@ static size_t parseLine(RawLine * out, const char line[]) {
         for (;;) {
             char ch = *ptr++;
             if (!ch) {
-                ptr -= 1;
-                goto CLEAR_IGNORED_WIDTHS;
+                return ptr - line - 1;
             } else if (ch == '\n') {
-                goto CLEAR_IGNORED_WIDTHS;
+                return ptr - line;
             } else if (ch == '\t') {
                 // Next column
                 break;
@@ -3329,38 +3335,109 @@ static size_t parseLine(RawLine * out, const char line[]) {
             }
         }
     }
-
-CLEAR_IGNORED_WIDTHS:
-    // Width limits can only be set on rows that are explicitly starting a
-    // new table (are marked with \f), this prevents multiply defined
-    // column rules.
-    if (!out->newTable) {
-        for (auto&& col : out->cols) {
-            // Not explicit start of table; make column width unspecified.
-            col.minPct = -1;
-            col.maxPct = -1;
-        }
-    }
-    return ptr - line;
 }
 
 //===========================================================================
-// Remove data from TableSize and apply it to the raw lines.
-static void applySize(vector<RawLine> * raws, TableSize * tab) {
-    for (auto && line : tab->rows) {
+// Apply TableSize to the raw lines in the table.
+static void applySize(vector<RawLine> * raws, const TableSize & tab) {
+    for (auto && line : tab.rows) {
         auto & cols = (*raws)[line].cols;
         for (unsigned i = 0; i < cols.size(); ++i) {
-            if (tab->width[i])
-                cols[i].width = tab->width[i];
+            auto & tcol = tab.cols[i];
+            if (tcol.softMax && !tcol.hardMax) {
+                // Some cells in the column extend beyond the max width but
+                // none pass the hard max. Use a width just enough beyond the
+                // normal maximum that no line wrapping is needed.
+                cols[i].width = tcol.softMax;
+            } else {
+                // Line wrapping is either unneeded or inevitable, use the
+                // width as calculated.
+                cols[i].width = tcol.width;
+            }
         }
     }
 }
 
 //===========================================================================
-// Remove data from TableSize and apply it to the raw lines.
-static void reset(TableSize * tab) {
-    tab->width.clear();
+static void clear(TableSize * tab) {
+    tab->cols.clear();
     tab->rows.clear();
+}
+
+//===========================================================================
+static void calcColumns(
+    unordered_map<int, TableSize> * tables,
+    vector<RawLine> * raws,
+    int index,
+    const Cli::Config & cfg
+) {
+    auto & raw = (*raws)[index];
+    auto & cols = raw.cols;
+    auto ncols = raw.cols.size();
+    if (ncols == 1) {
+        // Paragraph (not a table because there's only one column), no need
+        // to calculate column widths.
+        return;
+    }
+    auto & tab = (*tables)[cols[0].indent];
+    if (raw.newTable) {
+        // Update prior table at this indent and reset the calculated
+        // sizes to start the new table.
+        applySize(raws, tab);
+        clear(&tab);
+    }
+    tab.rows.push_back(index);
+    if (tab.cols.size() < ncols) {
+        // Add column size entries for additional columns added by this row.
+        auto icol = tab.cols.size();
+        tab.cols.resize(ncols);
+        for (; icol < ncols; ++icol) {
+            auto & tcol = tab.cols[icol];
+            auto & col = cols[icol];
+            if (raw.newTable && col.minPct != -1) {
+                // Use min/max widths from preamble of this table cell.
+                assert(col.maxPct != -1);
+                tcol.minWidth =
+                    (int) round(col.minPct * cfg.maxLineWidth / 100);
+                tcol.maxWidth =
+                    (int) round(col.maxPct * cfg.maxLineWidth / 100);
+            } else {
+                // Width unspecified or prohibited; start with default min
+                // to max for first column and just the default min for all
+                // others.
+                tcol.minWidth =
+                    (int) round(cfg.minNameColPct * cfg.maxLineWidth / 100);
+                tcol.maxWidth = !icol
+                    ? (int) round(cfg.maxNameColPct * cfg.maxLineWidth / 100)
+                    : tcol.minWidth;
+            }
+        }
+    }
+
+    // Adjust column size entries based on contents of this row.
+    for (unsigned icol = 0; icol < cols.size(); ++icol) {
+        auto & tcol = tab.cols[icol];
+        auto & col = cols[icol];
+        int width = col.indent + col.textLen + 2;
+        if (width < tcol.minWidth) {
+            // The width of a cell must be at least minWidth
+            width = tcol.minWidth;
+        } else if (width > tcol.maxWidth + 2) {
+            // The text is so long that the cell width shouldn't try growing
+            // to match it.
+            tcol.hardMax = true;
+            width = tcol.minWidth;
+        } else if (width > tcol.maxWidth) {
+            // Text is between the max width and hard max; update soft max to
+            // be the largest value within that range.
+            tcol.softMax = max(width, tcol.softMax);
+            width = tcol.maxWidth;
+        }
+        if (width > tcol.width) {
+            // Widen column width to contain this table cell.
+            tcol.width = width;
+        }
+    }
 }
 
 //===========================================================================
@@ -3481,52 +3558,16 @@ static string format(const Cli::Config & cfg, const string & text) {
 
     // Calculate table column widths.
     unordered_map<int, TableSize> tables;
-    for (unsigned i = 0; i < raws.size(); ++i) {
-        auto & raw = raws[i];
-        auto & cols = raw.cols;
-        if (cols.size() == 1) {
-            // Paragraph (not a table because there's only one column), no need
-            // to calculate column widths.
-            continue;
-        }
-        auto & tab = tables[cols[0].indent];
-        if (raw.newTable) {
-            // Update prior table at this indent and reset the calculated
-            // widths to start the new table.
-            applySize(&raws, &tab);
-            reset(&tab);
-        }
-        tab.rows.push_back(i);
-        auto & tcols = raws[tab.rows[0]].cols;
-        if (tcols.size() < cols.size())
-            tcols.resize(cols.size());
-        tab.width.resize(tcols.size());
-        for (unsigned icol = 0; icol < cols.size(); ++icol) {
-            auto & tcol = tcols[icol];
-            if (tcol.maxPct == -1) {
-                // Width unspecified; start with default min to max for first
-                // column and just the default min for all others.
-                tcol.minPct = cfg.minNameColPct;
-                tcol.maxPct = !icol ? cfg.maxNameColPct : cfg.minNameColPct;
-            }
-            auto & col = cols[icol];
-            int width = col.indent + col.textLen + 2;
-            int minWidth = (int) round(tcol.minPct * cfg.maxLineWidth / 100);
-            int maxWidth = (int) round(tcol.maxPct * cfg.maxLineWidth / 100);
-            if (width < minWidth || width > maxWidth + 2)
-                width = minWidth;
-            if (width > tab.width[icol])
-                tab.width[icol] = min(width, maxWidth);
-        }
-    }
+    for (unsigned i = 0; i < raws.size(); ++i)
+        calcColumns(&tables, &raws, i, cfg);
     for (auto && kv : tables)
-        applySize(&raws, &kv.second);
+        applySize(&raws, kv.second);
 
     // Render text.
     int lineBreaks = 0;
     string out;
     if (auto num = (int) raws.size()) {
-        lineBreaks += num - 1; // Number explicitly added in following loop.
+        lineBreaks += num - 1; // Breaks explicitly added in following loop.
         lineBreaks += formatLine(&out, raws[0], cfg.maxLineWidth);
         for (auto i = 1; i < num; ++i) {
             out += '\n';
