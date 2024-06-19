@@ -12,18 +12,18 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
 - Fixed - Assert calling cli.title() immediately after creating new option
-          group via cli.command(...).
-- Added - Support populating unknownArgs from any command.
+          group via cli.command(...)
+- Added - Support populating unknownArgs from any command
 - Fixed - No error when too few values for option named after optional operand,
-          for example: cli.optVec<string>("[FILES] files").size(2, 4);
-- Added - Robust quoting and escaping in names definition strings.
-- Added - New name suffix '!' for final option.
-- Fixed - Wrong argument sometimes reported by "Unknown argument" error.
-- Added - Value list (one option followed by multiple arguments).
-- Fixed - opt.defaultDesc("") doesn't suppress a flag value's (default) clause.
-- Added - opt.nameDesc() for overriding first column in options list.
-- Fixed - Crash in cli.printText() processing some custom tables.
-- Fixed - Docs for cli.parseExit() wrongly duplicated from cli.fail().
+          like "[FILES] files"
+- Added - Robust quoting and escaping in names definition strings
+- Added - New name suffix '!' for final option
+- Fixed - Wrong argument sometimes reported by "Unknown argument" error
+- Added - Value list (one option followed by multiple arguments)
+- Fixed - opt.defaultDesc("") doesn't suppress a flag value's (default) clause
+- Added - opt.nameDesc() for overriding first column in options list
+- Fixed - Crash in cli.printText() processing some custom tables
+- Fixed - Docs for cli.parseExit() wrongly duplicated from cli.fail()
 
 ## dimcli 7.2.0 (2024-02-22)
 - Added - More cli.to\*Cmdline() and cli.to\*CmdlineL() overloads
