@@ -53,7 +53,8 @@ nav#toc .nav-link:hover {
     background-color: steelblue;
     color: white;
 }
-nav#toc .nav-link.active {
+nav#toc .nav-link.active,
+nav#toc .nav-shadow .nav-link {
     color: black;
     font-weight: bold;
 }
