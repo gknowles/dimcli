@@ -51,4 +51,8 @@ Distributed under the Boost Software License, Version 1.0.
     3. Run "vcpkg x-add-version dimcli" and commit its changes.
 
 # Outstanding Issues
-None
+1. Codecov fails to update for master after merge. When the update to master
+   is simply catching up to dev it points at the same commit id that already
+   had coverage data uploaded when dev was built. Apparently codecov ignores
+   the master coverage because it looks like a duplicate for the dev coverage.
+   It might even be updating the dev coverage...
