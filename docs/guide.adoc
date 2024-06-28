@@ -1928,7 +1928,7 @@ representative inputs:
 
 [cols=13*, role=smaller-td-font]
 |===
-.2+.^h| Input
+.2+^.<h| Input
 12+^h| Flags
 h| -       h| +I       h| +BP       h| +BP,I
 h| "m"     h| "m" +I   h| "m" +BP   h| "m" +BP,I
