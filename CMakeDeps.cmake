@@ -6,6 +6,7 @@
 # conf/cmtupd.xml
 # configure.bat
 # docs/docgen.xml
+# docs/favicon.ico
 # docs/guide.adoc
 # docs/reference.adoc
 # docs/release-checklist.md

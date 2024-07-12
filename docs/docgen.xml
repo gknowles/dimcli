@@ -6,7 +6,7 @@ docgen config file
 https://github.com/gknowles/dimapp/tree/master/tools/docgen
 -->
 <Docs>
-  <Site name="DIMCLI" outDir="../vendor/gh-pages">
+  <Site name="DIMCLI" favicon="favicon.ico" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
     <Version tag="HEAD"/>
     <Version tag="v7.3.0" default="true"/>
@@ -29,40 +29,6 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Version tag="v2.0.0" layout="md"/>
     <Version tag="v1.0.3" layout="md"/>
   </Site>
-  <Samples outDir="../bin/docgen">
-    <Code>
-      <Lang name="C++"/>
-      <Lang name="cpp"/>
-      <File extension="cpp"/>
-      <Compile untracked="true">
-        <Arg value="cl"/>
-        <Arg value="/nologo"/>
-        <Arg value="/std:c++latest"/>
-        <Arg value="/permissive-"/>
-        <Arg value="/W4"/>
-        <Arg value="/wd4100"/> <!-- unreferenced formal parameter -->
-        <Arg value="/wd4459"/> <!-- declaration hides global declaration -->
-        <Arg value="/wd4996"/> <!-- function or variable may be unsafe -->
-        <Arg value="/WX"/>
-        <Arg value="/I../../../../libs"/>
-        <Arg value="/Fea.out"/>
-        <Arg value="../../../../libs/dimcli/cli.cpp"/>
-      </Compile>
-    </Code>
-    <Script>
-      <Lang name="shell session"/>
-      <Lang name="console"/>
-      <ShellPrefix value="$ "/>
-      <CommentPrefix value="$ #"/>
-      <SetEnv regex="^\$\sexport\s([^=&quot;]+)=(.*)$"/>
-      <SetEnv regex="^\$\sexport\s&quot;([^=&quot;]+)=([^&quot;]*)&quot;$"/>
-      <Shell>
-        <Arg value="cmd"/>
-        <Arg value="/D"/>   <!-- disable execution of autorun commands -->
-        <Arg value="/C"/>   <!-- execute string and terminate -->
-      </Shell>
-    </Script>
-  </Samples>
   <Layout name="default">
     <Page name="User's Guide" file="guide.adoc" default="true"/>
     <Page name="Reference" file="reference.adoc"/>
@@ -112,4 +78,45 @@ index 3374002..9d19b44 100644
     <Column content="toc" maxWidth="25%"/>
     <Column content="body"/>
   </PageLayout>
+
+
+  <Samples outDir="../bin/docgen">
+    <Code>
+      <Lang name="C++"/>
+      <Lang name="cpp"/>
+      <File extension="cpp"/>
+      <Compile untracked="true">
+        <Arg value="cl"/>
+        <Arg value="/nologo"/>
+        <Arg value="/std:c++latest"/>
+        <Arg value="/permissive-"/>
+        <Arg value="/W4"/>
+        <Arg value="/wd4100"/>
+        <!-- unreferenced formal parameter -->
+        <Arg value="/wd4459"/>
+        <!-- declaration hides global declaration -->
+        <Arg value="/wd4996"/>
+        <!-- function or variable may be unsafe -->
+        <Arg value="/WX"/>
+        <Arg value="/I../../../../libs"/>
+        <Arg value="/Fea.out"/>
+        <Arg value="../../../../libs/dimcli/cli.cpp"/>
+      </Compile>
+    </Code>
+    <Script>
+      <Lang name="shell session"/>
+      <Lang name="console"/>
+      <ShellPrefix value="$ "/>
+      <CommentPrefix value="$ #"/>
+      <SetEnv regex="^\$\sexport\s([^=&quot;]+)=(.*)$"/>
+      <SetEnv regex="^\$\sexport\s&quot;([^=&quot;]+)=([^&quot;]*)&quot;$"/>
+      <Shell>
+        <Arg value="cmd"/>
+        <Arg value="/D"/>
+        <!-- disable execution of autorun commands -->
+        <Arg value="/C"/>
+        <!-- execute string and terminate -->
+      </Shell>
+    </Script>
+  </Samples>
 </Docs>
