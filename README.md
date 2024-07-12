@@ -23,7 +23,7 @@ Distributed under the Boost Software License, Version 1.0.
 C++ command line parser toolkit for kids of all ages.
 
 - GNU style command lines (-o, --output=FILE, etc.)
-- Parses directly to any supplied (or implicitly created) variable that is:
+- Parses to any supplied (or implicitly created) variable whose type is:
   - Default constructible
   - Copyable
   - Either assignable or constructible from string, has an istream extraction
@@ -33,7 +33,7 @@ C++ command line parser toolkit for kids of all ages.
 - Git style subcommands.
 - Response files (requires `<filesystem>` support).
 - Convert argv to/from command line with Windows, Posix, or GNU semantics.
-- Wordwrap arbitrary paragraphs and simple text tables for console.
+- Wordwrap arbitrary paragraphs and simple text tables for console output.
 - Works whether or not exceptions and RTTI are disabled.
 - Distributed under the Boost Software License, Version 1.0.
 
