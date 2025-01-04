@@ -33,7 +33,7 @@ C++ command line parser toolkit for kids of all ages.
 - Git style subcommands.
 - Response files (requires `<filesystem>` support).
 - Convert argv to/from command line with Windows, Posix, or GNU semantics.
-- Wordwrap arbitrary paragraphs and simple text tables for console output.
+- Word wrap arbitrary paragraphs and simple text tables for console output.
 - Works whether or not exceptions and RTTI are disabled.
 - Distributed under the Boost Software License, Version 1.0.
 
