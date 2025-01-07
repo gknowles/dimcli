@@ -107,9 +107,9 @@ jobs:
           - env: CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
             image: ubuntu-20.04
           - env: CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
-            image: ubuntu-24.04
+            image: ubuntu-22.04
           - env: CXX=clang++-17 CC=clang-17 INSTALL_LLVM=17
-            image: ubuntu-24.04
+            image: ubuntu-22.04
           - env: CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
             image: ubuntu-24.04
           - env: CXX=g++-7 CC=gcc-7 INSTALL_APT=7
