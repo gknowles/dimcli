@@ -5,7 +5,7 @@
 #
 # Use this one file *unmodified* for all projects that follow the convections.
 # All the careful tweaking is for Visual Studio, but it works on linux with
-# both gcc and clang (at least well enough to do travis builds :P).
+# both gcc and clang (at least well enough for CI :P).
 #
 # Project layout:
 #   /<project_name>
@@ -25,6 +25,7 @@
 #   /<project_name>/vendor/<vendor_project_name>/ - only if
 #       /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
 #   /<project_name>/web/** - web UI for server projects (html, images, etc)
+#   /<project_name>/site/** - standalone website, dirs reflected as folders
 #
 # Code files:
 # Source files are expected to be "*.cpp" and "*.h".
@@ -70,7 +71,14 @@
 # a CMakeLists.txt file. It is expected to be a compatible version of this
 # file, and only it's lib projects will be included in the root solution.
 
-cmake_minimum_required(VERSION 3.6)
+
+#############################################################################
+#
+#   Options
+#
+####
+
+cmake_minimum_required(VERSION 3.8)
 option(BUILD_PROJECT_NAME "Override name of project to build" OFF)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
@@ -85,6 +93,35 @@ option(INSTALL_TESTS "Install includes test binaries" OFF)
 set(tmp "${BUILD_COVERAGE}")        # only used by clang and gcc builds
 set(tmp "${CMAKE_BUILD_TYPE}")      # not used (vcpkg sets it)
 set(tmp "${LINK_STATIC_RUNTIME}")   # not used by clang or gcc builds
+
+
+#############################################################################
+#
+#   Changelog
+#
+####
+
+# 2017-01-27 - First generalized CMakeLists.txt
+# 2017-04-07 - Changed - Rename CMakePredefinedTargets folder names
+# 2017-04-19 - Added - file/conf project
+# 2017-04-25 - Added - Include non-C++ files in tool and test projects
+# 2017-09-14 - Changed - Macro prefixes from DIM_LIB to <libname>_LIB
+# 2017-11-10 - Added - vcpkg build directory handling
+# 2018-03-01 - Added - Include props files in predefined targets
+# 2018-10-18 - Added - Enable ctest when BUILD_TESTING enabled
+# 2019-05-27 - Added - Include all top level *.yml files
+# 2021-06-08 - Changed - Moved conf directory from bin/conf to top level
+# 2021-06-11 - Changed - Stop copying *.sln to top level
+# 2021-07-10 - Added - Include *.rst doc files
+# 2021-09-07 - Added - Include github workflow definitions
+# 2021-09-08 - Added - ASAN to coverage build
+# 2022-03-06 - Added - Separate docs project
+# 2022-04-18 - Added - /web directory in files project
+# 2023-01-21 - Changed - Only create test projects if BUILD_TESTING enabled
+# 2024-02-18 - Removed - install_archive_pdb() in favor of /Z7
+# 2024-07-19 - Added - Site projects
+# 2024-07-20 - Added - Changelog
+# 2025-01-09 - Changed - Use --std=c++2c with supporting GCC and Clang
 
 
 #############################################################################
@@ -247,8 +284,9 @@ foreach(var ${config_defines})
 endforeach()
 
 # Setting source_group to a single space is weird and relies on Visual Studio
-# treating it as no group, ideally we'd set it to the empty string to mean
-# no group, but - just for regexes (bug?) - that causes CMake to use defaults.
+# treating it as no group, you'd expect setting it to the empty string would
+# mean no group, but - just for regexes (bug?) - that causes CMake to use
+# defaults.
 source_group(" " REGULAR_EXPRESSION ".*")
 source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
 source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
@@ -502,7 +540,7 @@ function(add_lib_project tgt srcdir)
     write_user_file(${tgt} "debug;props")
 endfunction()
 
-function(add_file_project tgt)
+function(add_file_project tgt folder)
     set(sources ${ARGN})
     list(LENGTH sources num)
     if(num)
@@ -510,7 +548,7 @@ function(add_file_project tgt)
         set(deps ${deps} PARENT_SCOPE)
         add_custom_target(${tgt} SOURCES ${sources})
         set_target_properties(${tgt} PROPERTIES
-            FOLDER files
+            FOLDER ${folder}
             EXCLUDE_FROM_ALL false)
     endif()
 endfunction()
@@ -541,7 +579,18 @@ if(sources)
     if (NOT ROOT_PROJECT)
         set(prjname web-${PROJECT_NAME})
     endif()
-    add_file_project(${prjname} ${sources})
+    add_file_project(${prjname} files ${sources})
+endif()
+
+# website file targets
+file(GLOB_RECURSE sources site/*)
+if(sources)
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/site FILES ${sources})
+    set(prjname site)
+    if (NOT ROOT_PROJECT)
+        set(prjname site-${PROJECT_NAME})
+    endif()
+    add_file_project(${prjname} files ${sources})
 endif()
 
 if(NOT ROOT_PROJECT)
@@ -571,15 +620,15 @@ file(GLOB sources
 file(GLOB_RECURSE allnames .github/*.yml)
 list(APPEND sources ${allnames})
 if(sources)
-    add_file_project(about ${sources})
+    add_file_project(about files ${sources})
 endif()
 file(GLOB_RECURSE sources conf/*)
 if(sources)
-    add_file_project(conf ${sources})
+    add_file_project(conf files ${sources})
 endif()
 file(GLOB_RECURSE sources docs/*)
 if(sources)
-    add_file_project(docs ${sources})
+    add_file_project(docs files ${sources})
 endif()
 
 # tool targets
