@@ -4,19 +4,6 @@ Distributed under the Boost Software License, Version 1.0.
 
 cmtupd config file
 https://github.com/gknowles/dimapp/tree/master/tools/cmtupd
-
-Auto-generated variables:
-    $CurrentYear: current year, 4-digits
-    $CommitYear: year file was last committed, 4-digits
-
-Lines matched by Match/@regex are replaced with @replace if an update action
-is triggered.
-
-The attributes @regex, @value, and @default are interpreted as attribute value
-templates, which means that Var's values can be embedded by surrounding the Var
-name in braces. This also means that any braces in the string must be escaped.
-Braces are escaped by doubling them up, so '{{' and '}}' are interpreted as '{'
-and '} respectively.
 -->
 <Comments>
   <Rule name="Copyright">
