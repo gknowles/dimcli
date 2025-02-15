@@ -9,8 +9,8 @@ Auto-generated variables:
     $CurrentYear: current year, 4-digits
     $CommitYear: year file was last committed, 4-digits
 
-Lines matched by Match/@regex are replaced with @replace if the file's
-$CommitYear is greater than LastYear.
+Lines matched by Match/@regex are replaced with @replace if an update action
+is triggered.
 
 The attributes @regex, @value, and @default are interpreted as attribute value
 templates, which means that Var's values can be embedded by surrounding the Var
@@ -25,6 +25,11 @@ and '} respectively.
         replace="{Prefix}Copyright {Owner} {FirstYear} - {$CurrentYear}.">
       <Capture var="FirstYear"/>
       <Capture var="LastYear" default="{FirstYear}"/>
+      <Action type="skip" arg1="{LastYear}" op=">" arg2="{$CommitYear}"
+          report="NEWER" reportType="warn"/>
+      <Action type="update" arg1="{LastYear}" op="&lt;" arg2="{$CommitYear}"
+          report="UPDATED" reportType="note"
+          checkReport="obsolete" checkReportType="warn"/>
     </Match>
     <Group>
       <File regex="CMakeLists\.txt"/>
