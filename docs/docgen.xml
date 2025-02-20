@@ -14,10 +14,10 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Version tag="v7.1.1"/>
     <Version tag="v7.1.0"/>
     <Version tag="v7.0.0"/>
-    <Version tag="v6.2.1" layout="adoc"/>
+    <Version tag="v6.2.1" layout="adoc"/>  <!-- layout missing in v6.2.1 -->
     <Version tag="v6.2.0"/>
     <Version tag="v6.1.0"/>
-    <Version tag="v6.0.0" layout="v6"/>
+    <Version tag="v6.0.0" layout="v6"/>    <!-- first version with docgen -->
     <Version tag="v5.0.2" layout="md +ref"/>
     <Version tag="v5.0.1" layout="md +ref"/>
     <Version tag="v5.0.0" layout="md +ref"/>
@@ -95,12 +95,9 @@ index 3374002..9d19b44 100644
         <Arg value="/std:c++latest"/>
         <Arg value="/permissive-"/>
         <Arg value="/W4"/>
-        <Arg value="/wd4100"/>
-        <!-- unreferenced formal parameter -->
-        <Arg value="/wd4459"/>
-        <!-- declaration hides global declaration -->
-        <Arg value="/wd4996"/>
-        <!-- function or variable may be unsafe -->
+        <Arg value="/wd4100"/> <!-- unreferenced formal parameter -->
+        <Arg value="/wd4459"/> <!-- declaration hides global declaration -->
+        <Arg value="/wd4996"/> <!-- function or variable may be unsafe -->
         <Arg value="/WX"/>
         <Arg value="/I../../../../libs"/>
         <Arg value="/Fea.out"/>
@@ -116,10 +113,8 @@ index 3374002..9d19b44 100644
       <SetEnv regex="^\$\sexport\s&quot;([^=&quot;]+)=([^&quot;]*)&quot;$"/>
       <Shell>
         <Arg value="cmd"/>
-        <Arg value="/D"/>
-        <!-- disable execution of autorun commands -->
-        <Arg value="/C"/>
-        <!-- execute string and terminate -->
+        <Arg value="/D"/> <!-- disable execution of autorun commands -->
+        <Arg value="/C"/> <!-- execute string and terminate -->
       </Shell>
     </Script>
   </Samples>
