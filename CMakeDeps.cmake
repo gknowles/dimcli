@@ -8,8 +8,8 @@
 # docs/docgen.xml
 # docs/favicon.ico
 # docs/guide.adoc
+# docs/howto-publish.md
 # docs/reference.adoc
-# docs/release-checklist.md
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
 # tests/cli/clitest.cpp
