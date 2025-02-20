@@ -14,7 +14,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Version tag="v7.1.1"/>
     <Version tag="v7.1.0"/>
     <Version tag="v7.0.0"/>
-    <Version tag="v6.2.1"/>
+    <Version tag="v6.2.1" layout="adoc"/>
     <Version tag="v6.2.0"/>
     <Version tag="v6.1.0"/>
     <Version tag="v6.0.0" layout="v6"/>
@@ -34,6 +34,11 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
     <Page name="ReadMe" file="../README.md" site="false"/>
+  </Layout>
+  <Layout name="adoc">
+    <Page name="User's Guide" file="guide.adoc" default="true"/>
+    <Page name="Reference" file="reference.adoc"/>
+    <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
   </Layout>
   <Layout name="v6">
     <Page name="User's Guide" file="guide.adoc" default="true">
@@ -78,7 +83,6 @@ index 3374002..9d19b44 100644
     <Column content="toc" maxWidth="25%"/>
     <Column content="body"/>
   </PageLayout>
-
 
   <Samples outDir="../bin/docgen">
     <Code>
