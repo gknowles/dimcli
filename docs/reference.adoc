@@ -1,5 +1,5 @@
 ﻿////
-Copyright Glen Knowles 2019 - 2024.
+Copyright Glen Knowles 2019 - 2025.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -100,7 +100,8 @@ miscellaneous state. Returns true if processing should continue.
 | Turns console echo on or off.
 
 | Cli::consoleWidth
-| Get the default width or query the console for it.
+| Get the console width, optionally try getting it from the current console,
+otherwise fallback to the built in default.
 |===
 
 == Option Names
@@ -507,7 +508,7 @@ Only for columns in rows that are marked with '\f' (new table).
 ! \b ! Non-breaking space.
 !===
 
-| cli.<<guide.adoc#value-description, valueDesc>><T>
+| Cli::<<guide.adoc#value-description, valueDesc>><T>
 | Default friendly name for type, such as NUM, FLOAT, or STRING.
 |===
 

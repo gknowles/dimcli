@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2024.
+// Copyright Glen Knowles 2016 - 2025.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.cpp - dimcli
@@ -159,90 +159,6 @@ struct RawValue {
 
 } // namespace
 
-struct Cli::OptIndex {
-    vector<OptBase *> m_opts;
-    unordered_map<char, OptName> m_shortNames;
-    unordered_map<string, OptName> m_longNames;
-    vector<OptName> m_oprNames;
-    bool m_allowCommands = {};
-
-    enum class Final {
-        // In order of priority
-        kUnset,     // nothing interesting found
-        kUnsetOpt,  // found an optional operand w/o final
-        kUnsetVar,  // found variable size operand w/o final
-        kOpt,       // found final on an optional operand
-        kReq,       // found final on required operand
-    } m_final = {};
-    int m_minOprs = 0;
-    int m_finalOpr = 0;
-
-    void index(
-        const Cli & cli,
-        const string & cmd,
-        bool forHelpText
-    );
-    void index(OptBase & opt);
-    vector<OptKey> findNamedOpts(
-        const Cli & cli,
-        CommandConfig & cmd,
-        NameListType type,
-        bool flatten
-    ) const;
-    string nameList(
-        const Cli & cli,
-        const OptBase & opt,
-        NameListType type
-    ) const;
-
-    static bool includeOptText(OptBase & opt, const string & cmd);
-    static bool includeOptValue(OptBase & opt, const string & cmd);
-    static string desc(const OptBase & opt, bool withMarkup = true);
-    static const unordered_map<string, OptBase::ChoiceDesc> & choiceDescs(
-        const OptBase & opt
-    );
-
-    // May completely replace index to new command if one is found.
-    bool parseToRawValues(
-        vector<RawValue> * out,
-        const vector<string> & args,
-        Cli & cli
-    );
-
-
-private:
-    bool indexOperandName(
-        OptBase & opt,
-        const string & name,
-        unsigned flags,
-        int pos
-    );
-    bool indexShortName(
-        OptBase & opt,
-        char name,
-        unsigned flags,
-        int pos
-    );
-    bool indexLongName(
-        OptBase & opt,
-        const string & name,
-        unsigned flags,
-        int pos
-    );
-
-    bool parseOperandValue(
-        vector<RawValue> * out,
-        ParseState & st,
-        Cli & cli
-    );
-    bool parseOptionValue(
-        vector<RawValue> * out,
-        ParseState & st,
-        Cli & cli,
-        const vector<string> & args
-    );
-};
-
 struct Cli::Config {
     vector<function<BeforeFn>> befores;
     bool allowUnknown = false;
@@ -289,6 +205,102 @@ struct Cli::Config {
 
     Config();
     void updateWidth(size_t width);
+};
+
+struct Cli::OptIndex {
+    vector<OptBase *> m_opts;
+    unordered_map<char, OptName> m_shortNames;
+    unordered_map<string, OptName> m_longNames;
+    vector<OptName> m_oprNames;
+    bool m_allowCommands = {};
+
+    enum class Final {
+        // In order of priority
+        kUnset,     // nothing interesting found
+        kUnsetOpt,  // found an optional operand w/o final
+        kUnsetVar,  // found variable size operand w/o final
+        kOpt,       // found final on an optional operand
+        kReq,       // found final on required operand
+    } m_final = {};
+    int m_minOprs = 0;
+    int m_finalOpr = 0;
+
+    //-----------------------------------------------------------------------
+    // Build index
+
+    // Members just to get access to protected members of OptBase.
+    static bool includeOptText(OptBase & opt, const string & cmd);
+    static bool includeOptValue(OptBase & opt, const string & cmd);
+
+    void index(
+        const Cli & cli,
+        const string & cmd,
+        bool forHelpText
+    );
+    void index(OptBase & opt);
+
+    //-----------------------------------------------------------------------
+    // Help Text
+    vector<OptKey> findNamedOpts(
+        const Cli & cli,
+        CommandConfig & cmd,
+        NameListType type,
+        bool flatten
+    ) const;
+
+    // Members just to get access to protected members of OptBase.
+    static string desc(const OptBase & opt, bool withMarkup = true);
+    static const unordered_map<string, OptBase::ChoiceDesc> & choiceDescs(
+        const OptBase & opt
+    );
+
+    //-----------------------------------------------------------------------
+    // Parsing
+    // Will completely rebuild index for new command if one is found.
+    bool parseToRawValues(
+        vector<RawValue> * out,
+        const vector<string> & args,
+        Cli & cli
+    );
+
+
+private:
+    bool indexOperandName(
+        OptBase & opt,
+        const string & name,
+        unsigned flags,
+        int pos
+    );
+    bool indexShortName(
+        OptBase & opt,
+        char name,
+        unsigned flags,
+        int pos
+    );
+    bool indexLongName(
+        OptBase & opt,
+        const string & name,
+        unsigned flags,
+        int pos
+    );
+
+    bool parseOperandValue(
+        vector<RawValue> * out,
+        ParseState & st,
+        Cli & cli
+    );
+    bool parseOptionValue(
+        vector<RawValue> * out,
+        ParseState & st,
+        Cli & cli,
+        const vector<string> & args
+    );
+
+    string nameDescList(
+        const Cli & cli,
+        const OptBase & opt,
+        NameListType type
+    ) const;
 };
 
 
@@ -400,6 +412,40 @@ static string intToString(const Cli::Convert & cvt, int val) {
     string tmp;
     (void) cvt.toString(tmp, val);
     return tmp;
+}
+
+//===========================================================================
+static bool parseBool(bool & out, const string & val) {
+    static const unordered_map<string, bool> allowed = {
+        { "1", true },
+        { "t", true },
+        { "y", true },
+        { "+", true },
+        { "true", true },
+        { "yes", true },
+        { "on", true },
+        { "enable", true },
+
+        { "0", false },
+        { "f", false },
+        { "n", false },
+        { "-", false },
+        { "false", false },
+        { "no", false },
+        { "off", false },
+        { "disable", false },
+    };
+
+    string tmp = val;
+    auto & f = use_facet<ctype<char>>(locale());
+    f.tolower(tmp.data(), tmp.data() + tmp.size());
+    auto i = allowed.find(tmp);
+    if (i == allowed.end()) {
+        out = false;
+        return false;
+    }
+    out = i->second;
+    return true;
 }
 
 
@@ -682,7 +728,7 @@ bool Cli::OptBase::withUnits(
 
 /****************************************************************************
 *
-*   Cli::OptIndex
+*   Cli::OptIndex (Build index)
 *
 ***/
 
@@ -1020,147 +1066,6 @@ bool Cli::OptIndex::indexLongName(
     return true;
 }
 
-//===========================================================================
-vector<OptKey> Cli::OptIndex::findNamedOpts(
-    const Cli & cli,
-    CommandConfig & cmd,
-    NameListType type,
-    bool flatten
-) const {
-    vector<OptKey> out;
-    for (auto && opt : cli.m_cfg->opts) {
-        auto list = nameList(cli, *opt, type);
-        if (list.size()) {
-            OptKey key;
-            key.opt = opt.get();
-            key.list = list;
-
-            // Sort by group sort key followed by name list with leading
-            // dashes removed.
-            key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
-            if (flatten && key.sort != kInternalOptionGroup)
-                key.sort.clear();
-            key.sort += '\0';
-            key.sort += list.substr(list.find_first_not_of('-'));
-            out.push_back(key);
-        }
-    }
-    sort(out.begin(), out.end(), [](auto & a, auto & b) {
-        return a.sort < b.sort;
-    });
-    return out;
-}
-
-//===========================================================================
-static bool includeName(
-    const OptName & name,
-    NameListType type,
-    const Cli::OptBase & opt,
-    bool flag,
-    bool inverted
-) {
-    if (name.opt != &opt)
-        return false;
-    if (flag) {
-        if (type == kNameEnable)
-            return ~name.flags & fNameInvert;
-        if (type == kNameDisable)
-            return name.flags & fNameInvert;
-
-        // includeName is always called with a filter (i.e. not kNameAll).
-        assert(type == kNameNonDefault // LCOV_EXCL_LINE
-            && "Internal dimcli error: unknown NameListType.");
-        return inverted == bool(name.flags & fNameInvert);
-    }
-    return true;
-}
-
-//===========================================================================
-string Cli::OptIndex::nameList(
-    const Cli & cli,
-    const Cli::OptBase & opt,
-    NameListType type
-) const {
-    string list;
-
-    if (!opt.m_nameDesc.empty()) {
-        list = opt.m_nameDesc;
-        return list;
-    }
-
-    if (type == kNameAll) {
-        list = nameList(cli, opt, kNameEnable);
-        if (opt.m_bool) {
-            auto invert = nameList(cli, opt, kNameDisable);
-            if (!invert.empty()) {
-                list += list.empty() ? "/ " : " / ";
-                list += invert;
-            }
-        }
-        return list;
-    }
-
-    bool foundLong = false;
-    unsigned flags = 0;
-
-    // Names
-    vector<const decltype(m_shortNames)::value_type *> snames;
-    for (auto & sn : m_shortNames)
-        snames.push_back(&sn);
-    sort(snames.begin(), snames.end(), [](auto & a, auto & b) {
-        return a->second.pos < b->second.pos;
-    });
-    for (auto && sn : snames) {
-        if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        flags = sn->second.flags;
-        if (!list.empty())
-            list += ", ";
-        list += '-';
-        list += sn->first;
-    }
-    vector<const decltype(m_longNames)::value_type *> lnames;
-    for (auto & ln : m_longNames)
-        lnames.push_back(&ln);
-    sort(lnames.begin(), lnames.end(), [](auto & a, auto & b) {
-        return a->second.pos < b->second.pos;
-    });
-    for (auto && ln : lnames) {
-        if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        flags = ln->second.flags;
-        if (!list.empty())
-            list += ", ";
-        foundLong = true;
-        list += "--";
-        list += ln->first;
-    }
-    if (opt.m_bool || list.empty())
-        return list;
-
-    // Value
-    string valDesc;
-    if (!opt.m_valueDesc) {
-        valDesc = opt.defaultValueDesc();
-    } else if (opt.m_valueDesc->empty()) {
-        // Explicit and empty value description, suppress the clause.
-    } else {
-        valDesc = *opt.m_valueDesc;
-    }
-    if (!valDesc.empty()) {
-        if (flags & fNameOptional) {
-            list += foundLong ? "[=" : " [";
-            list += valDesc + "]";
-        } else {
-            list += foundLong ? '=' : ' ';
-            list += valDesc;
-            if (flags & fNameList)
-                list += "...";
-        }
-    }
-    return list;
-}
-
 
 /****************************************************************************
 *
@@ -1296,6 +1201,24 @@ Cli & Cli::operator=(Cli && from) noexcept {
 *   Configuration
 *
 ***/
+
+//===========================================================================
+// private
+void Cli::addOpt(unique_ptr<OptBase> src) {
+    m_cfg->opts.push_back(move(src));
+}
+
+//===========================================================================
+// private
+Cli::OptBase * Cli::findOpt(const void * value) {
+    if (value) {
+        for (auto && opt : m_cfg->opts) {
+            if (opt->sameValue(value))
+                return opt.get();
+        }
+    }
+    return nullptr;
+}
 
 //===========================================================================
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
@@ -1589,6 +1512,35 @@ Cli && Cli::envOpts(const string & var) && {
 #endif
 
 //===========================================================================
+Cli & Cli::maxWidth(int width, int minDescCol, int maxDescCol) & {
+    // Make sure the width is at least 20 characters.
+    if (width < 20)
+        width = 20;
+
+    // Set default values for min/max key width.
+    m_cfg->updateWidth(width);
+
+    if (minDescCol && minDescCol < width) {
+        // Update minNameColPct if minDescCol is set and valid.
+        m_cfg->minNameColPct = 100.0f * minDescCol / width;
+    }
+    if (maxDescCol
+        && (!minDescCol || maxDescCol >= minDescCol)
+        && maxDescCol < width
+    ) {
+        // Update maxNameColPct if maxDescCol is set and valid.
+        m_cfg->maxNameColPct = 100.0f * maxDescCol / width;
+    }
+
+    return *this;
+}
+
+//===========================================================================
+Cli && Cli::maxWidth(int width, int minDescCol, int maxDescCol) && {
+    return move(maxWidth(width, minDescCol, maxDescCol));
+}
+
+//===========================================================================
 Cli & Cli::responseFiles(bool enable) & {
     m_cfg->responseFiles = enable;
     return *this;
@@ -1621,54 +1573,1955 @@ ostream & Cli::conout() {
     return *m_cfg->conout;
 }
 
+
+/****************************************************************************
+*
+*   SI Units (Configuration)
+*
+***/
+
+static vector<pair<string, double>> s_siBinExplicit = {
+    {"ki", double(1ull << 10)},
+    {"Mi", double(1ull << 20)},
+    {"Gi", double(1ull << 30)},
+    {"Ti", double(1ull << 40)},
+    {"Pi", double(1ull << 50)},
+};
+static vector<pair<string, double>> s_siBin({
+    {"k", double(1ull << 10)},
+    {"M", double(1ull << 20)},
+    {"G", double(1ull << 30)},
+    {"T", double(1ull << 40)},
+    {"P", double(1ull << 50)},
+});
+static vector<pair<string, double>> s_siDec({
+    {"k", 1e+3},
+    {"M", 1e+6},
+    {"G", 1e+9},
+    {"T", 1e+12},
+    {"P", 1e+15},
+});
+static vector<pair<string, double>> s_siSmall({
+    {"m", 1e-3},
+    {"u", 1e-6},
+    {"n", 1e-9},
+    {"p", 1e-12},
+    {"f", 1e-15},
+});
+
 //===========================================================================
-Cli & Cli::maxWidth(int width, int minDescCol, int maxDescCol) & {
-    // Make sure the width is at least 20 characters.
-    if (width < 20)
-        width = 20;
-
-    // Set default values for min/max key width.
-    m_cfg->updateWidth(width);
-
-    if (minDescCol && minDescCol < width) {
-        // Update minNameColPct if minDescCol is set and valid.
-        m_cfg->minNameColPct = 100.0f * minDescCol / width;
+// static
+vector<pair<string, double>> Cli::siUnitMapping(
+    const string & symbol,
+    int flags
+) {
+    vector<pair<string, double>> units = s_siBinExplicit;
+    if (flags & fUnitBinaryPrefix) {
+        units.insert(units.end(), s_siBin.begin(), s_siBin.end());
+    } else {
+        units.insert(units.end(), s_siDec.begin(), s_siDec.end());
+        if (~flags & fUnitInsensitive) {
+            units.insert(units.end(), s_siSmall.begin(), s_siSmall.end());
+        }
     }
-    if (maxDescCol
-        && (!minDescCol || maxDescCol >= minDescCol)
-        && maxDescCol < width
+    if (!symbol.empty()) {
+        if (flags & fUnitRequire) {
+            for (auto && kv : units)
+                kv.first += symbol;
+        } else {
+            units.reserve(2 * units.size());
+            for (auto i = units.size(); i-- > 0;) {
+                auto & kv = units[i];
+                units.push_back({kv.first + symbol, kv.second});
+            }
+        }
+        units.push_back({symbol, 1});
+    }
+    return units;
+}
+
+
+/****************************************************************************
+*
+*   Response files
+*
+***/
+
+#ifdef DIMCLI_LIB_FILESYSTEM
+
+// forward declarations
+static bool expandResponseFiles(
+    Cli & cli,
+    vector<string> & args,
+    vector<string> & ancestors
+);
+
+//===========================================================================
+// Returns false on error, if there was an error content will either be empty
+// or - if there was a transcoding error - contain the original content.
+static bool loadFileUtf8(string & content, const fs::path & fn) {
+    content.clear();
+
+    error_code ec;
+    auto bytes = (size_t) fs::file_size(fn, ec);
+    if (ec) {
+        // A file system race is required for this to fail (fs::exist success
+        // immediately followed by fs::file_size failure) and there's no
+        // practical way to cause it in a test. So give up and exclude this
+        // line from the test coverage report.
+        return false; // LCOV_EXCL_LINE
+    }
+
+    content.resize(bytes);
+    ifstream f(fn, ios::binary);
+    f.read(const_cast<char *>(content.data()), content.size());
+    if (!f) {
+        content.clear();
+        return false;
+    }
+    f.close();
+
+    if (content.size() < 2)
+        return true;
+    if (content[0] == '\xff' && content[1] == '\xfe') {
+        wstring_convert<CodecvtWchar> wcvt("");
+        auto base = reinterpret_cast<const wchar_t *>(content.data());
+        auto tmp = (string) wcvt.to_bytes(
+            base + 1,
+            base + content.size() / sizeof *base
+        );
+        if (tmp.empty())
+            return false;
+        content = tmp;
+    } else if (content.size() >= 3
+        && content[0] == '\xef'
+        && content[1] == '\xbb'
+        && content[2] == '\xbf'
     ) {
-        // Update maxNameColPct if maxDescCol is set and valid.
-        m_cfg->maxNameColPct = 100.0f * maxDescCol / width;
+        content.erase(0, 3);
+    }
+    return true;
+}
+
+//===========================================================================
+static bool expandResponseFile(
+    Cli & cli,
+    vector<string> & args,
+    size_t & pos,
+    vector<string> & ancestors
+) {
+    string content;
+    error_code ec;
+    auto fn = args[pos].substr(1);
+    auto cfn = ancestors.empty()
+        ? (fs::path) fn
+        : fs::path(ancestors.back()).parent_path() / fn;
+    cfn = fs::canonical(cfn, ec);
+    if (ec || !fs::exists(cfn)) {
+        cli.badUsage("Invalid response file", fn);
+        return false;
+    }
+    for (auto && a : ancestors) {
+        if (a == cfn.string()) {
+            cli.badUsage("Recursive response file", fn);
+            return false;
+        }
+    }
+    ancestors.push_back(cfn.string());
+    if (!loadFileUtf8(content, cfn)) {
+        string desc = content.empty() ? "Read error" : "Invalid encoding";
+        cli.badUsage(desc, fn);
+        return false;
+    }
+    auto rargs = cli.toArgv(content);
+    if (!expandResponseFiles(cli, rargs, ancestors))
+        return false;
+    auto rargLen = rargs.size();
+    replace(args, pos, 1, move(rargs));
+    pos += rargLen - 1;
+    ancestors.pop_back();
+    return true;
+}
+
+//===========================================================================
+// "ancestors" contains the set of response files these args came from,
+// directly or indirectly, and is used to detect recursive response files.
+static bool expandResponseFiles(
+    Cli & cli,
+    vector<string> & args,
+    vector<string> & ancestors
+) {
+    for (size_t pos = 0; pos < args.size(); ++pos) {
+        if (!args[pos].empty() && args[pos][0] == '@') {
+            if (!expandResponseFile(cli, args, pos, ancestors))
+                return false;
+        }
+    }
+    return true;
+}
+
+#endif
+
+
+/****************************************************************************
+*
+*   Parse command line
+*
+***/
+
+namespace {
+
+enum class OprCat {
+    kMinReq,    // Minimum expected for all required opts (vectors may be >1)
+    kReq,       // Max expected for all required opts
+    kOpt,       // All optionals
+};
+
+} // namespace
+
+//===========================================================================
+static int numMatches(
+    OprCat cat,
+    int avail,
+    const OptName & optn
+) {
+    bool op = optn.flags & fNameOptional;
+    auto minVec = optn.opt->minSize();
+    auto maxVec = optn.opt->maxSize();
+    bool vec = minVec != 1 || maxVec != 1;
+
+    if (cat == OprCat::kMinReq && !op && vec && avail >= minVec) {
+        // Min required with required vector not requiring too many arguments.
+        return minVec;
+    }
+    if (cat == OprCat::kReq && !op && vec) {
+        // Max required with required vector.
+        return maxVec == -1 ? avail : min(avail, maxVec - minVec);
+    }
+    if (cat == OprCat::kOpt && op && vec && avail >= minVec) {
+        // All optionals with optional vector not requiring too many arguments.
+        return maxVec == -1 ? avail : min(avail, maxVec);
+    }
+    if (cat == OprCat::kMinReq && !op && !vec
+        || cat == OprCat::kOpt && op && !vec
+    ) {
+        // Min required with required non-vector; or all optional with optional
+        // non-vector.
+        return min(avail, 1);
     }
 
+    // Fall through for unmatched combinations.
+    return 0;
+}
+
+//===========================================================================
+static bool matchOperands(
+    RawValue * rawValues,
+    size_t numRawValues,
+    Cli & cli,
+    const Cli::OptIndex & ndx,
+    int numOprs
+) {
+    // Match positional values with operands. There must be enough values for
+    // all operands of a category for any of the next category to be eligible.
+    vector<int> matched(ndx.m_oprNames.size());
+    int usedOprs = 0;
+
+    for (auto&& cat : { OprCat::kMinReq, OprCat::kReq, OprCat::kOpt }) {
+        for (unsigned i = 0; i < matched.size() && usedOprs < numOprs; ++i) {
+            auto & oprName = ndx.m_oprNames[i];
+            int num = numMatches(cat, numOprs - usedOprs, oprName);
+            matched[i] += num;
+            usedOprs += num;
+        }
+    }
+
+    if (usedOprs < numOprs) {
+        auto val = rawValues;
+        for (int ipos = -1;; ++val) {
+            if (val->type == RawValue::kOperand && ++ipos >= usedOprs)
+                break;
+        }
+        cli.badUsage("Unexpected argument", val->ptr);
+        return false;
+    }
+    assert(usedOprs == numOprs // LCOV_EXCL_LINE
+        && "Internal dimcli error: not all operands mapped to variables.");
+
+    int ipos = 0;       // Operand being matched.
+    int imatch = 0;     // Values already been matched to this opt.
+    for (auto val = rawValues; val < rawValues + numRawValues; ++val) {
+        if (val->opt || val->type != RawValue::kOperand)
+            continue;
+        if (matched[ipos] <= imatch) {
+            imatch = 0;
+            for (;;) {
+                ipos += 1;
+                if (matched[ipos])
+                    break;
+            }
+        }
+        auto & oprName = ndx.m_oprNames[ipos];
+        val->opt = oprName.opt;
+        val->name = oprName.name;
+        imatch += 1;
+    }
+    return true;
+}
+
+//===========================================================================
+bool Cli::OptIndex::parseOperandValue(
+    vector<RawValue> * out,
+    ParseState & st,
+    Cli & cli
+) {
+    if (st.cmdMode == ParseState::kPending && st.numOprs == m_minOprs) {
+        // We've been expecting a subcommand name and, after any other
+        // operands, it's finally arrived.
+        auto cmd = (string)st.ptr;
+
+        // Assign all prior operands to their top level definitions.
+        bool noExtras = matchOperands(
+            out->data(),
+            out->size(),
+            cli,
+            *this,
+            st.numOprs
+        );
+        // Number of assigned operands should always exactly match the
+        // count, since it's equal to the calculated minimum.
+        assert(noExtras // LCOV_EXCL_LINE
+            && "Internal dimcli error: operand count mismatch.");
+        noExtras = true;
+
+        // Add command raw value and prepare for new set of opt rules
+        // that are defined by the command.
+        out->push_back({ RawValue::kCommand, nullptr, cmd });
+        st.precmdValues = out->size();
+        st.numOprs = 0;
+
+        bool exists = cli.commandExists(cmd);
+        if (exists && !cli.m_cfg->cmds[cmd].unknownArgs) {
+            // Command exists and it's args are to be processed normally
+            st.cmdMode = ParseState::kFound;
+            index(cli, cmd, false);
+        } else if (exists || cli.m_cfg->allowUnknown) {
+            // Known command marked for unknown argument processing or allowed
+            // unknown command.
+            st.cmdMode = ParseState::kUnknown;
+            st.moreOpts = false;
+        } else {
+            // Unknown command and unknown commands are not allowed.
+            cli.badUsage("Unknown command", cmd);
+            return false;
+        }
+        // Record command after we're sure it's usage is allowed.
+        cli.m_cfg->command = cmd;
+        return true;
+    }
+
+    if (st.cmdMode == ParseState::kUnknown) {
+        // Arguments for an unknown subcommand, no opt definitions are
+        // available so just capture as unknown arguments.
+        cli.m_cfg->unknownArgs.push_back(st.ptr);
+        return true;
+    }
+
+    if (st.numOprs == m_finalOpr) {
+        // Operand marked as finalOpt, record so that all remaining arguments
+        // are treaded as operands.
+        st.moreOpts = false;
+    }
+
+    // Record operand, it will be assigned and named later by assignOperands().
+    out->push_back({
+        RawValue::kOperand,
+        nullptr,
+        string{},
+        st.argPos,
+        st.ptr
+    });
+    st.numOprs += 1;
+
+    return true;
+}
+
+//===========================================================================
+static void addOptionMatch(
+    vector<RawValue> * out,
+    ParseState & st,
+    const char * ptr
+) {
+    st.optMatches[st.optName.opt] += 1;
+    out->push_back({
+        RawValue::kOption,
+        st.optName.opt,
+        st.name,
+        st.argPos,
+        ptr
+    });
+}
+
+//===========================================================================
+bool Cli::OptIndex::parseOptionValue(
+    vector<RawValue> * out,
+    ParseState & st,
+    Cli & cli,
+    const vector<string> & args
+) {
+    if (st.ptr) {
+        // Option with attached value (in the same argument).
+        addOptionMatch(out, st, st.ptr);
+        return true;
+    }
+    if (st.optName.flags & fNameOptional) {
+        // Option allows optional value and has no value attached. Treat the
+        // value as not present.
+        addOptionMatch(out, st, nullptr);
+        return true;
+    }
+
+    // Option has required value but has no value attached. Use next argument
+    // as the value.
+    st.argPos += 1;
+    if (st.argPos == args.size()) {
+        cli.badUsage("No value given for " + st.name);
+        return false;
+    }
+    addOptionMatch(out, st, args[st.argPos].c_str());
+
+    // Option has value list, use following arguments up to the next option as
+    // values.
+    if (st.optName.flags & fNameList) {
+        while (st.argPos + 1 < args.size()) {
+            auto val = args[st.argPos + 1].c_str();
+            if (*val == '-') {
+                // The next argument looks like an option, so stop taking
+                // arguments.
+                break;
+            }
+            if (st.optName.opt->m_vector
+                && st.optName.opt->maxSize() != -1
+                && st.optMatches[st.optName.opt] >= st.optName.opt->maxSize()
+            ) {
+                // Don't take more arguments as it would push the vector past
+                // it's maximum size.
+                break;
+            }
+            st.argPos += 1;
+            addOptionMatch(out, st, val);
+        }
+    }
+    return true;
+}
+
+//===========================================================================
+static bool commandRequired(const Cli::Config & cfg) {
+    return cfg.allowUnknown || cfg.cmds.size() > 1;
+}
+
+//===========================================================================
+bool Cli::OptIndex::parseToRawValues(
+    vector<RawValue> * out,
+    const vector<string> & args,
+    Cli & cli
+) {
+    cli.m_cfg->progName = args[0];
+    ParseState st;
+    if (cli.m_cfg->cmds[""].unknownArgs) {
+        st.cmdMode = ParseState::kUnknown;
+        st.moreOpts = false;
+    } else if (commandRequired(*cli.m_cfg)) {
+        st.cmdMode = ParseState::kPending;
+    }
+
+    for (; st.argPos < args.size(); ++st.argPos) {
+        st.ptr = args[st.argPos].c_str();
+        if (*st.ptr == '-' && st.ptr[1] && st.moreOpts) {
+            // Argument contains one or more options.
+            st.ptr += 1;
+            // Process all options with short names contained in the argument.
+            for (; *st.ptr && *st.ptr != '-'; ++st.ptr) {
+                // Found short name in argument.
+                st.name = '-';
+                st.name += *st.ptr;
+                auto it = m_shortNames.find(*st.ptr);
+                if (it == m_shortNames.end()) {
+                    cli.badUsage("Unknown option", st.name);
+                    return false;
+                }
+                st.optName = it->second;
+                if (st.optName.flags & fNameFinal)
+                    st.moreOpts = false;
+
+                if (!st.optName.opt->m_bool) {
+                    // Short name option that takes a value, which might be
+                    // attached as the rest of the argument. Adjust pointer to
+                    // the attached value, or set it to null if none.
+                    st.ptr += 1;
+                    if (!*st.ptr)
+                        st.ptr = nullptr;
+                    // Since that value consumes the rest of the argument,
+                    // process it and then advance to next argument.
+                    if (!parseOptionValue(out, st, cli, args))
+                        return false;
+                    goto NEXT_ARG;
+                }
+
+                // Found bool short name, record and continue processing any
+                // additional short names in this same argument.
+                addOptionMatch(
+                    out,
+                    st,
+                    (st.optName.flags & fNameInvert) ? "0" : "1"
+                );
+            }
+            if (!*st.ptr) {
+            NEXT_ARG:
+                // Reached end of this argument, continue to next argument.
+                continue;
+            }
+
+            // Rest of the argument is a long name option, possibly including
+            // an "=value" clause.
+            st.ptr += 1;
+            if (!*st.ptr) {
+                // Bare "--" found, all remaining args are operands.
+                st.moreOpts = false;
+                continue;
+            }
+            if (auto equal = strchr(st.ptr, '=')) {
+                // Name is everything up to the equal sign, value is rest of
+                // the arg after it.
+                st.name.assign(st.ptr, equal);
+                st.ptr = equal + 1;
+            } else {
+                // No equal sign, everything is name, there is no value.
+                st.name = st.ptr;
+                st.ptr = nullptr;
+            }
+            auto it = m_longNames.find(st.name);
+            st.name.insert(0, "--");
+            if (it == m_longNames.end()) {
+                cli.badUsage("Unknown option", st.name);
+                return false;
+            }
+            st.optName = it->second;
+            if (st.optName.flags & fNameFinal)
+                st.moreOpts = false;
+
+            if (!st.optName.opt->m_bool) {
+                // Long option with (possibly empty) value, process it and
+                // advance to next argument.
+                if (!parseOptionValue(out, st, cli, args))
+                    return false;
+                continue;
+            }
+
+            // Found bool long name.
+            auto val = true;
+            if (st.ptr
+                && (st.optName.opt->m_flagValue || !parseBool(val, st.ptr))
+            ) {
+                // Only regular bool opts support values, and those values
+                // must be valid: true, false, 1, 0, y, n, etc.
+                cli.badUsage("Invalid '" + st.name + "' value", st.ptr);
+                return false;
+            }
+            // Record and advance to the next argument.
+            addOptionMatch(
+                out,
+                st,
+                val == bool(st.optName.flags & fNameInvert) ? "0" : "1"
+            );
+            continue;
+        }
+
+        // Positional value
+        if (!parseOperandValue(out, st, cli))
+            return false;
+    }
+
+    if (st.cmdMode == ParseState::kUnknown) {
+        // Since unknown was detected all remaining arguments have already been
+        // copied to the unknownArgs vector.
+    } else {
+        // If there was no subcommand, precmdValues is 0 and all operands are
+        // matched in the context of the top level. If there was a subcommand,
+        // operands that follow it are matched based on it's configuration, any
+        // operands that may have preceded it (precmdValues in number) have
+        // already been processed.
+        if (!matchOperands(
+            out->data() + st.precmdValues,
+            out->size() - st.precmdValues,
+            cli,
+            *this,
+            st.numOprs
+        )) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//===========================================================================
+static bool badMinMatched(
+    Cli & cli,
+    const Cli::OptBase & opt,
+    const string & name = {}
+) {
+    int min = opt.minSize();
+    int max = opt.maxSize();
+    string detail;
+    if (min != 1 && min == max) {
+        detail = "Must have " + intToString(opt, min) + " values.";
+    } else if (max == -1) {
+        detail = "Must have " + intToString(opt, min) + " or more values.";
+    } else if (min != max) {
+        detail = "Must have " + intToString(opt, min) + " to "
+            + intToString(opt, max) + " values.";
+    }
+    cli.badUsage(
+        "Option '" + (name.empty() ? opt.from() : name) + "' missing value.",
+        {},
+        detail
+    );
+    return false;
+}
+
+//===========================================================================
+bool Cli::parse(vector<string> & args) {
+    Config::touchAllCmds(*this);
+    resetValues();
+
+    OptIndex ndx;
+    ndx.index(*this, "", false);
+
+    if (commandRequired(*m_cfg) && !ndx.m_allowCommands) {
+        // Command processing requires that the command be unambiguously
+        // identifiable and can't be used when the top level has an operand
+        // that requires look ahead to match. Which is caused by the first
+        // operand being either optional or a variable length vector.
+        assert(!"Mixing top level optional operands with commands.");
+    }
+
+    // Preprocess arguments and verify that at least one exists.
+    if (!args.empty()) {
+#if !defined(DIMCLI_LIB_NO_ENV)
+        // Insert environment options
+        if (m_cfg->envOpts.size()) {
+            if (auto val = getenv(m_cfg->envOpts.c_str()))
+                replace(args, 1, 0, toArgv(val));
+        }
+#endif
+#ifdef DIMCLI_LIB_FILESYSTEM
+        // Expand response files
+        if (m_cfg->responseFiles) {
+            vector<string> ancestors;
+            if (!expandResponseFiles(*this, args, ancestors))
+                return false;
+        }
+#endif
+        // Before actions
+        for (auto && fn : m_cfg->befores) {
+            fn(*this, args);
+            if (parseExited())
+                return false;
+            if (args.empty())
+                break;
+        }
+    }
+    // The 0th argument (name of this program) must always be present.
+    if (args.empty()) {
+        assert(!"At least one argument (the program name) required.");
+        fail(kExitSoftware, "No arguments (not even program name) provided.");
+        return false;
+    }
+
+    // Extract raw values and match them to opts.
+    vector<RawValue> rawValues;
+    if (!ndx.parseToRawValues(&rawValues, args, *this))
+        return false;
+
+    // Parse values and copy them to defined opts.
+    m_cfg->command = "";
+    for (auto && val : rawValues) {
+        switch (val.type) {
+        case RawValue::kCommand:
+            m_cfg->command = val.name;
+            continue;
+        default:
+            break;
+        }
+        if (!parseValue(*val.opt, val.name, val.pos, val.ptr))
+            return false;
+    }
+
+    // Report operands and options with too few values.
+    for (auto && oprName : ndx.m_oprNames) {
+        auto & opt = *oprName.opt;
+        if (~oprName.flags & fNameOptional) {
+            // Report required operands that are missing.
+            if (!opt || opt.size() < (size_t) opt.minSize())
+                return badMinMatched(*this, opt, oprName.name);
+        }
+    }
+    for (auto && nv : ndx.m_shortNames) {
+        auto & opt = *nv.second.opt;
+        if (opt && opt.size() < (size_t) opt.minSize())
+            return badMinMatched(*this, opt);
+    }
+    for (auto && nv : ndx.m_longNames) {
+        auto & opt = *nv.second.opt;
+        if (opt && opt.size() < (size_t) opt.minSize())
+            return badMinMatched(*this, opt);
+    }
+
+    // After actions
+    for (auto && opt : m_cfg->opts) {
+        if (!ndx.includeOptValue(*opt, commandMatched()))
+            continue;
+        opt->doAfterActions(*this);
+        if (parseExited())
+            return false;
+    }
+
+    return true;
+}
+
+//===========================================================================
+bool Cli::parse(vector<string> && args) {
+    return parse(args);
+}
+
+//===========================================================================
+bool Cli::parse(size_t argc, char * argv[]) {
+    auto args = toArgv(argc, argv);
+    return parse(move(args));
+}
+
+//===========================================================================
+Cli & Cli::resetValues() & {
+    for (auto && opt : m_cfg->opts)
+        opt->reset();
+    m_cfg->parseExit = false;
+    m_cfg->exitCode = kExitOk;
+    m_cfg->errMsg.clear();
+    m_cfg->errDetail.clear();
+    m_cfg->progName.clear();
+    m_cfg->command.clear();
+    m_cfg->unknownArgs.clear();
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::maxWidth(int width, int minDescCol, int maxDescCol) && {
-    return move(maxWidth(width, minDescCol, maxDescCol));
+Cli && Cli::resetValues() && {
+    return move(resetValues());
 }
 
-//===========================================================================
-void Cli::addOpt(unique_ptr<OptBase> src) {
-    m_cfg->opts.push_back(move(src));
-}
+
+/****************************************************************************
+*
+*   Parse action support functions
+*
+***/
 
 //===========================================================================
-Cli::OptBase * Cli::findOpt(const void * value) {
-    if (value) {
-        for (auto && opt : m_cfg->opts) {
-            if (opt->sameValue(value))
-                return opt.get();
-        }
-    }
-    return nullptr;
-}
-
-//===========================================================================
+// private
 bool Cli::parseExited() const {
     return m_cfg->parseExit;
+}
+
+//===========================================================================
+void Cli::badUsage(
+    const string & prefix,
+    const string & value,
+    const string & detail
+) {
+    string out;
+    auto & cmd = commandMatched();
+    if (cmd.size())
+        out = "Command '" + cmd + "': ";
+    out += prefix;
+    if (!value.empty()) {
+        out += ": ";
+        out += value;
+    }
+    fail(kExitUsage, out, detail);
+    m_cfg->parseExit = true;
+}
+
+//===========================================================================
+void Cli::badUsage(
+    const OptBase & opt,
+    const string & value,
+    const string & detail
+) {
+    string prefix = "Invalid '" + opt.from() + "' value";
+    return badUsage(prefix, value, detail);
+}
+
+//===========================================================================
+void Cli::parseExit() {
+    m_cfg->parseExit = true;
+    m_cfg->exitCode = kExitOk;
+    m_cfg->errMsg.clear();
+    m_cfg->errDetail.clear();
+}
+
+//===========================================================================
+bool Cli::parseValue(
+    OptBase & opt,
+    const string & name,
+    size_t pos,
+    const char ptr[]
+) {
+    if (!opt.match(name, pos)) {
+        string prefix = "Too many '" + name + "' values";
+        string detail = "The maximum number of values is "
+            + intToString(opt, opt.maxSize()) + ".";
+        badUsage(prefix, ptr, detail);
+        return false;
+    }
+    string val;
+    if (ptr) {
+        val = ptr;
+        opt.doParseAction(*this, val);
+        if (parseExited())
+            return false;
+    } else {
+        opt.assignImplicit();
+    }
+    opt.doCheckActions(*this, val);
+    return !parseExited();
+}
+
+//===========================================================================
+void Cli::prompt(OptBase & opt, const string & msg, int flags) {
+    if (!opt.from().empty())
+        return;
+    auto & is = conin();
+    auto & os = conout();
+    if (msg.empty()) {
+        os << opt.defaultPrompt();
+    } else {
+        os << msg;
+    }
+    bool defAdded = false;
+    if (~flags & fPromptNoDefault) {
+        if (opt.m_bool) {
+            defAdded = true;
+            bool def = false;
+            if (!opt.m_flagValue) {
+                auto & bopt = static_cast<Opt<bool>&>(opt);
+                def = bopt.defaultValue();
+            }
+            os << (def ? " [Y/n]:" : " [y/N]:");
+        } else {
+            string tmp;
+            if (opt.defaultValueToString(tmp) && !tmp.empty()) {
+                defAdded = true;
+                os << " [" << tmp << "]:";
+            }
+        }
+    }
+    if (!defAdded && msg.empty())
+        os << ':';
+    os << ' ';
+    if (flags & fPromptHide)
+        consoleEnableEcho(false); // Disable if hide, must be re-enabled.
+    string val;
+    os.flush();
+    getline(is, val);
+    if (flags & fPromptHide) {
+        os << endl;
+        if (~flags & fPromptConfirm)
+            consoleEnableEcho(true); // Re-enable when hide and !confirm.
+    }
+    if (flags & fPromptConfirm) {
+        string again;
+        os << "Enter again to confirm: " << flush;
+        getline(is, again);
+        if (flags & fPromptHide) {
+            os << endl;
+            consoleEnableEcho(true); // Re-enable when hide and confirm.
+        }
+        if (val != again) {
+            badUsage("Confirm failed, entries not the same.");
+            return;
+        }
+    }
+    if (opt.m_bool) {
+        // Honor the contract that bool parse functions are only presented
+        // with either "0" or "1".
+        val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
+    }
+    (void) parseValue(opt, opt.defaultFrom(), 0, val.c_str());
+}
+
+
+/****************************************************************************
+*
+*   After parsing (get results, execute command
+*
+***/
+
+//===========================================================================
+int Cli::exitCode() const {
+    return m_cfg->exitCode;
+};
+
+//===========================================================================
+const string & Cli::errMsg() const {
+    return m_cfg->errMsg;
+}
+
+//===========================================================================
+const string & Cli::errDetail() const {
+    return m_cfg->errDetail;
+}
+
+//===========================================================================
+const string & Cli::progName() const {
+    return m_cfg->progName;
+}
+
+//===========================================================================
+const string & Cli::commandMatched() const {
+    return m_cfg->command;
+}
+
+//===========================================================================
+const vector<string> & Cli::unknownArgs() const {
+    return m_cfg->unknownArgs;
+}
+
+//===========================================================================
+bool Cli::exec() {
+    auto & name = commandMatched();
+    auto & cmdFn = commandExists(name)
+        ? m_cfg->cmds[name].action
+        : m_cfg->unknownCmd;
+
+    if (cmdFn) {
+        fail(kExitOk, {});
+        cmdFn(*this);
+        return !parseExited();
+    } else {
+        // Most likely parse failed, was never run, or "this" was reset.
+        assert(!"Command found by parse not defined.");
+        fail(
+            kExitSoftware,
+            "Command '" + name + "' found by parse not defined."
+        );
+        return false;
+    }
+}
+
+//===========================================================================
+bool Cli::exec(size_t argc, char * argv[]) {
+    return parse(argc, argv) && exec();
+}
+
+//===========================================================================
+bool Cli::exec(vector<string> & args) {
+    return parse(args) && exec();
+}
+
+//===========================================================================
+void Cli::fail(int code, const string & msg, const string & detail) {
+    m_cfg->parseExit = false;
+    m_cfg->exitCode = code;
+    m_cfg->errMsg = format(*m_cfg, msg);
+    m_cfg->errDetail = format(*m_cfg, detail);
+}
+
+//===========================================================================
+bool Cli::commandExists(const string & name) const {
+    auto & cmds = m_cfg->cmds;
+    return cmds.find(name) != cmds.end();
+}
+
+
+/****************************************************************************
+*
+*   Cli::OptIndex (Help Text)
+*
+***/
+
+//===========================================================================
+static bool includeName(
+    const OptName & name,
+    NameListType type,
+    const Cli::OptBase & opt,
+    bool flag,
+    bool inverted
+) {
+    if (name.opt != &opt)
+        return false;
+    if (flag) {
+        if (type == kNameEnable)
+            return ~name.flags & fNameInvert;
+        if (type == kNameDisable)
+            return name.flags & fNameInvert;
+
+        // includeName is always called with a filter (i.e. not kNameAll).
+        assert(type == kNameNonDefault // LCOV_EXCL_LINE
+            && "Internal dimcli error: unknown NameListType.");
+        return inverted == bool(name.flags & fNameInvert);
+    }
+    return true;
+}
+
+//===========================================================================
+string Cli::OptIndex::nameDescList(
+    const Cli & cli,
+    const Cli::OptBase & opt,
+    NameListType type
+) const {
+    string list;
+
+    if (!opt.m_nameDesc.empty()) {
+        list = opt.m_nameDesc;
+        return list;
+    }
+
+    if (type == kNameAll) {
+        list = nameDescList(cli, opt, kNameEnable);
+        if (opt.m_bool) {
+            auto invert = nameDescList(cli, opt, kNameDisable);
+            if (!invert.empty()) {
+                list += list.empty() ? "/ " : " / ";
+                list += invert;
+            }
+        }
+        return list;
+    }
+
+    bool foundLong = false;
+    unsigned flags = 0;
+
+    // Names
+    vector<const decltype(m_shortNames)::value_type *> snames;
+    for (auto & sn : m_shortNames)
+        snames.push_back(&sn);
+    sort(snames.begin(), snames.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && sn : snames) {
+        if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
+            continue;
+        flags = sn->second.flags;
+        if (!list.empty())
+            list += ", ";
+        list += '-';
+        list += sn->first;
+    }
+    vector<const decltype(m_longNames)::value_type *> lnames;
+    for (auto & ln : m_longNames)
+        lnames.push_back(&ln);
+    sort(lnames.begin(), lnames.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && ln : lnames) {
+        if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
+            continue;
+        flags = ln->second.flags;
+        if (!list.empty())
+            list += ", ";
+        foundLong = true;
+        list += "--";
+        list += ln->first;
+    }
+    if (opt.m_bool || list.empty())
+        return list;
+
+    // Value
+    string valDesc;
+    if (!opt.m_valueDesc) {
+        valDesc = opt.defaultValueDesc();
+    } else if (opt.m_valueDesc->empty()) {
+        // Explicit and empty value description, suppress the clause.
+    } else {
+        valDesc = *opt.m_valueDesc;
+    }
+    if (!valDesc.empty()) {
+        if (flags & fNameOptional) {
+            list += foundLong ? "[=" : " [";
+            list += valDesc + "]";
+        } else {
+            list += foundLong ? '=' : ' ';
+            list += valDesc;
+            if (flags & fNameList)
+                list += "...";
+        }
+    }
+    return list;
+}
+
+//===========================================================================
+vector<OptKey> Cli::OptIndex::findNamedOpts(
+    const Cli & cli,
+    CommandConfig & cmd,
+    NameListType type,
+    bool flatten
+) const {
+    vector<OptKey> out;
+    for (auto && opt : cli.m_cfg->opts) {
+        auto list = nameDescList(cli, *opt, type);
+        if (list.size()) {
+            OptKey key;
+            key.opt = opt.get();
+            key.list = list;
+
+            // Sort by group sort key followed by name list with leading
+            // dashes removed.
+            key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
+            if (flatten && key.sort != kInternalOptionGroup)
+                key.sort.clear();
+            key.sort += '\0';
+            key.sort += list.substr(list.find_first_not_of('-'));
+            out.push_back(key);
+        }
+    }
+    sort(out.begin(), out.end(), [](auto & a, auto & b) {
+        return a.sort < b.sort;
+    });
+    return out;
+}
+
+
+/****************************************************************************
+*
+*   Help Text
+*
+***/
+
+namespace {
+
+struct ChoiceKey {
+    size_t pos;
+    const char * key;
+    const char * desc;
+    const char * sortKey;
+    bool def;
+};
+
+} // namespace
+
+//===========================================================================
+static vector<ChoiceKey> getChoiceKeys(
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+) {
+    vector<ChoiceKey> out;
+    for (auto && cd : choices) {
+        ChoiceKey key;
+        key.pos = cd.second.pos;
+        key.key = cd.first.c_str();
+        key.desc = cd.second.desc.c_str();
+        key.sortKey = cd.second.sortKey.c_str();
+        key.def = cd.second.def;
+        out.push_back(key);
+    }
+    sort(out.begin(), out.end(), [](auto & a, auto & b) {
+        if (int rc = strcmp(a.sortKey, b.sortKey))
+            return rc < 0;
+        return a.pos < b.pos;
+    });
+    return out;
+}
+
+//===========================================================================
+static void writeNbsp(string * out, const string & str) {
+    for (auto ch : str)
+        out->append(1, (ch == ' ') ? '\b' : ch);
+}
+
+//===========================================================================
+static void writeChoices(
+    string * outPtr,
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+) {
+    auto & out = *outPtr;
+    if (choices.empty())
+        return;
+    auto keys = getChoiceKeys(choices);
+    const size_t indent = 6;
+
+    string desc;
+    string prefix(indent, ' ');
+    for (auto && k : keys) {
+        out += prefix;
+        writeNbsp(&out, k.key);
+        out += '\t';
+        out += k.desc;
+        if (k.def)
+            out += " (default)";
+        out += '\n';
+    }
+}
+
+//===========================================================================
+static void writeChoicesDetail(
+    string * outPtr,
+    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
+) {
+    auto & out = *outPtr;
+    if (choices.empty())
+        return;
+    out += "Must be";
+    auto keys = getChoiceKeys(choices);
+
+    string val;
+    size_t pos = 0;
+    auto num = keys.size();
+    for (auto i = keys.begin(); pos < num; ++pos, ++i) {
+        out += " '";
+        writeNbsp(&out, i->key);
+        out += "'";
+        if (pos == 0 && num == 2) {
+            out += " or";
+        } else if (pos + 1 == num) {
+            out += '.';
+        } else {
+            out += ',';
+            if (pos + 2 == num)
+                out += " or";
+        }
+    }
+}
+
+//===========================================================================
+static void writeUsage(
+    string * outPtr,
+    Cli & cli,
+    const string & arg0,
+    const string & cmdName,
+    bool expandedOptions
+) {
+    auto & out = *outPtr;
+    auto & cfg = Cli::Config::get(cli);
+    Cli::OptIndex ndx;
+    ndx.index(cli, cmdName, true);
+    auto prog = displayName(arg0.empty() ? cli.progName() : arg0);
+    auto prefix = "Usage: " + prog;
+    out.append(prefix.size() + 1, '\v');
+    out += prefix;
+    if (cmdName.size()) {
+        out += ' ';
+        out += cmdName;
+    }
+    if (!ndx.m_shortNames.empty() || !ndx.m_longNames.empty()) {
+        if (!expandedOptions) {
+            out += " [OPTIONS]";
+        } else {
+            auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+            auto namedOpts = ndx.findNamedOpts(
+                cli,
+                cmd,
+                kNameNonDefault,
+                true
+            );
+            for (auto && key : namedOpts) {
+                out += ' ';
+                writeNbsp(&out, "[" + key.list + "]");
+            }
+        }
+    }
+    if (cmdName.empty() && cfg.cmds.size() > 1) {
+        out += " COMMAND [ARGS...]";
+    } else if (cmdName.empty() && cfg.allowUnknown) {
+        out += " [COMMAND] [ARGS...]";
+    } else if (!cli.commandExists(cmdName)) {
+        out += " [ARGS...]";
+    } else {
+        for (auto && pa : ndx.m_oprNames) {
+            out += ' ';
+            string token = pa.name.find(' ') == string::npos
+                ? pa.name
+                : "<" + pa.name + ">";
+            if (pa.opt->maxSize() < 0 || pa.opt->maxSize() > 1)
+                token += "...";
+            if (pa.flags & fNameOptional) {
+                writeNbsp(&out, "[" + token + "]");
+            } else {
+                writeNbsp(&out, token);
+            }
+        }
+    }
+    out += '\n';
+}
+
+//===========================================================================
+static void writeCommands(string * outPtr, Cli & cli) {
+    auto & out = *outPtr;
+    auto & cfg = Cli::Config::get(cli);
+    Cli::Config::touchAllCmds(cli);
+
+    struct CmdKey {
+        const char * name;
+        const CommandConfig * cmd;
+        const GroupConfig * grp;
+    };
+    vector<CmdKey> keys;
+    for (auto && cmd : cfg.cmds) {
+        if (cmd.first.size()) {
+            CmdKey key = {
+                cmd.first.c_str(),
+                &cmd.second,
+                &cfg.cmdGroups[cmd.second.cmdGroup]
+            };
+            keys.push_back(key);
+        }
+    }
+    if (keys.empty())
+        return;
+    sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
+        if (int rc = a.grp->sortKey.compare(b.grp->sortKey))
+            return rc < 0;
+        return strcmp(a.name, b.name) < 0;
+    });
+
+    const char * gname = nullptr;
+    for (auto && key : keys) {
+        string indent = "  \v\v";
+        if (!gname || key.grp->name != gname) {
+            if (!gname)
+                indent += '\f';
+            gname = key.grp->name.c_str();
+            out += '\n';
+            auto title = key.grp->title;
+            if (title.empty()
+                && strcmp(gname, kInternalOptionGroup) == 0
+                && &key == keys.data()
+            ) {
+                // First group and it's the internal group, give it a title.
+                title = "Commands";
+            }
+            if (!title.empty()) {
+                out += title;
+                out += ":\n";
+            }
+        }
+
+        out += indent;
+        writeNbsp(&out, key.name);
+        auto desc = key.cmd->desc;
+        size_t pos = 0;
+        for (;;) {
+            pos = desc.find_first_of(".!?", pos);
+            if (pos == string::npos)
+                break;
+            pos += 1;
+            if (desc[pos] == ' ') {
+                desc.resize(pos);
+                break;
+            }
+        }
+        desc = trim(desc);
+        if (!desc.empty()) {
+            out += '\t';
+            out += desc;
+        }
+        out += '\n';
+    }
+}
+
+//===========================================================================
+// static
+string Cli::OptIndex::desc(
+    const Cli::OptBase & opt,
+    bool withMarkup
+) {
+    string suffix;
+    if (!withMarkup) {
+        // Raw description without any markup.
+    } else if (!opt.m_choiceDescs.empty()) {
+        // "default" tag is added to individual choices later.
+    } else if (opt.m_flagValue && opt.m_flagDefault) {
+        if (opt.m_defaultDesc && opt.m_defaultDesc->empty()) {
+            // Explicit and empty default description, suppress the clause.
+        } else {
+            suffix += "(default)";
+        }
+    } else if (opt.m_vector) {
+        auto minVec = opt.minSize();
+        auto maxVec = opt.maxSize();
+        if (minVec != 1 || maxVec != -1) {
+            suffix += "(limit: " + intToString(opt, minVec);
+            if (maxVec == -1) {
+                suffix += "+";
+            } else if (minVec != maxVec) {
+                suffix += " to " + intToString(opt, maxVec);
+            }
+            suffix += ")";
+        }
+    } else if (!opt.m_bool) {
+        string tmp;
+        if (!opt.m_defaultDesc) {
+            if (!opt.defaultValueToString(tmp))
+                tmp.clear();
+        } else if (opt.m_defaultDesc->empty()) {
+            // Explicit and empty default description, suppress the clause.
+        } else {
+            tmp = *opt.m_defaultDesc;
+        }
+        if (!tmp.empty())
+            suffix += "(default: " + tmp + ")";
+    }
+    if (suffix.empty()) {
+        return opt.m_desc;
+    } else if (opt.m_desc.empty()) {
+        return suffix;
+    } else {
+        return opt.m_desc + ' ' + suffix;
+    }
+}
+
+//===========================================================================
+// static
+const unordered_map<string, Cli::OptBase::ChoiceDesc> &
+Cli::OptIndex::choiceDescs(const OptBase & opt) {
+    return opt.m_choiceDescs;
+}
+
+//===========================================================================
+static void writeOperands(string * outPtr, Cli & cli, const string & cmd) {
+    auto & out = *outPtr;
+    Cli::OptIndex ndx;
+    ndx.index(cli, cmd, true);
+    bool hasDesc = false;
+    for (auto && pa : ndx.m_oprNames) {
+        if (!ndx.desc(*pa.opt, false).empty()) {
+            hasDesc = true;
+            break;
+        }
+    }
+    if (!hasDesc)
+        return;
+
+    out += '\f';
+    for (auto && pa : ndx.m_oprNames) {
+        out += "  \v\v";
+        writeNbsp(&out, pa.name);
+        out += '\t';
+        out += ndx.desc(*pa.opt);
+        out += '\n';
+        writeChoices(&out, ndx.choiceDescs(*pa.opt));
+    }
+}
+
+//===========================================================================
+static void writeOptions(string * outPtr, Cli & cli, const string & cmdName) {
+    auto & out = *outPtr;
+    Cli::OptIndex ndx;
+    ndx.index(cli, cmdName, true);
+    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+
+    // Find named args and the longest name list.
+    auto namedOpts = ndx.findNamedOpts(cli, cmd, kNameAll, false);
+    if (namedOpts.empty())
+        return;
+
+    const char * gname = nullptr;
+    for (auto && key : namedOpts) {
+        string indent = "  \v\v";
+        if (!gname || key.opt->group() != gname) {
+            if (!gname)
+                indent += '\f';
+            gname = key.opt->group().c_str();
+            out += '\n';
+            auto & grp = Cli::Config::findGrpAlways(cmd, key.opt->group());
+            auto title = grp.title;
+            if (title.empty()
+                && strcmp(gname, kInternalOptionGroup) == 0
+                && &key == namedOpts.data()
+            ) {
+                // First group and it's the internal group, give it a title
+                // so it's not just left hanging.
+                title = "Options";
+            }
+            if (!title.empty()) {
+                out += title;
+                out += ":\n";
+            }
+        }
+        out += indent;
+        out += key.list;
+        out += '\t';
+        out += ndx.desc(*key.opt);
+        out += '\n';
+        writeChoices(&out, ndx.choiceDescs(*key.opt));
+    }
+}
+
+//===========================================================================
+static void writeHelp(
+    string * outPtr,
+    Cli & cli,
+    const string & progName,
+    const string & cmdName
+) {
+    auto & out = *outPtr;
+    if (!cli.commandExists(cmdName))
+        return writeUsage(&out, cli, progName, cmdName, false);
+
+    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+    auto & top = Cli::Config::findCmdAlways(cli, "");
+    auto & hdr = cmd.header.empty() ? top.header : cmd.header;
+    if (*hdr.data()) {
+        out += hdr;
+        out += '\n';
+    }
+    writeUsage(&out, cli, progName, cmdName, false);
+    if (!cmd.desc.empty()) {
+        out.append(1, '\n').append(cmd.desc).append(1, '\n');
+    }
+    if (cmdName.empty())
+        writeCommands(&out, cli);
+    writeOperands(&out, cli, cmdName);
+    writeOptions(&out, cli, cmdName);
+    auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
+    if (*ftr.data()) {
+        out += '\n';
+        out += ftr;
+    }
+}
+
+//===========================================================================
+int Cli::printHelp(
+    ostream & os,
+    const string & progName,
+    const string & cmdName
+) {
+    string raw;
+    writeHelp(&raw, *this, progName, cmdName);
+    os << format(*m_cfg, raw) << '\n';
+    return exitCode();
+}
+
+//===========================================================================
+int Cli::printUsage(
+    ostream & os,
+    const string & arg0,
+    const string & cmd
+) {
+    string raw;
+    writeUsage(&raw, *this, arg0, cmd, false);
+    os << format(*m_cfg, raw) << '\n';
+    return exitCode();
+}
+
+//===========================================================================
+int Cli::printUsageEx(
+    ostream & os,
+    const string & arg0,
+    const string & cmd
+) {
+    string raw;
+    writeUsage(&raw, *this, arg0, cmd, true);
+    os << format(*m_cfg, raw) << '\n';
+    return exitCode();
+}
+
+//===========================================================================
+void Cli::printOperands(ostream & os, const string & cmd) {
+    string raw;
+    writeOperands(&raw, *this, cmd);
+    os << format(*m_cfg, raw);
+}
+
+//===========================================================================
+void Cli::printOptions(ostream & os, const string & cmd) {
+    string raw;
+    writeOptions(&raw, *this, cmd);
+    os << format(*m_cfg, raw);
+}
+
+//===========================================================================
+void Cli::printCommands(ostream & os) {
+    string raw;
+    writeCommands(&raw, *this);
+    os << format(*m_cfg, raw);
+}
+
+//===========================================================================
+int Cli::printError(ostream & os) {
+    auto code = exitCode();
+    if (code) {
+        os << "Error: " << errMsg() << endl;
+        auto & detail = errDetail();
+        if (detail.size())
+            os << detail << endl;
+    }
+    return code;
+}
+
+
+/****************************************************************************
+*
+*   Arbitrary Text
+*
+***/
+
+namespace {
+
+struct RawCol {
+    int indent = {};
+    int childIndent = {};
+    const char * text = {};
+    int textLen = {};
+    int width = -1;    // Chars (-1 for unspecified).
+    float minPct = -1; // Width as percentage of line (-1 for unspecified).
+    float maxPct = -1; // Width as percentage of line (-1 for unspecified).
+};
+struct RawLine {
+    bool newTable {};
+    vector<RawCol> cols;
+};
+
+struct ColumnSize {
+    int width = -1;
+    int softMax = 0;
+    bool hardMax = false;
+    int minWidth = -1;
+    int maxWidth = -1;
+};
+struct TableSize {
+    vector<ColumnSize> cols;    // Width of each table column.
+    vector<int> rows;           // Indexes to RawLines in the table.
+};
+
+} // namespace
+
+//===========================================================================
+// Returns number of characters used by the line.
+static size_t parseLine(RawLine * out, const char line[]) {
+    *out = {};
+    auto ptr = line;
+    for (;;) {
+        out->cols.emplace_back();
+        auto & col = out->cols.back();
+
+        //--------------------------------------------------------------------
+        // Preamble
+        //
+        // Paragraph or table column:
+        //  SP  Increase indent of first line of paragraph or column text
+        //  \r  Reduced indentation after line wrap by one
+        //  \v  Increase indentation after line wrap by one
+        // Table column only:
+        //  \a<MIN> <MAX>\a
+        //      Set min and max width of column
+        //  \f  Starts a new table, not extending current table at this indent
+        for (;; ++ptr) {
+            if (*ptr == ' ') {
+                col.indent += 1;
+            } else if (*ptr == '\r') {
+                col.childIndent -= 1;
+            } else if (*ptr == '\v') {
+                col.childIndent += 1;
+            } else if (*ptr == '\a') {
+                char * eptr;
+                col.minPct = strtof(ptr + 1, &eptr);
+                col.maxPct = strtof(eptr, &eptr);
+                if (*eptr == '\a'
+                    && col.minPct <= col.maxPct
+                    && col.minPct >= 0 && col.minPct <= 100
+                ) {
+                    // Valid width spec, use and advance past entire '\a'
+                    // clause.
+                    col.maxPct = min(col.maxPct, 100.0f);
+                    ptr = eptr;
+                } else {
+                    // Malformed column width given; set width to unspecified
+                    // and ignore the leading '\a'.
+                    col.minPct = -1;
+                    col.maxPct = -1;
+                    col.text = ptr;
+                    break;
+                }
+            } else if (*ptr == '\f') {
+                out->newTable = true;
+            } else {
+                col.text = ptr;
+                break;
+            }
+        }
+
+        // Don't allow unindent to bleed into previous column.
+        col.childIndent = max(col.childIndent, -col.indent);
+
+        //--------------------------------------------------------------------
+        // Body
+        //
+        // Separators:
+        //  \n  Paragraph or table row separator
+        //  \t  Table column separator
+        col.textLen = 0;
+        for (;;) {
+            char ch = *ptr++;
+            if (!ch) {
+                return ptr - line - 1;
+            } else if (ch == '\n') {
+                return ptr - line;
+            } else if (ch == '\t') {
+                // Next column
+                break;
+            } else if (ch == ' ' || ch == '\r') {
+                // Skip potentially trailing spaces and carriage returns.
+            } else {
+                // Standard text character. Include everything up to it.
+                col.textLen = int(ptr - col.text);
+            }
+        }
+    }
+}
+
+//===========================================================================
+// Apply TableSize to the raw lines in the table.
+static void applySize(vector<RawLine> * raws, const TableSize & tab) {
+    for (auto && line : tab.rows) {
+        auto & cols = (*raws)[line].cols;
+        for (unsigned i = 0; i < cols.size(); ++i) {
+            auto & tcol = tab.cols[i];
+            if (tcol.softMax && !tcol.hardMax) {
+                // Some cells in the column extend beyond the max width but
+                // none pass the hard max. Use a width just enough beyond the
+                // normal maximum that no line wrapping is needed.
+                cols[i].width = tcol.softMax;
+            } else {
+                // Line wrapping is either unneeded or inevitable, use the
+                // width as calculated.
+                cols[i].width = tcol.width;
+            }
+        }
+    }
+}
+
+//===========================================================================
+static void clear(TableSize * tab) {
+    tab->cols.clear();
+    tab->rows.clear();
+}
+
+//===========================================================================
+static void calcColumns(
+    unordered_map<int, TableSize> * tables,
+    vector<RawLine> * raws,
+    int index,
+    const Cli::Config & cfg
+) {
+    auto & raw = (*raws)[index];
+    auto & cols = raw.cols;
+    auto ncols = raw.cols.size();
+    if (ncols == 1) {
+        // Paragraph (not a table because there's only one column), no need
+        // to calculate column widths.
+        return;
+    }
+    auto & tab = (*tables)[cols[0].indent];
+    if (raw.newTable) {
+        // Update prior table at this indent and reset the calculated
+        // sizes to start the new table.
+        applySize(raws, tab);
+        clear(&tab);
+    }
+    tab.rows.push_back(index);
+    if (tab.cols.size() < ncols) {
+        // Add column size entries for additional columns added by this row.
+        auto icol = tab.cols.size();
+        tab.cols.resize(ncols);
+        for (; icol < ncols; ++icol) {
+            auto & tcol = tab.cols[icol];
+            auto & col = cols[icol];
+            if (raw.newTable && col.minPct != -1) {
+                // Use min/max widths from preamble of this table cell.
+                assert(col.maxPct != -1);
+                tcol.minWidth =
+                    (int) round(col.minPct * cfg.maxLineWidth / 100);
+                tcol.maxWidth =
+                    (int) round(col.maxPct * cfg.maxLineWidth / 100);
+            } else {
+                // Width unspecified or prohibited; start with default min
+                // to max for first column and just the default min for all
+                // others.
+                tcol.minWidth =
+                    (int) round(cfg.minNameColPct * cfg.maxLineWidth / 100);
+                tcol.maxWidth = !icol
+                    ? (int) round(cfg.maxNameColPct * cfg.maxLineWidth / 100)
+                    : tcol.minWidth;
+            }
+        }
+    }
+
+    // Adjust column size entries based on contents of this row.
+    for (unsigned icol = 0; icol < cols.size(); ++icol) {
+        auto & tcol = tab.cols[icol];
+        auto & col = cols[icol];
+        int width = col.indent + col.textLen + 2;
+        if (width < tcol.minWidth) {
+            // The width of a cell must be at least minWidth
+            width = tcol.minWidth;
+        } else if (width > tcol.maxWidth + 2) {
+            // The text is so long that the cell width shouldn't try growing
+            // to match it.
+            tcol.hardMax = true;
+            width = tcol.minWidth;
+        } else if (width > tcol.maxWidth) {
+            // Text is between the max width and hard max; update soft max to
+            // be the largest value within that range.
+            tcol.softMax = max(width, tcol.softMax);
+            width = tcol.maxWidth;
+        }
+        if (width > tcol.width) {
+            // Widen column width to contain this table cell.
+            tcol.width = width;
+        }
+    }
+}
+
+//===========================================================================
+static int wrapIndent(int indent, size_t width) {
+    if (indent >= (int) width) {
+        return (indent - 2) % ((int) width - 2) + 2;
+    } else {
+        return indent;
+    }
+}
+
+//===========================================================================
+// Appends formatted text to *outPtr.
+// Increases *lines by the number of line breaks generated.
+// Returns the new output column position.
+//
+//  SP  Soft word break
+//  \b  non-breaking space
+static size_t formatCol(
+    string * outPtr,
+    int * lines,
+    const RawCol & col,
+    size_t startPos,
+    size_t pos,
+    size_t lineWidth
+) {
+    auto & out = *outPtr;
+    auto width = (col.width == -1) ? lineWidth : col.width;
+    assert(width // LCOV_EXCL_LINE
+        && "Internal dimcli error: unknown column width.");
+
+    if (startPos && col.textLen) {
+        if (pos + 1 < startPos) {
+            out.append(startPos - pos, ' ');
+            pos = startPos;
+        } else if (pos < startPos + 3) {
+            out += "  ";
+            pos += 2;
+        } else {
+            pos = lineWidth;
+        }
+    }
+
+    bool firstWord = true;
+    auto indent = wrapIndent(col.indent, width);
+    auto childIndent = startPos
+        + wrapIndent(col.indent + col.childIndent, width);
+    out.append(indent, ' ');
+    pos += indent;
+    for (auto ptr = col.text, eptr = ptr + col.textLen; ptr != eptr;) {
+        if (*ptr == ' ') {
+            ptr += 1;
+            continue;
+        }
+        auto eword = (const char *) memchr(ptr, ' ', eptr - ptr);
+        if (!eword)
+            eword = eptr;
+        size_t wordLen = eword - ptr;
+        if (pos + wordLen + 1 > lineWidth
+            && pos > wordLen
+        ) {
+            firstWord = true;
+            *lines += 1;
+            out += '\n';
+            out.append(childIndent, ' ');
+            pos = childIndent;
+        }
+        if (firstWord) {
+            firstWord = false;
+        } else {
+            out += ' ';
+            pos += 1;
+        }
+        for (; ptr != eword; ++ptr) {
+            if (*ptr == '\b') {
+                out += ' ';
+            } else {
+                out += *ptr;
+            }
+        }
+        pos += wordLen;
+        ptr = eword;
+    }
+    return pos;
+}
+
+//===========================================================================
+// Returns number of line breaks added by formatting.
+static int formatLine(
+    string * outPtr,
+    const RawLine & raw,
+    size_t lineWidth
+) {
+    auto & out = *outPtr;
+    if (raw.cols.size() == 1 && !raw.cols[0].textLen)
+        return 0;
+
+    auto lines = 0;
+    size_t pos = 0;
+    size_t startPos = 0;
+    for (auto && col : raw.cols) {
+        pos = formatCol(&out, &lines, col, startPos, pos, lineWidth);
+        startPos += col.width;
+    }
+    return lines;
+}
+
+//===========================================================================
+// Returns formatted text.
+static string format(const Cli::Config & cfg, const string & text) {
+    // Parse into lines and columns.
+    vector<RawLine> raws;
+    for (auto ptr = text.c_str(); *ptr;) {
+        raws.emplace_back();
+        auto & raw = raws.back();
+        ptr += parseLine(&raw, ptr);
+    }
+
+    // Calculate table column widths.
+    unordered_map<int, TableSize> tables;
+    for (unsigned i = 0; i < raws.size(); ++i)
+        calcColumns(&tables, &raws, i, cfg);
+    for (auto && kv : tables)
+        applySize(&raws, kv.second);
+
+    // Render text.
+    int lineBreaks = 0;
+    string out;
+    if (auto num = (int) raws.size()) {
+        lineBreaks += num - 1; // Breaks explicitly added in following loop.
+        lineBreaks += formatLine(&out, raws[0], cfg.maxLineWidth);
+        for (auto i = 1; i < num; ++i) {
+            out += '\n';
+            lineBreaks += formatLine(&out, raws[i], cfg.maxLineWidth);
+        }
+    }
+    return out;
+}
+
+//===========================================================================
+void Cli::printText(ostream & os, const string & text) {
+    os << format(*m_cfg, text);
 }
 
 
@@ -2225,1828 +4078,6 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
 string Cli::toWindowsCmdline(const vector<string> & args) {
     auto ptrs = toPtrArgv(args);
     return toWindowsCmdline(ptrs.size(), (char **)ptrs.data());
-}
-
-
-/****************************************************************************
-*
-*   Response files
-*
-***/
-
-#ifdef DIMCLI_LIB_FILESYSTEM
-
-// forward declarations
-static bool expandResponseFiles(
-    Cli & cli,
-    vector<string> & args,
-    vector<string> & ancestors
-);
-
-//===========================================================================
-// Returns false on error, if there was an error content will either be empty
-// or - if there was a transcoding error - contain the original content.
-static bool loadFileUtf8(string & content, const fs::path & fn) {
-    content.clear();
-
-    error_code ec;
-    auto bytes = (size_t) fs::file_size(fn, ec);
-    if (ec) {
-        // A file system race is required for this to fail (fs::exist success
-        // immediately followed by fs::file_size failure) and there's no
-        // practical way to cause it in a test. So give up and exclude this
-        // line from the test coverage report.
-        return false; // LCOV_EXCL_LINE
-    }
-
-    content.resize(bytes);
-    ifstream f(fn, ios::binary);
-    f.read(const_cast<char *>(content.data()), content.size());
-    if (!f) {
-        content.clear();
-        return false;
-    }
-    f.close();
-
-    if (content.size() < 2)
-        return true;
-    if (content[0] == '\xff' && content[1] == '\xfe') {
-        wstring_convert<CodecvtWchar> wcvt("");
-        auto base = reinterpret_cast<const wchar_t *>(content.data());
-        auto tmp = (string) wcvt.to_bytes(
-            base + 1,
-            base + content.size() / sizeof *base
-        );
-        if (tmp.empty())
-            return false;
-        content = tmp;
-    } else if (content.size() >= 3
-        && content[0] == '\xef'
-        && content[1] == '\xbb'
-        && content[2] == '\xbf'
-    ) {
-        content.erase(0, 3);
-    }
-    return true;
-}
-
-//===========================================================================
-static bool expandResponseFile(
-    Cli & cli,
-    vector<string> & args,
-    size_t & pos,
-    vector<string> & ancestors
-) {
-    string content;
-    error_code ec;
-    auto fn = args[pos].substr(1);
-    auto cfn = ancestors.empty()
-        ? (fs::path) fn
-        : fs::path(ancestors.back()).parent_path() / fn;
-    cfn = fs::canonical(cfn, ec);
-    if (ec || !fs::exists(cfn)) {
-        cli.badUsage("Invalid response file", fn);
-        return false;
-    }
-    for (auto && a : ancestors) {
-        if (a == cfn.string()) {
-            cli.badUsage("Recursive response file", fn);
-            return false;
-        }
-    }
-    ancestors.push_back(cfn.string());
-    if (!loadFileUtf8(content, cfn)) {
-        string desc = content.empty() ? "Read error" : "Invalid encoding";
-        cli.badUsage(desc, fn);
-        return false;
-    }
-    auto rargs = cli.toArgv(content);
-    if (!expandResponseFiles(cli, rargs, ancestors))
-        return false;
-    auto rargLen = rargs.size();
-    replace(args, pos, 1, move(rargs));
-    pos += rargLen - 1;
-    ancestors.pop_back();
-    return true;
-}
-
-//===========================================================================
-// "ancestors" contains the set of response files these args came from,
-// directly or indirectly, and is used to detect recursive response files.
-static bool expandResponseFiles(
-    Cli & cli,
-    vector<string> & args,
-    vector<string> & ancestors
-) {
-    for (size_t pos = 0; pos < args.size(); ++pos) {
-        if (!args[pos].empty() && args[pos][0] == '@') {
-            if (!expandResponseFile(cli, args, pos, ancestors))
-                return false;
-        }
-    }
-    return true;
-}
-
-#endif
-
-
-/****************************************************************************
-*
-*   SI Units
-*
-***/
-
-static vector<pair<string, double>> s_siBinExplicit = {
-    {"ki", double(1ull << 10)},
-    {"Mi", double(1ull << 20)},
-    {"Gi", double(1ull << 30)},
-    {"Ti", double(1ull << 40)},
-    {"Pi", double(1ull << 50)},
-};
-static vector<pair<string, double>> s_siBin({
-    {"k", double(1ull << 10)},
-    {"M", double(1ull << 20)},
-    {"G", double(1ull << 30)},
-    {"T", double(1ull << 40)},
-    {"P", double(1ull << 50)},
-});
-static vector<pair<string, double>> s_siDec({
-    {"k", 1e+3},
-    {"M", 1e+6},
-    {"G", 1e+9},
-    {"T", 1e+12},
-    {"P", 1e+15},
-});
-static vector<pair<string, double>> s_siSmall({
-    {"m", 1e-3},
-    {"u", 1e-6},
-    {"n", 1e-9},
-    {"p", 1e-12},
-    {"f", 1e-15},
-});
-
-//===========================================================================
-// static
-vector<pair<string, double>> Cli::siUnitMapping(
-    const string & symbol,
-    int flags
-) {
-    vector<pair<string, double>> units = s_siBinExplicit;
-    if (flags & fUnitBinaryPrefix) {
-        units.insert(units.end(), s_siBin.begin(), s_siBin.end());
-    } else {
-        units.insert(units.end(), s_siDec.begin(), s_siDec.end());
-        if (~flags & fUnitInsensitive) {
-            units.insert(units.end(), s_siSmall.begin(), s_siSmall.end());
-        }
-    }
-    if (!symbol.empty()) {
-        if (flags & fUnitRequire) {
-            for (auto && kv : units)
-                kv.first += symbol;
-        } else {
-            units.reserve(2 * units.size());
-            for (auto i = units.size(); i-- > 0;) {
-                auto & kv = units[i];
-                units.push_back({kv.first + symbol, kv.second});
-            }
-        }
-        units.push_back({symbol, 1});
-    }
-    return units;
-}
-
-
-/****************************************************************************
-*
-*   Parse command line
-*
-***/
-
-//===========================================================================
-Cli & Cli::resetValues() & {
-    for (auto && opt : m_cfg->opts)
-        opt->reset();
-    m_cfg->parseExit = false;
-    m_cfg->exitCode = kExitOk;
-    m_cfg->errMsg.clear();
-    m_cfg->errDetail.clear();
-    m_cfg->progName.clear();
-    m_cfg->command.clear();
-    m_cfg->unknownArgs.clear();
-    return *this;
-}
-
-//===========================================================================
-Cli && Cli::resetValues() && {
-    return move(resetValues());
-}
-
-//===========================================================================
-void Cli::prompt(OptBase & opt, const string & msg, int flags) {
-    if (!opt.from().empty())
-        return;
-    auto & is = conin();
-    auto & os = conout();
-    if (msg.empty()) {
-        os << opt.defaultPrompt();
-    } else {
-        os << msg;
-    }
-    bool defAdded = false;
-    if (~flags & fPromptNoDefault) {
-        if (opt.m_bool) {
-            defAdded = true;
-            bool def = false;
-            if (!opt.m_flagValue) {
-                auto & bopt = static_cast<Opt<bool>&>(opt);
-                def = bopt.defaultValue();
-            }
-            os << (def ? " [Y/n]:" : " [y/N]:");
-        } else {
-            string tmp;
-            if (opt.defaultValueToString(tmp) && !tmp.empty()) {
-                defAdded = true;
-                os << " [" << tmp << "]:";
-            }
-        }
-    }
-    if (!defAdded && msg.empty())
-        os << ':';
-    os << ' ';
-    if (flags & fPromptHide)
-        consoleEnableEcho(false); // Disable if hide, must be re-enabled.
-    string val;
-    os.flush();
-    getline(is, val);
-    if (flags & fPromptHide) {
-        os << endl;
-        if (~flags & fPromptConfirm)
-            consoleEnableEcho(true); // Re-enable when hide and !confirm.
-    }
-    if (flags & fPromptConfirm) {
-        string again;
-        os << "Enter again to confirm: " << flush;
-        getline(is, again);
-        if (flags & fPromptHide) {
-            os << endl;
-            consoleEnableEcho(true); // Re-enable when hide and confirm.
-        }
-        if (val != again) {
-            badUsage("Confirm failed, entries not the same.");
-            return;
-        }
-    }
-    if (opt.m_bool) {
-        // Honor the contract that bool parse functions are only presented
-        // with either "0" or "1".
-        val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
-    }
-    (void) parseValue(opt, opt.defaultFrom(), 0, val.c_str());
-}
-
-//===========================================================================
-bool Cli::parseValue(
-    OptBase & opt,
-    const string & name,
-    size_t pos,
-    const char ptr[]
-) {
-    if (!opt.match(name, pos)) {
-        string prefix = "Too many '" + name + "' values";
-        string detail = "The maximum number of values is "
-            + intToString(opt, opt.maxSize()) + ".";
-        badUsage(prefix, ptr, detail);
-        return false;
-    }
-    string val;
-    if (ptr) {
-        val = ptr;
-        opt.doParseAction(*this, val);
-        if (parseExited())
-            return false;
-    } else {
-        opt.assignImplicit();
-    }
-    opt.doCheckActions(*this, val);
-    return !parseExited();
-}
-
-//===========================================================================
-void Cli::badUsage(
-    const string & prefix,
-    const string & value,
-    const string & detail
-) {
-    string out;
-    auto & cmd = commandMatched();
-    if (cmd.size())
-        out = "Command '" + cmd + "': ";
-    out += prefix;
-    if (!value.empty()) {
-        out += ": ";
-        out += value;
-    }
-    fail(kExitUsage, out, detail);
-    m_cfg->parseExit = true;
-}
-
-//===========================================================================
-void Cli::badUsage(
-    const OptBase & opt,
-    const string & value,
-    const string & detail
-) {
-    string prefix = "Invalid '" + opt.from() + "' value";
-    return badUsage(prefix, value, detail);
-}
-
-//===========================================================================
-void Cli::parseExit() {
-    m_cfg->parseExit = true;
-    m_cfg->exitCode = kExitOk;
-    m_cfg->errMsg.clear();
-    m_cfg->errDetail.clear();
-}
-
-//===========================================================================
-void Cli::fail(int code, const string & msg, const string & detail) {
-    m_cfg->parseExit = false;
-    m_cfg->exitCode = code;
-    m_cfg->errMsg = format(*m_cfg, msg);
-    m_cfg->errDetail = format(*m_cfg, detail);
-}
-
-//===========================================================================
-static bool parseBool(bool & out, const string & val) {
-    static const unordered_map<string, bool> allowed = {
-        { "1", true },
-        { "t", true },
-        { "y", true },
-        { "+", true },
-        { "true", true },
-        { "yes", true },
-        { "on", true },
-        { "enable", true },
-
-        { "0", false },
-        { "f", false },
-        { "n", false },
-        { "-", false },
-        { "false", false },
-        { "no", false },
-        { "off", false },
-        { "disable", false },
-    };
-
-    string tmp = val;
-    auto & f = use_facet<ctype<char>>(locale());
-    f.tolower(tmp.data(), tmp.data() + tmp.size());
-    auto i = allowed.find(tmp);
-    if (i == allowed.end()) {
-        out = false;
-        return false;
-    }
-    out = i->second;
-    return true;
-}
-
-namespace {
-enum class OprCat {
-    kMinReq,    // Minimum expected for all required opts (vectors may be >1)
-    kReq,       // Max expected for all required opts
-    kOpt,       // All optionals
-};
-} // namespace
-
-//===========================================================================
-static int numMatches(
-    OprCat cat,
-    int avail,
-    const OptName & optn
-) {
-    bool op = optn.flags & fNameOptional;
-    auto minVec = optn.opt->minSize();
-    auto maxVec = optn.opt->maxSize();
-    bool vec = minVec != 1 || maxVec != 1;
-
-    if (cat == OprCat::kMinReq && !op && vec && avail >= minVec) {
-        // Min required with required vector not requiring too many arguments.
-        return minVec;
-    }
-    if (cat == OprCat::kReq && !op && vec) {
-        // Max required with required vector.
-        return maxVec == -1 ? avail : min(avail, maxVec - minVec);
-    }
-    if (cat == OprCat::kOpt && op && vec && avail >= minVec) {
-        // All optionals with optional vector not requiring too many arguments.
-        return maxVec == -1 ? avail : min(avail, maxVec);
-    }
-    if (cat == OprCat::kMinReq && !op && !vec
-        || cat == OprCat::kOpt && op && !vec
-    ) {
-        // Min required with required non-vector; or all optional with optional
-        // non-vector.
-        return min(avail, 1);
-    }
-
-    // Fall through for unmatched combinations.
-    return 0;
-}
-
-//===========================================================================
-static bool matchOperands(
-    RawValue * rawValues,
-    size_t numRawValues,
-    Cli & cli,
-    const Cli::OptIndex & ndx,
-    int numOprs
-) {
-    // Match positional values with operands. There must be enough values for
-    // all operands of a category for any of the next category to be eligible.
-    vector<int> matched(ndx.m_oprNames.size());
-    int usedOprs = 0;
-
-    for (auto&& cat : { OprCat::kMinReq, OprCat::kReq, OprCat::kOpt }) {
-        for (unsigned i = 0; i < matched.size() && usedOprs < numOprs; ++i) {
-            auto & oprName = ndx.m_oprNames[i];
-            int num = numMatches(cat, numOprs - usedOprs, oprName);
-            matched[i] += num;
-            usedOprs += num;
-        }
-    }
-
-    if (usedOprs < numOprs) {
-        auto val = rawValues;
-        for (int ipos = -1;; ++val) {
-            if (val->type == RawValue::kOperand && ++ipos >= usedOprs)
-                break;
-        }
-        cli.badUsage("Unexpected argument", val->ptr);
-        return false;
-    }
-    assert(usedOprs == numOprs // LCOV_EXCL_LINE
-        && "Internal dimcli error: not all operands mapped to variables.");
-
-    int ipos = 0;       // Operand being matched.
-    int imatch = 0;     // Values already been matched to this opt.
-    for (auto val = rawValues; val < rawValues + numRawValues; ++val) {
-        if (val->opt || val->type != RawValue::kOperand)
-            continue;
-        if (matched[ipos] <= imatch) {
-            imatch = 0;
-            for (;;) {
-                ipos += 1;
-                if (matched[ipos])
-                    break;
-            }
-        }
-        auto & oprName = ndx.m_oprNames[ipos];
-        val->opt = oprName.opt;
-        val->name = oprName.name;
-        imatch += 1;
-    }
-    return true;
-}
-
-//===========================================================================
-bool Cli::OptIndex::parseOperandValue(
-    vector<RawValue> * out,
-    ParseState & st,
-    Cli & cli
-) {
-    if (st.cmdMode == ParseState::kPending && st.numOprs == m_minOprs) {
-        // We've been expecting a subcommand name and, after any other
-        // operands, it's finally arrived.
-        auto cmd = (string)st.ptr;
-
-        // Assign all prior operands to their top level definitions.
-        bool noExtras = matchOperands(
-            out->data(),
-            out->size(),
-            cli,
-            *this,
-            st.numOprs
-        );
-        // Number of assigned operands should always exactly match the
-        // count, since it's equal to the calculated minimum.
-        assert(noExtras // LCOV_EXCL_LINE
-            && "Internal dimcli error: operand count mismatch.");
-        noExtras = true;
-
-        // Add command raw value and prepare for new set of opt rules
-        // that are defined by the command.
-        out->push_back({ RawValue::kCommand, nullptr, cmd });
-        st.precmdValues = out->size();
-        st.numOprs = 0;
-
-        bool exists = cli.commandExists(cmd);
-        if (exists && !cli.m_cfg->cmds[cmd].unknownArgs) {
-            // Command exists and it's args are to be processed normally
-            st.cmdMode = ParseState::kFound;
-            index(cli, cmd, false);
-        } else if (exists || cli.m_cfg->allowUnknown) {
-            // Known command marked for unknown argument processing or allowed
-            // unknown command.
-            st.cmdMode = ParseState::kUnknown;
-            st.moreOpts = false;
-        } else {
-            // Unknown command and unknown commands are not allowed.
-            cli.badUsage("Unknown command", cmd);
-            return false;
-        }
-        // Record command after we're sure it's usage is allowed.
-        cli.m_cfg->command = cmd;
-        return true;
-    }
-
-    if (st.cmdMode == ParseState::kUnknown) {
-        // Arguments for an unknown subcommand, no opt definitions are
-        // available so just capture as unknown arguments.
-        cli.m_cfg->unknownArgs.push_back(st.ptr);
-        return true;
-    }
-
-    if (st.numOprs == m_finalOpr) {
-        // Operand marked as finalOpt, record so that all remaining arguments
-        // are treaded as operands.
-        st.moreOpts = false;
-    }
-
-    // Record operand, it will be assigned and named later by assignOperands().
-    out->push_back({
-        RawValue::kOperand,
-        nullptr,
-        string{},
-        st.argPos,
-        st.ptr
-    });
-    st.numOprs += 1;
-
-    return true;
-}
-
-//===========================================================================
-static void addOptionMatch(
-    vector<RawValue> * out,
-    ParseState & st,
-    const char * ptr
-) {
-    st.optMatches[st.optName.opt] += 1;
-    out->push_back({
-        RawValue::kOption,
-        st.optName.opt,
-        st.name,
-        st.argPos,
-        ptr
-    });
-}
-
-//===========================================================================
-bool Cli::OptIndex::parseOptionValue(
-    vector<RawValue> * out,
-    ParseState & st,
-    Cli & cli,
-    const vector<string> & args
-) {
-    if (st.ptr) {
-        // Option with attached value (in the same argument).
-        addOptionMatch(out, st, st.ptr);
-        return true;
-    }
-    if (st.optName.flags & fNameOptional) {
-        // Option allows optional value and has no value attached. Treat the
-        // value as not present.
-        addOptionMatch(out, st, nullptr);
-        return true;
-    }
-
-    // Option has required value but has no value attached. Use next argument
-    // as the value.
-    st.argPos += 1;
-    if (st.argPos == args.size()) {
-        cli.badUsage("No value given for " + st.name);
-        return false;
-    }
-    addOptionMatch(out, st, args[st.argPos].c_str());
-
-    // Option has value list, use following arguments up to the next option as
-    // values.
-    if (st.optName.flags & fNameList) {
-        while (st.argPos + 1 < args.size()) {
-            auto val = args[st.argPos + 1].c_str();
-            if (*val == '-') {
-                // The next argument looks like an option, so stop taking
-                // arguments.
-                break;
-            }
-            if (st.optName.opt->m_vector
-                && st.optName.opt->maxSize() != -1
-                && st.optMatches[st.optName.opt] >= st.optName.opt->maxSize()
-            ) {
-                // Don't take more arguments as it would push the vector past
-                // it's maximum size.
-                break;
-            }
-            st.argPos += 1;
-            addOptionMatch(out, st, val);
-        }
-    }
-    return true;
-}
-
-//===========================================================================
-static bool commandRequired(const Cli::Config & cfg) {
-    return cfg.allowUnknown || cfg.cmds.size() > 1;
-}
-
-//===========================================================================
-bool Cli::OptIndex::parseToRawValues(
-    vector<RawValue> * out,
-    const vector<string> & args,
-    Cli & cli
-) {
-    cli.m_cfg->progName = args[0];
-    ParseState st;
-    if (cli.m_cfg->cmds[""].unknownArgs) {
-        st.cmdMode = ParseState::kUnknown;
-        st.moreOpts = false;
-    } else if (commandRequired(*cli.m_cfg)) {
-        st.cmdMode = ParseState::kPending;
-    }
-
-    for (; st.argPos < args.size(); ++st.argPos) {
-        st.ptr = args[st.argPos].c_str();
-        if (*st.ptr == '-' && st.ptr[1] && st.moreOpts) {
-            // Argument contains one or more options.
-            st.ptr += 1;
-            // Process all options with short names contained in the argument.
-            for (; *st.ptr && *st.ptr != '-'; ++st.ptr) {
-                // Found short name in argument.
-                st.name = '-';
-                st.name += *st.ptr;
-                auto it = m_shortNames.find(*st.ptr);
-                if (it == m_shortNames.end()) {
-                    cli.badUsage("Unknown option", st.name);
-                    return false;
-                }
-                st.optName = it->second;
-                if (st.optName.flags & fNameFinal)
-                    st.moreOpts = false;
-
-                if (!st.optName.opt->m_bool) {
-                    // Short name option that takes a value, which might be
-                    // attached as the rest of the argument. Adjust pointer to
-                    // the attached value, or set it to null if none.
-                    st.ptr += 1;
-                    if (!*st.ptr)
-                        st.ptr = nullptr;
-                    // Since that value consumes the rest of the argument,
-                    // process it and then advance to next argument.
-                    if (!parseOptionValue(out, st, cli, args))
-                        return false;
-                    goto NEXT_ARG;
-                }
-
-                // Found bool short name, record and continue processing any
-                // additional short names in this same argument.
-                addOptionMatch(
-                    out,
-                    st,
-                    (st.optName.flags & fNameInvert) ? "0" : "1"
-                );
-            }
-            if (!*st.ptr) {
-            NEXT_ARG:
-                // Reached end of this argument, continue to next argument.
-                continue;
-            }
-
-            // Rest of the argument is a long name option, possibly including
-            // an "=value" clause.
-            st.ptr += 1;
-            if (!*st.ptr) {
-                // Bare "--" found, all remaining args are operands.
-                st.moreOpts = false;
-                continue;
-            }
-            if (auto equal = strchr(st.ptr, '=')) {
-                // Name is everything up to the equal sign, value is rest of
-                // the arg after it.
-                st.name.assign(st.ptr, equal);
-                st.ptr = equal + 1;
-            } else {
-                // No equal sign, everything is name, there is no value.
-                st.name = st.ptr;
-                st.ptr = nullptr;
-            }
-            auto it = m_longNames.find(st.name);
-            st.name.insert(0, "--");
-            if (it == m_longNames.end()) {
-                cli.badUsage("Unknown option", st.name);
-                return false;
-            }
-            st.optName = it->second;
-            if (st.optName.flags & fNameFinal)
-                st.moreOpts = false;
-
-            if (!st.optName.opt->m_bool) {
-                // Long option with (possibly empty) value, process it and
-                // advance to next argument.
-                if (!parseOptionValue(out, st, cli, args))
-                    return false;
-                continue;
-            }
-
-            // Found bool long name.
-            auto val = true;
-            if (st.ptr
-                && (st.optName.opt->m_flagValue || !parseBool(val, st.ptr))
-            ) {
-                // Only regular bool opts support values, and those values
-                // must be valid: true, false, 1, 0, y, n, etc.
-                cli.badUsage("Invalid '" + st.name + "' value", st.ptr);
-                return false;
-            }
-            // Record and advance to the next argument.
-            addOptionMatch(
-                out,
-                st,
-                val == bool(st.optName.flags & fNameInvert) ? "0" : "1"
-            );
-            continue;
-        }
-
-        // Positional value
-        if (!parseOperandValue(out, st, cli))
-            return false;
-    }
-
-    if (st.cmdMode == ParseState::kUnknown) {
-        // Since unknown was detected all remaining arguments have already been
-        // copied to the unknownArgs vector.
-    } else {
-        // If there was no subcommand, precmdValues is 0 and all operands are
-        // matched in the context of the top level. If there was a subcommand,
-        // operands that follow it are matched based on it's configuration, any
-        // operands that may have preceded it (precmdValues in number) have
-        // already been processed.
-        if (!matchOperands(
-            out->data() + st.precmdValues,
-            out->size() - st.precmdValues,
-            cli,
-            *this,
-            st.numOprs
-        )) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-//===========================================================================
-static bool badMinMatched(
-    Cli & cli,
-    const Cli::OptBase & opt,
-    const string & name = {}
-) {
-    int min = opt.minSize();
-    int max = opt.maxSize();
-    string detail;
-    if (min != 1 && min == max) {
-        detail = "Must have " + intToString(opt, min) + " values.";
-    } else if (max == -1) {
-        detail = "Must have " + intToString(opt, min) + " or more values.";
-    } else if (min != max) {
-        detail = "Must have " + intToString(opt, min) + " to "
-            + intToString(opt, max) + " values.";
-    }
-    cli.badUsage(
-        "Option '" + (name.empty() ? opt.from() : name) + "' missing value.",
-        {},
-        detail
-    );
-    return false;
-}
-
-//===========================================================================
-bool Cli::parse(vector<string> & args) {
-    Config::touchAllCmds(*this);
-    resetValues();
-
-    OptIndex ndx;
-    ndx.index(*this, "", false);
-
-    if (commandRequired(*m_cfg) && !ndx.m_allowCommands) {
-        // Command processing requires that the command be unambiguously
-        // identifiable and can't be used when the top level has an operand
-        // that requires look ahead to match. Which is caused by the first
-        // operand being either optional or a variable length vector.
-        assert(!"Mixing top level optional operands with commands.");
-    }
-
-    // Preprocess arguments and verify that at least one exists.
-    if (!args.empty()) {
-#if !defined(DIMCLI_LIB_NO_ENV)
-        // Insert environment options
-        if (m_cfg->envOpts.size()) {
-            if (auto val = getenv(m_cfg->envOpts.c_str()))
-                replace(args, 1, 0, toArgv(val));
-        }
-#endif
-#ifdef DIMCLI_LIB_FILESYSTEM
-        // Expand response files
-        if (m_cfg->responseFiles) {
-            vector<string> ancestors;
-            if (!expandResponseFiles(*this, args, ancestors))
-                return false;
-        }
-#endif
-        // Before actions
-        for (auto && fn : m_cfg->befores) {
-            fn(*this, args);
-            if (parseExited())
-                return false;
-            if (args.empty())
-                break;
-        }
-    }
-    // The 0th argument (name of this program) must always be present.
-    if (args.empty()) {
-        assert(!"At least one argument (the program name) required.");
-        fail(kExitSoftware, "No arguments (not even program name) provided.");
-        return false;
-    }
-
-    // Extract raw values and match them to opts.
-    vector<RawValue> rawValues;
-    if (!ndx.parseToRawValues(&rawValues, args, *this))
-        return false;
-
-    // Parse values and copy them to defined opts.
-    m_cfg->command = "";
-    for (auto && val : rawValues) {
-        switch (val.type) {
-        case RawValue::kCommand:
-            m_cfg->command = val.name;
-            continue;
-        default:
-            break;
-        }
-        if (!parseValue(*val.opt, val.name, val.pos, val.ptr))
-            return false;
-    }
-
-    // Report operands and options with too few values.
-    for (auto && oprName : ndx.m_oprNames) {
-        auto & opt = *oprName.opt;
-        if (~oprName.flags & fNameOptional) {
-            // Report required operands that are missing.
-            if (!opt || opt.size() < (size_t) opt.minSize())
-                return badMinMatched(*this, opt, oprName.name);
-        }
-    }
-    for (auto && nv : ndx.m_shortNames) {
-        auto & opt = *nv.second.opt;
-        if (opt && opt.size() < (size_t) opt.minSize())
-            return badMinMatched(*this, opt);
-    }
-    for (auto && nv : ndx.m_longNames) {
-        auto & opt = *nv.second.opt;
-        if (opt && opt.size() < (size_t) opt.minSize())
-            return badMinMatched(*this, opt);
-    }
-
-    // After actions
-    for (auto && opt : m_cfg->opts) {
-        if (!ndx.includeOptValue(*opt, commandMatched()))
-            continue;
-        opt->doAfterActions(*this);
-        if (parseExited())
-            return false;
-    }
-
-    return true;
-}
-
-//===========================================================================
-bool Cli::parse(vector<string> && args) {
-    return parse(args);
-}
-
-//===========================================================================
-bool Cli::parse(size_t argc, char * argv[]) {
-    auto args = toArgv(argc, argv);
-    return parse(move(args));
-}
-
-
-/****************************************************************************
-*
-*   Parse results
-*
-***/
-
-//===========================================================================
-int Cli::exitCode() const {
-    return m_cfg->exitCode;
-};
-
-//===========================================================================
-const string & Cli::errMsg() const {
-    return m_cfg->errMsg;
-}
-
-//===========================================================================
-const string & Cli::errDetail() const {
-    return m_cfg->errDetail;
-}
-
-//===========================================================================
-const string & Cli::progName() const {
-    return m_cfg->progName;
-}
-
-//===========================================================================
-const string & Cli::commandMatched() const {
-    return m_cfg->command;
-}
-
-//===========================================================================
-const vector<string> & Cli::unknownArgs() const {
-    return m_cfg->unknownArgs;
-}
-
-//===========================================================================
-bool Cli::exec() {
-    auto & name = commandMatched();
-    auto & cmdFn = commandExists(name)
-        ? m_cfg->cmds[name].action
-        : m_cfg->unknownCmd;
-
-    if (cmdFn) {
-        fail(kExitOk, {});
-        cmdFn(*this);
-        return !parseExited();
-    } else {
-        // Most likely parse failed, was never run, or "this" was reset.
-        assert(!"Command found by parse not defined.");
-        fail(
-            kExitSoftware,
-            "Command '" + name + "' found by parse not defined."
-        );
-        return false;
-    }
-}
-
-//===========================================================================
-bool Cli::exec(size_t argc, char * argv[]) {
-    return parse(argc, argv) && exec();
-}
-
-//===========================================================================
-bool Cli::exec(vector<string> & args) {
-    return parse(args) && exec();
-}
-
-//===========================================================================
-bool Cli::commandExists(const string & name) const {
-    auto & cmds = m_cfg->cmds;
-    return cmds.find(name) != cmds.end();
-}
-
-
-/****************************************************************************
-*
-*   Arbitrary Text
-*
-***/
-
-namespace {
-
-struct RawCol {
-    int indent = {};
-    int childIndent = {};
-    const char * text = {};
-    int textLen = {};
-    int width = -1;    // Chars (-1 for unspecified).
-    float minPct = -1; // Width as percentage of line (-1 for unspecified).
-    float maxPct = -1; // Width as percentage of line (-1 for unspecified).
-};
-struct RawLine {
-    bool newTable {};
-    vector<RawCol> cols;
-};
-
-struct ColumnSize {
-    int width = -1;
-    int softMax = 0;
-    bool hardMax = false;
-    int minWidth = -1;
-    int maxWidth = -1;
-};
-struct TableSize {
-    vector<ColumnSize> cols;    // Width of each table column.
-    vector<int> rows;           // Indexes to RawLines in the table.
-};
-
-} // namespace
-
-//===========================================================================
-// Returns number of characters used by the line.
-static size_t parseLine(RawLine * out, const char line[]) {
-    *out = {};
-    auto ptr = line;
-    for (;;) {
-        out->cols.emplace_back();
-        auto & col = out->cols.back();
-
-        //--------------------------------------------------------------------
-        // Preamble
-        //
-        // Paragraph or table column:
-        //  SP  Increase indent of first line of paragraph or column text
-        //  \r  Reduced indentation after line wrap by one
-        //  \v  Increase indentation after line wrap by one
-        // Table column only:
-        //  \a<MIN> <MAX>\a
-        //      Set min and max width of column
-        //  \f  Starts a new table, not extending current table at this indent
-        for (;; ++ptr) {
-            if (*ptr == ' ') {
-                col.indent += 1;
-            } else if (*ptr == '\r') {
-                col.childIndent -= 1;
-            } else if (*ptr == '\v') {
-                col.childIndent += 1;
-            } else if (*ptr == '\a') {
-                char * eptr;
-                col.minPct = strtof(ptr + 1, &eptr);
-                col.maxPct = strtof(eptr, &eptr);
-                if (*eptr == '\a'
-                    && col.minPct <= col.maxPct
-                    && col.minPct >= 0 && col.minPct <= 100
-                ) {
-                    // Valid width spec, use and advance past entire '\a'
-                    // clause.
-                    col.maxPct = min(col.maxPct, 100.0f);
-                    ptr = eptr;
-                } else {
-                    // Malformed column width given; set width to unspecified
-                    // and ignore the leading '\a'.
-                    col.minPct = -1;
-                    col.maxPct = -1;
-                    col.text = ptr;
-                    break;
-                }
-            } else if (*ptr == '\f') {
-                out->newTable = true;
-            } else {
-                col.text = ptr;
-                break;
-            }
-        }
-
-        // Don't allow unindent to bleed into previous column.
-        col.childIndent = max(col.childIndent, -col.indent);
-
-        //--------------------------------------------------------------------
-        // Body
-        //
-        // Separators:
-        //  \n  Paragraph or table row separator
-        //  \t  Table column separator
-        col.textLen = 0;
-        for (;;) {
-            char ch = *ptr++;
-            if (!ch) {
-                return ptr - line - 1;
-            } else if (ch == '\n') {
-                return ptr - line;
-            } else if (ch == '\t') {
-                // Next column
-                break;
-            } else if (ch == ' ' || ch == '\r') {
-                // Skip potentially trailing spaces and carriage returns.
-            } else {
-                // Standard text character. Include everything up to it.
-                col.textLen = int(ptr - col.text);
-            }
-        }
-    }
-}
-
-//===========================================================================
-// Apply TableSize to the raw lines in the table.
-static void applySize(vector<RawLine> * raws, const TableSize & tab) {
-    for (auto && line : tab.rows) {
-        auto & cols = (*raws)[line].cols;
-        for (unsigned i = 0; i < cols.size(); ++i) {
-            auto & tcol = tab.cols[i];
-            if (tcol.softMax && !tcol.hardMax) {
-                // Some cells in the column extend beyond the max width but
-                // none pass the hard max. Use a width just enough beyond the
-                // normal maximum that no line wrapping is needed.
-                cols[i].width = tcol.softMax;
-            } else {
-                // Line wrapping is either unneeded or inevitable, use the
-                // width as calculated.
-                cols[i].width = tcol.width;
-            }
-        }
-    }
-}
-
-//===========================================================================
-static void clear(TableSize * tab) {
-    tab->cols.clear();
-    tab->rows.clear();
-}
-
-//===========================================================================
-static void calcColumns(
-    unordered_map<int, TableSize> * tables,
-    vector<RawLine> * raws,
-    int index,
-    const Cli::Config & cfg
-) {
-    auto & raw = (*raws)[index];
-    auto & cols = raw.cols;
-    auto ncols = raw.cols.size();
-    if (ncols == 1) {
-        // Paragraph (not a table because there's only one column), no need
-        // to calculate column widths.
-        return;
-    }
-    auto & tab = (*tables)[cols[0].indent];
-    if (raw.newTable) {
-        // Update prior table at this indent and reset the calculated
-        // sizes to start the new table.
-        applySize(raws, tab);
-        clear(&tab);
-    }
-    tab.rows.push_back(index);
-    if (tab.cols.size() < ncols) {
-        // Add column size entries for additional columns added by this row.
-        auto icol = tab.cols.size();
-        tab.cols.resize(ncols);
-        for (; icol < ncols; ++icol) {
-            auto & tcol = tab.cols[icol];
-            auto & col = cols[icol];
-            if (raw.newTable && col.minPct != -1) {
-                // Use min/max widths from preamble of this table cell.
-                assert(col.maxPct != -1);
-                tcol.minWidth =
-                    (int) round(col.minPct * cfg.maxLineWidth / 100);
-                tcol.maxWidth =
-                    (int) round(col.maxPct * cfg.maxLineWidth / 100);
-            } else {
-                // Width unspecified or prohibited; start with default min
-                // to max for first column and just the default min for all
-                // others.
-                tcol.minWidth =
-                    (int) round(cfg.minNameColPct * cfg.maxLineWidth / 100);
-                tcol.maxWidth = !icol
-                    ? (int) round(cfg.maxNameColPct * cfg.maxLineWidth / 100)
-                    : tcol.minWidth;
-            }
-        }
-    }
-
-    // Adjust column size entries based on contents of this row.
-    for (unsigned icol = 0; icol < cols.size(); ++icol) {
-        auto & tcol = tab.cols[icol];
-        auto & col = cols[icol];
-        int width = col.indent + col.textLen + 2;
-        if (width < tcol.minWidth) {
-            // The width of a cell must be at least minWidth
-            width = tcol.minWidth;
-        } else if (width > tcol.maxWidth + 2) {
-            // The text is so long that the cell width shouldn't try growing
-            // to match it.
-            tcol.hardMax = true;
-            width = tcol.minWidth;
-        } else if (width > tcol.maxWidth) {
-            // Text is between the max width and hard max; update soft max to
-            // be the largest value within that range.
-            tcol.softMax = max(width, tcol.softMax);
-            width = tcol.maxWidth;
-        }
-        if (width > tcol.width) {
-            // Widen column width to contain this table cell.
-            tcol.width = width;
-        }
-    }
-}
-
-//===========================================================================
-static int wrapIndent(int indent, size_t width) {
-    if (indent >= (int) width) {
-        return (indent - 2) % ((int) width - 2) + 2;
-    } else {
-        return indent;
-    }
-}
-
-//===========================================================================
-// Appends formatted text to *outPtr.
-// Increases *lines by the number of line breaks generated.
-// Returns the new output column position.
-//
-//  SP  Soft word break
-//  \b  non-breaking space
-static size_t formatCol(
-    string * outPtr,
-    int * lines,
-    const RawCol & col,
-    size_t startPos,
-    size_t pos,
-    size_t lineWidth
-) {
-    auto & out = *outPtr;
-    auto width = (col.width == -1) ? lineWidth : col.width;
-    assert(width // LCOV_EXCL_LINE
-        && "Internal dimcli error: unknown column width.");
-
-    if (startPos && col.textLen) {
-        if (pos + 1 < startPos) {
-            out.append(startPos - pos, ' ');
-            pos = startPos;
-        } else if (pos < startPos + 3) {
-            out += "  ";
-            pos += 2;
-        } else {
-            pos = lineWidth;
-        }
-    }
-
-    bool firstWord = true;
-    auto indent = wrapIndent(col.indent, width);
-    auto childIndent = startPos
-        + wrapIndent(col.indent + col.childIndent, width);
-    out.append(indent, ' ');
-    pos += indent;
-    for (auto ptr = col.text, eptr = ptr + col.textLen; ptr != eptr;) {
-        if (*ptr == ' ') {
-            ptr += 1;
-            continue;
-        }
-        auto eword = (const char *) memchr(ptr, ' ', eptr - ptr);
-        if (!eword)
-            eword = eptr;
-        size_t wordLen = eword - ptr;
-        if (pos + wordLen + 1 > lineWidth
-            && pos > wordLen
-        ) {
-            firstWord = true;
-            *lines += 1;
-            out += '\n';
-            out.append(childIndent, ' ');
-            pos = childIndent;
-        }
-        if (firstWord) {
-            firstWord = false;
-        } else {
-            out += ' ';
-            pos += 1;
-        }
-        for (; ptr != eword; ++ptr) {
-            if (*ptr == '\b') {
-                out += ' ';
-            } else {
-                out += *ptr;
-            }
-        }
-        pos += wordLen;
-        ptr = eword;
-    }
-    return pos;
-}
-
-//===========================================================================
-// Returns number of line breaks added by formatting.
-static int formatLine(
-    string * outPtr,
-    const RawLine & raw,
-    size_t lineWidth
-) {
-    auto & out = *outPtr;
-    if (raw.cols.size() == 1 && !raw.cols[0].textLen)
-        return 0;
-
-    auto lines = 0;
-    size_t pos = 0;
-    size_t startPos = 0;
-    for (auto && col : raw.cols) {
-        pos = formatCol(&out, &lines, col, startPos, pos, lineWidth);
-        startPos += col.width;
-    }
-    return lines;
-}
-
-//===========================================================================
-// Returns formatted text.
-static string format(const Cli::Config & cfg, const string & text) {
-    // Parse into lines and columns.
-    vector<RawLine> raws;
-    for (auto ptr = text.c_str(); *ptr;) {
-        raws.emplace_back();
-        auto & raw = raws.back();
-        ptr += parseLine(&raw, ptr);
-    }
-
-    // Calculate table column widths.
-    unordered_map<int, TableSize> tables;
-    for (unsigned i = 0; i < raws.size(); ++i)
-        calcColumns(&tables, &raws, i, cfg);
-    for (auto && kv : tables)
-        applySize(&raws, kv.second);
-
-    // Render text.
-    int lineBreaks = 0;
-    string out;
-    if (auto num = (int) raws.size()) {
-        lineBreaks += num - 1; // Breaks explicitly added in following loop.
-        lineBreaks += formatLine(&out, raws[0], cfg.maxLineWidth);
-        for (auto i = 1; i < num; ++i) {
-            out += '\n';
-            lineBreaks += formatLine(&out, raws[i], cfg.maxLineWidth);
-        }
-    }
-    return out;
-}
-
-//===========================================================================
-void Cli::printText(ostream & os, const string & text) {
-    os << format(*m_cfg, text);
-}
-
-
-/****************************************************************************
-*
-*   Help Text
-*
-***/
-
-namespace {
-
-struct ChoiceKey {
-    size_t pos;
-    const char * key;
-    const char * desc;
-    const char * sortKey;
-    bool def;
-};
-
-} // namespace
-
-//===========================================================================
-// static
-string Cli::OptIndex::desc(
-    const Cli::OptBase & opt,
-    bool withMarkup
-) {
-    string suffix;
-    if (!withMarkup) {
-        // Raw description without any markup.
-    } else if (!opt.m_choiceDescs.empty()) {
-        // "default" tag is added to individual choices later.
-    } else if (opt.m_flagValue && opt.m_flagDefault) {
-        if (opt.m_defaultDesc && opt.m_defaultDesc->empty()) {
-            // Explicit and empty default description, suppress the clause.
-        } else {
-            suffix += "(default)";
-        }
-    } else if (opt.m_vector) {
-        auto minVec = opt.minSize();
-        auto maxVec = opt.maxSize();
-        if (minVec != 1 || maxVec != -1) {
-            suffix += "(limit: " + intToString(opt, minVec);
-            if (maxVec == -1) {
-                suffix += "+";
-            } else if (minVec != maxVec) {
-                suffix += " to " + intToString(opt, maxVec);
-            }
-            suffix += ")";
-        }
-    } else if (!opt.m_bool) {
-        string tmp;
-        if (!opt.m_defaultDesc) {
-            if (!opt.defaultValueToString(tmp))
-                tmp.clear();
-        } else if (opt.m_defaultDesc->empty()) {
-            // Explicit and empty default description, suppress the clause.
-        } else {
-            tmp = *opt.m_defaultDesc;
-        }
-        if (!tmp.empty())
-            suffix += "(default: " + tmp + ")";
-    }
-    if (suffix.empty()) {
-        return opt.m_desc;
-    } else if (opt.m_desc.empty()) {
-        return suffix;
-    } else {
-        return opt.m_desc + ' ' + suffix;
-    }
-}
-
-//===========================================================================
-// static
-const unordered_map<string, Cli::OptBase::ChoiceDesc> &
-Cli::OptIndex::choiceDescs(const OptBase & opt) {
-    return opt.m_choiceDescs;
-}
-
-//===========================================================================
-static vector<ChoiceKey> getChoiceKeys(
-    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
-) {
-    vector<ChoiceKey> out;
-    for (auto && cd : choices) {
-        ChoiceKey key;
-        key.pos = cd.second.pos;
-        key.key = cd.first.c_str();
-        key.desc = cd.second.desc.c_str();
-        key.sortKey = cd.second.sortKey.c_str();
-        key.def = cd.second.def;
-        out.push_back(key);
-    }
-    sort(out.begin(), out.end(), [](auto & a, auto & b) {
-        if (int rc = strcmp(a.sortKey, b.sortKey))
-            return rc < 0;
-        return a.pos < b.pos;
-    });
-    return out;
-}
-
-//===========================================================================
-static void writeNbsp(string * out, const string & str) {
-    for (auto ch : str)
-        out->append(1, (ch == ' ') ? '\b' : ch);
-}
-
-//===========================================================================
-static void writeChoices(
-    string * outPtr,
-    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
-) {
-    auto & out = *outPtr;
-    if (choices.empty())
-        return;
-    auto keys = getChoiceKeys(choices);
-    const size_t indent = 6;
-
-    string desc;
-    string prefix(indent, ' ');
-    for (auto && k : keys) {
-        out += prefix;
-        writeNbsp(&out, k.key);
-        out += '\t';
-        out += k.desc;
-        if (k.def)
-            out += " (default)";
-        out += '\n';
-    }
-}
-
-//===========================================================================
-static void writeChoicesDetail(
-    string * outPtr,
-    const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
-) {
-    auto & out = *outPtr;
-    if (choices.empty())
-        return;
-    out += "Must be";
-    auto keys = getChoiceKeys(choices);
-
-    string val;
-    size_t pos = 0;
-    auto num = keys.size();
-    for (auto i = keys.begin(); pos < num; ++pos, ++i) {
-        out += " '";
-        writeNbsp(&out, i->key);
-        out += "'";
-        if (pos == 0 && num == 2) {
-            out += " or";
-        } else if (pos + 1 == num) {
-            out += '.';
-        } else {
-            out += ',';
-            if (pos + 2 == num)
-                out += " or";
-        }
-    }
-}
-
-//===========================================================================
-static void writeUsage(
-    string * outPtr,
-    Cli & cli,
-    const string & arg0,
-    const string & cmdName,
-    bool expandedOptions
-) {
-    auto & out = *outPtr;
-    auto & cfg = Cli::Config::get(cli);
-    Cli::OptIndex ndx;
-    ndx.index(cli, cmdName, true);
-    auto prog = displayName(arg0.empty() ? cli.progName() : arg0);
-    auto prefix = "Usage: " + prog;
-    out.append(prefix.size() + 1, '\v');
-    out += prefix;
-    if (cmdName.size()) {
-        out += ' ';
-        out += cmdName;
-    }
-    if (!ndx.m_shortNames.empty() || !ndx.m_longNames.empty()) {
-        if (!expandedOptions) {
-            out += " [OPTIONS]";
-        } else {
-            auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
-            auto namedOpts = ndx.findNamedOpts(
-                cli,
-                cmd,
-                kNameNonDefault,
-                true
-            );
-            for (auto && key : namedOpts) {
-                out += ' ';
-                writeNbsp(&out, "[" + key.list + "]");
-            }
-        }
-    }
-    if (cmdName.empty() && cfg.cmds.size() > 1) {
-        out += " COMMAND [ARGS...]";
-    } else if (cmdName.empty() && cfg.allowUnknown) {
-        out += " [COMMAND] [ARGS...]";
-    } else if (!cli.commandExists(cmdName)) {
-        out += " [ARGS...]";
-    } else {
-        for (auto && pa : ndx.m_oprNames) {
-            out += ' ';
-            string token = pa.name.find(' ') == string::npos
-                ? pa.name
-                : "<" + pa.name + ">";
-            if (pa.opt->maxSize() < 0 || pa.opt->maxSize() > 1)
-                token += "...";
-            if (pa.flags & fNameOptional) {
-                writeNbsp(&out, "[" + token + "]");
-            } else {
-                writeNbsp(&out, token);
-            }
-        }
-    }
-    out += '\n';
-}
-
-//===========================================================================
-static void writeCommands(string * outPtr, Cli & cli) {
-    auto & out = *outPtr;
-    auto & cfg = Cli::Config::get(cli);
-    Cli::Config::touchAllCmds(cli);
-
-    struct CmdKey {
-        const char * name;
-        const CommandConfig * cmd;
-        const GroupConfig * grp;
-    };
-    vector<CmdKey> keys;
-    for (auto && cmd : cfg.cmds) {
-        if (cmd.first.size()) {
-            CmdKey key = {
-                cmd.first.c_str(),
-                &cmd.second,
-                &cfg.cmdGroups[cmd.second.cmdGroup]
-            };
-            keys.push_back(key);
-        }
-    }
-    if (keys.empty())
-        return;
-    sort(keys.begin(), keys.end(), [](auto & a, auto & b) {
-        if (int rc = a.grp->sortKey.compare(b.grp->sortKey))
-            return rc < 0;
-        return strcmp(a.name, b.name) < 0;
-    });
-
-    const char * gname = nullptr;
-    for (auto && key : keys) {
-        string indent = "  \v\v";
-        if (!gname || key.grp->name != gname) {
-            if (!gname)
-                indent += '\f';
-            gname = key.grp->name.c_str();
-            out += '\n';
-            auto title = key.grp->title;
-            if (title.empty()
-                && strcmp(gname, kInternalOptionGroup) == 0
-                && &key == keys.data()
-            ) {
-                // First group and it's the internal group, give it a title.
-                title = "Commands";
-            }
-            if (!title.empty()) {
-                out += title;
-                out += ":\n";
-            }
-        }
-
-        out += indent;
-        writeNbsp(&out, key.name);
-        auto desc = key.cmd->desc;
-        size_t pos = 0;
-        for (;;) {
-            pos = desc.find_first_of(".!?", pos);
-            if (pos == string::npos)
-                break;
-            pos += 1;
-            if (desc[pos] == ' ') {
-                desc.resize(pos);
-                break;
-            }
-        }
-        desc = trim(desc);
-        if (!desc.empty()) {
-            out += '\t';
-            out += desc;
-        }
-        out += '\n';
-    }
-}
-
-//===========================================================================
-static void writeOperands(string * outPtr, Cli & cli, const string & cmd) {
-    auto & out = *outPtr;
-    Cli::OptIndex ndx;
-    ndx.index(cli, cmd, true);
-    bool hasDesc = false;
-    for (auto && pa : ndx.m_oprNames) {
-        if (!ndx.desc(*pa.opt, false).empty()) {
-            hasDesc = true;
-            break;
-        }
-    }
-    if (!hasDesc)
-        return;
-
-    out += '\f';
-    for (auto && pa : ndx.m_oprNames) {
-        out += "  \v\v";
-        writeNbsp(&out, pa.name);
-        out += '\t';
-        out += ndx.desc(*pa.opt);
-        out += '\n';
-        writeChoices(&out, ndx.choiceDescs(*pa.opt));
-    }
-}
-
-//===========================================================================
-static void writeOptions(string * outPtr, Cli & cli, const string & cmdName) {
-    auto & out = *outPtr;
-    Cli::OptIndex ndx;
-    ndx.index(cli, cmdName, true);
-    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
-
-    // Find named args and the longest name list.
-    auto namedOpts = ndx.findNamedOpts(cli, cmd, kNameAll, false);
-    if (namedOpts.empty())
-        return;
-
-    const char * gname = nullptr;
-    for (auto && key : namedOpts) {
-        string indent = "  \v\v";
-        if (!gname || key.opt->group() != gname) {
-            if (!gname)
-                indent += '\f';
-            gname = key.opt->group().c_str();
-            out += '\n';
-            auto & grp = Cli::Config::findGrpAlways(cmd, key.opt->group());
-            auto title = grp.title;
-            if (title.empty()
-                && strcmp(gname, kInternalOptionGroup) == 0
-                && &key == namedOpts.data()
-            ) {
-                // First group and it's the internal group, give it a title
-                // so it's not just left hanging.
-                title = "Options";
-            }
-            if (!title.empty()) {
-                out += title;
-                out += ":\n";
-            }
-        }
-        out += indent;
-        out += key.list;
-        out += '\t';
-        out += ndx.desc(*key.opt);
-        out += '\n';
-        writeChoices(&out, ndx.choiceDescs(*key.opt));
-    }
-}
-
-//===========================================================================
-static void writeHelp(
-    string * outPtr,
-    Cli & cli,
-    const string & progName,
-    const string & cmdName
-) {
-    auto & out = *outPtr;
-    if (!cli.commandExists(cmdName))
-        return writeUsage(&out, cli, progName, cmdName, false);
-
-    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
-    auto & top = Cli::Config::findCmdAlways(cli, "");
-    auto & hdr = cmd.header.empty() ? top.header : cmd.header;
-    if (*hdr.data()) {
-        out += hdr;
-        out += '\n';
-    }
-    writeUsage(&out, cli, progName, cmdName, false);
-    if (!cmd.desc.empty()) {
-        out.append(1, '\n').append(cmd.desc).append(1, '\n');
-    }
-    if (cmdName.empty())
-        writeCommands(&out, cli);
-    writeOperands(&out, cli, cmdName);
-    writeOptions(&out, cli, cmdName);
-    auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
-    if (*ftr.data()) {
-        out += '\n';
-        out += ftr;
-    }
-}
-
-//===========================================================================
-int Cli::printHelp(
-    ostream & os,
-    const string & progName,
-    const string & cmdName
-) {
-    string raw;
-    writeHelp(&raw, *this, progName, cmdName);
-    os << format(*m_cfg, raw) << '\n';
-    return exitCode();
-}
-
-//===========================================================================
-int Cli::printUsage(
-    ostream & os,
-    const string & arg0,
-    const string & cmd
-) {
-    string raw;
-    writeUsage(&raw, *this, arg0, cmd, false);
-    os << format(*m_cfg, raw) << '\n';
-    return exitCode();
-}
-
-//===========================================================================
-int Cli::printUsageEx(
-    ostream & os,
-    const string & arg0,
-    const string & cmd
-) {
-    string raw;
-    writeUsage(&raw, *this, arg0, cmd, true);
-    os << format(*m_cfg, raw) << '\n';
-    return exitCode();
-}
-
-//===========================================================================
-void Cli::printOperands(ostream & os, const string & cmd) {
-    string raw;
-    writeOperands(&raw, *this, cmd);
-    os << format(*m_cfg, raw);
-}
-
-//===========================================================================
-void Cli::printOptions(ostream & os, const string & cmd) {
-    string raw;
-    writeOptions(&raw, *this, cmd);
-    os << format(*m_cfg, raw);
-}
-
-//===========================================================================
-void Cli::printCommands(ostream & os) {
-    string raw;
-    writeCommands(&raw, *this);
-    os << format(*m_cfg, raw);
-}
-
-//===========================================================================
-int Cli::printError(ostream & os) {
-    auto code = exitCode();
-    if (code) {
-        os << "Error: " << errMsg() << endl;
-        auto & detail = errDetail();
-        if (detail.size())
-            os << detail << endl;
-    }
-    return code;
 }
 
 

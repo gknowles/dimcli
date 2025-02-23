@@ -1,4 +1,4 @@
-// Copyright Glen Knowles 2016 - 2024.
+// Copyright Glen Knowles 2016 - 2025.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // cli.h - dimcli
@@ -491,51 +491,6 @@ public:
     std::ostream & conout();
 
     //-----------------------------------------------------------------------
-    // RENDERING HELP TEXT
-    //
-    // NOTE: The print*() family of methods return incomplete or meaningless
-    //       results when used before parse() has been called to supply the
-    //       program name and finalize the configuration. The exception is
-    //       printText(), which only uses console width, and is safe to use
-    //       without first calling parse(). To learn about printText(), see
-    //       the section on rendering arbitrary text.
-
-    // If exitCode() is not EX_OK, prints errMsg and errDetail (if present),
-    // otherwise prints nothing. Returns exitCode(). Only makes sense after
-    // parsing has completed.
-    int printError(std::ostream & os);
-
-    // printHelp() & printUsage() return the current exitCode().
-    int printHelp(
-        std::ostream & os,
-        const std::string & progName = {},
-        const std::string & cmd = {}
-    );
-    int printUsage(
-        std::ostream & os,
-        const std::string & progName = {},
-        const std::string & cmd = {}
-    );
-    // Same as printUsage(), except always lists all non-default options
-    // individually instead of the [OPTIONS] catchall.
-    int printUsageEx(
-        std::ostream & os,
-        const std::string & progName = {},
-        const std::string & cmd = {}
-    );
-
-    void printCommands(std::ostream & os);
-    void printOperands(
-        std::ostream & os,
-        const std::string & cmd = {}
-    );
-    void printOptions(std::ostream & os, const std::string & cmd = {});
-
-    // Friendly name for type used in help text, such as NUM, VALUE, or FILE.
-    template <typename T>
-    static std::string valueDesc();
-
-    //-----------------------------------------------------------------------
     // PARSING
 
     // Parse the command line, populate the options, and set the error and
@@ -554,68 +509,6 @@ public:
     // starts.
     Cli & resetValues() &;
     Cli && resetValues() &&;
-
-    // Parse cmdline into vector of args, using the default conventions
-    // (Gnu or Windows) of the platform.
-    static std::vector<std::string> toArgv(const std::string & cmdline);
-    // Copy array of pointers into vector of args.
-    static std::vector<std::string> toArgv(size_t argc, char * argv[]);
-    static std::vector<std::string> toArgv(size_t argc, const char * argv[]);
-    // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
-    static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
-    static std::vector<std::string> toArgv(
-        size_t argc,
-        const wchar_t * argv[]
-    );
-    // Copy args into vector of args. Arguments must be convertible to string
-    // via Convert::toString().
-    template <typename ...Args>
-    static std::vector<std::string> toArgvL(Args &&... args);
-
-    // Create vector of pointers suitable for use with argc/argv APIs, has a
-    // trailing null that is not included in size(). The return values point
-    // into the source string vector and are only valid until that vector is
-    // resized or destroyed.
-    static std::vector<const char *> toPtrArgv(
-        const std::vector<std::string> & args
-    );
-
-    // Parse according to glib conventions, based on the UNIX98 shell spec.
-    static std::vector<std::string> toGlibArgv(const std::string & cmdline);
-    // Parse using GNU conventions, same rules as buildargv().
-    static std::vector<std::string> toGnuArgv(const std::string & cmdline);
-    // Parse using Windows conventions.
-    static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
-
-    // Join arguments into a single command line, escaping as needed, that
-    // parses back into those same arguments. Uses the default conventions (Gnu
-    // or Windows) of the platform.
-    static std::string toCmdline(const std::vector<std::string> & args);
-    // Join array of pointers into command line, escaping as needed.
-    static std::string toCmdline(size_t argc, char * argv[]);
-    static std::string toCmdline(size_t argc, const char * argv[]);
-    static std::string toCmdline(size_t argc, wchar_t * argv[]);
-    static std::string toCmdline(size_t argc, const wchar_t * argv[]);
-    // Join arguments into command line, escaping as needed. Arguments must be
-    // convertible to string via Convert::toString().
-    template <typename ...Args>
-    static std::string toCmdlineL(Args &&... args);
-
-    // Join according to glib conventions, based on the UNIX98 shell spec.
-    static std::string toGlibCmdline(const std::vector<std::string> & args);
-    static std::string toGlibCmdline(size_t argc, char * argv[]);
-    template <typename ...Args>
-    static std::string toGlibCmdlineL(Args &&... args);
-    // Join using GNU conventions, same rules as buildargv().
-    static std::string toGnuCmdline(const std::vector<std::string> & args);
-    static std::string toGnuCmdline(size_t argc, char * argv[]);
-    template <typename ...Args>
-    static std::string toGnuCmdlineL(Args &&... args);
-    // Join using Windows conventions.
-    static std::string toWindowsCmdline(const std::vector<std::string> & args);
-    static std::string toWindowsCmdline(size_t argc, char * argv[]);
-    template <typename ...Args>
-    static std::string toWindowsCmdlineL(Args &&... args);
 
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
@@ -751,6 +644,51 @@ public:
     bool commandExists(const std::string & name) const;
 
     //-----------------------------------------------------------------------
+    // RENDERING HELP TEXT
+    //
+    // NOTE: The print*() family of methods return incomplete or meaningless
+    //       results when used before parse() has been called to supply the
+    //       program name and finalize the configuration. The exception is
+    //       printText(), which only uses console width, and is safe to use
+    //       without first calling parse(). To learn about printText(), see
+    //       the section on rendering arbitrary text below.
+
+    // If exitCode() is not EX_OK, prints errMsg and errDetail (if present),
+    // otherwise prints nothing. Returns exitCode(). Only makes sense after
+    // parsing has completed.
+    int printError(std::ostream & os);
+
+    // printHelp() & printUsage() return the current exitCode().
+    int printHelp(
+        std::ostream & os,
+        const std::string & progName = {},
+        const std::string & cmd = {}
+    );
+    int printUsage(
+        std::ostream & os,
+        const std::string & progName = {},
+        const std::string & cmd = {}
+    );
+    // Same as printUsage(), except always lists all non-default options
+    // individually instead of the [OPTIONS] catchall.
+    int printUsageEx(
+        std::ostream & os,
+        const std::string & progName = {},
+        const std::string & cmd = {}
+    );
+
+    void printCommands(std::ostream & os);
+    void printOperands(
+        std::ostream & os,
+        const std::string & cmd = {}
+    );
+    void printOptions(std::ostream & os, const std::string & cmd = {});
+
+    // Friendly name for type used in help text, such as NUM, VALUE, or FILE.
+    template <typename T>
+    static std::string valueDesc();
+
+    //-----------------------------------------------------------------------
     // RENDERING ARBITRARY TEXT
     //
     // NOTE: This text rendering method is not needed for applications to
@@ -862,11 +800,76 @@ public:
     void printText(std::ostream & os, const std::string & text);
 
     //-----------------------------------------------------------------------
+    // ARGV CONVERSIONS
+
+    // Parse cmdline into vector of args, using the default conventions
+    // (Gnu or Windows) of the platform.
+    static std::vector<std::string> toArgv(const std::string & cmdline);
+    // Copy array of pointers into vector of args.
+    static std::vector<std::string> toArgv(size_t argc, char * argv[]);
+    static std::vector<std::string> toArgv(size_t argc, const char * argv[]);
+    // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
+    static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
+    static std::vector<std::string> toArgv(
+        size_t argc,
+        const wchar_t * argv[]
+    );
+    // Copy args into vector of args. Arguments must be convertible to string
+    // via cvt.toString().
+    template <typename ...Args>
+    static std::vector<std::string> toArgvL(Args &&... args);
+
+    // Create vector of pointers suitable for use with argc/argv APIs, has a
+    // trailing null that is not included in size(). The return values point
+    // into the source string vector and are only valid until that vector is
+    // resized or destroyed.
+    static std::vector<const char *> toPtrArgv(
+        const std::vector<std::string> & args
+    );
+
+    // Parse according to glib conventions, based on the UNIX98 shell spec.
+    static std::vector<std::string> toGlibArgv(const std::string & cmdline);
+    // Parse using GNU conventions, same rules as buildargv().
+    static std::vector<std::string> toGnuArgv(const std::string & cmdline);
+    // Parse using Windows conventions.
+    static std::vector<std::string> toWindowsArgv(const std::string & cmdline);
+
+    // Join arguments into a single command line, escaping as needed, that
+    // parses back into those same arguments. Uses the default conventions (Gnu
+    // or Windows) of the platform.
+    static std::string toCmdline(const std::vector<std::string> & args);
+    // Join array of pointers into command line, escaping as needed.
+    static std::string toCmdline(size_t argc, char * argv[]);
+    static std::string toCmdline(size_t argc, const char * argv[]);
+    static std::string toCmdline(size_t argc, wchar_t * argv[]);
+    static std::string toCmdline(size_t argc, const wchar_t * argv[]);
+    // Join arguments into command line, escaping as needed. Arguments must be
+    // convertible to string via cvt.toString().
+    template <typename ...Args>
+    static std::string toCmdlineL(Args &&... args);
+
+    // Join according to glib conventions, based on the UNIX98 shell spec.
+    static std::string toGlibCmdline(const std::vector<std::string> & args);
+    static std::string toGlibCmdline(size_t argc, char * argv[]);
+    template <typename ...Args>
+    static std::string toGlibCmdlineL(Args &&... args);
+    // Join using GNU conventions, same rules as buildargv().
+    static std::string toGnuCmdline(const std::vector<std::string> & args);
+    static std::string toGnuCmdline(size_t argc, char * argv[]);
+    template <typename ...Args>
+    static std::string toGnuCmdlineL(Args &&... args);
+    // Join using Windows conventions.
+    static std::string toWindowsCmdline(const std::vector<std::string> & args);
+    static std::string toWindowsCmdline(size_t argc, char * argv[]);
+    template <typename ...Args>
+    static std::string toWindowsCmdlineL(Args &&... args);
+
+    //-----------------------------------------------------------------------
     // HELPERS
 
     // Returns false if echo was unable to be set.
     static bool consoleEnableEcho(bool enable = true);
-    // Returns the default when queryWidth is false.
+    // Returns the built in default when queryWidth is false.
     static unsigned consoleWidth(bool queryWidth = true);
 
 protected:
