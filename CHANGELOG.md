@@ -72,10 +72,10 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Allowed long named booleans an optional value (e.g. "=true")
 - Changed - Rename opt.unspecifiedValue() to opt.implicitValue()
 - Added - fromString() support for types constructible from string
-- Changed - Allow optional positionals before required ones
+- Changed - Allow optional operands before required ones
 - Added - optVec.size(exact) and optVec.size(min, max)
 - Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead
-- Added - Allow unambiguous positionals before subcommands
+- Added - Allow unambiguous operands before subcommands
 - Added - Optionally capture arbitrary arguments of unknown subcommands
 - Added - Option to change column at which errors and help text wraps
 - Changed - Default text columns reduced on narrow console windows
@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - cli.exec() returns exit code instead of just whether it's 0
 - Changed - Command handlers now return void
 - Fixed - Meaningless and ignored "--no" version appears for flag values
-- Added - opt.finalOpt() makes all following arguments positional
+- Added - opt.finalOpt() makes all following arguments operands
 - Changed - Renamed cli.printPositionals() to cli.printOperands()
 
 ## dimcli 5.0.2 (2020-01-14)
@@ -112,7 +112,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed - optVec flag values with inverted keys aren't ignored
 - Fixed - Nested response files not resolved relative to parent
 - Fixed - Not all response files expanded when multiple appear
-- Added - Trim spaces around positional argument names
+- Added - Trim spaces around operand argument names
 - Fixed - Error detail for options with two choices missing "or"
 - Fixed - Subcommand help summary terminated by '.' instead of "[.!?] "
 - Added - Allow non-bool options to be inverted ('!' name prefix)

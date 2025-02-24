@@ -130,7 +130,7 @@ with optional prefix/suffix modifiers, take one of four forms:
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
 version.
-| ! | Final option, all following arguments will be positional operands.
+| ! | Final option, all following arguments will be operands.
 |===
 
 == Options
@@ -195,7 +195,7 @@ to the low, if higher than high it's made merely high.
 | Query or change the default value of an opt after it has been created.
 
 | opt.<<guide.adoc#final-option, finalOpt>>
-| Interpret all following arguments as positional operands.
+| Interpret all following arguments as operands.
 
 | opt.<<guide.adoc#flag-values, flagValue>>
 | Turns the option into a flag value. There are normally multiple flags pointed
@@ -478,7 +478,7 @@ completed.
 | Write usage, but include names of all non-default options.
 
 | cli.<<guide.adoc#going-your-own-way, printOperands>>
-| Write names and descriptions of positional arguments.
+| Write names and descriptions of operands (i.e. positional arguments).
 
 | cli.<<guide.adoc#going-your-own-way, printOptions>>
 | Write full option descriptions.

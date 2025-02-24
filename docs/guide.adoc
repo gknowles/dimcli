@@ -1,5 +1,5 @@
 ////
-Copyright Glen Knowles 2016 - 2024.
+Copyright Glen Knowles 2016 - 2025.
 Distributed under the Boost Software License, Version 1.0.
 ////
 
@@ -303,7 +303,7 @@ h| Prefixes |
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
 version.
-| ! | Final option, all following arguments will be positional operands.
+| ! | Final option, all following arguments will be operands.
 |===
 
 .Additional rules
@@ -1706,7 +1706,7 @@ changed via cli.iostreams().
 
 === Final Option
 An option or operand can be marked so that all following arguments are treated
-as positional operands, the same as when <<#special-arguments, "--">> is used.
+as operands, the same as when <<#special-arguments, "--">> is used.
 
 This can be used to forward raw arguments to such things as another program or
 an internal script language interpreter.

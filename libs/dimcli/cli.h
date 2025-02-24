@@ -240,7 +240,7 @@ public:
     //  .   For boolean options with long names, suppresses the addition of the
     //      "no-" version.
     //  !   For options and operands, final option, all following arguments
-    //      will be positional operands.
+    //      will be operands.
     //
     // Additional rules
     // - Names of operands (inside angled or square brackets) may contain
