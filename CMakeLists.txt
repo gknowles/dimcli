@@ -19,13 +19,14 @@
 #   /<project_name>/libs/<lib_project_name>/**
 #   /<project_name>/libs/${PROJECT_NAME}/config.h - may be modified by the
 #       install task, see "Installing" below.
+#   /<project_name>/res/<res_project_name>/** - arbitrary resource files, with
+#       dirs reflected as folders
 #   /<project_name>/testlibs/<test_lib_project_name>/**
 #   /<project_name>/tests/<test_project_name>/**
 #   /<project_name>/tools/<tool_project_name>/**
 #   /<project_name>/vendor/<vendor_project_name>/ - only if
 #       /<project_name>/vendor/<vendor_project_name>/CMakeLists.txt exists
 #   /<project_name>/web/** - web UI for server projects (html, images, etc)
-#   /<project_name>/site/** - standalone website, dirs reflected as folders
 #
 # Code files:
 # Source files are expected to be "*.cpp" and "*.h".
@@ -119,9 +120,11 @@ set(tmp "${LINK_STATIC_RUNTIME}")   # not used by clang or gcc builds
 # 2022-04-18 - Added - /web directory in files project
 # 2023-01-21 - Changed - Only create test projects if BUILD_TESTING enabled
 # 2024-02-18 - Removed - install_archive_pdb() in favor of /Z7
-# 2024-07-19 - Added - Site projects
+# 2024-07-19 - Added - Site project
 # 2024-07-20 - Added - Changelog
 # 2025-01-09 - Changed - Use --std=c++2c with supporting GCC and Clang
+# 2025-02-24 - Added - Resource projects with arbitrary files
+# 2025-02-24 - Removed - Site project, use a resource project instead
 
 
 #############################################################################
@@ -582,16 +585,23 @@ if(sources)
     add_file_project(${prjname} files ${sources})
 endif()
 
-# website file targets
-file(GLOB_RECURSE sources site/*)
-if(sources)
-    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/site FILES ${sources})
-    set(prjname site)
-    if (NOT ROOT_PROJECT)
-        set(prjname site-${PROJECT_NAME})
+# resource targets
+file(GLOB allnames res/*)
+foreach(var ${allnames})
+    if(IS_DIRECTORY "${var}")
+        message(STATUS "resource - ${var} is dir")
+        get_filename_component(prjname "${var}" NAME)
+        file(GLOB_RECURSE sources "res/${prjname}/*")
+        if (sources)
+            source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/res/${prjname}
+                FILES ${sources})
+            if (NOT ROOT_PROJECT)
+                set(prjname ${prjname}-${PROJECT_NAME})
+            endif()
+            add_file_project(${prjname} res ${sources})
+        endif()
     endif()
-    add_file_project(${prjname} files ${sources})
-endif()
+endforeach()
 
 if(NOT ROOT_PROJECT)
     set(deps ${deps} PARENT_SCOPE)
