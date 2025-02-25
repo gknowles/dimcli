@@ -128,7 +128,7 @@ c:\dimcli on a windows machine):
   - git submodule update --init
   - md build & cd build
   - cmake .. -G "Visual Studio 14 2015 Win64"
-  - cmake . --build
+  - cmake --build .
 - Test
   - ctest -C Debug
 - Visual Studio
