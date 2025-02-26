@@ -1322,7 +1322,8 @@ public:
     // populated at all, check from() to tell the difference.
     //
     // It's possible for a value to come from prompt() or some other action
-    // (which should set the position to 0) instead of the command args.
+    // (which should set the position to 0) instead of the command line
+    // arguments.
     //
     // Note that this is the position in argv[] after environment variable and
     // response file expansion.
