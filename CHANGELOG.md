@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
-- Cosmetic - Minor adjustments to docs
+- Cosmetic - Fixes and adjustments to README and other docs
 
 ## dimcli 7.3.0 (2024-06-19)
 - Fixed - Assert calling cli.title() immediately after creating new option
@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Removed - cli.parse() and cli.exec() variants taking an ostream. Use
             with cli.printError() instead.
 - Changed - cli.fail() and cli.badUsage() now return void instead of false
-- Added - cli.parseExit() for aborting parsing w/o error
+- Added - cli.parseExit() for aborting parsing w/o error (e.g. --help)
 - Changed - All types of application actions now return void
 
 ## dimcli 6.2.1 (2022-02-07)
