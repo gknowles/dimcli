@@ -1749,12 +1749,14 @@ void writeRsp(const char path[], T const (&data)[N]) {
 }
 
 //===========================================================================
-void responseTests() {
+void responseTests(const string & progName) {
 #ifdef FILESYSTEM
     namespace fs = FILESYSTEM;
     int line = 0;
     CliTest cli;
 
+    auto dir = fs::weakly_canonical(progName).parent_path();
+    fs::current_path(dir);
     if (!fs::is_directory("test"))
         fs::create_directories("test");
     writeRsp("test/a.rsp", "1 @bu8.rsp 2\n");
@@ -2686,7 +2688,7 @@ void finalOptTests() {
 ***/
 
 //===========================================================================
-static int runTests(bool prompt) {
+static int runTests(const string & progName, bool prompt) {
     // consoleWidth() call for code coverage.
     unsigned width = Dim::Cli::consoleWidth(false);
     (void) width;
@@ -2708,7 +2710,7 @@ static int runTests(bool prompt) {
     argvTests();
     optCheckTests();
     flagTests();
-    responseTests();
+    responseTests(progName);
     filesystemTests();
     execTests();
     vectorTests();
@@ -2742,11 +2744,11 @@ int main(int argc, char * argv[]) {
     auto & test = cli.opt<bool>("test.").desc("Run tests.");
     auto & prompt = cli.opt<bool>("prompt.").desc("Run tests with prompting.");
 
-    auto & echo = cli.optVec<string>("e")
+    auto & echo = cli.optVec<string>("?e")
         .desc("List arguments from the command line.")
-        .valueDesc("[ANY...]")
+        .valueDesc("ANY...")
         .finalOpt();
-    cli.optVec<string>("[ANY]")
+    auto & oprs = cli.optVec<string>("[ANY]")
         .desc("Additional arguments to echo.")
         .show(false);
 
@@ -2756,13 +2758,16 @@ int main(int argc, char * argv[]) {
         return cli.printError(cerr);
 
     if (*test || *prompt)
-        return runTests(*prompt);
+        return runTests(cli.progName(), *prompt);
 
     if (echo) {
         cout << "Number of args: " << argc << "\n";
         for (auto i = 0; i < argc; ++i)
             cout << i << ": {" << argv[i] << "}\n";
         cout << "Line: " << cli.toCmdline(argc, argv) << '\n';
+        return 0;
     }
-    return 0;
+
+    cli.badUsage("Unexpected argument", argv[oprs.pos()]);
+    return cli.printError(cerr);
 }
