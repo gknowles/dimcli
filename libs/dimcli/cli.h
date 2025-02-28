@@ -354,15 +354,15 @@ public:
     // Action that should be taken when the currently selected command is run,
     // which happens when cli.exec() is called by the application. The
     // command's action function should:
-    //  - For parsing errors not caught by parse(), such as complex
+    //  - For parsing errors not caught by cli.parse(), such as complex
     //    interactions between arguments; call cli.badUsage() and return. Also
     //    consider an after action instead.
     //  - If no action was really attempted, as when only printing help text
     //    or a version string; call cli.parseExit() and return.
     //  - Do something useful
     //  - Call cli.fail() to set exit code and error message for other errors.
-    // Generally, only use badUsage() or parseExit() when responding like an
-    // extension of parse time processing.
+    //    Generally, only use cli.badUsage() or cli.parseExit() when responding
+    //    like an extension of parse time processing.
     //
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
@@ -451,8 +451,8 @@ public:
     // but before any individual arguments are parsed. The before action
     // function should:
     //  - inspect and possibly modify the raw arguments coming in
-    //  - call badUsage() for errors
-    //  - call parseExit() if parsing should stop, but there was no error
+    //  - call cli.badUsage() for errors
+    //  - call cli.parseExit() if parsing should stop, but there was no error
     Cli & before(std::function<BeforeFn> fn) &;
     Cli && before(std::function<BeforeFn> fn) &&;
 
@@ -496,12 +496,12 @@ public:
     // Parse the command line, populate the options, and set the error and
     // other miscellaneous state. Returns true if processing should continue.
     //
-    // Error information can also be extracted after parse() completes, see
-    // errMsg() and friends.
+    // Error information can also be extracted after cli.parse() completes, see
+    // cli.errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
 
     // "args" is non-const so that response files can be expanded in place and
-    // before actions can modify it.
+    // to allow it to be modified by before actions.
     [[nodiscard]] bool parse(std::vector<std::string> & args);
     [[nodiscard]] bool parse(std::vector<std::string> && args);
 
@@ -523,7 +523,7 @@ public:
         const std::string & detail = {}
     );
 
-    // Calls badUsage(prefix, value, detail) with prefix set to:
+    // Calls cli.badUsage(prefix, value, detail) with prefix set to:
     //  "Invalid '" + opt.from() + "' value"
     void badUsage(
         const OptBase & opt,
@@ -531,8 +531,8 @@ public:
         const std::string & detail = {}
     );
 
-    // Calls badUsage with "Out of range" message and the low and high in the
-    // detail.
+    // Calls cli.badUsage with "Out of range" message and the low and high in
+    // the detail.
     template <typename A, typename T>
     void badRange(
         A & opt,
@@ -564,7 +564,7 @@ public:
         // absence in option values makes them invalid arguments.
         fUnitRequire = 1,
 
-        // Makes units case insensitive. For siUnits() unit prefixes are
+        // Makes units case insensitive. For opt.siUnits() unit prefixes are
         // also case insensitive, but fractional prefixes (milli, micro, etc)
         // are prohibited because they would clash with mega and peta.
         fUnitInsensitive = 2,
@@ -605,33 +605,35 @@ public:
     // are no commands defined or none were matched.
     const std::string & commandMatched() const;
 
-    // If commands are defined, even just unknownCmd(), and the matched command
-    // is unknown, the unknownArgs vector is populated with the all arguments
-    // that follow the command. Including any that started with "-", as if "--"
-    // had been given.
+    // If commands are defined, even just cli.unknownCmd(), and the matched
+    // command is unknown, the unknownArgs vector is populated with the all
+    // arguments that follow the command. Including any that started with "-",
+    // as if "--" had been given.
     const std::vector<std::string> & unknownArgs() const;
 
     // Executes the action of the matched command and propagates it's return
     // value back to he caller. On failure the action is expected to have set
-    // exitCode, errMsg, and optionally errDetail by calling fail(). If no
+    // exitCode, errMsg, and optionally errDetail by calling cli.fail(). If no
     // command was matched the action of the empty "" command is run, which
     // defaults to failing with "No command given." but can be set using
     // cli.action() like any other command.
     //
     // To be consistent with cli.parse() the action should return false if it
-    // ends immediately, such as a usage error, printing help text, or a version
-    // string. Otherwise, if the action was really attempted, return true.
+    // ends immediately, such as a usage error, printing help text, or a
+    // version string. Otherwise, if the action was really attempted, return
+    // true.
     //
-    // It is assumed that a prior call to parse() has already been made to set
-    // the matched command.
+    // It is assumed that a prior call to cli.parse() has already been made to
+    // set the matched command.
     bool exec();
 
     // Helpers to parse and, if successful, execute.
     bool exec(size_t argc, char * argv[]);
     bool exec(std::vector<std::string> & args);
 
-    // Sets exitCode(), errMsg(), errDetail(). Intended to be called from
-    // command actions, parsing related failures should use badUsage() instead.
+    // Sets values of cli.exitCode(), cli.errMsg(), cli.errDetail(). Intended
+    // to be called from command actions, parsing related failures should use
+    // cli.badUsage() instead.
     void fail(
         int code,
         const std::string & msg,
@@ -646,16 +648,17 @@ public:
     //-----------------------------------------------------------------------
     // RENDERING HELP TEXT
     //
-    // NOTE: The print*() family of methods return incomplete or meaningless
-    //       results when used before parse() has been called to supply the
-    //       program name and finalize the configuration. The exception is
-    //       printText(), which only uses console width, and is safe to use
-    //       without first calling parse(). To learn about printText(), see
-    //       the section on rendering arbitrary text below.
+    // NOTE: The cli.print*() family of functions return incomplete or
+    //       meaningless results when used before cli.parse() has been called
+    //       to supply the program name and finalize the configuration. The
+    //       exception is cli.printText(), which only uses console width, and
+    //       is safe to use without first calling cli.parse(). To learn about
+    //       cli.printText(), see the section on rendering arbitrary text
+    //       below.
 
-    // If exitCode() is not EX_OK, prints errMsg and errDetail (if present),
-    // otherwise prints nothing. Returns exitCode(). Only makes sense after
-    // parsing has completed.
+    // If cli.exitCode() is not EX_OK, prints errMsg and errDetail (if
+    // present), otherwise prints nothing. Returns cli.exitCode(). Only makes
+    // sense after parsing has completed.
     int printError(std::ostream & os);
 
     // printHelp() & printUsage() return the current exitCode().
@@ -820,9 +823,9 @@ public:
     static std::vector<std::string> toArgvL(Args &&... args);
 
     // Create vector of pointers suitable for use with argc/argv APIs, has a
-    // trailing null that is not included in size(). The return values point
-    // into the source string vector and are only valid until that vector is
-    // resized or destroyed.
+    // trailing null that is not included in the vectors size(). The return
+    // values point into the source string vector and are only valid until that
+    // vector is resized or destroyed.
     static std::vector<const char *> toPtrArgv(
         const std::vector<std::string> & args
     );
@@ -1318,10 +1321,10 @@ public:
 
     // Absolute position in argv[] of last the argument that populated the
     // value. For vectors, it refers to where the value on the back came from.
-    // If pos() is 0 the value wasn't populated from the command line or wasn't
-    // populated at all, check from() to tell the difference.
+    // If opt.pos() is 0 the value wasn't populated from the command line or
+    // wasn't populated at all, check opt.from() to tell the difference.
     //
-    // It's possible for a value to come from prompt() or some other action
+    // It's possible for a value to come from opt.prompt() or some other action
     // (which should set the position to 0) instead of the command line
     // arguments.
     //
@@ -1370,7 +1373,7 @@ protected:
 
     // Assign the implicit value to the value. Used when an option, with an
     // optional value, is specified without one. The default implicit value is
-    // T{}, but can be changed with implicitValue().
+    // T{}, but can be changed with opt.implicitValue().
     virtual void assignImplicit() = 0;
 
     // True for flags (bool on command line) that default to true.
@@ -1544,7 +1547,7 @@ public:
     A & range(const T & low, const T & high);
 
     // Causes a check whether the option value was set during parsing, and
-    // reports badUsage() if it wasn't.
+    // reports cli.badUsage() if it wasn't.
     A & require();
 
     // Enables prompting. When the option hasn't been provided on the command
