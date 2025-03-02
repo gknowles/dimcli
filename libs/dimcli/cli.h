@@ -366,7 +366,7 @@ public:
     //
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
-    // handling in main to wait for it to complete.
+    // handling in main to wait for that work to complete.
     Cli & action(std::function<ActionFn> fn) &;
     Cli && action(std::function<ActionFn> fn) &&;
 
@@ -611,12 +611,12 @@ public:
     // as if "--" had been given.
     const std::vector<std::string> & unknownArgs() const;
 
-    // Executes the action of the matched command and propagates it's return
-    // value back to he caller. On failure the action is expected to have set
-    // exitCode, errMsg, and optionally errDetail by calling cli.fail(). If no
-    // command was matched the action of the empty "" command is run, which
-    // defaults to failing with "No command given." but can be set using
-    // cli.action() like any other command.
+    // Executes the action of the matched command and returns true if it
+    // successfully ran to completion. On failure the action is expected to
+    // have set exitCode, errMsg, and optionally errDetail by calling
+    // cli.fail(). If no command was matched the action of the empty "" command
+    // is run, which defaults to failing with "No command given." but can be
+    // set using cli.action() like any other command.
     //
     // To be consistent with cli.parse() the action should return false if it
     // ends immediately, such as a usage error, printing help text, or a
