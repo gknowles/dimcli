@@ -1749,14 +1749,23 @@ void writeRsp(const char path[], T const (&data)[N]) {
 }
 
 //===========================================================================
-void responseTests(const string & progName) {
+void responseTests(const string & rawProgName) {
 #ifdef FILESYSTEM
     namespace fs = FILESYSTEM;
     int line = 0;
     CliTest cli;
 
-    auto dir = fs::weakly_canonical(progName).parent_path();
-    fs::current_path(dir);
+    auto progName = fs::path(rawProgName).parent_path();
+    auto dir = progName.parent_path();
+    error_code ec;
+    if (!dir.empty()) {
+        dir = fs::canonical(dir, ec);
+        EXPECT(!ec);
+    }
+    if (!dir.empty()) {
+        fs::current_path(dir, ec);
+        EXPECT(!ec);
+    }
     if (!fs::is_directory("test"))
         fs::create_directories("test");
     writeRsp("test/a.rsp", "1 @bu8.rsp 2\n");
