@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
 - Cosmetic - Fixes and adjustments to README and other docs
+- Added - cli.beforeExec() and cli.afterExec() for code common to all commands
 
 ## dimcli 7.3.0 (2024-06-19)
 - Fixed - Assert calling cli.title() immediately after creating new option
@@ -147,7 +148,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Rename cli.run() to cli.exec() and invert the return value
 - Fixed - Internal group name relies on static init order
 - Added - opt.require()
-- Fixed - After actions of unselected commands should not be run
+- Fixed - After parse actions of unselected commands should not be run
 - Added - opt.defaultDesc() to modify "(default: )" clause
 - Fixed - "No command given." should return kExitUsage
 - Changed - Command header and footer default to the top level values

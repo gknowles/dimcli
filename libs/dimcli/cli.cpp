@@ -161,6 +161,8 @@ struct RawValue {
 
 struct Cli::Config {
     vector<function<BeforeFn>> befores;
+    vector<function<ActionFn>> execBefores;
+    vector<function<ActionFn>> execAfters;
     bool allowUnknown = false;
     function<ActionFn> unknownCmd;
     unordered_map<string, CommandConfig> cmds;
@@ -1573,6 +1575,28 @@ ostream & Cli::conout() {
     return *m_cfg->conout;
 }
 
+//===========================================================================
+Cli & Cli::beforeExec(function<ActionFn> fn) & {
+    m_cfg->execBefores.push_back(move(fn));
+    return *this;
+}
+
+//===========================================================================
+Cli && Cli::beforeExec(function<ActionFn> fn) && {
+    return move(beforeExec(fn));
+}
+
+//===========================================================================
+Cli & Cli::afterExec(function<ActionFn> fn) & {
+    m_cfg->execAfters.push_back(move(fn));
+    return *this;
+}
+
+//===========================================================================
+Cli && Cli::afterExec(function<ActionFn> fn) && {
+    return move(afterExec(fn));
+}
+
 
 /****************************************************************************
 *
@@ -2503,20 +2527,27 @@ bool Cli::exec() {
     auto & cmdFn = commandExists(name)
         ? m_cfg->cmds[name].action
         : m_cfg->unknownCmd;
-
-    if (cmdFn) {
-        fail(kExitOk, {});
-        cmdFn(*this);
-        return !parseExited();
-    } else {
+    if (!cmdFn) {
         // Most likely parse failed, was never run, or "this" was reset.
         assert(!"Command found by parse not defined.");
         fail(
             kExitSoftware,
             "Command '" + name + "' found by parse not defined."
         );
-        return false;
+    } else {
+        fail(kExitOk, {});
+        for (auto&& fn : m_cfg->execBefores) {
+            fn(*this);
+            if (exitCode() || parseExited())
+                goto AFTERS;
+        }
+        cmdFn(*this);
     }
+
+AFTERS:
+    for (auto&& fn : m_cfg->execAfters)
+        fn(*this);
+    return !parseExited();
 }
 
 //===========================================================================

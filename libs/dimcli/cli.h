@@ -490,6 +490,25 @@ public:
     std::istream & conin();
     std::ostream & conout();
 
+    // Actions to run after parsing has completed and immediately before the
+    // command action is executed. Before exec actions are run in the order
+    // they were added.
+    //
+    // Before exec actions should follow the same guidelines as for command
+    // actions; see cli.action() above. If one calls cli.badUsage(),
+    // cli.parseExit(), or cli.fail(), remaining before exec actions and the
+    // command action are not run.
+    Cli & beforeExec(std::function<ActionFn> fn) &;
+    Cli && beforeExec(std::function<ActionFn> fn) &&;
+
+    // Actions to run after the sequence of before exec actions and command
+    // action have completed. The after exec action should:
+    //  - Inspect cli.exitCode() to see how the command ended, if that effects
+    //    what it does.
+    //  - Do something useful.
+    Cli & afterExec(std::function<ActionFn> fn) &;
+    Cli && afterExec(std::function<ActionFn> fn) &&;
+
     //-----------------------------------------------------------------------
     // PARSING
 

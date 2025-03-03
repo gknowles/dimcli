@@ -1897,7 +1897,7 @@ void execTests() {
 
     {
         cli = {};
-        CliTest(cli).action([](auto &) { return true; });
+        CliTest(cli).action([](auto &) {});
         EXPECT(cli.exec(nargsNone, (char **) argsNone));
         EXPECT(cli.exitCode() == Dim::kExitOk);
         out.clear();
@@ -1912,6 +1912,24 @@ void execTests() {
         EXPECT(!cli.exec(vargsNone));
         EXPECT(cli.printError(out) == Dim::kExitUsage);
         EXPECT(out.str() == "Error: No command given.\n");
+    }
+
+    {
+        cli = {};
+        int befores = 0;
+        int afters = 0;
+        CliTest(cli).beforeExec([&](auto &) { ++befores; });
+        CliTest(cli).afterExec([&](auto &) { ++afters; });
+        EXPECT(!cli.exec(vargsNone) && cli.exitCode() == Dim::kExitUsage);
+        EXPECT(befores == 1);
+        EXPECT(afters == 1);
+        befores = afters = 0;
+        cli.beforeExec([&](auto & cli) {
+            ++befores;
+            cli.parseExit();
+        });
+        EXPECT(!cli.exec(vargsNone) && cli.exitCode() == Dim::kExitOk);
+        EXPECT(befores == 2 && afters == 1);
     }
 }
 
