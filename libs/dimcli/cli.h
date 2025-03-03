@@ -357,12 +357,12 @@ public:
     //  - For parsing errors not caught by cli.parse(), such as complex
     //    interactions between arguments; call cli.badUsage() and return. Also
     //    consider an after action instead.
-    //  - If no action was really attempted, as when only printing help text
-    //    or a version string; call cli.parseExit() and return.
-    //  - Do something useful
+    //  - If no action was really attempted, as when only printing help text or
+    //    a version string; call cli.parseExit() and return.
+    //  - Do something useful.
     //  - Call cli.fail() to set exit code and error message for other errors.
     //    Generally, only use cli.badUsage() or cli.parseExit() when responding
-    //    like an extension of parse time processing.
+    //    as an extension of parse time processing.
     //
     // If the process should exit but there may still be asynchronous work
     // going on, consider a custom "exit pending" exit code with special
@@ -450,9 +450,9 @@ public:
     // Actions taken after environment variable and response file expansion
     // but before any individual arguments are parsed. The before action
     // function should:
-    //  - inspect and possibly modify the raw arguments coming in
-    //  - call cli.badUsage() for errors
-    //  - call cli.parseExit() if parsing should stop, but there was no error
+    //  - Inspect and possibly modify the raw arguments coming in.
+    //  - Call cli.badUsage() for errors.
+    //  - Call cli.parseExit() if parsing should stop, but there was no error.
     Cli & before(std::function<BeforeFn> fn) &;
     Cli && before(std::function<BeforeFn> fn) &&;
 
@@ -611,20 +611,16 @@ public:
     // as if "--" had been given.
     const std::vector<std::string> & unknownArgs() const;
 
-    // Executes the action of the matched command and returns true if it
-    // successfully ran to completion. On failure the action is expected to
-    // have set exitCode, errMsg, and optionally errDetail by calling
-    // cli.fail(). If no command was matched the action of the empty "" command
-    // is run, which defaults to failing with "No command given." but can be
-    // set using cli.action() like any other command.
-    //
-    // To be consistent with cli.parse() the action should return false if it
-    // ends immediately, such as a usage error, printing help text, or a
-    // version string. Otherwise, if the action was really attempted, return
-    // true.
+    // Executes the action of the matched command. Just like cli.parse(),
+    // cli.exec() returns false only if cli.badUsage() or cli.parseExit() is
+    // called before it returns.
     //
     // It is assumed that a prior call to cli.parse() has already been made to
     // set the matched command.
+    //
+    // If no command was matched the action of the empty "" command is run,
+    // which defaults to failing with "No command given." but can be set using
+    // cli.action() like any other command.
     bool exec();
 
     // Helpers to parse and, if successful, execute.
@@ -649,8 +645,8 @@ public:
     // RENDERING HELP TEXT
     //
     // NOTE: The cli.print*() family of functions return incomplete or
-    //       meaningless results when used before cli.parse() has been called
-    //       to supply the program name and finalize the configuration. The
+    //       meaningless results if used before cli.parse() has been called to
+    //       supply the program name and finalize the configuration. The
     //       exception is cli.printText(), which only uses console width, and
     //       is safe to use without first calling cli.parse(). To learn about
     //       cli.printText(), see the section on rendering arbitrary text
@@ -1175,13 +1171,13 @@ bool Cli::Convert::fromString_impl(
     long, long, long
 ) const {
     // In order to parse an argument one of the following must exist:
-    //  - assignment operator to T accepting const std::string&
-    //  - constructor of T accepting const std::string&
+    //  - Assignment operator to T accepting const std::string&
+    //  - Constructor of T accepting const std::string&
     //  - std::istream extraction operator for T
-    //  - specialization of Cli::Convert::fromString template for T, such as:
+    //  - Specialization of Cli::Convert::fromString template for T, such as:
     //      template<> bool Cli::Convert::fromString<MyType>(
     //          MyType & out, const std::string & src) const { ... }
-    //  - parse action attached to the Opt<T> instance that does NOT call
+    //  - Parse action attached to the Opt<T> instance that does NOT call
     //    opt.parseValue(), such as opt.choice().
     assert(!"Unusable type, no conversion from string exists.");
     return false;
@@ -1572,12 +1568,11 @@ public:
     //
     // You can use opt.from() and opt.pos() to get the option name that the
     // value was matched with on the command line and its position in argv[].
-    // For bool arguments the source value string will always be either "0"
-    // or "1".
+    // For bool arguments the val string will always be either "0" or "1".
     //
     // If you just need support for a new type you can provide an istream
-    // extraction (>>) or assignment from string operator and the default
-    // parse action will pick it up.
+    // extraction (>>) or constructor (or assignment operator) from string and
+    // the default parse action will pick it up.
     A & parse(std::function<ActionFn> fn);
 
     // Action to take immediately after each value is parsed, unlike parsing
@@ -1789,13 +1784,17 @@ A & Cli::OptShim<A, T>::flagValue(bool isDefault) {
     auto self = static_cast<A *>(this);
     m_flagValue = true;
     if (!self->m_proxy->m_defFlagOpt) {
+        // No previous default, mark this opt as the default.
         self->m_proxy->m_defFlagOpt = self;
         m_flagDefault = true;
     } else if (isDefault) {
+        // Has default but this opt is to replace it. Unmark previous opt and
+        // mark this one.
         self->m_proxy->m_defFlagOpt->m_flagDefault = false;
         self->m_proxy->m_defFlagOpt = self;
         m_flagDefault = true;
     } else {
+        // Has existing default, keep it as is.
         m_flagDefault = false;
     }
     m_bool = true;
