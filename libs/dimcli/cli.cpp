@@ -2250,7 +2250,7 @@ bool Cli::parse(vector<string> & args) {
         // Before actions
         for (auto && fn : m_cfg->befores) {
             fn(*this, args);
-            if (parseExited())
+            if (parseAborted())
                 return false;
             if (args.empty())
                 break;
@@ -2307,7 +2307,7 @@ bool Cli::parse(vector<string> & args) {
         if (!ndx.includeOptValue(*opt, commandMatched()))
             continue;
         opt->doAfterActions(*this);
-        if (parseExited())
+        if (parseAborted())
             return false;
     }
 
@@ -2350,12 +2350,6 @@ Cli && Cli::resetValues() && {
 *   Parse action support functions
 *
 ***/
-
-//===========================================================================
-// private
-bool Cli::parseExited() const {
-    return m_cfg->parseExit;
-}
 
 //===========================================================================
 void Cli::badUsage(
@@ -2412,13 +2406,13 @@ bool Cli::parseValue(
     if (ptr) {
         val = ptr;
         opt.doParseAction(*this, val);
-        if (parseExited())
+        if (parseAborted())
             return false;
     } else {
         opt.assignImplicit();
     }
     opt.doCheckActions(*this, val);
-    return !parseExited();
+    return !parseAborted();
 }
 
 //===========================================================================
@@ -2522,6 +2516,11 @@ const vector<string> & Cli::unknownArgs() const {
 }
 
 //===========================================================================
+bool Cli::parseAborted() const {
+    return m_cfg->parseExit;
+}
+
+//===========================================================================
 bool Cli::exec() {
     auto & name = commandMatched();
     auto & cmdFn = commandExists(name)
@@ -2538,7 +2537,7 @@ bool Cli::exec() {
         fail(kExitOk, {});
         for (auto&& fn : m_cfg->execBefores) {
             fn(*this);
-            if (exitCode() || parseExited())
+            if (exitCode() || parseAborted())
                 goto AFTERS;
         }
         cmdFn(*this);
@@ -2547,7 +2546,7 @@ bool Cli::exec() {
 AFTERS:
     for (auto&& fn : m_cfg->execAfters)
         fn(*this);
-    return !parseExited();
+    return !parseAborted();
 }
 
 //===========================================================================

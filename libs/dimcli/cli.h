@@ -501,8 +501,8 @@ public:
     Cli & beforeExec(std::function<ActionFn> fn) &;
     Cli && beforeExec(std::function<ActionFn> fn) &&;
 
-    // Actions to run after the sequence of before exec actions and command
-    // action have completed. The after exec action should:
+    // Actions to run after the sequence of before exec and command actions
+    // have completed. The after exec action should:
     //  - Inspect cli.exitCode() to see how the command ended, if that effects
     //    what it does.
     //  - Do something useful.
@@ -513,9 +513,9 @@ public:
     // PARSING
 
     // Parse the command line, populate the options, and set the error and
-    // other miscellaneous state. Returns true if processing should continue.
+    // other miscellaneous state. Returns false if cli.parseAborted() is true.
     //
-    // Error information can also be extracted after cli.parse() completes, see
+    // Error information can be extracted after cli.parse() completes, see
     // cli.errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
 
@@ -630,9 +630,12 @@ public:
     // as if "--" had been given.
     const std::vector<std::string> & unknownArgs() const;
 
+    // Returns true if cli.badUsage() or cli.parseExit() was called while
+    // processing cli.parse() or cli.exec().
+    bool parseAborted() const;
+
     // Executes the action of the matched command. Just like cli.parse(),
-    // cli.exec() returns false only if cli.badUsage() or cli.parseExit() is
-    // called before it returns.
+    // cli.exec() returns false if cli.parseAborted() is true.
     //
     // It is assumed that a prior call to cli.parse() has already been made to
     // set the matched command.
@@ -918,8 +921,6 @@ private:
 
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
-
-    bool parseExited() const;
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;
@@ -1705,7 +1706,7 @@ inline void Cli::OptShim<A, T>::act(
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
         fn(cli, *self, val);
-        if (cli.parseExited())
+        if (cli.parseAborted())
             break;
     }
 }
