@@ -59,7 +59,7 @@ which are then inserted into the argument list right after arg0.
 intended for testing. Setting to null restores the defaults which are cin and
 cout respectively.
 
-| cli.maxWidth
+| cli.<<guide.adoc#paragraphs, maxWidth>>
 | Change the column at which errors and help text wraps. Defaults from 80 down
 to 50 depending on width of output console.
 
@@ -91,8 +91,12 @@ miscellaneous state. Returns true if processing should continue.
 | cli.<<guide.adoc#basic-usage, exitCode>>
 | EX_OK (0), EX_USAGE, or any value set by user defined actions.
 
-| cli.progName
+| cli.<<guide.adoc#flag-options, progName>>
 | Program name received in argv[0]
+
+| cli.<<guide.adoc#exec-actions, parseAborted>>
+| Returns whether cli.badUsage() or cli.parseExit() was called while processing
+cli.parse() or cli.exec().
 
 2+h| Helpers
 
@@ -353,6 +357,12 @@ to run "prog help command" in addition to the more awkward "prog command
 | cli.<<guide.adoc#subcommands, action>>
 | Action that should be taken when the currently selected command is run.
 Actions are executed when cli.exec() is called by the application.
+
+| cli.<<guide.adoc#exec-actions, afterExec>>
+| Action taken after the currently selected command is run.
+
+| cli.<<guide.adoc#exec-actions, beforeExec>>
+| Action taken immediately before the currently selected command is run.
 
 | cli.<<guide.adoc#external-commands, unknownArgs(bool)>>
 | Makes all arguments following the command appear in cli.unknownArgs() instead

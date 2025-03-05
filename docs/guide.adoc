@@ -1132,6 +1132,60 @@ Range is from 2 to 5
 ----
 
 
+=== Multiple Files
+Options don't have to be defined all in one source file. Separate source
+files can each define options of interest to that file and get them populated
+when the command line is processed.
+
+When you instantiate Dim::Cli you're creating a handle to the globally shared
+configuration. So multiple translation units can each create one and use it to
+update the shared configuration.
+
+The following example has a logMsg function in log.cpp with its own "-1"
+option while main.cpp registers "--version":
+
+[source, C++]
+----
+// main.cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt("1.0");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    // do stuff that might call logMsg()...
+    return EX_OK;
+}
+----
+
+[source, C++, test file log]
+----
+// log.cpp
+static Dim::Cli cli;
+static auto & failEarly = cli.opt<bool>("1").desc("Exit on first error");
+
+void logMsg(string & msg) {
+    cerr << msg << endl;
+    if (*failEarly)
+        exit(EX_SOFTWARE);
+}
+----
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1         Exit on first error
+
+  --help     Show this message and exit.
+  --version  Show version and exit.
+----
+
+Multiple files and commands go well togather, see the Subcommands section for
+<<#in-seperate-file, additional examples>>.
+
+
 === Subcommands
 Git style subcommands are created by either cli.command("cmd"), which changes
 the cli objects context to the command, or with opt.command("cmd"), which
@@ -1155,14 +1209,12 @@ static auto & color = Dim::Cli().opt<string>("color", "red")
     .command("apple")
     .desc("Change color of the apple.");
 
-bool apple(Dim::Cli & cli) {
+void apple(Dim::Cli & cli) {
     cout << "It's a " << *color << " apple" << (*yell ? "!!!" : ".");
-    return true;
 }
 
-bool orange(Dim::Cli & cli) {
+void orange(Dim::Cli & cli) {
     cout << "It's an orange" << (*yell ? "!!!" : ".");
-    return true;
 }
 
 int main(int argc, char * argv[]) {
@@ -1176,14 +1228,14 @@ int main(int argc, char * argv[]) {
 
 The same thing could also be done with external variables:
 
-[source, C++, test alt, test repl 6 1 11 1]
+[source, C++, test alt, test repl 6 1 10 1]
 ////
     cout << "It's a " << color << " apple" << (yell ? "!!!" : ".");
     ...
     cout << "It's an orange" << (yell ? "!!!" : ".");
 ////
 
-[source, C++, test repl 0 4 14 3]
+[source, C++, test repl 0 4 12 3]
 ----
 static bool yell;
 static string color;
@@ -1199,7 +1251,7 @@ int main(int argc, char * argv[]) {
 
 Or if there's some additional argument checks or setup you need to do, the
 exec() call can be separate from parse():
-[source, C++, test alt, test repl 20 2]
+[source, C++, test alt, test repl 18 2]
 ----
     if (!cli.parse(argc, argv))
         return cli.printError(cerr);
@@ -1252,6 +1304,118 @@ Options:
   --help          Show this message and exit.
 ----
 
+==== In Seperate File
+First the main function:
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.exec(argc, argv);
+    return cli.printError(cerr);
+}
+----
+
+When you want to put a bundle of stuff in a separate source file, such as a
+<<#subcommands, command>> and its options, it can be convenient to group them
+into a single static struct.
+[source, C++, test file somefile]
+----
+// somefile.cpp
+static void myCmd(Dim::Cli & cli);
+
+static struct CmdOpts {
+    int option1;
+    string option2;
+    string option3;
+
+    CmdOpts() {
+        Dim::Cli cli;
+        cli.command("my").action(myCmd).desc("What my command does.");
+        cli.opt(&option1, "1 one", 1).desc("First option.");
+        cli.opt(&option2, "2", "two").desc("Second option.");
+        cli.opt(&option3, "three", "three").desc("Third option.");
+    }
+} s_opts;
+
+static void myCmd(Dim::Cli &) {
+    cout << "Options: " << s_opts.option1 << ", " << s_opts.option2
+        << ", and " << s_opts.option3 << endl;
+}
+----
+
+Then in myCmd() and throughout the rest of somefile.cpp you can reference the
+options as **s_opts.option1**, **s_opts.option2**, and **s_opts.option3**.
+
+And the output will be:
+[source, shell session]
+----
+$ a.out my
+Options: 1, two, and three
+----
+
+[source, shell session]
+----
+$ a.out my --help
+Usage: a.out my [OPTIONS]
+
+What my command does.
+
+Options:
+  -1, --one=NUM   First option. (default: 1)
+  -2 STRING       Second option. (default: two)
+  --three=STRING  Third option. (default: three)
+
+  --help          Show this message and exit.
+----
+
+==== Exec Actions
+If you have some code that you want to run for all commands that makes sense to
+separate from the code making the cli.exec() call, you can use cli.execBefore()
+and cli.execAfter() to register exec actions to run them.
+
+Let's add this source file to the "in seperate file" example to time how long
+commands take to finish.
+[source, C++, test file timer]
+----
+// timer.cpp
+#include <chrono>
+using namespace std::chrono;
+
+static struct TimerInfo {
+    system_clock::time_point startTime;
+    TimerInfo();
+} s_info;
+
+static void startTimer(Dim::Cli & cli) {
+    s_info.startTime = system_clock::now();
+}
+
+static void elapsedTime(Dim::Cli & cli) {
+    // Don't print the elapsed time for help text or usage errors.
+    if (!cli.parseAborted()) {
+        auto elapsed = system_clock::now() - s_info.startTime;
+        auto mins = duration_cast<minutes>(elapsed);
+        cout << "Elapsed time: " << mins.count() << " minutes"
+            << endl;
+    }
+}
+
+TimerInfo::TimerInfo() {
+    Dim::Cli cli;
+    cli.beforeExec(startTimer)
+        .afterExec(elapsedTime);
+}
+----
+
+Now we get an extra line with the time!
+[source, shell session]
+----
+$ a.out my
+Options: 1, two, and three
+Elapsed time: 0 minutes
+----
+
 ==== External Commands
 In order to support an external command that processes its own command line you
 can set an unknown command action. That action will be called by cli.exec(),
@@ -1266,11 +1430,10 @@ as if <<#special-arguments, "--">> had been given.
 
 [source, C++]
 ----
-bool unknown(Dim::Cli & cli) {
+void unknown(Dim::Cli & cli) {
     cout << "Command: " << cli.commandMatched() << endl;
     for (auto&& arg : cli.unknownArgs())
         cout << "Arg: " << arg << endl;
-    return false;
 }
 
 int main(int argc, char * argv[]) {
@@ -1295,7 +1458,7 @@ Arg: 3
 An regular command can also be configured to populate the unknownArgs vector
 instead of normal options/operands via cli.unknownArgs(bool enable)
 
-[source, C++, test repl 7 6]
+[source, C++, test repl 6 6]
 ----
 int main(int argc, char * argv[]) {
     Dim::Cli cli;
@@ -1314,108 +1477,6 @@ Command: echo
 Arg: a
 Arg: b
 Arg: c
-----
-
-=== Multiple Source Files
-Options don't have to be defined all in one source file. Separate source
-files can each define options of interest to that file and get them populated
-when the command line is processed.
-
-When you instantiate Dim::Cli you're creating a handle to the globally shared
-configuration. So multiple translation units can each create one and use it to
-update the shared configuration.
-
-The following example has a logMsg function in log.cpp with its own "-1"
-option while main.cpp registers "--version":
-
-[source, C++]
-----
-// main.cpp
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    cli.versionOpt("1.0");
-    if (!cli.parse(argc, argv))
-        return cli.printError(cerr);
-    // do stuff that might call logMsg()...
-    return EX_OK;
-}
-----
-
-[source, C++, test file log]
-----
-// log.cpp
-static Dim::Cli cli;
-static auto & failEarly = cli.opt<bool>("1").desc("Exit on first error");
-
-void logMsg(string & msg) {
-    cerr << msg << endl;
-    if (*failEarly)
-        exit(EX_SOFTWARE);
-}
-----
-
-[source, shell session]
-----
-$ a.out --help
-Usage: a.out [OPTIONS]
-
-Options:
-  -1         Exit on first error
-
-  --help     Show this message and exit.
-  --version  Show version and exit.
-----
-
-When you want to put a bundle of stuff in a separate source file, such as a
-<<#subcommands, command>> and its options, it can be convenient to group them
-into a single static struct.
-[source, C++, test file somefile]
-----
-// somefile.cpp
-static int myCmd(Dim::Cli & cli);
-
-static struct CmdOpts {
-    int option1;
-    string option2;
-    string option3;
-
-    CmdOpts() {
-        Dim::Cli cli;
-        cli.command("my").action(myCmd).desc("What my command does.");
-        cli.opt(&option1, "1 one", 1).desc("First option.");
-        cli.opt(&option2, "2", "two").desc("Second option.");
-        cli.opt(&option3, "three", "three").desc("Third option.");
-    }
-} s_opts;
-----
-
-[source, C++, test file somefile, test repl 15 0]
-////
-
-static int myCmd(Dim::Cli &) {
-    return s_opts.option1;
-}
-////
-++++
-++++
-
-Then in myCmd() and throughout the rest of somefile.cpp you can reference the
-options as **s_opts.option1**, **s_opts.option2**, and **s_opts.option3**.
-
-And the help text will be:
-[source, shell session]
-----
-$ a.out my --help
-Usage: a.out my [OPTIONS]
-
-What my command does.
-
-Options:
-  -1, --one=NUM   First option. (default: 1)
-  -2 STRING       Second option. (default: two)
-  --three=STRING  Third option. (default: three)
-
-  --help          Show this message and exit.
 ----
 
 
@@ -1690,7 +1751,8 @@ Options:
 ----
 
 cli.helpOpt() writes to cli.conout(), which defaults to cout, but can be
-changed via cli.iostreams().
+changed via cli.iostreams(). Although if you're going that far it might be time
+to make your own --help option.
 
 
 === Final Option
