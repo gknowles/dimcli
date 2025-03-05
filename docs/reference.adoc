@@ -302,7 +302,7 @@ happens to be the same as the default.
 | Pointer to underlying value or value vector.
 
 | opt.<<guide.adoc#life-after-parsing, from>>
-| Name of the last argument to populated the value, or an empty string if it
+| Name of the last argument to populate the value, or an empty string if it
 wasn't populated.
 
 | opt.maxSize
@@ -555,7 +555,7 @@ conventions (Gnu or Windows) of the platform.
 
 2+h| To Command Line
 
-| Cli::toCmdline(argc, argv) +
+| Cli::toCmdline(argc,&nbsp;argv) +
 Cli::toCmdline(args)
 | Join arguments into a single command line, escaping as needed, that will
 parse back into those same arguments. Uses the default conventions (Gnu or
