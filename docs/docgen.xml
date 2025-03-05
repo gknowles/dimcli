@@ -99,6 +99,7 @@ index 3374002..9d19b44 100644
         <Arg value="/wd4459"/> <!-- declaration hides global declaration -->
         <Arg value="/wd4996"/> <!-- function or variable may be unsafe -->
         <Arg value="/WX"/>
+        <Arg value="/Z7"/>
         <Arg value="/I../../../../libs"/>
         <Arg value="/Fea.out"/>
         <Arg value="../../../../libs/dimcli/cli.cpp"/>
