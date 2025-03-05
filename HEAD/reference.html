@@ -217,7 +217,7 @@ intended for testing. Setting to null restores the defaults which are cin and
 cout respectively.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.maxWidth</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#paragraphs">maxWidth</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Change the column at which errors and help text wraps. Defaults from 80 down
 to 50 depending on width of output console.</p></td>
 </tr>
@@ -259,8 +259,13 @@ miscellaneous state. Returns true if processing should continue.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">EX_OK (0), EX_USAGE, or any value set by user defined actions.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cli.progName</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#flag-options">progName</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Program name received in argv[0]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#exec-actions">parseAborted</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns whether cli.badUsage() or cli.parseExit() was called while processing
+cli.parse() or cli.exec().</p></td>
 </tr>
 <tr>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Helpers</p></th>
@@ -645,6 +650,14 @@ to run "prog help command" in addition to the more awkward "prog command
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#subcommands">action</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Action that should be taken when the currently selected command is run.
 Actions are executed when cli.exec() is called by the application.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#exec-actions">afterExec</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action taken after the currently selected command is run.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#exec-actions">beforeExec</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action taken immediately before the currently selected command is run.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.<a href="guide.html#external-commands">unknownArgs(bool)</a></p></td>
