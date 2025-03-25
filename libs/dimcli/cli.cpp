@@ -2830,6 +2830,8 @@ static void writeUsage(
     const string & cmdName,
     bool expandedOptions
 ) {
+    if (!outPtr)
+        return;
     auto & out = *outPtr;
     auto & cfg = Cli::Config::get(cli);
     Cli::OptIndex ndx;
@@ -2884,10 +2886,33 @@ static void writeUsage(
 }
 
 //===========================================================================
-static void writeCommands(string * outPtr, Cli & cli) {
+int Cli::printUsage(
+    string * out,
+    const string & arg0,
+    const string & cmd
+) {
+    writeUsage(out, *this, arg0, cmd, false);
+    return exitCode();
+}
+
+//===========================================================================
+int Cli::printUsageEx(
+    string * out,
+    const string & arg0,
+    const string & cmd
+) {
+    writeUsage(out, *this, arg0, cmd, true);
+    return exitCode();
+}
+
+//===========================================================================
+void Cli::printCommands(string * outPtr) {
+    auto & cfg = Cli::Config::get(*this);
+    Cli::Config::touchAllCmds(*this);
+
+    if (!outPtr)
+        return;
     auto & out = *outPtr;
-    auto & cfg = Cli::Config::get(cli);
-    Cli::Config::touchAllCmds(cli);
 
     struct CmdKey {
         const char * name;
@@ -3017,10 +3042,12 @@ Cli::OptIndex::choiceDescs(const OptBase & opt) {
 }
 
 //===========================================================================
-static void writeOperands(string * outPtr, Cli & cli, const string & cmd) {
+void Cli::printOperands(string * outPtr, const string & cmd) {
+    if (!outPtr)
+        return;
     auto & out = *outPtr;
     Cli::OptIndex ndx;
-    ndx.index(cli, cmd, true);
+    ndx.index(*this, cmd, true);
     bool hasDesc = false;
     for (auto && pa : ndx.m_oprNames) {
         if (!ndx.desc(*pa.opt, false).empty()) {
@@ -3043,14 +3070,16 @@ static void writeOperands(string * outPtr, Cli & cli, const string & cmd) {
 }
 
 //===========================================================================
-static void writeOptions(string * outPtr, Cli & cli, const string & cmdName) {
+void Cli::printOptions(string * outPtr, const string & cmdName) {
+    if (!outPtr)
+        return;
     auto & out = *outPtr;
     Cli::OptIndex ndx;
-    ndx.index(cli, cmdName, true);
-    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
+    ndx.index(*this, cmdName, true);
+    auto & cmd = Cli::Config::findCmdAlways(*this, cmdName);
 
     // Find named args and the longest name list.
-    auto namedOpts = ndx.findNamedOpts(cli, cmd, kNameAll, false);
+    auto namedOpts = ndx.findNamedOpts(*this, cmd, kNameAll, false);
     if (namedOpts.empty())
         return;
 
@@ -3087,36 +3116,52 @@ static void writeOptions(string * outPtr, Cli & cli, const string & cmdName) {
 }
 
 //===========================================================================
-static void writeHelp(
+int Cli::printHelp(
     string * outPtr,
-    Cli & cli,
     const string & progName,
     const string & cmdName
 ) {
+    if (!outPtr)
+        return exitCode();
     auto & out = *outPtr;
-    if (!cli.commandExists(cmdName))
-        return writeUsage(&out, cli, progName, cmdName, false);
+    if (!commandExists(cmdName)) {
+        printUsage(outPtr, progName, cmdName);
+        return exitCode();
+    }
 
-    auto & cmd = Cli::Config::findCmdAlways(cli, cmdName);
-    auto & top = Cli::Config::findCmdAlways(cli, "");
+    auto & cmd = Cli::Config::findCmdAlways(*this, cmdName);
+    auto & top = Cli::Config::findCmdAlways(*this, "");
     auto & hdr = cmd.header.empty() ? top.header : cmd.header;
     if (*hdr.data()) {
         out += hdr;
         out += '\n';
     }
-    writeUsage(&out, cli, progName, cmdName, false);
+    printUsage(outPtr, progName, cmdName);
     if (!cmd.desc.empty()) {
         out.append(1, '\n').append(cmd.desc).append(1, '\n');
     }
     if (cmdName.empty())
-        writeCommands(&out, cli);
-    writeOperands(&out, cli, cmdName);
-    writeOptions(&out, cli, cmdName);
+        printCommands(outPtr);
+    printOperands(outPtr, cmdName);
+    printOptions(outPtr, cmdName);
     auto & ftr = cmd.footer.empty() ? top.footer : cmd.footer;
     if (*ftr.data()) {
         out += '\n';
         out += ftr;
     }
+    return exitCode();
+}
+
+//===========================================================================
+int Cli::printError(string * outPtr) {
+    auto code = exitCode();
+    if (code && outPtr) {
+        *outPtr += "Error: " + errMsg() + "\n";
+        auto & detail = errDetail();
+        if (detail.size())
+            *outPtr += detail + "\n";
+    }
+    return code;
 }
 
 //===========================================================================
@@ -3126,9 +3171,10 @@ int Cli::printHelp(
     const string & cmdName
 ) {
     string raw;
-    writeHelp(&raw, *this, progName, cmdName);
-    os << format(*m_cfg, raw) << '\n';
-    return exitCode();
+    auto rc = printHelp(&raw, progName, cmdName);
+    printText(os, raw);
+    os << '\n';
+    return rc;
 }
 
 //===========================================================================
@@ -3138,9 +3184,10 @@ int Cli::printUsage(
     const string & cmd
 ) {
     string raw;
-    writeUsage(&raw, *this, arg0, cmd, false);
-    os << format(*m_cfg, raw) << '\n';
-    return exitCode();
+    auto rc = printUsage(&raw, arg0, cmd);
+    printText(os, raw);
+    os << '\n';
+    return rc;
 }
 
 //===========================================================================
@@ -3150,40 +3197,41 @@ int Cli::printUsageEx(
     const string & cmd
 ) {
     string raw;
-    writeUsage(&raw, *this, arg0, cmd, true);
-    os << format(*m_cfg, raw) << '\n';
-    return exitCode();
+    auto rc = printUsageEx(&raw, arg0, cmd);
+    printText(os, raw);
+    os << '\n';
+    return rc;
 }
 
 //===========================================================================
 void Cli::printOperands(ostream & os, const string & cmd) {
     string raw;
-    writeOperands(&raw, *this, cmd);
-    os << format(*m_cfg, raw);
+    printOperands(&raw, cmd);
+    printText(os, raw);
 }
 
 //===========================================================================
 void Cli::printOptions(ostream & os, const string & cmd) {
     string raw;
-    writeOptions(&raw, *this, cmd);
-    os << format(*m_cfg, raw);
+    printOptions(&raw, cmd);
+    printText(os, raw);
 }
 
 //===========================================================================
 void Cli::printCommands(ostream & os) {
     string raw;
-    writeCommands(&raw, *this);
-    os << format(*m_cfg, raw);
+    printCommands(&raw);
+    printText(os, raw);
 }
 
 //===========================================================================
 int Cli::printError(ostream & os) {
-    auto code = exitCode();
+    string raw;
+    auto code = printError(&raw);
     if (code) {
-        os << "Error: " << errMsg() << endl;
-        auto & detail = errDetail();
-        if (detail.size())
-            os << detail << endl;
+        // errMsg and errDetail are formatted when set, no need to do it again
+        // here.
+        os << raw;
     }
     return code;
 }

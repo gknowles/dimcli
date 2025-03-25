@@ -847,6 +847,13 @@ void helpTests() {
         EXPECT_HELP(cli, {}, 1 + R"(
 Usage: test
 )");
+        cli.printError(nullptr);
+        cli.printHelp(nullptr);
+        cli.printUsage(nullptr);
+        cli.printUsageEx(nullptr);
+        cli.printCommands(nullptr);
+        cli.printOperands(nullptr);
+        cli.printOptions(nullptr);
     }
 
     {

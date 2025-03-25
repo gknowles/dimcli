@@ -560,9 +560,9 @@ public:
         const T & high
     );
 
-    // Intended for use in action callbacks. Stops parsing, sets exitCode to
-    // EX_OK, and causes an in progress cli.parse() or cli.exec() to return
-    // false.
+    // Intended for use in action callbacks. Stops parsing, sets
+    // cli.parseAborted() to true, cli.exitCode() to EX_OK, and sets the return
+    // of an in progress cli.parse() or cli.exec() to false.
     void parseExit();
 
     // Used to populate an option with an arbitrary input string through the
@@ -670,9 +670,12 @@ public:
     //       meaningless results if used before cli.parse() has been called to
     //       supply the program name and finalize the configuration. The
     //       exception is cli.printText(), which only uses console width, and
-    //       is safe to use without first calling cli.parse(). To learn about
-    //       cli.printText(), see the section on rendering arbitrary text
+    //       is safe to use without first calling cli.parse(). To learn more
+    //       about cli.printText(), see the section on rendering arbitrary text
     //       below.
+
+    //-----------------------------------------------------------------------
+    // Print function overloads that write formatted text to an ostream.
 
     // If cli.exitCode() is not EX_OK, prints errMsg and errDetail (if
     // present), otherwise prints nothing. Returns cli.exitCode(). Only makes
@@ -690,6 +693,7 @@ public:
         const std::string & progName = {},
         const std::string & cmd = {}
     );
+
     // Same as printUsage(), except always lists all non-default options
     // individually instead of the [OPTIONS] catchall.
     int printUsageEx(
@@ -705,6 +709,34 @@ public:
     );
     void printOptions(std::ostream & os, const std::string & cmd = {});
 
+    //-----------------------------------------------------------------------
+    // Print function overloads that append text formatted for rendering by
+    // cli.printText() to a string.
+
+    int printError(std::string * out);
+    int printHelp(
+        std::string * out,
+        const std::string & progName = {},
+        const std::string & cmd = {}
+    );
+    int printUsage(
+        std::string * out,
+        const std::string & progName = {},
+        const std::string & cmd = {}
+    );
+    int printUsageEx(
+        std::string * out,
+        const std::string & progName = {},
+        const std::string & cmd = {}
+    );
+    void printCommands(std::string * out);
+    void printOperands(
+        std::string * out,
+        const std::string & cmd = {}
+    );
+    void printOptions(std::string * out, const std::string & cmd = {});
+
+    //-----------------------------------------------------------------------
     // Friendly name for type used in help text, such as NUM, VALUE, or FILE.
     template <typename T>
     static std::string valueDesc();

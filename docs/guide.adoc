@@ -2717,8 +2717,8 @@ if (*help)
 This works because the last definition for named options overrides any
 previous ones.
 
-Within your help printer you can use the existing functions to do some of the
-work:
+Within your help printer you can use the existing functions to do some or all
+of the work:
 
 * cli.printHelp
 * cli.printUsage / cli.printUsageEx
