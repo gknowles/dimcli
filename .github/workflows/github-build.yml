@@ -80,7 +80,6 @@ jobs:
           - CXX=g++-12 CC=gcc-12
           - CXX=g++-13 CC=gcc-13
           - CXX=g++-14 CC=gcc-14
-          - CXX=g++-15 CC=gcc-15
         include:
           - env: CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON
             image: ubuntu-22.04
@@ -113,8 +112,6 @@ jobs:
           - env: CXX=g++-13 CC=gcc-13
             image: ubuntu-24.04
           - env: CXX=g++-14 CC=gcc-14
-            image: ubuntu-24.04
-          - env: CXX=g++-15 CC=gcc-15
             image: ubuntu-24.04
 
     runs-on: ${{matrix.image}}
