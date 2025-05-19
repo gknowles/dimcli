@@ -79,7 +79,7 @@
 #
 ####
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 option(BUILD_PROJECT_NAME "Override name of project to build" OFF)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
@@ -125,6 +125,7 @@ set(tmp "${LINK_STATIC_RUNTIME}")   # not used by clang or gcc builds
 # 2025-01-09 - Changed - Use --std=c++2c with supporting GCC and Clang
 # 2025-02-24 - Added - Resource projects with arbitrary files
 # 2025-02-24 - Removed - Site project, use a resource project instead
+# 2025-05-18 - Changed - Minimum required version now 3.10
 
 
 #############################################################################
