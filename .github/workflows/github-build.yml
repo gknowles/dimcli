@@ -22,13 +22,13 @@ jobs:
         toolset: [v140, v141, v142, v143]
         include:
           - toolset: v140
-            image: windows-2019
+            image: windows-2025
           - toolset: v141
-            image: windows-2019
+            image: windows-2025
           - toolset: v142
-            image: windows-2019
+            image: windows-2025
           - toolset: v143
-            image: windows-2022
+            image: windows-2025
     runs-on: ${{matrix.image}}
     defaults:
       run:
@@ -44,11 +44,11 @@ jobs:
       run: |
         md build
         cd build
-        if "${{matrix.toolset}}" == "v143" (
+        :: if "${{matrix.toolset}}" == "v143" (
           set generator=Visual Studio 17 2022
-        ) else (
-          set generator=Visual Studio 16 2019
-        )
+        :: ) else (
+        ::   set generator=Visual Studio 16 2019
+        :: )
         cmake .. -G "%generator%" -A ${{matrix.platform}} -T ${{matrix.toolset}}
         cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}}^
           -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
