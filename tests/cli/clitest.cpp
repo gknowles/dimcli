@@ -1336,10 +1336,54 @@ Usage: test one [OPTIONS]
 Options:
   --help    Show this message and exit.
 )");
-    }
         EXPECT_HELP(cli, "unknown", 1 + R"(
 Usage: test unknown [ARGS...]
 )");
+    }
+
+    // allCmd
+    {
+        cli = {};
+        auto & n1 = cli.opt<bool>("1").desc("top level text");
+        auto & n2 = cli.command("one").opt<bool>("2").desc("one text");
+        auto & n3 = cli.command("").opt<bool>("3").desc("top level text");
+        auto & n3b = cli.command("one").opt<bool>("3").desc("one text");
+        auto & a1 = cli.opt<bool>("a").allCmd(true).desc("all text");
+        auto & a2 = cli.opt<bool>("b").allCmd(false).desc("all but top text");
+        auto & t1 = cli.command("two").opt<bool>("a").desc("two text");
+        auto & t2 = cli.command("two").opt<bool>("b").desc("two text");
+
+        EXPECT_PARSE(cli, "-1");
+        EXPECT(*n1 && !*n2 && !*n3 && !*n3b && !*a1 && !*a2);
+        EXPECT_PARSE(cli, "two -a");
+        EXPECT(!*a1 && !*a2 && *t1 && !*t2);
+
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS] COMMAND [ARGS...]
+
+Commands:
+  one
+  two
+
+Options:
+  -1        top level text
+  -3        top level text
+  -a        all text
+
+  --help    Show this message and exit.
+)");
+        EXPECT_HELP(cli, "one", 1 + R"(
+Usage: test one [OPTIONS]
+
+Options:
+  -2        one text
+  -3        one text
+  -a        all text
+  -b        all but top text
+
+  --help    Show this message and exit.
+)");
+    }
 
     // unknownCmd
     {

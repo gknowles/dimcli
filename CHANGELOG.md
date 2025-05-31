@@ -11,10 +11,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
-- Cosmetic - Fixes and adjustments to README and other docs
 - Added - cli.beforeExec() and cli.afterExec() for code common to all commands
 - Added - cli.parseAborted() to test whether cli.parseExit() was called
 - Added - cli.print*() overloads that append to a string
+- Fixed - Top level options not of selected command populated by parser
+- Added - opt.allCmd() to add option to all commands
 
 ## dimcli 7.3.0 (2024-06-19)
 - Fixed - Assert calling cli.title() immediately after creating new option

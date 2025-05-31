@@ -68,8 +68,14 @@ const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
 *
 ***/
 
-// Name of group containing --help, --version, etc
-const char kInternalOptionGroup[] = "~";
+// Name of group containing --help, --version, etc.
+const string Cli::kInternalOptGrp = "~";
+
+// Command with options available to all commands including the top level.
+const string Cli::kInternalAllCmd = "-allWithTop";
+
+// Command with options available with all commands except the top level.
+const string Cli::kInternalAllSubcmd = "-allNoTop";
 
 namespace {
 
@@ -231,8 +237,16 @@ struct Cli::OptIndex {
     // Build index
 
     // Members just to get access to protected members of OptBase.
-    static bool includeOptText(OptBase & opt, const string & cmd);
-    static bool includeOptValue(OptBase & opt, const string & cmd);
+    static bool includeOpt(
+        OptBase & opt,
+        const string & cmd,
+        bool forHelpText,
+        bool forAllCmd
+    );
+    static bool includeOptAfter(
+        OptBase & opt,
+        const string & cmd
+    );
 
     void index(
         const Cli & cli,
@@ -473,8 +487,10 @@ CliLocal::CliLocal()
 // static
 void Cli::Config::touchAllCmds(Cli & cli) {
     // Make sure all opts have a backing command config.
-    for (auto && opt : cli.m_cfg->opts)
-        Config::findCmdAlways(cli, opt->m_command);
+    for (auto && opt : cli.m_cfg->opts) {
+        if (!opt->allCmd())
+            Config::findCmdAlways(cli, opt->m_command);
+    }
     // Make sure all commands have a backing command group.
     for (auto && cmd : cli.m_cfg->cmds)
         Config::findCmdGrpAlways(cli, cmd.second.cmdGroup);
@@ -503,19 +519,34 @@ CommandConfig & Cli::Config::findCmdAlways(
     if (i != cmds.end())
         return i->second;
 
-    auto & cmd = cmds[name];
-    cmd.name = name;
+    string mname;
+    auto epos = name.find('\0');
+    if (epos == string::npos) {
+        mname = name;
+    } else {
+        assert(!"Bad command name, contains null.");
+        for (auto&& ch : name) {
+            if (ch)
+                mname += ch;
+        }
+    }
+    if (mname[0] == '-') {
+        assert(!"Bad command name, starts with '-'.");
+        mname.erase(0);
+    }
+    auto & cmd = cmds[mname];
+    cmd.name = move(mname);
     cmd.action = defCmdAction;
     cmd.cmdGroup = cli.cmdGroup();
     auto & defGrp = findGrpAlways(cmd, "");
     defGrp.title = "Options";
-    auto & intGrp = findGrpAlways(cmd, kInternalOptionGroup);
+    auto & intGrp = findGrpAlways(cmd, kInternalOptGrp);
     intGrp.title.clear();
     auto & hlp = cli.opt<bool>("help.")
         .desc("Show this message and exit.")
         .check(helpOptAction)
-        .command(name)
-        .group(kInternalOptionGroup);
+        .command(cmd.name)
+        .group(kInternalOptGrp);
     cmd.helpOpt = &hlp;
     return cmd;
 }
@@ -548,7 +579,7 @@ GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli, const string & name) {
     grp.name = grp.sortKey = name;
     if (name.empty()) {
         grp.title = "Commands";
-    } else if (name == kInternalOptionGroup) {
+    } else if (name == kInternalOptGrp) {
         grp.title = "";
     } else {
         grp.title = name;
@@ -667,6 +698,12 @@ string Cli::OptBase::defaultPrompt() const {
 }
 
 //===========================================================================
+bool Cli::OptBase::allCmd() const {
+    return command() == kInternalAllCmd
+        || command() == kInternalAllSubcmd;
+}
+
+//===========================================================================
 void Cli::OptBase::setNameIfEmpty(const string & name) {
     if (m_fromName.empty())
         m_fromName = name;
@@ -736,22 +773,41 @@ bool Cli::OptBase::withUnits(
 
 //===========================================================================
 // static
-bool Cli::OptIndex::includeOptText(
+bool Cli::OptIndex::includeOptAfter(
     Cli::OptBase & opt,
     const string & cmd
 ) {
-    // Is this an opt that should appear in the help text of cmd?
-    return opt.m_visible && opt.m_command == cmd;
+    // Should opt activate its after actions if cmd is selected?
+    return opt.command().empty()
+        || opt.command() == cmd
+        || opt.command() == kInternalAllCmd
+        || opt.command() == kInternalAllSubcmd;
 }
 
 //===========================================================================
 // static
-bool Cli::OptIndex::includeOptValue(
+bool Cli::OptIndex::includeOpt(
     Cli::OptBase & opt,
-    const string & cmd
+    const string & cmd,
+    bool forHelpText,
+    bool forAllCmd
 ) {
-    // Is this an opt that could be assigned if cmd is selected?
-    return opt.m_command.empty() || opt.m_command == cmd;
+    if (forAllCmd) {
+        if (opt.command() != kInternalAllCmd
+            && (cmd.empty() || opt.command() != kInternalAllSubcmd)
+        ) {
+            return false;
+        }
+    } else if (cmd != opt.command()) {
+        return false;
+    }
+    if (forHelpText) {
+        // Should opt appear in the help text of cmd?
+        return opt.m_visible;
+    } else {
+        // Should opt have value assigned if cmd is selected?
+        return true;
+    }
 }
 
 //===========================================================================
@@ -760,15 +816,18 @@ void Cli::OptIndex::index(
     const string & cmd,
     bool forHelpText
 ) {
+    assert(cmd != kInternalAllCmd // LCOV_EXCL_LINE
+        && cmd != kInternalAllSubcmd
+        && "Internal dimcli error: direct usage of '-all*' subcommand");
+
     *this = {};
     m_allowCommands = cmd.empty();
 
-    for (auto && opt : cli.m_cfg->opts) {
-        auto include = forHelpText
-            ? includeOptText(*opt, cmd)
-            : includeOptValue(*opt, cmd);
-        if (include)
-            index(*opt);
+    for (auto && forAllCmd : {true, false}) {
+        for (auto && opt : cli.m_cfg->opts) {
+            if (includeOpt(*opt, cmd, forHelpText, forAllCmd))
+                index(*opt);
+        }
     }
 
     if (m_final < Final::kOpt)
@@ -885,6 +944,8 @@ IN_QUOTED_NAME:
         if (ch == close) {
             if (cur == last || *cur != close)
                 goto IN_SUFFIX;
+            // Escaped (consecutive pair) close quote character. Treated as
+            // single literal and keeps quotes open.
             ch = *cur++;
         } else if (~flags & fNameOperand) {
             if (ch == '=') {
@@ -1261,7 +1322,7 @@ Cli::Opt<bool> & Cli::versionOpt(
     return opt<bool>("version.")
         .desc("Show version and exit.")
         .check(act)
-        .group(kInternalOptionGroup);
+        .group(kInternalOptGrp);
 }
 
 //===========================================================================
@@ -1402,7 +1463,7 @@ Cli & Cli::helpCmd() & {
     // preserved.
     Cli cli(*this);
     cli.command("help")
-        .cmdGroup(kInternalOptionGroup)
+        .cmdGroup(kInternalOptGrp)
         .desc("Show help for individual commands and exit. If no command is "
             "given the list of commands and general options are shown.")
         .action(helpCmdAction);
@@ -2304,8 +2365,9 @@ bool Cli::parse(vector<string> & args) {
 
     // After actions
     for (auto && opt : m_cfg->opts) {
-        if (!ndx.includeOptValue(*opt, commandMatched()))
+        if (!ndx.includeOptAfter(*opt, commandMatched())) {
             continue;
+        }
         opt->doAfterActions(*this);
         if (parseAborted())
             return false;
@@ -2708,7 +2770,7 @@ vector<OptKey> Cli::OptIndex::findNamedOpts(
             // Sort by group sort key followed by name list with leading
             // dashes removed.
             key.sort = Config::findGrpAlways(cmd, opt->m_group).sortKey;
-            if (flatten && key.sort != kInternalOptionGroup)
+            if (flatten && key.sort != kInternalOptGrp)
                 key.sort.clear();
             key.sort += '\0';
             key.sort += list.substr(list.find_first_not_of('-'));
@@ -2948,7 +3010,7 @@ void Cli::printCommands(string * outPtr) {
             out += '\n';
             auto title = key.grp->title;
             if (title.empty()
-                && strcmp(gname, kInternalOptionGroup) == 0
+                && strcmp(gname, kInternalOptGrp.c_str()) == 0
                 && &key == keys.data()
             ) {
                 // First group and it's the internal group, give it a title.
@@ -3094,7 +3156,7 @@ void Cli::printOptions(string * outPtr, const string & cmdName) {
             auto & grp = Cli::Config::findGrpAlways(cmd, key.opt->group());
             auto title = grp.title;
             if (title.empty()
-                && strcmp(gname, kInternalOptionGroup) == 0
+                && strcmp(gname, kInternalOptGrp.c_str()) == 0
                 && &key == namedOpts.data()
             ) {
                 // First group and it's the internal group, give it a title

@@ -174,6 +174,10 @@ exits. An empty progName defaults to argv[0].
 actions can be added and will, for each option, be called in the order they're
 added.
 
+| opt.allCmd
+| Change option to be a member of all commands, with or without also including
+the top level.
+
 | opt.<<guide.adoc#any-units, anyUnits>>
 | Given a series of unit names and factors, incoming values have trailing unit
 names removed and are multiplied by the factor.
@@ -446,9 +450,6 @@ previous one.
 
 2+h| Options
 
-| opt.<<guide.adoc#subcommands, command>>
-| Set subcommand for which this is an option.
-
 | opt.<<guide.adoc#option-groups, group>>
 | Set group under which this argument will show up in the help text.
 
@@ -509,7 +510,7 @@ meaning when embedded in the text:
 ! \a
 ! Set min and max widths of a table column as percentages of console width.
 Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
-Only for columns in rows that are marked with '\f' (new table).
+Only valid for columns in rows that are marked with '\f' (new table).
 ! \f ! Start of new table.
 ! \r ! Decrease indent of wrapped text.
 ! \v ! Increase indent of wrapped text.

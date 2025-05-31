@@ -191,6 +191,10 @@ enum {
 
 class DIMCLI_LIB_DECL Cli {
 public:
+    static const std::string kInternalOptGrp;
+    static const std::string kInternalAllCmd;
+    static const std::string kInternalAllSubcmd;
+
     struct Config;
     class Convert;
 
@@ -1396,6 +1400,7 @@ public:
     // Command and group this option belongs to.
     const std::string & command() const { return m_command; }
     const std::string & group() const { return m_group; }
+    bool allCmd() const;
 
     //-----------------------------------------------------------------------
     // UPDATE VALUE
@@ -1497,6 +1502,10 @@ public:
 
     // Set subcommand for which this is an option.
     A & command(const std::string & val);
+
+    // Makes this option available for all commands with or without the top
+    // level included.
+    A & allCmd(bool includeTopLevel);
 
     // Set group under which this opt will show up in the help text.
     A & group(const std::string & val);
@@ -1765,6 +1774,16 @@ template <typename A, typename T>
 A & Cli::OptShim<A, T>::command(const std::string & val) {
     m_command = val;
     return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::allCmd(bool includeTopLevel) {
+    if (includeTopLevel) {
+        return command(kInternalAllCmd);
+    } else {
+        return command(kInternalAllSubcmd);
+    }
 }
 
 //===========================================================================
