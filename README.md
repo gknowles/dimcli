@@ -108,26 +108,26 @@ All you need is:
 ### Using cmake
 Get the latest dimcli [release](https://github.com/gknowles/dimcli/releases).
 
-Build it (this example uses Visual C++ 2015 to install a 64-bit build to
+Build it (this example uses Visual C++ 2022 to install a 64-bit build to
 c:\dimcli on a windows machine):
 - md build & cd build
-- cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 14 2015 Win64"
+- cmake .. -DCMAKE_INSTALL_PREFIX=c:\dimcli -G "Visual Studio 17 2022 Win64"
 - cmake --build .
 - ctest -C Debug
 - cmake --build . --target install
 
 ## Working on the dimcli Project
 - Prerequisites
-  - install cmake >= 3.6
+  - install cmake >= 3.10
   - install Visual Studio >= 2015
     - include the "Github Extension for Visual Studio" (if you care)
     - include git
-- Make the library (assuming VS 2015)
+- Make the library (assuming VS 2022)
   - git clone https://github.com/gknowles/dimcli.git
   - cd dimcli
   - git submodule update --init
   - md build & cd build
-  - cmake .. -G "Visual Studio 14 2015 Win64"
+  - cmake .. -G "Visual Studio 17 2022 Win64"
   - cmake --build .
 - Test
   - ctest -C Debug
