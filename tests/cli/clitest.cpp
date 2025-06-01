@@ -404,6 +404,29 @@ Usage: test [--help] [B]
 !"Required operand w/finalOpt after optional operand."
 )");
     }
+
+    // bad command name
+    {
+        cli = {};
+        cli.command("-all");
+        EXPECT_ASSERT(1 + R"(
+!"Bad command name, starts with '-'."
+)");
+        cli.command("with\0null");
+        EXPECT_ASSERT(1 + R"(
+!"Bad command name, contains null."
+)");
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS] COMMAND [ARGS...]
+
+Commands:
+  all
+  withnull
+
+Options:
+  --help    Show this message and exit.
+)");
+    }
 }
 
 #endif
