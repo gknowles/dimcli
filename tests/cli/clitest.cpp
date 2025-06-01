@@ -412,7 +412,7 @@ Usage: test [--help] [B]
         EXPECT_ASSERT(1 + R"(
 !"Bad command name, starts with '-'."
 )");
-        cli.command("with\0null");
+        cli.command("with\0null"s);
         EXPECT_ASSERT(1 + R"(
 !"Bad command name, contains null."
 )");

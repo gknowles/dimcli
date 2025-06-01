@@ -948,6 +948,8 @@ private:
         const std::string & val
     );
 
+    static std::string fixCmdName(const std::string & name);
+
     static std::vector<std::pair<std::string, double>> siUnitMapping(
         const std::string & symbol,
         int flags
@@ -1776,18 +1778,15 @@ inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::command(const std::string & val) {
-    m_command = val;
+    m_command = fixCmdName(val);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::allCmd(bool includeTopLevel) {
-    if (includeTopLevel) {
-        return command(kInternalAllCmd);
-    } else {
-        return command(kInternalAllSubcmd);
-    }
+    m_command = includeTopLevel ? kInternalAllCmd : kInternalAllSubcmd;
+    return static_cast<A &>(*this);
 }
 
 //===========================================================================

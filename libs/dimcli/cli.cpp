@@ -515,28 +515,16 @@ CommandConfig & Cli::Config::findCmdAlways(
     Cli & cli,
     const string & name
 ) {
+    assert(name.empty() || name[0] != '-' // LCOV_EXCL_LINE
+        && "Internal dimcli error: command name starts with '-'.");
+
     auto & cmds = cli.m_cfg->cmds;
     auto i = cmds.find(name);
     if (i != cmds.end())
         return i->second;
 
-    string mname;
-    auto epos = name.find('\0');
-    if (epos == string::npos) {
-        mname = name;
-    } else {
-        assert(!"Bad command name, contains null.");
-        for (auto&& ch : name) {
-            if (ch)
-                mname += ch;
-        }
-    }
-    if (!mname.empty() && mname[0] == '-') {
-        assert(!"Bad command name, starts with '-'.");
-        mname.erase(0);
-    }
-    auto & cmd = cmds[mname];
-    cmd.name = move(mname);
+    auto & cmd = cmds[name];
+    cmd.name = name;
     cmd.action = defCmdAction;
     cmd.cmdGroup = cli.cmdGroup();
     auto & defGrp = findGrpAlways(cmd, "");
@@ -1267,6 +1255,26 @@ Cli & Cli::operator=(Cli && from) noexcept {
 ***/
 
 //===========================================================================
+// private static
+std::string Cli::fixCmdName(const std::string & name) {
+    string out = name;
+    auto epos = name.find('\0');
+    if (epos != string::npos) {
+        assert(!"Bad command name, contains null.");
+        out.clear();
+        for (auto&& ch : name) {
+            if (ch)
+                out += ch;
+        }
+    }
+    if (!out.empty() && out[0] == '-') {
+        assert(!"Bad command name, starts with '-'.");
+        out.erase(0);
+    }
+    return out;
+}
+
+//===========================================================================
 // private
 void Cli::addOpt(unique_ptr<OptBase> src) {
     m_cfg->opts.push_back(move(src));
@@ -1371,7 +1379,8 @@ const string & Cli::sortKey() const {
 }
 
 //===========================================================================
-Cli & Cli::command(const string & name, const string & grpName) & {
+Cli & Cli::command(const string & rawName, const string & grpName) & {
+    auto name = fixCmdName(rawName);
     Config::findCmdAlways(*this, name);
     m_command = name;
     return group(grpName);
