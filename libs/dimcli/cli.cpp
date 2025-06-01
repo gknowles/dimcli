@@ -531,7 +531,7 @@ CommandConfig & Cli::Config::findCmdAlways(
                 mname += ch;
         }
     }
-    if (mname[0] == '-') {
+    if (!mname.empty() && mname[0] == '-') {
         assert(!"Bad command name, starts with '-'.");
         mname.erase(0);
     }

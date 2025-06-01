@@ -408,7 +408,7 @@ Usage: test [--help] [B]
     // bad command name
     {
         cli = {};
-        cli.command("-all");
+        cli.command("-");
         EXPECT_ASSERT(1 + R"(
 !"Bad command name, starts with '-'."
 )");
@@ -420,7 +420,6 @@ Usage: test [--help] [B]
 Usage: test [OPTIONS] COMMAND [ARGS...]
 
 Commands:
-  all
   withnull
 
 Options:
