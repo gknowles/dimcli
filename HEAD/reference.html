@@ -412,6 +412,11 @@ actions can be added and will, for each option, be called in the order they&#821
 added.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.allCmd</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change option to be a member of all commands, with or without also including
+the top level.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#any-units">anyUnits</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Given a series of unit names and factors, incoming values have trailing unit
 names removed and are multiplied by the factor.</p></td>
@@ -774,10 +779,6 @@ previous one.</p></td>
 <th class="tableblock halign-left valign-top" colspan="2"><p class="tableblock">Options</p></th>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#subcommands">command</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set subcommand for which this is an option.</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#option-groups">group</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set group under which this argument will show up in the help text.</p></td>
 </tr>
@@ -872,7 +873,7 @@ meaning when embedded in the text:</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">\a</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Set min and max widths of a table column as percentages of console width.
 Appears as "\aMIN MAX\a", where MIN and MAX are floats parsed via strtof().
-Only for columns in rows that are marked with '\f' (new table).</p></td>
+Only valid for columns in rows that are marked with '\f' (new table).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-center valign-top"><p class="tableblock">\f</p></td>
