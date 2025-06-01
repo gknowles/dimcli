@@ -854,7 +854,7 @@ public:
     // seventeen
     //        Too long for column width, pushed down.
     // ----
-    void printText(std::ostream & os, const std::string & text);
+    void printText(std::ostream & os, const std::string & text) const;
 
     //-----------------------------------------------------------------------
     // ARGV CONVERSIONS

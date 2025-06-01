@@ -3660,7 +3660,7 @@ static string format(const Cli::Config & cfg, const string & text) {
 }
 
 //===========================================================================
-void Cli::printText(ostream & os, const string & text) {
+void Cli::printText(ostream & os, const string & text) const {
     os << format(*m_cfg, text);
 }
 
