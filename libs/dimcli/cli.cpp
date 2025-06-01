@@ -79,6 +79,7 @@ const string Cli::kInternalAllSubcmd = "-allNoTop";
 
 namespace {
 
+// Used for both command groups and option groups.
 struct GroupConfig {
     string name;
     string title;

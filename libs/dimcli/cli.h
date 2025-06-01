@@ -670,13 +670,17 @@ public:
     //-----------------------------------------------------------------------
     // RENDERING HELP TEXT
     //
-    // NOTE: The cli.print*() family of functions return incomplete or
+    // NOTE: The cli.print*() family of methods return incomplete or
     //       meaningless results if used before cli.parse() has been called to
     //       supply the program name and finalize the configuration. The
     //       exception is cli.printText(), which only uses console width, and
     //       is safe to use without first calling cli.parse(). To learn more
     //       about cli.printText(), see the section on rendering arbitrary text
     //       below.
+    //
+    // The cli.print*() methods are non-const because many of them create
+    // internal structures for any uninitialized commands and groups being
+    // referenced.
 
     //-----------------------------------------------------------------------
     // Print function overloads that write formatted text to an ostream.
