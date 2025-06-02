@@ -1204,11 +1204,8 @@ static shared_ptr<Cli::Config> globalConfig() {
 
 //===========================================================================
 // Creates a handle to the shared configuration
-Cli::Cli()
-    : m_cfg(globalConfig())
-{
-    helpOpt();
-}
+Cli::Cli() : Cli(globalConfig())
+{}
 
 //===========================================================================
 Cli::Cli(const Cli & from)

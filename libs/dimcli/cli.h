@@ -303,8 +303,8 @@ public:
     Opt<bool> & confirmOpt(const std::string & prompt = {});
 
     // Get reference to internal help option, can be used to change the
-    // description, option group, etc. To completely replace it, add another
-    // option that responds to --help.
+    // description, option group, etc. To completely override it, add a new
+    // option that also responds to --help.
     Opt<bool> & helpOpt();
 
     // Add --password option and prompts for a password if it's not given
