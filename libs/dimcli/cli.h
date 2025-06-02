@@ -191,10 +191,6 @@ enum {
 
 class DIMCLI_LIB_DECL Cli {
 public:
-    static const std::string kInternalOptGrp;
-    static const std::string kInternalAllCmd;
-    static const std::string kInternalAllSubcmd;
-
     struct Config;
     class Convert;
 
@@ -207,6 +203,11 @@ public:
     struct ArgMatch;
     template <typename T> struct Value;
     template <typename T> struct ValueVec;
+
+    // Names of internally defined commands and groups.
+    static const std::string kInternalAllCmd;
+    static const std::string kInternalAllSubcmd;
+    static const std::string kInternalOptGrp;
 
 public:
     // Creates a handle to the shared command line configuration, this
@@ -948,6 +949,9 @@ private:
         const std::string & val
     );
 
+    static const std::string & allCmdName(bool includeTopLevel);
+    static bool allCmd(const std::string & name);
+
     static std::string fixCmdName(const std::string & name);
 
     static std::vector<std::pair<std::string, double>> siUnitMapping(
@@ -1406,7 +1410,7 @@ public:
     // Command and group this option belongs to.
     const std::string & command() const { return m_command; }
     const std::string & group() const { return m_group; }
-    bool allCmd() const;
+    bool allCmd() const { return Cli::allCmd(command()); }
 
     //-----------------------------------------------------------------------
     // UPDATE VALUE
@@ -1785,7 +1789,7 @@ A & Cli::OptShim<A, T>::command(const std::string & val) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::allCmd(bool includeTopLevel) {
-    m_command = includeTopLevel ? kInternalAllCmd : kInternalAllSubcmd;
+    m_command = allCmdName(includeTopLevel);
     return static_cast<A &>(*this);
 }
 

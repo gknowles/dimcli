@@ -68,14 +68,14 @@ const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
 *
 ***/
 
-// Name of group containing --help, --version, etc.
-const string Cli::kInternalOptGrp = "~";
-
 // Command with options available to all commands including the top level.
 const string Cli::kInternalAllCmd = "-allWithTop";
 
 // Command with options available with all commands except the top level.
 const string Cli::kInternalAllSubcmd = "-allNoTop";
+
+// Name of group containing --help, --version, etc.
+const string Cli::kInternalOptGrp = "~";
 
 namespace {
 
@@ -687,12 +687,6 @@ string Cli::OptBase::defaultPrompt() const {
 }
 
 //===========================================================================
-bool Cli::OptBase::allCmd() const {
-    return command() == kInternalAllCmd
-        || command() == kInternalAllSubcmd;
-}
-
-//===========================================================================
 void Cli::OptBase::setNameIfEmpty(const string & name) {
     if (m_fromName.empty())
         m_fromName = name;
@@ -1253,6 +1247,19 @@ Cli & Cli::operator=(Cli && from) noexcept {
 *   Configuration
 *
 ***/
+
+//===========================================================================
+// private static
+const std::string & Cli::allCmdName(bool includeTopLevel) {
+    return includeTopLevel ? kInternalAllCmd : kInternalAllSubcmd;
+}
+
+//===========================================================================
+// private static
+bool Cli::allCmd(const std::string & name) {
+    return name == kInternalAllCmd
+        || name == kInternalAllSubcmd;
+}
 
 //===========================================================================
 // private static
