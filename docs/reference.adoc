@@ -425,13 +425,15 @@ single blank line separating this group from the previous one.
 2+h| Commands
 
 | cli.<<guide.adoc#page-layout, header>>
-| Arbitrary help text, for the command, before the usage section.
+| Arbitrary help text, for the command, before the usage section. Defaults to
+value set for top level command.
 
 | cli.<<guide.adoc#page-layout, desc>>
 | Help text, for the command, between the usage and arguments / options.
 
 | cli.<<guide.adoc#page-layout, footer>>
-| Help text, for the command, after the options.
+| Help text, for the command, after the options. Defaults to value set for top
+level command.
 
 2+h| Option groups
 
