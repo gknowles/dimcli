@@ -94,7 +94,6 @@ struct CommandConfig {
     function<Cli::ActionFn> action;
     bool unknownArgs = {};
     string cmdGroup;
-    Cli::Opt<bool> * helpOpt = {};
     unordered_map<string, GroupConfig> groups;
 };
 
@@ -175,6 +174,7 @@ struct Cli::Config {
     unordered_map<string, CommandConfig> cmds;
     unordered_map<string, GroupConfig> cmdGroups;
     list<unique_ptr<OptBase>> opts;
+    Cli::Opt<bool> * helpOpt = {};
     bool responseFiles = true;
     string envOpts;
     istream * conin = &cin;
@@ -531,12 +531,6 @@ CommandConfig & Cli::Config::findCmdAlways(
     defGrp.title = "Options";
     auto & intGrp = findGrpAlways(cmd, kInternalOptGrp);
     intGrp.title.clear();
-    auto & hlp = cli.opt<bool>("help.")
-        .desc("Show this message and exit.")
-        .check(helpOptAction)
-        .command(cmd.name)
-        .group(kInternalOptGrp);
-    cmd.helpOpt = &hlp;
     return cmd;
 }
 
@@ -806,11 +800,19 @@ void Cli::OptIndex::index(
     *this = {};
     m_allowCommands = cmd.empty();
 
-    for (auto && forAllCmd : {true, false}) {
+    if (cli.commandExists(cmd)) {
+        // Options configured for all commands are only processed by existing
+        // (as opposed to "unknown") commands. These are added first so that
+        // any following command specific options will override them.
         for (auto && opt : cli.m_cfg->opts) {
-            if (includeOpt(*opt, cmd, forHelpText, forAllCmd))
+            if (includeOpt(*opt, cmd, forHelpText, true))
                 index(*opt);
         }
+    }
+    // Every command processes the options explicitly configured for it.
+    for (auto && opt : cli.m_cfg->opts) {
+        if (includeOpt(*opt, cmd, forHelpText, false))
+            index(*opt);
     }
 
     if (m_final < Final::kOpt)
@@ -1219,7 +1221,13 @@ Cli::Cli(const Cli & from)
 Cli::Cli(shared_ptr<Config> cfg)
     : m_cfg(cfg)
 {
-    helpOpt();
+    Config::findCmdAlways(*this, {});
+    auto & hlp = opt<bool>("help.")
+        .desc("Show this message and exit.")
+        .check(helpOptAction)
+        .allCmd(true)
+        .group(kInternalOptGrp);
+    m_cfg->helpOpt = &hlp;
 }
 
 //===========================================================================
@@ -1310,7 +1318,7 @@ Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
 
 //===========================================================================
 Cli::Opt<bool> & Cli::helpOpt() {
-    return *Config::findCmdAlways(*this).helpOpt;
+    return *m_cfg->helpOpt;
 }
 
 //===========================================================================

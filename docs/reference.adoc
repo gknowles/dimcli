@@ -175,8 +175,8 @@ actions can be added and will, for each option, be called in the order they're
 added.
 
 | opt.allCmd
-| Change option to be a member of all commands, with or without also including
-the top level.
+| Change option to be a member of all known commands, with or without also
+including the top level.
 
 | opt.<<guide.adoc#any-units, anyUnits>>
 | Given a series of unit names and factors, incoming values have trailing unit

@@ -416,8 +416,7 @@ public:
     Cli & unknownCmd(std::function<ActionFn> fn = {}) &;
     Cli && unknownCmd(std::function<ActionFn> fn = {}) &&;
 
-    // Adds before action that replaces the command line with "--help" when
-    // it's empty.
+    // Adds before action that replaces empty command lines with "--help".
     Cli & helpNoArgs() &;
     Cli && helpNoArgs() &&;
 
@@ -1513,8 +1512,8 @@ public:
     // Set subcommand for which this is an option.
     A & command(const std::string & val);
 
-    // Makes this option available for all commands with or without the top
-    // level included.
+    // Makes this option available for all known commands, with or without the
+    // top level included.
     A & allCmd(bool includeTopLevel);
 
     // Set group under which this opt will show up in the help text.
