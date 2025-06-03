@@ -294,6 +294,7 @@ endforeach()
 source_group(" " REGULAR_EXPRESSION ".*")
 source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
 source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
+source_group("ci" FILES .circleci/config.yml)
 source_group("vendor" REGULAR_EXPRESSION "web/(.*/)+vendor/.*")
 
 if(ROOT_PROJECT)
@@ -627,7 +628,7 @@ file(GLOB sources
     *.rst
     *.yml
 )
-file(GLOB_RECURSE allnames .github/*.yml)
+file(GLOB_RECURSE allnames .circleci/*.yml .github/*.yml)
 list(APPEND sources ${allnames})
 if(sources)
     add_file_project(about files ${sources})
