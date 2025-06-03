@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - cli.parseAborted() to test whether cli.parseExit() was called
 - Added - cli.print*() overloads that append to a string
 - Fixed - Top level options not of selected command populated by parser
-- Added - opt.allCmd() to add option to all commands
+- Added - opt.allCmds() to add option to all commands
 
 ## dimcli 7.3.0 (2024-06-19)
 - Fixed - Assert calling cli.title() immediately after creating new option

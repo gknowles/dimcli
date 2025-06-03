@@ -174,7 +174,7 @@ exits. An empty progName defaults to argv[0].
 actions can be added and will, for each option, be called in the order they're
 added.
 
-| opt.allCmd
+| opt.allCmds
 | Change option to be a member of all known commands, with or without also
 including the top level.
 

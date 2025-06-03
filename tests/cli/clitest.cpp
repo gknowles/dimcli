@@ -1370,10 +1370,10 @@ Usage: test unknown [ARGS...]
         auto & n2 = cli.command("one").opt<bool>("2").desc("one text");
         auto & n3 = cli.command("").opt<bool>("3").desc("top level text");
         auto & n3b = cli.command("one").opt<bool>("3").desc("one text");
-        auto & aa = cli.opt<bool>("a").allCmd(false).desc("all but top text");
-        auto & ab = cli.opt<bool>("b").allCmd(false).desc("all but top text");
-        auto & ac = cli.opt<bool>("c").allCmd(true).desc("all text");
-        auto & ad = cli.opt<bool>("d").allCmd(true).desc("all text");
+        auto & aa = cli.opt<bool>("a").allCmds(false).desc("all but top text");
+        auto & ab = cli.opt<bool>("b").allCmds(false).desc("all but top text");
+        auto & ac = cli.opt<bool>("c").allCmds(true).desc("all text");
+        auto & ad = cli.opt<bool>("d").allCmds(true).desc("all text");
         auto & ta = cli.command("two").opt<bool>("a").desc("two text");
         auto & tc = cli.command("two").opt<bool>("c").desc("two text");
 

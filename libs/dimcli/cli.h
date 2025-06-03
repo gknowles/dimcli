@@ -205,8 +205,8 @@ public:
     template <typename T> struct ValueVec;
 
     // Names of internally defined commands and groups.
-    static const std::string kInternalAllCmd;
-    static const std::string kInternalAllSubcmd;
+    static const std::string kInternalAllCmds;
+    static const std::string kInternalAllSubcmds;
     static const std::string kInternalOptGrp;
 
 public:
@@ -948,8 +948,8 @@ private:
         const std::string & val
     );
 
-    static const std::string & allCmdName(bool includeTopLevel);
-    static bool allCmd(const std::string & name);
+    static const std::string & allCmdsName(bool includeTopLevel);
+    static bool allCmds(const std::string & name);
 
     static std::string fixCmdName(const std::string & name);
 
@@ -1409,7 +1409,7 @@ public:
     // Command and group this option belongs to.
     const std::string & command() const { return m_command; }
     const std::string & group() const { return m_group; }
-    bool allCmd() const { return Cli::allCmd(command()); }
+    bool allCmds() const { return Cli::allCmds(command()); }
 
     //-----------------------------------------------------------------------
     // UPDATE VALUE
@@ -1514,7 +1514,7 @@ public:
 
     // Makes this option available for all known commands, with or without the
     // top level included.
-    A & allCmd(bool includeTopLevel);
+    A & allCmds(bool includeTopLevel);
 
     // Set group under which this opt will show up in the help text.
     A & group(const std::string & val);
@@ -1787,8 +1787,8 @@ A & Cli::OptShim<A, T>::command(const std::string & val) {
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::allCmd(bool includeTopLevel) {
-    m_command = allCmdName(includeTopLevel);
+A & Cli::OptShim<A, T>::allCmds(bool includeTopLevel) {
+    m_command = allCmdsName(includeTopLevel);
     return static_cast<A &>(*this);
 }
 

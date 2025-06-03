@@ -69,10 +69,10 @@ const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
 ***/
 
 // Command with options available to all commands including the top level.
-const string Cli::kInternalAllCmd = "-allWithTop";
+const string Cli::kInternalAllCmds = "-allWithTop";
 
 // Command with options available with all commands except the top level.
-const string Cli::kInternalAllSubcmd = "-allNoTop";
+const string Cli::kInternalAllSubcmds = "-allNoTop";
 
 // Name of group containing --help, --version, etc.
 const string Cli::kInternalOptGrp = "~";
@@ -489,7 +489,7 @@ CliLocal::CliLocal()
 void Cli::Config::touchAllCmds(Cli & cli) {
     // Make sure all opts have a backing command config.
     for (auto && opt : cli.m_cfg->opts) {
-        if (!opt->allCmd())
+        if (!opt->allCmds())
             Config::findCmdAlways(cli, opt->m_command);
     }
     // Make sure all commands have a backing command group.
@@ -757,7 +757,7 @@ bool Cli::OptIndex::includeOptAfter(
     // Should opt activate its after actions if cmd is selected?
     return opt.command().empty()
         || opt.command() == cmd
-        || opt.allCmd();
+        || opt.allCmds();
 }
 
 //===========================================================================
@@ -769,8 +769,8 @@ bool Cli::OptIndex::includeOpt(
     bool forAllCmd
 ) {
     if (forAllCmd) {
-        if (opt.command() != kInternalAllCmd
-            && (cmd.empty() || opt.command() != kInternalAllSubcmd)
+        if (opt.command() != kInternalAllCmds
+            && (cmd.empty() || opt.command() != kInternalAllSubcmds)
         ) {
             return false;
         }
@@ -792,7 +792,7 @@ void Cli::OptIndex::index(
     const string & cmd,
     bool forHelpText
 ) {
-    assert(!Cli::allCmd(cmd) // LCOV_EXCL_LINE
+    assert(!Cli::allCmds(cmd) // LCOV_EXCL_LINE
         && "Internal dimcli error: direct usage of '-all*' subcommand");
 
     *this = {};
@@ -1223,7 +1223,7 @@ Cli::Cli(shared_ptr<Config> cfg)
     auto & hlp = opt<bool>("help.")
         .desc("Show this message and exit.")
         .check(helpOptAction)
-        .allCmd(true)
+        .allCmds(true)
         .group(kInternalOptGrp);
     m_cfg->helpOpt = &hlp;
 }
@@ -1253,15 +1253,15 @@ Cli & Cli::operator=(Cli && from) noexcept {
 
 //===========================================================================
 // private static
-const std::string & Cli::allCmdName(bool includeTopLevel) {
-    return includeTopLevel ? kInternalAllCmd : kInternalAllSubcmd;
+const std::string & Cli::allCmdsName(bool includeTopLevel) {
+    return includeTopLevel ? kInternalAllCmds : kInternalAllSubcmds;
 }
 
 //===========================================================================
 // private static
-bool Cli::allCmd(const std::string & name) {
-    return name == kInternalAllCmd
-        || name == kInternalAllSubcmd;
+bool Cli::allCmds(const std::string & name) {
+    return name == kInternalAllCmds
+        || name == kInternalAllSubcmds;
 }
 
 //===========================================================================
