@@ -757,8 +757,7 @@ bool Cli::OptIndex::includeOptAfter(
     // Should opt activate its after actions if cmd is selected?
     return opt.command().empty()
         || opt.command() == cmd
-        || opt.command() == kInternalAllCmd
-        || opt.command() == kInternalAllSubcmd;
+        || opt.allCmd();
 }
 
 //===========================================================================
@@ -793,8 +792,7 @@ void Cli::OptIndex::index(
     const string & cmd,
     bool forHelpText
 ) {
-    assert(cmd != kInternalAllCmd // LCOV_EXCL_LINE
-        && cmd != kInternalAllSubcmd
+    assert(!Cli::allCmd(cmd) // LCOV_EXCL_LINE
         && "Internal dimcli error: direct usage of '-all*' subcommand");
 
     *this = {};
