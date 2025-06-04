@@ -42,7 +42,6 @@ jobs:
     # https://circleci.com/docs/configuration-reference/#executor-job
     machine:
       image: <<parameters.image>>
-      resource_class: medium
       shell: cmd
 
     # Add steps to the job
