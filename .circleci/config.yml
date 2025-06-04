@@ -7,7 +7,7 @@ workflows:
           matrix:
             parameters:
               image: [windows-server-2019-gui:current]
-              generator: ["Visual Studio 16 2019"]
+              generator: [Visual Studio 16 2019]
               platform: [Win32, x64]
               configuration: [Debug, Release]
               toolset: [v140, v141]
@@ -15,7 +15,7 @@ workflows:
           matrix:
             parameters:
               image: [windows-server-2022-gui:current]
-              generator: ["Visual Studio 17 2022"]
+              generator: [Visual Studio 17 2022]
               platform: [Win32, x64]
               configuration: [Debug, Release]
               toolset: [v142, v143]
@@ -23,16 +23,11 @@ workflows:
 jobs:
   build-win:
     parameters:
-      image:
-        type: string
-      generator:
-        type: string
-      platform:
-        type: string
-      configuration:
-        type: string
-      toolset:
-        type: string
+      image: {type: string}
+      generator: {type: string}
+      platform: {type: string}
+      configuration: {type: string}
+      toolset: {type: string}
     machine:
       image: <<parameters.image>>
       resource_class: medium
