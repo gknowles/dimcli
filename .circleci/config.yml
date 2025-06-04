@@ -13,10 +13,10 @@ workflows:
   build:
     jobs:
       - build-win:
+          image: windows-server-2019-gui:current
+          generator: Visual Studio 16 2019
           matrix:
             parameters:
-              image: [windows-server-2019-gui:current]
-              generator: [Visual Studio 16 2019]
               platform: [Win32, x64]
               configuration: [Debug, Release]
               toolset: [v140, v141]
@@ -41,7 +41,7 @@ jobs:
     # Specify the execution environment.
     # https://circleci.com/docs/configuration-reference/#executor-job
     machine:
-      image: <<matrix.image>>
+      image: <<parameters.image>>
       resource_class: medium
       shell: cmd
 
@@ -57,11 +57,12 @@ jobs:
           command: |
             md build
             cd build
-            cmake .. -G "<<matrix.generator>>" -A <<matrix.platform>>^
-              -T <<matrix.toolset>>
-            cmake . -DCMAKE_BUILD_TYPE=<<matrix.configuration>>^
+            cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>>^
+              -T <<parameters.toolset>>
+            cmake . -DCMAKE_BUILD_TYPE=<<parameters.configuration>>^
               -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
-            cmake --build . --target install --config <<matrix.configuration>>
+            cmake --build . --target install^
+              --config <<parameters.configuration>>
 
       - run:
           name: Test
