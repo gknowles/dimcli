@@ -13,7 +13,7 @@ workflows:
   build:
     jobs:
       - build-win:
-          image: windows-server-2019:current
+          image: windows-server-2019-vs2019:current
           generator: Visual Studio 16 2019
           matrix:
             parameters:
