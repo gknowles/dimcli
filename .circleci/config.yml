@@ -43,7 +43,7 @@ jobs:
     machine:
       image: <<parameters.image>>
       resource_class: windows.medium
-      shell: cmd.exe
+      #shell: cmd.exe
 
     # Add steps to the job
     # See: https://circleci.com/docs/jobs-steps/#steps-overview &
