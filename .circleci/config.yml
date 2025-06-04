@@ -57,12 +57,9 @@ jobs:
           command: >
             choco install cmake -y --installargs "ADD_CMAKE_TO_PATH=User" &&
             md build && cd build &&
-            cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>>
-              -T <<parameters.toolset>> &&
-            cmake . -DCMAKE_BUILD_TYPE=<<parameters.configuration>>
-              -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON &&
-            cmake --build . --target install
-              --config <<parameters.configuration>>
+            cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>> -T <<parameters.toolset>> &&
+            cmake . -DCMAKE_BUILD_TYPE=<<parameters.configuration>> -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON &&
+            cmake --build . --target install --config <<parameters.configuration>>
 
       - run:
           name: Test
