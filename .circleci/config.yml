@@ -64,6 +64,7 @@ jobs:
               -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
             cmake --build . --target install^
               --config <<parameters.configuration>>
+            echo cmd waves goodbye.
 
       - run:
           name: Test
