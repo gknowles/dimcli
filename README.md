@@ -20,6 +20,13 @@ Distributed under the Boost Software License, Version 1.0.
 [cc-image-dev]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
 [cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
 
+| Branch | MSVC 2015, 2017, 2019, 2022                            |
+| :----: | :----------------------------------------------------: |
+| dev    | [![Build Status][cir-image-dev]][cir-link-dev]         |
+
+[cir-image-dev]: https://dl.circleci.com/status-badge/img/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/dev.svg?style=shield "CircleCI"
+[cir-link-dev]: https://dl.circleci.com/status-badge/redirect/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/dev
+
 C++ command line parser toolkit for kids of all ages.
 
 - GNU style command lines (-o, --output=FILE, etc.)
