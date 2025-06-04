@@ -54,8 +54,8 @@ jobs:
 
       - run:
           name: Build
-          run: choco install cmake -y
           command: >
+            choco install cmake -y --installargs "ADD_CMAKE_TO_PATH=User" &&
             md build && cd build &&
             cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>>
               -T <<parameters.toolset>> &&
