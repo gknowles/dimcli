@@ -21,10 +21,10 @@ workflows:
               configuration: [Debug, Release]
               toolset: [v140, v141]
       - build-win:
+          image: windows-server-2022-gui:current
+          generator: Visual Studio 17 2022
           matrix:
             parameters:
-              image: [windows-server-2022-gui:current]
-              generator: [Visual Studio 17 2022]
               platform: [Win32, x64]
               configuration: [Debug, Release]
               toolset: [v142, v143]
@@ -42,7 +42,8 @@ jobs:
     # https://circleci.com/docs/configuration-reference/#executor-job
     machine:
       image: <<parameters.image>>
-      shell: cmd
+      resource_class: windows.medium
+      shell: cmd.exe
 
     # Add steps to the job
     # See: https://circleci.com/docs/jobs-steps/#steps-overview &
