@@ -43,7 +43,7 @@ jobs:
     machine:
       image: <<parameters.image>>
       resource_class: windows.medium
-      shell: powershell.exe
+      shell: cmd.exe
 
     # Add steps to the job
     # See: https://circleci.com/docs/jobs-steps/#steps-overview &
@@ -55,6 +55,7 @@ jobs:
       - run:
           name: Build
           command: |
+            echo cmd welcomes you.
             md build
             cd build
             cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>>^
