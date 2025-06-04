@@ -32,11 +32,11 @@ workflows:
 jobs:
   build-win:
     parameters:
-      image: type: string
-      generator: type: string
-      platform: type: string
-      configuration: type: string
-      toolset: type: string
+      image: {type: string}
+      generator: {type: string}
+      platform: {type: string}
+      configuration: {type: string}
+      toolset: {type: string}
 
     # Specify the execution environment.
     # https://circleci.com/docs/configuration-reference/#executor-job
