@@ -57,12 +57,11 @@ jobs:
 
       - run:
           name: Build
-          command: >
-            cd .circleci && <<parameters.init>> && cd .. &&
-            md build && cd build &&
-            cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>> -T <<parameters.toolset>> &&
-            cmake . -DCMAKE_BUILD_TYPE=<<parameters.configuration>> -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON &&
-            cmake --build . --target install --config <<parameters.configuration>>
+          run: cd .circleci && <<parameters.init>> && cd ..
+          run: md build && cd build
+          run: cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>> -T <<parameters.toolset>>
+          run: cmake . -DCMAKE_BUILD_TYPE=<<parameters.configuration>> -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
+          run: cmake --build . --target install --config <<parameters.configuration>>
 
       - run:
           name: Test
