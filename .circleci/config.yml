@@ -68,4 +68,4 @@ jobs:
 
       - run:
           name: Test
-          command: '"bin/cli" --test'
+          command: cd bin && cli --test
