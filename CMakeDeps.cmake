@@ -4,6 +4,7 @@
 # CHANGELOG.md
 # LICENSE
 # README.md
+# appveyor.yml
 # conf/cmtupd.xml
 # configure.bat
 # docs/docgen.xml
