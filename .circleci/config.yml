@@ -19,7 +19,7 @@ workflows:
           matrix:
             parameters:
               platform: [Win32, x64]
-              configuration: [Debug, Release]
+              config: [Debug, Release]
               toolset: [v140, v141]
       - build-win:
           init: vs17
@@ -28,7 +28,7 @@ workflows:
           matrix:
             parameters:
               platform: [Win32, x64]
-              configuration: [Debug, Release]
+              config: [Debug, Release]
               toolset: [v142, v143]
 
 jobs:
@@ -38,8 +38,15 @@ jobs:
       image: {type: string}
       generator: {type: string}
       platform: {type: string}
-      configuration: {type: string}
+      config: {type: string}
       toolset: {type: string}
+    environment:
+      p-init: <<parameters.init>>
+      p-image: <<parameters.image>>
+      p-generator: <parameters.generator>>
+      p-platform: <<parameters.platform>>
+      p-config: <<parameters.config>>
+      p-toolset: <<parameters.toolset>>
 
     # Specify the execution environment.
     # https://circleci.com/docs/configuration-reference/#executor-job
@@ -60,8 +67,8 @@ jobs:
           command: cd .circleci && <<parameters.init>> && cd ..
       - run: md build && cd build
       - run: cmake .. -G "<<parameters.generator>>" -A <<parameters.platform>> -T <<parameters.toolset>>
-      - run: cmake . -DCMAKE_BUILD_TYPE=<<parameters.configuration>> -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
-      - run: cmake --build . --target install --config <<parameters.configuration>>
+      - run: cmake . -DCMAKE_BUILD_TYPE=<<parameters.config>> -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
+      - run: cmake --build . --target install --config <<parameters.config>>
 
       - run:
           name: Test
