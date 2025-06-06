@@ -1,4 +1,98 @@
-# Copyright Glen Knowles 2025.
+# Copyright Glen Knowles 2016 - 2025.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # appveyor.yml
+
+version: "{build}"
+environment:
+  matrix:
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      BUILD_COVERAGE: ON
+    - CXX: clang++-6.0
+      CC: clang-6.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - CXX: clang++-10
+      CC: clang-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: clang++-11
+      CC: clang-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-10
+      CC: gcc-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - CXX: g++-11
+      CC: gcc-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - TOOLSET: v140
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+    - TOOLSET: v141
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+    - TOOLSET: v142
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      GENERATOR: Visual Studio 17 2022
+    - TOOLSET: v143
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      GENERATOR: Visual Studio 17 2022
+matrix:
+  exclude:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      platform: Win32
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      platform: Win32
+    - BUILD_COVERAGE: ON
+      configuration: Release
+
+platform:
+  - Win32
+  - x64
+configuration:
+  - Debug
+  - Release
+
+for:
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    build_script:
+      - md build
+      - cd build
+      - cmake -G "%GENERATOR%" -A %PLATFORM% -T %TOOLSET% ..
+      - cmake . -DCMAKE_BUILD_TYPE=%CONFIGURATION%
+          -DCMAKE_INSTALL_PREFIX=publish
+          -DINSTALL_LIBS:BOOL=ON
+      - cmake --build . --target install --config %CONFIGURATION%
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+    install:
+      - sh: |
+            if [ "$INSTALL_COMPILER" = "ON" ]; then
+                sudo apt-get update
+                sudo apt-get install -y ${CC} ${CXX}
+            fi
+    build_script:
+      - export LANG=en_US.UTF-8
+      - mkdir -p build && cd build
+      - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+      - cmake --build . --config ${CONFIGURATION}
+      - cd ..
+    after_test:
+      - sh: |
+            if [ "$BUILD_COVERAGE" = "ON" ]; then
+                bash <(curl -s https://codecov.io/bash)
+            fi
+
+test_script:
+  - '"bin/cli" --test'
