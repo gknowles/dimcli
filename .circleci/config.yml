@@ -13,7 +13,6 @@ workflows:
   build:
     jobs:
       - build-win:
-          init: vs16
           image: windows-server-2019-vs2019:current
           generator: "Visual Studio 16 2019"
           matrix:
@@ -22,7 +21,6 @@ workflows:
               config: [Debug, Release]
               toolset: [v140, v141]
       - build-win:
-          init: vs17
           image: windows-server-2022-gui:current
           generator: "Visual Studio 17 2022"
           matrix:
@@ -34,15 +32,12 @@ workflows:
 jobs:
   build-win:
     parameters:
-      init: {type: string}
       image: {type: string}
       generator: {type: string}
       platform: {type: string}
       config: {type: string}
       toolset: {type: string}
     environment:
-      p_init: <<parameters.init>>
-      p_image: <<parameters.image>>
       p_generator: <<parameters.generator>>
       p_platform: <<parameters.platform>>
       p_config: <<parameters.config>>
