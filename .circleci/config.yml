@@ -43,7 +43,7 @@ jobs:
     environment:
       p_init: <<parameters.init>>
       p_image: <<parameters.image>>
-      p_generator: <parameters.generator>>
+      p_generator: <<parameters.generator>>
       p_platform: <<parameters.platform>>
       p_config: <<parameters.config>>
       p_toolset: <<parameters.toolset>>
