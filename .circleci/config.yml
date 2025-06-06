@@ -15,7 +15,7 @@ workflows:
       - build-win:
           init: vs16
           image: windows-server-2019-vs2019:current
-          generator: Visual Studio 16 2019
+          generator: "Visual Studio 16 2019"
           matrix:
             parameters:
               platform: [Win32, x64]
@@ -24,7 +24,7 @@ workflows:
       - build-win:
           init: vs17
           image: windows-server-2022-gui:current
-          generator: Visual Studio 17 2022
+          generator: "Visual Studio 17 2022"
           matrix:
             parameters:
               platform: [Win32, x64]
