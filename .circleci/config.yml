@@ -64,7 +64,9 @@ jobs:
 
       - run:
           name: Build
-          command: '".circleci/build-win.bat"'
+          command: cd .circleci
+      - run: cd
+      - run: build-win.bat
 
       - run:
           name: Test
