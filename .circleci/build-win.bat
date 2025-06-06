@@ -2,9 +2,9 @@
 :: Distributed under the Boost Software License, Version 1.0.
 @echo off
 cd %~dp0
-if "%p_generator" equ "Visual Studio 16 2019" (
+if "%p_generator%" equ "Visual Studio 16 2019" (
     call vs16
-) else if "%p_generator" equ "Visual Studio 17 2022" (
+) else if "%p_generator%" equ "Visual Studio 17 2022" (
     call vs17
 )
 cd ..
