@@ -61,11 +61,9 @@ jobs:
     steps:
       # Checkout the code as the first step.
       - checkout
-
       - run:
           name: Build
           command: cd .circleci && build-win
-
       - run:
           name: Test
           command: cd bin && cli --test
