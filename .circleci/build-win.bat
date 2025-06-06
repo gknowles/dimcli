@@ -3,7 +3,7 @@
 @echo off
 cd %~dp0
 if "%p_generator%" equ "Visual Studio 16 2019" (
-    call vs16
+    call "c:\program files\microsoft visual studio\2019\community\vc\auxiliary\build\vcvarsall.bat" x64
 ) else if "%p_generator%" equ "Visual Studio 17 2022" (
     call vs17
 )
