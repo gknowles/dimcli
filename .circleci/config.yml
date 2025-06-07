@@ -29,7 +29,7 @@ workflows:
               config: [Debug, Release]
               toolset: [v142, v143]
       - build-dunix:
-          image: gcc:9
+          image: [gcc:9, gcc:10, gcc:11, gcc:12]
           env: CXX=g++ CC=gcc
           config: Debug
       - build-unix:
@@ -117,7 +117,8 @@ jobs:
             export <<parameters.env>>
             export LANG=en_US.UTF-8
             export COLUMNS=80
-            bin/cli --test
+            cd bin
+            cli --test
 
   build-dunix:
     parameters:
@@ -126,6 +127,7 @@ jobs:
       config: {type: string}
     docker:
       - image: <<parameters.image>>
+    resource_class: medium
     steps:
       - checkout
       - run:
@@ -147,4 +149,5 @@ jobs:
             export <<parameters.env>>
             export LANG=en_US.UTF-8
             export COLUMNS=80
-            bin/cli --test
+            cd bin
+            cli --test
