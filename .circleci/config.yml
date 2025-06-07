@@ -34,7 +34,7 @@ workflows:
             parameters:
               env:
                 - CXX=g++-9 CC=gcc-9
-                - CXX=g++-10 CC=gcc-10 INSTALL_APT
+                - CXX=g++-10 CC=gcc-10 INSTALL_APT=1
               config: [Debug, Release]
 
 jobs:
