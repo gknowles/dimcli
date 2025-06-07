@@ -29,7 +29,8 @@ workflows:
               config: [Debug, Release]
               toolset: [v142, v143]
       - build-unix:
-          image: gcc:9
+          docker:
+            - image: gcc:9
           env: CXX=g++ CC=gcc
           config: Debug
       - build-unix:
@@ -90,6 +91,7 @@ jobs:
       config: {type: string}
     machine:
       image: <<parameters.image>>
+      resource_class: medium
     steps:
       - checkout
       - run:
