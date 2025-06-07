@@ -36,7 +36,6 @@ workflows:
                 - CXX=g++-9 CC=gcc-9
                 - CXX=g++-10 CC=gcc-10 INSTALL_APT=1
                 - CXX=g++-11 CC=gcc-11 INSTALL_APT=1
-                - CXX=g++-12 CC=gcc-12
                 - CXX=g++-13 CC=gcc-13 INSTALL_APT=1
               config: [Debug, Release]
       - build-unix:
@@ -44,6 +43,7 @@ workflows:
           matrix:
             parameters:
               env:
+                - CXX=g++ CC=gcc
                 - CXX=g++-14 CC=gcc-14 INSTALL_APT=1
               config: [Debug, Release]
 
