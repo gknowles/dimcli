@@ -88,6 +88,7 @@ jobs:
       config: {type: string}
     machine:
       image: <<parameters.image>>
+      resource_class: medium
     steps:
       - checkout
       - run:
