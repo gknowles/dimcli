@@ -138,6 +138,7 @@ jobs:
             export <<parameters.env>>
             apt-get update -y
             apt-get install cmake -y
+            apt-get install locales-all -y
       - run:
           name: Build
           command: |
@@ -149,7 +150,7 @@ jobs:
           name: Test
           command: |
             export <<parameters.env>>
-            LANG=C.UTF-8
+            LANG=en_US.UTF-8
             export COLUMNS=80
             cd bin
             ./cli --test
