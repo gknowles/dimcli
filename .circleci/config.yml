@@ -125,8 +125,7 @@ jobs:
       env: {type: string}
       config: {type: string}
     docker:
-      image: <<parameters.image>>
-      resource_class: medium
+      - image: <<parameters.image>>
     steps:
       - checkout
       - run:
