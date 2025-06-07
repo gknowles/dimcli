@@ -34,7 +34,7 @@ workflows:
             parameters:
               env:
                 - CXX=g++-9 CC=gcc-9
-                - CXX=g++-10 CC=gcc-10
+                - CXX=g++-10 CC=gcc-10 INSTALL_APT
               config: [Debug, Release]
 
 jobs:
@@ -80,6 +80,17 @@ jobs:
       image: <<parameters.image>>
     steps:
       - checkout
+      - run:
+          name: Install
+          command: |
+            export <<parameters.env>>
+            if [ -n "$INSTALL_APT" ]; then
+              sudo apt-get update
+              sudo apt-get install software-properties-common
+              sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+              sudo apt-get update
+              sudo apt-get install -y ${CC} ${CXX}
+            fi
       - run:
           name: Build
           command: |
