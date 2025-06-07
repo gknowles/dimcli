@@ -28,6 +28,12 @@ workflows:
               platform: [Win32, x64]
               config: [Debug, Release]
               toolset: [v142, v143]
+      - build-unix:
+          image: ubuntu-2004:current
+          env: CXX=g++ CC=gcc
+          matrix:
+            parameters:
+              config: [Debug, Release]
 
 jobs:
   build-win:
@@ -62,3 +68,27 @@ jobs:
       - run:
           name: Test
           command: cd bin && cli --test
+
+  build-unix:
+    parameters:
+      image: {type: string}
+      env: {type: string}
+      config: {type: string}
+    machine:
+      image: <<parameters.image>>
+    steps:
+      - checkout
+      - run:
+          name: Build
+          command: |
+            export <<parameters.env>>
+            mkdir -p build && cd build
+            cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+            cmake --build . --config <<parameters.config>>
+      - run:
+          name: Test
+          command: |
+            export <<parameters.env>>
+            export LANG=en_US.UTF-8
+            export COLUMNS=80
+            bin/cli --test
