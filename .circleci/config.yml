@@ -119,8 +119,8 @@ jobs:
             export <<parameters.env>>
             export LANG=en_US.UTF-8
             export COLUMNS=80
-            chdir bin
-            cli --test
+            cd bin
+            ./cli --test
 
   build-dunix:
     parameters:
@@ -151,5 +151,5 @@ jobs:
             export <<parameters.env>>
             export LANG=en_US.UTF-8
             export COLUMNS=80
-            chdir bin
-            cli --test
+            cd bin
+            ./cli --test
