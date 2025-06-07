@@ -129,6 +129,12 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install
+          command: |
+            export <<parameters.env>>
+            sudo apt-get update -y
+            sudo apt-get install cmake -y
+      - run:
           name: Build
           command: |
             export <<parameters.env>>
