@@ -29,6 +29,9 @@ workflows:
               config: [Debug, Release]
               toolset: [v142, v143]
       - build-unix:
+          image: gcc:9
+          config: Debug
+      - build-unix:
           image: ubuntu-2004:current
           matrix:
             parameters:
@@ -43,8 +46,6 @@ workflows:
               env:
                 - CXX=g++-11 CC=gcc-11
                 - CXX=g++-12 CC=gcc-12 INSTALL_APT=1
-                - CXX=g++-13 CC=gcc-13 INSTALL_APT=1
-                - CXX=g++-14 CC=gcc-14 INSTALL_APT=1
               config: [Debug, Release]
 
 jobs:
