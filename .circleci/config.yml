@@ -132,8 +132,8 @@ jobs:
           name: Install
           command: |
             export <<parameters.env>>
-            sudo apt-get update -y
-            sudo apt-get install cmake -y
+            apt-get update -y
+            apt-get install cmake -y
       - run:
           name: Build
           command: |
