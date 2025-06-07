@@ -149,7 +149,8 @@ jobs:
           name: Test
           command: |
             export <<parameters.env>>
-            export LANG=en_US.UTF-8
+            locale -a
+            #export LANG=en_US.UTF-8
             export COLUMNS=80
             cd bin
             ./cli --test
