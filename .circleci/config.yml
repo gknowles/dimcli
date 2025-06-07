@@ -28,9 +28,8 @@ workflows:
               platform: [Win32, x64]
               config: [Debug, Release]
               toolset: [v142, v143]
-      - build-unix:
-          docker:
-            - image: gcc:9
+      - build-dunix:
+          image: gcc:9
           env: CXX=g++ CC=gcc
           config: Debug
       - build-unix:
@@ -105,6 +104,31 @@ jobs:
               sudo apt-get update -y
               sudo apt-get install -y ${CC} ${CXX}
             fi
+      - run:
+          name: Build
+          command: |
+            export <<parameters.env>>
+            mkdir -p build && cd build
+            cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+            cmake --build . --config <<parameters.config>>
+      - run:
+          name: Test
+          command: |
+            export <<parameters.env>>
+            export LANG=en_US.UTF-8
+            export COLUMNS=80
+            bin/cli --test
+
+  build-dunix:
+    parameters:
+      image: {type: string}
+      env: {type: string}
+      config: {type: string}
+    docker:
+      image: <<parameters.image>>
+      resource_class: medium
+    steps:
+      - checkout
       - run:
           name: Build
           command: |
