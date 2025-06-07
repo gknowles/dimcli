@@ -30,9 +30,11 @@ workflows:
               toolset: [v142, v143]
       - build-unix:
           image: ubuntu-2004:current
-          env: CXX=g++ CC=gcc
           matrix:
             parameters:
+              env:
+                - CXX=g++-9 CC=gcc-9
+                - CXX=g++-10 CC=gcc-10
               config: [Debug, Release]
 
 jobs:
