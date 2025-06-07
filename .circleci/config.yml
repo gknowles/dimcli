@@ -30,6 +30,7 @@ workflows:
               toolset: [v142, v143]
       - build-unix:
           image: gcc:9
+          env: CXX=g++ CC=gcc
           config: Debug
       - build-unix:
           image: ubuntu-2004:current
