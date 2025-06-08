@@ -8,14 +8,15 @@
 
 using namespace std;
 
+#define TEST_EXPLICIT_IMBUE
+
 #if defined(_MSC_VER)
-#if _MSC_VER > 1900
-#define TEST_EXPLICIT_IMBUE
-#endif
-#else
-#define TEST_EXPLICIT_IMBUE
 #if defined(__clang__)
 #pragma clang diagnostic ignored "-Wstring-plus-int"
+#endif
+
+#if _MSC_VER <= 1900
+#undef TEST_EXPLICIT_IMBUE
 #endif
 #endif
 
@@ -2482,8 +2483,6 @@ Units symbol 'k' not recognized.
         auto & si = cli.opt<int>("i").siUnits();
 #if defined(TEST_EXPLICIT_IMBUE)
         si.imbue(s_loc);
-#else
-        si.imbue(locale("en_US"));
 #endif
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
@@ -2524,8 +2523,6 @@ Options:
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
 #if defined(TEST_EXPLICIT_IMBUE)
         sht.imbue(s_loc);
-#else
-        sht.imbue(locale("en_US"));
 #endif
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
