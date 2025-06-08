@@ -33,9 +33,6 @@ workflows:
           matrix:
             parameters:
               image:
-                - gcc:6
-                - gcc:7
-                - gcc:8
                 - gcc:9
                 - gcc:10
                 - gcc:11
@@ -44,6 +41,13 @@ workflows:
                 - gcc:14
                 - gcc:15
               config: [Debug, Release]
+      - build-dunix:
+          env: CXX=g++ CC=gcc
+          matrix:
+            parameters:
+              image:
+                - silkeh/clang:19
+              config: [Debug]
 
 jobs:
   build-win:
