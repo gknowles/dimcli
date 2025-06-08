@@ -1901,7 +1901,7 @@ void responseTests(const string & rawProgName) {
                 << errno << endl;
         }
 #ifdef SH_DENYRW
-        auto f = _open("test/f.rsp", O_RDONLY | SH_DENYRW);
+        auto f = sopen("test/f.rsp", O_RDONLY, SH_DENYRW);
 #endif
         EXPECT_PARSE(cli, "@test/f.rsp", false);
         EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");

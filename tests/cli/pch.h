@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <io.h>
 #include <iostream>
 
 #if defined(_MSC_VER) && _MSC_VER < 1914
@@ -22,6 +21,14 @@
 #elif __has_include(<experimental/filesystem>)
 #include <experimental/filesystem>
 #define FILESYSTEM std::experimental::filesystem
+#endif
+#endif
+
+#if defined(__has_include)
+#if __has_include(<unistd.h>) && __has_include(<share.h>)
+#include <unistd.h>
+#include <fcntl.h>
+#include <share.h>
 #endif
 #endif
 
