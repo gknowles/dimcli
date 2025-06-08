@@ -1896,7 +1896,10 @@ void responseTests(const string & rawProgName) {
     }
 #else
     {
-        chmod("test/f.rsp", 0111);
+        if (chmod("test/f.rsp", 0111)) {
+            cerr << "Internal: chmod(test/f.rsp, 0111) failed, "
+                << errno << endl;
+        }
         EXPECT_PARSE(cli, "@test/f.rsp", false);
         EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
         chmod("test/f.rsp", 0555);
