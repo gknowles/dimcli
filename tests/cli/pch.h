@@ -24,14 +24,6 @@
 #endif
 #endif
 
-#if defined(__has_include)
-#if __has_include(<unistd.h>) && __has_include(<share.h>)
-#include <unistd.h>
-#include <fcntl.h>
-#include <share.h>
-#endif
-#endif
-
 #if !defined(_WIN32)
 #include <sys/stat.h>
 #endif
