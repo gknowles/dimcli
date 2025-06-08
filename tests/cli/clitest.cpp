@@ -2465,6 +2465,7 @@ Units symbol 'k' not recognized.
         EXPECT(*sv == "1000000");
 
         auto & si = cli.opt<int>("i").siUnits();
+        si.imbue(locale("en_US.UTF-8"));
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
         EXPECT_PARSE(cli, "-i6G", false);
@@ -2502,6 +2503,7 @@ Options:
     {
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
+        sht.imbue(locale("en_US.UTF-8"));
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
