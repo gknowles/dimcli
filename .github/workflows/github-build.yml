@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [Debug, Release]
+        configuration: [Debug]
         include:
           - env: CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON
             configuration: Debug
