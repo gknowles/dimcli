@@ -1900,10 +1900,11 @@ void responseTests(const string & rawProgName) {
             cerr << "Internal: chmod(test/f.rsp, 0111) failed, "
                 << errno << endl;
         }
-        EXPECT_PARSE(cli, "@test/f.rsp", false);
-        if (args.size() == 1 && args[0] == "f") {
+        auto rc = cli.parse({ kCommand, "@test/f.rsp" });
+        if (rc && args.size() == 1 && args[0] == "f") {
             // Unable to generate error reading file
         } else {
+            EXPECT_PARSE(cli, "@test/f.rsp", false);
             EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
         }
         chmod("test/f.rsp", 0555);
