@@ -2392,8 +2392,8 @@ istream & operator>>(istream & is, EnumAB & val) {
 //===========================================================================
 void unitsTests() {
     int line = 0;
-    CliTest cli;
     auto loc = locale("en_US.UTF-8");
+    CliTest cli;
 
     // si units
     {
