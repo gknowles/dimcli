@@ -13,16 +13,107 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  build-win:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [Win32, x64]
+        configuration: [Debug, Release]
+        toolset: [v140, v141, v142, v143]
+        include:
+          - toolset: v140
+            image: windows-2019
+          - toolset: v141
+            image: windows-2019
+          - toolset: v142
+            image: windows-2025
+          - toolset: v143
+            image: windows-2025
+    runs-on: ${{matrix.image}}
+    defaults:
+      run:
+        shell: cmd
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: |
+        md build
+        cd build
+        set generator=Visual Studio 16 2019
+        if "${{matrix.toolset}}" == "v142" set generator=Visual Studio 17 2022
+        if "${{matrix.toolset}}" == "v143" set generator=Visual Studio 17 2022
+        cmake .. -G "%generator%" -A ${{matrix.platform}}^
+          -T ${{matrix.toolset}}
+        cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}}^
+          -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
+        cmake --build . --target install --config ${{matrix.configuration}}
+        cd publish
+        :: 7z a dimcli-latest.zip include lib
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: '"bin/cli" --test'
+
   build-unix:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [Debug]
+        configuration: [Debug, Release]
+        env:
+          - CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+          - CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
+          - CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
+          - CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
+          - CXX=clang++-17 CC=clang-17 INSTALL_LLVM=17
+          - CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
+          - CXX=clang++-19 CC=clang-19 INSTALL_LLVM=19
+          - CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
+          - CXX=g++-9 CC=gcc-9
+          - CXX=g++-10 CC=gcc-10
+          - CXX=g++-11 CC=gcc-11
+          - CXX=g++-12 CC=gcc-12
+          - CXX=g++-13 CC=gcc-13
+          - CXX=g++-14 CC=gcc-14
         include:
           - env: CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON
+            image: ubuntu-22.04
             configuration: Debug
             coverage: true
-    runs-on: ubuntu-22.04
+          - env: CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+            image: ubuntu-22.04
+          - env: CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
+            image: ubuntu-22.04
+          - env: CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
+            image: ubuntu-22.04
+          - env: CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
+            image: ubuntu-22.04
+          - env: CXX=clang++-17 CC=clang-17 INSTALL_LLVM=17
+            image: ubuntu-22.04
+          - env: CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
+            image: ubuntu-24.04
+          - env: CXX=clang++-19 CC=clang-19 INSTALL_LLVM=19
+            image: ubuntu-24.04
+          - env: CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
+            image: ubuntu-24.04
+          - env: CXX=g++-9 CC=gcc-9
+            image: ubuntu-22.04
+          - env: CXX=g++-10 CC=gcc-10
+            image: ubuntu-22.04
+          - env: CXX=g++-11 CC=gcc-11
+            image: ubuntu-22.04
+          - env: CXX=g++-12 CC=gcc-12
+            image: ubuntu-24.04
+          - env: CXX=g++-13 CC=gcc-13
+            image: ubuntu-24.04
+          - env: CXX=g++-14 CC=gcc-14
+            image: ubuntu-24.04
+
+    runs-on: ${{matrix.image}}
     steps:
     - name: Checkout
       uses: actions/checkout@v4

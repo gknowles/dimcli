@@ -5,10 +5,9 @@
 
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
+orbs:
+  codecov: codecov/codecov@5
 
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/workflows/ &
-# https://circleci.com/docs/configuration-reference/#workflows
 workflows:
   build:
     jobs:
@@ -29,20 +28,8 @@ workflows:
               config: [Debug, Release]
               toolset: [v142, v143]
       - build-dunix:
-          env: CXX=g++ CC=gcc
-          matrix:
-            parameters:
-              image:
-                - gcc:9
-                - gcc:10
-                - gcc:11
-                - gcc:12
-                - gcc:13
-                - gcc:14
-                - gcc:15
-              config: [Debug, Release]
-      - build-dunix:
           env: CXX=clang++ CC=clang
+          coverage: false
           matrix:
             parameters:
               image:
@@ -57,6 +44,25 @@ workflows:
                 - silkeh/clang:19
                 - silkeh/clang:20
               config: [Debug, Release]
+      - build-dunix:
+          env: CXX=g++ CC=gcc
+          coverage: false
+          matrix:
+            parameters:
+              image:
+                - gcc:9
+                - gcc:10
+                - gcc:11
+                - gcc:12
+                - gcc:13
+                - gcc:14
+                - gcc:15
+              config: [Debug, Release]
+     - build-dunix:
+         env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
+         image: gcc
+         config: Debug
+         coverage: true
 
 jobs:
   build-win:
@@ -105,6 +111,7 @@ jobs:
               sudo apt-get update -y
               sudo apt-get install -y ${CC} ${CXX}
             fi
+            sudo apt-get install locales-all -y
       - run:
           name: Build
           command: |
@@ -126,6 +133,7 @@ jobs:
       image: {type: string}
       env: {type: string}
       config: {type: string}
+      coverage: {type: coverage}
     docker:
       - image: <<parameters.image>>
     resource_class: medium
@@ -153,3 +161,8 @@ jobs:
             export COLUMNS=80
             cd bin
             ./cli --test
+      - run:
+          name: Report Coverage
+          when: <<parameters.coverage>>
+          command: |
+            codecov/upload
