@@ -2396,7 +2396,7 @@ istream & operator>>(istream & is, EnumAB & val) {
 }
 
 #ifdef TEST_EXPLICIT_IMBUE
-static locale s_loc("en_US.UTF-8");
+static locale s_loc("en_US");
 #endif
 
 //===========================================================================
@@ -2482,6 +2482,8 @@ Units symbol 'k' not recognized.
         auto & si = cli.opt<int>("i").siUnits();
 #if defined(TEST_EXPLICIT_IMBUE)
         si.imbue(s_loc);
+#else
+        si.imbue(locale("en_US"));
 #endif
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
@@ -2522,6 +2524,8 @@ Options:
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
 #if defined(TEST_EXPLICIT_IMBUE)
         sht.imbue(s_loc);
+#else
+        si.imbue(locale("en_US"));
 #endif
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
