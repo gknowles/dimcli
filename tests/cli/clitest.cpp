@@ -2395,7 +2395,9 @@ istream & operator>>(istream & is, EnumAB & val) {
     return is;
 }
 
+#ifdef TEST_EXPLICIT_IMBUE
 static locale s_loc("en_US.UTF-8");
+#endif
 
 //===========================================================================
 void unitsTests() {
