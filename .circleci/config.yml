@@ -58,7 +58,7 @@ workflows:
               config: [Debug, Release]
       - build-dunix:
           env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
-          image: gcc
+          image: gcc:10
           config: Debug
           coverage: true
 
