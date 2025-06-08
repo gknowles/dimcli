@@ -29,7 +29,6 @@ workflows:
               toolset: [v142, v143]
       - build-dunix:
           env: CXX=clang++ CC=clang
-          coverage: false
           matrix:
             parameters:
               image:
@@ -46,7 +45,6 @@ workflows:
               config: [Debug, Release]
       - build-dunix:
           env: CXX=g++ CC=gcc
-          coverage: false
           matrix:
             parameters:
               image:
@@ -133,7 +131,7 @@ jobs:
       image: {type: string}
       env: {type: string}
       config: {type: string}
-      coverage: {type: coverage}
+      coverage: {type: boolean, default: false}
     docker:
       - image: <<parameters.image>>
     resource_class: medium
@@ -161,8 +159,9 @@ jobs:
             export COLUMNS=80
             cd bin
             ./cli --test
-      - run:
-          name: Report Coverage
-          when: <<parameters.coverage>>
-          command: |
-            codecov/upload
+      - when:
+          condition: <<parameters.coverage>>
+          steps:
+            run:
+              name: Report Coverage
+              command: codecov/upload
