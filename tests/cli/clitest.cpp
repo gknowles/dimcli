@@ -1900,8 +1900,15 @@ void responseTests(const string & rawProgName) {
             cerr << "Internal: chmod(test/f.rsp, 0111) failed, "
                 << errno << endl;
         }
+#ifdef SH_DENYRW
+        auto f = _open("test/f.rsp", O_RDONLY | SH_DENYRW);
+#endif
         EXPECT_PARSE(cli, "@test/f.rsp", false);
         EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
+#ifdef SH_DENYRW
+        if (f != -1)
+            _close(f);
+#endif
         chmod("test/f.rsp", 0555);
     }
 #endif
