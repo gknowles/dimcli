@@ -2525,7 +2525,7 @@ Options:
 #if defined(TEST_EXPLICIT_IMBUE)
         sht.imbue(s_loc);
 #else
-        si.imbue(locale("en_US"));
+        sht.imbue(locale("en_US"));
 #endif
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
