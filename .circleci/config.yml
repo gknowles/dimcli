@@ -58,11 +58,11 @@ workflows:
                 - gcc:14
                 - gcc:15
               config: [Debug, Release]
-     - build-dunix:
-         env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
-         image: gcc
-         config: Debug
-         coverage: true
+      - build-dunix:
+          env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
+          image: gcc
+          config: Debug
+          coverage: true
 
 jobs:
   build-win:
