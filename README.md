@@ -20,7 +20,7 @@ Distributed under the Boost Software License, Version 1.0.
 [cc-image-dev]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
 [cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
 
-| Branch | MSVC 2015, 2017, 2019, 2022 / GCC 9-15                 |
+| Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 11-20 / GCC 9-15   |
 | :----: | :----------------------------------------------------: |
 | dev    | [![Build Status][cir-image-dev]][cir-link-dev]         |
 

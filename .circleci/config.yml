@@ -12,22 +12,22 @@ version: 2.1
 workflows:
   build:
     jobs:
-#      - build-win:
-#          image: windows-server-2019-vs2019:current
-#          generator: "Visual Studio 16 2019"
-#          matrix:
-#            parameters:
-#              platform: [Win32, x64]
-#              config: [Debug, Release]
-#              toolset: [v140, v141]
-#      - build-win:
-#          image: windows-server-2022-gui:current
-#          generator: "Visual Studio 17 2022"
-#          matrix:
-#            parameters:
-#              platform: [Win32, x64]
-#              config: [Debug, Release]
-#              toolset: [v142, v143]
+      - build-win:
+          image: windows-server-2019-vs2019:current
+          generator: "Visual Studio 16 2019"
+          matrix:
+            parameters:
+              platform: [Win32, x64]
+              config: [Debug, Release]
+              toolset: [v140, v141]
+      - build-win:
+          image: windows-server-2022-gui:current
+          generator: "Visual Studio 17 2022"
+          matrix:
+            parameters:
+              platform: [Win32, x64]
+              config: [Debug, Release]
+              toolset: [v142, v143]
       - build-dunix:
           env: CXX=g++ CC=gcc
           matrix:
@@ -46,12 +46,6 @@ workflows:
           matrix:
             parameters:
               image:
-                - silkeh/clang:5.0
-                - silkeh/clang:6.0
-                - silkeh/clang:7
-                - silkeh/clang:8
-                - silkeh/clang:9
-                - silkeh/clang:10
                 - silkeh/clang:11
                 - silkeh/clang:12
                 - silkeh/clang:13
