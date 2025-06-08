@@ -2393,6 +2393,7 @@ istream & operator>>(istream & is, EnumAB & val) {
 void unitsTests() {
     int line = 0;
     CliTest cli;
+    auto loc = locale("en_US.UTF-8");
 
     // si units
     {
@@ -2470,7 +2471,7 @@ Units symbol 'k' not recognized.
         EXPECT(*sv == "1000000");
 
         auto & si = cli.opt<int>("i").siUnits();
-        si.imbue(locale("en_US.UTF-8"));
+        si.imbue(loc);
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
         EXPECT_PARSE(cli, "-i6G", false);
@@ -2508,7 +2509,7 @@ Options:
     {
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
-        sht.imbue(locale("en_US.UTF-8"));
+        sht.imbue(loc);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
