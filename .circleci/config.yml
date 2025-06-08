@@ -42,12 +42,13 @@ workflows:
                 - gcc:15
               config: [Debug, Release]
       - build-dunix:
-          env: CXX=g++ CC=gcc
+          env: CXX=clang++ CC=clang
           matrix:
             parameters:
               image:
                 - silkeh/clang:19
-              config: [Debug]
+                - silkeh/clang:20
+              config: [Debug, Release]
 
 jobs:
   build-win:
