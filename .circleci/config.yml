@@ -30,25 +30,9 @@ workflows:
               toolset: [v142, v143]
       - build-dunix:
           env: CXX=g++ CC=gcc
-          config: Debug
           matrix:
             parameters:
-              image: [gcc:9, gcc:10, gcc:11, gcc:12]
-      - build-unix:
-          image: ubuntu-2004:current
-          matrix:
-            parameters:
-              env:
-                - CXX=g++-9 CC=gcc-9
-                - CXX=g++-10 CC=gcc-10 INSTALL_APT=1
-              config: [Debug, Release]
-      - build-unix:
-          image: ubuntu-2204:current
-          matrix:
-            parameters:
-              env:
-                - CXX=g++-11 CC=gcc-11
-                - CXX=g++-12 CC=gcc-12 INSTALL_APT=1
+              image: [gcc:9, gcc:10, gcc:11, gcc:12, gcc:13, gcc:14, gcc:15]
               config: [Debug, Release]
 
 jobs:
@@ -64,19 +48,11 @@ jobs:
       p_platform: <<parameters.platform>>
       p_config: <<parameters.config>>
       p_toolset: <<parameters.toolset>>
-
-    # Specify the execution environment.
-    # https://circleci.com/docs/configuration-reference/#executor-job
     machine:
       image: <<parameters.image>>
       resource_class: windows.medium
       shell: cmd.exe
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/jobs-steps/#steps-overview &
-    # https://circleci.com/docs/configuration-reference/#steps
     steps:
-      # Checkout the code as the first step.
       - checkout
       - run:
           name: Build
