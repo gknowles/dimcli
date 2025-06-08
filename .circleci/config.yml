@@ -32,7 +32,17 @@ workflows:
           env: CXX=g++ CC=gcc
           matrix:
             parameters:
-              image: [gcc:9, gcc:10, gcc:11, gcc:12, gcc:13, gcc:14, gcc:15]
+              image:
+                - gcc:6
+                - gcc:7
+                - gcc:8
+                - gcc:9
+                - gcc:10
+                - gcc:11
+                - gcc:12
+                - gcc:13
+                - gcc:14
+                - gcc:15
               config: [Debug, Release]
 
 jobs:
