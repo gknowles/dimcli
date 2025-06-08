@@ -2392,7 +2392,7 @@ istream & operator>>(istream & is, EnumAB & val) {
 //===========================================================================
 void unitsTests() {
     int line = 0;
-    auto loc = locale("en_US.UTF-8");
+    locale loc("en_US.UTF-8");
     CliTest cli;
 
     // si units
@@ -2479,6 +2479,7 @@ Units symbol 'k' not recognized.
 Error: Out of range '-i' value: 6G
 Must be between '-2,147,483,648' and '2,147,483,647'.
 )");
+        si.imbue({});
         EXPECT_PARSE(cli, "-iNaN(1)k", false);
         EXPECT_ERR(cli, "Error: Invalid '-i' value: NaN(1)k\n");
 
@@ -2527,6 +2528,7 @@ Options:
 Error: Out of range '-s' value: 1y
 Must be between '0' and '65,535'.
 )");
+        sht.imbue({});
         auto & lng = cli.opt<long>("l").timeUnits();
         EXPECT_PARSE(cli, "-l1y");
         EXPECT(*lng == 31'536'000);
