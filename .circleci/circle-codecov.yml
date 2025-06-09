@@ -1,7 +1,7 @@
 # Copyright Glen Knowles 2025.
 # Distributed under the Boost Software License, Version 1.0.
 #
-# .circleci/config.yml
+# .circleci/build-codecov.yml
 
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
@@ -11,121 +11,13 @@ orbs:
 workflows:
   build:
     jobs:
-      - build-win:
-          image: windows-server-2019-vs2019:current
-          generator: "Visual Studio 16 2019"
-          matrix:
-            parameters:
-              platform: [Win32, x64]
-              config: [Debug, Release]
-              toolset: [v140, v141]
-      - build-win:
-          image: windows-server-2022-gui:current
-          generator: "Visual Studio 17 2022"
-          matrix:
-            parameters:
-              platform: [Win32, x64]
-              config: [Debug, Release]
-              toolset: [v142, v143]
       - build-dunix:
-          env: CXX=clang++ CC=clang
-          matrix:
-            parameters:
-              image:
-                - silkeh/clang:11
-                - silkeh/clang:12
-                - silkeh/clang:13
-                - silkeh/clang:14
-                - silkeh/clang:15
-                - silkeh/clang:16
-                - silkeh/clang:17
-                - silkeh/clang:18
-                - silkeh/clang:19
-                - silkeh/clang:20
-              config: [Debug, Release]
-      - build-dunix:
-          env: CXX=g++ CC=gcc
-          matrix:
-            parameters:
-              image:
-                - gcc:9
-                - gcc:10
-                - gcc:11
-                - gcc:12
-                - gcc:13
-                - gcc:14
-                - gcc:15
-              config: [Debug, Release]
-#      - build-dunix:
-#          env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
-#          image: gcc
-#          config: Debug
-#          coverage: true
+          env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
+          image: gcc
+          config: Debug
+          coverage: true
 
 jobs:
-  build-win:
-    parameters:
-      image: {type: string}
-      generator: {type: string}
-      platform: {type: string}
-      config: {type: string}
-      toolset: {type: string}
-    environment:
-      p_generator: <<parameters.generator>>
-      p_platform: <<parameters.platform>>
-      p_config: <<parameters.config>>
-      p_toolset: <<parameters.toolset>>
-    machine:
-      image: <<parameters.image>>
-      resource_class: windows.medium
-      shell: cmd.exe
-    steps:
-      - checkout
-      - run:
-          name: Build
-          command: cd .circleci && build-win
-      - run:
-          name: Test
-          command: cd bin && cli --test
-
-  build-unix:
-    parameters:
-      image: {type: string}
-      env: {type: string}
-      config: {type: string}
-    machine:
-      image: <<parameters.image>>
-      resource_class: medium
-    steps:
-      - checkout
-      - run:
-          name: Install
-          command: |
-            export <<parameters.env>>
-            if [ -n "$INSTALL_APT" ]; then
-              sudo apt-get update -y
-              sudo apt-get install software-properties-common -y
-              sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-              sudo apt-get update -y
-              sudo apt-get install -y ${CC} ${CXX}
-            fi
-            sudo apt-get install locales-all -y
-      - run:
-          name: Build
-          command: |
-            export <<parameters.env>>
-            mkdir -p build && cd build
-            cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-            cmake --build . --config <<parameters.config>>
-      - run:
-          name: Test
-          command: |
-            export <<parameters.env>>
-            export LANG=en_US.UTF-8
-            export COLUMNS=80
-            cd bin
-            ./cli --test
-
   build-dunix:
     parameters:
       image: {type: string}

@@ -5,8 +5,6 @@
 
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
-orbs:
-  codecov: codecov/codecov@5.4.3
 
 workflows:
   build:
@@ -27,40 +25,6 @@ workflows:
               platform: [Win32, x64]
               config: [Debug, Release]
               toolset: [v142, v143]
-      - build-dunix:
-          env: CXX=clang++ CC=clang
-          matrix:
-            parameters:
-              image:
-                - silkeh/clang:11
-                - silkeh/clang:12
-                - silkeh/clang:13
-                - silkeh/clang:14
-                - silkeh/clang:15
-                - silkeh/clang:16
-                - silkeh/clang:17
-                - silkeh/clang:18
-                - silkeh/clang:19
-                - silkeh/clang:20
-              config: [Debug, Release]
-      - build-dunix:
-          env: CXX=g++ CC=gcc
-          matrix:
-            parameters:
-              image:
-                - gcc:9
-                - gcc:10
-                - gcc:11
-                - gcc:12
-                - gcc:13
-                - gcc:14
-                - gcc:15
-              config: [Debug, Release]
-#      - build-dunix:
-#          env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
-#          image: gcc
-#          config: Debug
-#          coverage: true
 
 jobs:
   build-win:
@@ -87,79 +51,3 @@ jobs:
       - run:
           name: Test
           command: cd bin && cli --test
-
-  build-unix:
-    parameters:
-      image: {type: string}
-      env: {type: string}
-      config: {type: string}
-    machine:
-      image: <<parameters.image>>
-      resource_class: medium
-    steps:
-      - checkout
-      - run:
-          name: Install
-          command: |
-            export <<parameters.env>>
-            if [ -n "$INSTALL_APT" ]; then
-              sudo apt-get update -y
-              sudo apt-get install software-properties-common -y
-              sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-              sudo apt-get update -y
-              sudo apt-get install -y ${CC} ${CXX}
-            fi
-            sudo apt-get install locales-all -y
-      - run:
-          name: Build
-          command: |
-            export <<parameters.env>>
-            mkdir -p build && cd build
-            cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-            cmake --build . --config <<parameters.config>>
-      - run:
-          name: Test
-          command: |
-            export <<parameters.env>>
-            export LANG=en_US.UTF-8
-            export COLUMNS=80
-            cd bin
-            ./cli --test
-
-  build-dunix:
-    parameters:
-      image: {type: string}
-      env: {type: string}
-      config: {type: string}
-      coverage: {type: boolean, default: false}
-    docker:
-      - image: <<parameters.image>>
-    resource_class: medium
-    steps:
-      - checkout
-      - run:
-          name: Install
-          command: |
-            export <<parameters.env>>
-            apt-get update -y
-            apt-get install cmake -y
-            apt-get install locales-all -y
-      - run:
-          name: Build
-          command: |
-            export <<parameters.env>>
-            mkdir -p build && cd build
-            cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
-            cmake --build . --config <<parameters.config>>
-      - run:
-          name: Test
-          command: |
-            export <<parameters.env>>
-            LANG=en_US.UTF-8
-            export COLUMNS=80
-            cd bin
-            ./cli --test
-      - when:
-          condition: <<parameters.coverage>>
-          steps:
-            - codecov/upload
