@@ -6,7 +6,7 @@
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
 orbs:
-  codecov: codecov/codecov@5
+  codecov: codecov/codecov@5.4.3
 
 workflows:
   build:
@@ -58,7 +58,7 @@ workflows:
               config: [Debug, Release]
       - build-dunix:
           env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON
-          image: gcc:10
+          image: gcc
           config: Debug
           coverage: true
 
@@ -162,6 +162,4 @@ jobs:
       - when:
           condition: <<parameters.coverage>>
           steps:
-            run:
-              name: Report Coverage
-              command: codecov/upload
+            - codecov/upload
