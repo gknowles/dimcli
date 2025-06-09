@@ -5,27 +5,20 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 13-20 / GCC 9-14 | Test Coverage |
-| :----: | :----------------------------------------------------: | :-----------: |
-| master | [![Build Status][gh-image-master]][gh-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
-| dev    | [![Build Status][gh-image-dev]][gh-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
+| Branch | MSVC 2015-2022 / CLANG 11-20 / GCC 9-15   | Test Coverage   |
+| :----: | :---------------------------------------: | :-------------: |
+| master | [![Build Status][cir-image-master]][cir-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
+| dev    | [![Build Status][cir-image-dev]][cir-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
 
-[gh-image-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg?branch=master "GitHub Actions"
-[gh-link-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Amaster
+[cir-image-master]: https://dl.circleci.com/status-badge/img/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/master.svg?style=shield "CircleCI"
+[cir-link-master]: https://dl.circleci.com/status-badge/redirect/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/master
 [cc-image-master]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
 [cc-link-master]: https://app.codecov.io/gh/gknowles/dimcli/tree/master
 
-[gh-image-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg?branch=dev "GitHub Actions"
-[gh-link-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml?query=branch%3Adev
-[cc-image-dev]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
-[cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
-
-| Branch | MSVC 2015, 2017, 2019, 2022 / CLANG 11-20 / GCC 9-15   |
-| :----: | :----------------------------------------------------: |
-| dev    | [![Build Status][cir-image-dev]][cir-link-dev]         |
-
 [cir-image-dev]: https://dl.circleci.com/status-badge/img/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/dev.svg?style=shield "CircleCI"
 [cir-link-dev]: https://dl.circleci.com/status-badge/redirect/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/dev
+[cc-image-dev]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
+[cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
 
 C++ command line parser toolkit for kids of all ages.
 
