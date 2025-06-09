@@ -42,7 +42,7 @@ jobs:
           command: |
             export <<parameters.env>>
             apt-get update -y
-            apt-get install cmake=3.14 -y
+            apt-get install cmake -y
             apt-get install locales-all -y
       - run:
           name: Build
