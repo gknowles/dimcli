@@ -9,7 +9,7 @@ orbs:
   codecov: codecov/codecov@5.4.3
 
 workflows:
-  build:
+  build-codecov:
     jobs:
       - build-dunix:
           env: CXX=g++ CC=gcc GCOV=gcov BUILD_COVERAGE=ON

@@ -7,13 +7,15 @@
 version: 2.1
 
 workflows:
-  build:
+  build-gcc:
     jobs:
       - build-dunix:
           env: CXX=g++ CC=gcc
           matrix:
             parameters:
               image:
+                - gcc:7
+                - gcc:8
                 - gcc:9
                 - gcc:10
                 - gcc:11

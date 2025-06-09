@@ -7,7 +7,7 @@
 version: 2.1
 
 workflows:
-  build:
+  build-clang:
     jobs:
       - build-dunix:
           env: CXX=clang++ CC=clang

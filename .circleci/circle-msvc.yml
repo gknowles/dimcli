@@ -7,7 +7,7 @@
 version: 2.1
 
 workflows:
-  build:
+  build-msvc:
     jobs:
       - build-win:
           image: windows-server-2019-vs2019:current
