@@ -79,7 +79,7 @@
 #
 ####
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 option(BUILD_PROJECT_NAME "Override name of project to build" OFF)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
@@ -463,7 +463,7 @@ function(set_pch tgt)
         return()
     endif()
     foreach(var ${sources})
-        get_filename_component(ext "${var}" EXT)
+        get_filename_component(ext "${var}" LAST_EXT)
         if(ext STREQUAL ".cpp")
             get_filename_component(basename "${var}" NAME_WLE)
             if(basename STREQUAL "pch")
