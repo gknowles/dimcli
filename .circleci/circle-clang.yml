@@ -14,6 +14,11 @@ workflows:
           matrix:
             parameters:
               image:
+                - silkeh/clang:6.0
+                - silkeh/clang:7
+                - silkeh/clang:8
+                - silkeh/clang:9
+                - silkeh/clang:10
                 - silkeh/clang:11
                 - silkeh/clang:12
                 - silkeh/clang:13
