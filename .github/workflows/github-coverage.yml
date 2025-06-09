@@ -1,0 +1,81 @@
+# Copyright Glen Knowles 2021 - 2025.
+# Distributed under the Boost Software License, Version 1.0.
+#
+# github-build.yml
+#
+# Configuration for GitHub Actions
+# https://docs.github.com/en/actions/writing-workflows
+#   /workflow-syntax-for-github-actions
+
+name: build
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+  workflow_dispatch: {}
+
+jobs:
+  build-unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON]
+        image: [ubuntu-22.04]
+        configuration: [Debug]
+        coverage: [true]
+
+    runs-on: ${{matrix.image}}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install
+      run: |
+        export ${{matrix.env}}
+        if [ -n "$INSTALL_LLVM_BIONIC" ]; then
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | \
+                sudo apt-key add -
+            sudo add-apt-repository "deb  http://apt.llvm.org/bionic/  \
+                llvm-toolchain-bionic-$INSTALL_LLVM_BIONIC  main"
+            export INSTALL_APT=${INSTALL_LLVM_BIONIC}
+        fi
+        if [ -n "$INSTALL_LLVM" ]; then
+            wget https://apt.llvm.org/llvm.sh
+            chmod +x llvm.sh
+            sudo ./llvm.sh $INSTALL_LLVM
+        elif [ -n "$INSTALL_APT" ]; then
+            sudo apt-get update
+            sudo apt-get install software-properties-common
+            sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+            sudo apt-get update
+            sudo apt-get install -y ${CC} ${CXX} ${{matrix.apt-get}}
+        fi
+        sudo apt-get install -y locales-all
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: |
+        export ${{matrix.env}}
+        mkdir -p build && cd build
+        cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+        cmake --build . --config ${{matrix.configuration}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: |
+        export ${{matrix.env}}
+        export LANG=en_US.UTF-8
+        export COLUMNS=80
+        bin/cli --test
+
+    - name: Report Coverage
+      if: matrix.coverage
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{secrets.CODECOV_TOKEN}}
+        fail_ci_if_error: true
+        flags: ${{github.ref_name}}

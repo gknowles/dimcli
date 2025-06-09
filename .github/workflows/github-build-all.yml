@@ -2,14 +2,18 @@
 # Distributed under the Boost Software License, Version 1.0.
 #
 # github-build.yml
+#
+# Configuration for GitHub Actions
+# https://docs.github.com/en/actions/writing-workflows
+#   /workflow-syntax-for-github-actions
 
 name: build
 
 on:
-  push:
-    branches: [ master, dev ]
-  pull_request:
-    branches: [ master, dev ]
+#  push:
+#    branches: [ master, dev ]
+#  pull_request:
+#    branches: [ master, dev ]
   workflow_dispatch: {}
 
 jobs:
