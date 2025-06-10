@@ -14,8 +14,6 @@ workflows:
           matrix:
             parameters:
               image:
-                - gcc:5
-                - gcc:6
                 - gcc:7
                 - gcc:8
                 - gcc:9
