@@ -2198,7 +2198,7 @@ bool Cli::OptIndex::parseToRawValues(
             if (auto equal = strchr(st.ptr, '=')) {
                 // Name is everything up to the equal sign, value is rest of
                 // the arg after it.
-                st.name.assign(st.ptr, equal);
+                st.name.assign(st.ptr, equal - st.ptr);
                 st.ptr = equal + 1;
             } else {
                 // No equal sign, everything is name, there is no value.
