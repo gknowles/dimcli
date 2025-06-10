@@ -79,7 +79,7 @@
 #
 ####
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.10)
 option(BUILD_PROJECT_NAME "Override name of project to build" OFF)
 option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
@@ -337,6 +337,29 @@ endif()
 #
 ####
 
+function(get_last_ext out src)
+  get_filename_component(src "${src}" NAME)
+  string(FIND "${src}" "." pos REVERSE)
+  if(pos EQUAL -1)
+    set(src, "")
+  else()
+    string(SUBSTRING "${src}" ${pos} -1 src)
+  endif()
+  set(${out} "${src}" PARENT_SCOPE)
+endfunction()
+
+# Get name without directory or last extension.
+function(get_name_wle out src)
+  get_filename_component(src "${src}" NAME)
+  string(FIND "${src}" "." pos REVERSE)
+  if(pos EQUAL -1)
+    # No extension to remove, keep entire name.
+  else()
+    string(SUBSTRING "${src}" 0 ${pos} src)
+  endif()
+  set(${out} "${src}" PARENT_SCOPE)
+endfunction()
+
 # Compare the new contents with the existing file, if it exists and is the
 # same we don't want to trigger a make by changing its timestamp.
 function(update_file path content)
@@ -365,10 +388,10 @@ function(update_deps_file)
     foreach(dep ${all_rel_deps})
         # Remove files where the same file exists but with an additional
         # ".sample" extension.
-        get_filename_component(match "${dep}" LAST_EXT)
+        get_last_ext(match "${dep}")
         if(match STREQUAL ".sample")
             get_filename_component(dir "${dep}" DIRECTORY)
-            get_filename_component(name ${dep} NAME_WLE)
+            get_name_wle(name ${dep})
             if (dir)
                 set(name "${dir}/${name}")
             endif()
@@ -463,9 +486,9 @@ function(set_pch tgt)
         return()
     endif()
     foreach(var ${sources})
-        get_filename_component(ext "${var}" LAST_EXT)
+        get_last_ext(ext "${var}")
         if(ext STREQUAL ".cpp")
-            get_filename_component(basename "${var}" NAME_WLE)
+            get_name_wle(basename "${var}")
             if(basename STREQUAL "pch")
                 # Use pch.cpp to create precompiled header.
                 set_property(SOURCE "${var}"
