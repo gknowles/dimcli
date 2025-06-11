@@ -5,7 +5,7 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| Branch | MSVC 2015-2022 / CLANG 11-20 / GCC 9-15   | Test Coverage   |
+| Branch | MSVC 2015-2022 / CLANG 7-20 / GCC 7-15    | Test Coverage   |
 | :----: | :---------------------------------------: | :-------------: |
 | master | [![Build Status][cir-image-master]][cir-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
 | dev    | [![Build Status][cir-image-dev]][cir-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
