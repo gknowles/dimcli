@@ -3,7 +3,6 @@
 //
 // pch.h - dimcli test perf
 
-#define DIMCLI_LIB_NO_FILESYSTEM
 #include "dimcli/cli.h"
 
 #pragma warning(disable : \
