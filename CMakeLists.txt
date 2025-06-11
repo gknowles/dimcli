@@ -126,6 +126,7 @@ set(tmp "${LINK_STATIC_RUNTIME}")   # not used by clang or gcc builds
 # 2025-02-24 - Added - Resource projects with arbitrary files
 # 2025-02-24 - Removed - Site project, use a resource project instead
 # 2025-05-18 - Changed - Minimum required version now 3.10
+# 2025-06-03 - Added - Include CircleCI pipeline configurations
 
 
 #############################################################################
@@ -287,14 +288,16 @@ foreach(var ${config_defines})
     add_definitions(/D${var})
 endforeach()
 
-# Setting source_group to a single space is weird and relies on Visual Studio
-# treating it as no group, you'd expect setting it to the empty string would
-# mean no group, but - just for regexes (bug?) - that causes CMake to use
+# Note 1: Setting source_group to a single space is weird and relies on Visual
+# Studio treating it as no group, you'd expect setting it to the empty string
+# would mean no group, but - just for regexes (bug?) - that causes CMake to use
 # defaults.
+# Note 2: If you have multiple source_group(REGULAR_EXPRESSION) commands
+# for the same group name, all but the last are ignored. So I fear that the
+# "ci" regex is going to get really ugly.
 source_group(" " REGULAR_EXPRESSION ".*")
-source_group("ci" REGULAR_EXPRESSION "\.github/.*\.yml")
+source_group("ci" REGULAR_EXPRESSION "\.circleci/.*|\.github/.*\.yml")
 source_group("ci" FILES appveyor.yml codecov.yml .travis.yml)
-source_group("ci" REGULAR_EXPRESSION "\.circleci/.*")
 source_group("vendor" REGULAR_EXPRESSION "web/(.*/)+vendor/.*")
 
 if(ROOT_PROJECT)
