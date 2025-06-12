@@ -3,18 +3,18 @@
 #
 # CMakeLists.txt - general project generator
 #
-# Use this one file *unmodified* for all projects that follow the convections.
-# All the careful tweaking is for Visual Studio, but it works on linux with
-# both gcc and clang (at least well enough for CI :P).
+# Use this one script file *unmodified* for all projects that follow the 
+# convections. All the careful tweaking is for Visual Studio, but it works on 
+# linux with both gcc and clang (at least well enough for CI :P).
 #
-# Project layout:
+# Project file layout:
 #   /<project_name>
-#   /<project_name>/CMakeLists.txt - this file
-#   /<project_name>/CMakeDeps.cmake - made by this file (source controlled)
+#   /<project_name>/CMakeLists.txt - this script file
+#   /<project_name>/CMakeDeps.cmake - made by this script (source controlled)
 #   /<project_name>/*.user.props - properties included in MSVC projects
 #   /<project_name>/conf/**
 #   /<project_name>/conf/**/<basename>.sample - causes .../<basename> to be
-#       excluded from dependencies
+#       excluded from dependencies, <basename> may include an extension.
 #   /<project_name>/docs/**
 #   /<project_name>/libs/<lib_project_name>/**
 #   /<project_name>/libs/${PROJECT_NAME}/config.h - may be modified by the
@@ -120,11 +120,11 @@ set(tmp "${LINK_STATIC_RUNTIME}")   # not used by clang or gcc builds
 # 2022-04-18 - Added - /web directory in files project
 # 2023-01-21 - Changed - Only create test projects if BUILD_TESTING enabled
 # 2024-02-18 - Removed - install_archive_pdb() in favor of /Z7
-# 2024-07-19 - Added - Site project
+# 2024-07-19 - Added - file/site project
 # 2024-07-20 - Added - Changelog
 # 2025-01-09 - Changed - Use --std=c++2c with supporting GCC and Clang
 # 2025-02-24 - Added - Resource projects with arbitrary files
-# 2025-02-24 - Removed - Site project, use a resource project instead
+# 2025-02-24 - Removed - file/site project, use a resource project instead
 # 2025-05-18 - Changed - Minimum required version now 3.10
 # 2025-06-03 - Added - Include CircleCI pipeline configurations
 
