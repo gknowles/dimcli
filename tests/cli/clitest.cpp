@@ -16,7 +16,7 @@ using namespace std;
 #endif
 
 #if _MSC_VER <= 1900
-#undef TEST_EXPLICIT_IMBUE
+//#undef TEST_EXPLICIT_IMBUE
 #endif
 #endif
 
