@@ -2401,10 +2401,6 @@ istream & operator>>(istream & is, EnumAB & val) {
     return is;
 }
 
-#ifdef TEST_EXPLICIT_IMBUE
-static locale s_loc("en_US");
-#endif
-
 //===========================================================================
 void unitsTests() {
     int line = 0;
@@ -2486,6 +2482,9 @@ Units symbol 'k' not recognized.
         EXPECT(*sv == "1000000");
 
         auto & si = cli.opt<int>("i").siUnits();
+#ifdef TEST_EXPLICIT_IMBUE
+        static locale s_loc("en_US");
+#endif
 #if defined(TEST_EXPLICIT_IMBUE)
         si.imbue(s_loc);
 #endif
@@ -2526,6 +2525,9 @@ Options:
     {
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
+#ifdef TEST_EXPLICIT_IMBUE
+        static locale s_loc("en_US");
+#endif
 #if defined(TEST_EXPLICIT_IMBUE)
         sht.imbue(s_loc);
 #endif
