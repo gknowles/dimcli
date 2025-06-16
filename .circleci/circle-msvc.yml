@@ -50,4 +50,4 @@ jobs:
           command: cd .circleci && build-win
       - run:
           name: Test
-          command: cd bin && cli --test
+          command: cd bin && cli --test --verbose

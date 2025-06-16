@@ -34,6 +34,7 @@ const char kCommand[] = "test";
 #endif
 
 static int s_errors;
+static bool s_verbose;
 
 
 /****************************************************************************
@@ -43,8 +44,7 @@ static int s_errors;
 ***/
 
 #define EXPECT(...) \
-    if (!bool(__VA_ARGS__)) \
-    failed(line ? line : __LINE__, #__VA_ARGS__)
+    failed(bool(__VA_ARGS__), line ? line : __LINE__, #__VA_ARGS__)
 #define EXPECT_PARSE(...) parseTest(__LINE__, __VA_ARGS__)
 #define EXPECT_ERR(cli, text) errTest(__LINE__, cli, text)
 #define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
@@ -55,9 +55,14 @@ static int s_errors;
 #define EXPECT_ASSERT(text) assertTest(__LINE__, text)
 
 //===========================================================================
-void failed(int line, const char msg[]) {
-    cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
-    s_errors += 1;
+void failed(bool success, int line, const char msg[]) {
+    if (success) {
+        if (s_verbose)
+            cout << "Line " << line << ": ok" << endl;
+    } else {
+        cerr << "Line " << line << ": EXPECT(" << msg << ") failed" << endl;
+        s_errors += 1;
+    }
 }
 
 //===========================================================================
@@ -2875,7 +2880,7 @@ int main(int argc, char * argv[]) {
     cli.footer("On parsing failures, lists arguments from command line.");
     auto & test = cli.opt<bool>("test.").desc("Run tests.");
     auto & prompt = cli.opt<bool>("prompt.").desc("Run tests with prompting.");
-
+    cli.opt(&s_verbose, "verbose.").desc("Display progress through tests.");
     auto & echo = cli.optVec<string>("?e")
         .desc("List arguments from the command line.")
         .valueDesc("ANY...")
