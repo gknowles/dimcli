@@ -2483,7 +2483,9 @@ Units symbol 'k' not recognized.
 
         auto & si = cli.opt<int>("i").siUnits();
 #ifdef TEST_EXPLICIT_IMBUE
-        static locale s_loc("en_US");
+        setlocale(LC_ALL, "en_US");
+        EXPECT(true);
+        locale s_loc("");
         EXPECT(true);
 #endif
 #if defined(TEST_EXPLICIT_IMBUE)
