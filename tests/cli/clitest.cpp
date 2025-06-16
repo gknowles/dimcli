@@ -16,7 +16,7 @@ using namespace std;
 #endif
 
 #if _MSC_VER <= 1900
-//#undef TEST_EXPLICIT_IMBUE
+#undef TEST_EXPLICIT_IMBUE
 #endif
 #endif
 
@@ -2483,14 +2483,15 @@ Units symbol 'k' not recognized.
 
         auto & si = cli.opt<int>("i").siUnits();
 #ifdef TEST_EXPLICIT_IMBUE
+        locale loc("en_US");
+        EXPECT(true);
+#else
         setlocale(LC_ALL, "en_US");
         EXPECT(true);
-        locale s_loc("");
+        locale loc("");
         EXPECT(true);
 #endif
-#if defined(TEST_EXPLICIT_IMBUE)
-        si.imbue(s_loc);
-#endif
+        si.imbue(loc);
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
         EXPECT_PARSE(cli, "-i6G", false);
@@ -2529,11 +2530,12 @@ Options:
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
 #ifdef TEST_EXPLICIT_IMBUE
-        static locale s_loc("en_US");
+        locale loc("en_US");
+#else
+        setlocale(LC_ALL, "en_US");
+        locale loc("");
 #endif
-#if defined(TEST_EXPLICIT_IMBUE)
-        sht.imbue(s_loc);
-#endif
+        sht.imbue(loc);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
