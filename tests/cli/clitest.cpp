@@ -8,16 +8,8 @@
 
 using namespace std;
 
-#define TEST_EXPLICIT_IMBUE
-
-#if defined(_MSC_VER)
-#if defined(__clang__)
+#if defined(_MSC_VER) && defined(__clang__)
 #pragma clang diagnostic ignored "-Wstring-plus-int"
-#endif
-
-#if _MSC_VER <= 1900
-#undef TEST_EXPLICIT_IMBUE
-#endif
 #endif
 
 
@@ -2405,6 +2397,17 @@ istream & operator>>(istream & is, EnumAB & val) {
 void unitsTests() {
     int line = 0;
     CliTest cli;
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+    // Don't directly construct locale("en_US") in MSVC 2015 because of a bug
+    // in the locale implementation that may cause it to hang in debug builds.
+    setlocale(LC_ALL, "en_US");
+    EXPECT(true);
+    locale loc("");
+    EXPECT(true);
+#else
+    locale loc("en_US");
+    EXPECT(true);
+#endif
 
     // si units
     {
@@ -2482,15 +2485,6 @@ Units symbol 'k' not recognized.
         EXPECT(*sv == "1000000");
 
         auto & si = cli.opt<int>("i").siUnits();
-#ifdef TEST_EXPLICIT_IMBUE
-        locale loc("en_US");
-        EXPECT(true);
-#else
-        setlocale(LC_ALL, "en_US");
-        EXPECT(true);
-        locale loc("");
-        EXPECT(true);
-#endif
         si.imbue(loc);
         EXPECT_PARSE(cli, "-i2G");
         EXPECT(*si == 2'000'000'000);
@@ -2529,12 +2523,6 @@ Options:
     {
         cli = {};
         auto & sht = cli.opt<uint16_t>("s").timeUnits();
-#ifdef TEST_EXPLICIT_IMBUE
-        locale loc("en_US");
-#else
-        setlocale(LC_ALL, "en_US");
-        locale loc("");
-#endif
         sht.imbue(loc);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
@@ -2573,7 +2561,7 @@ Must be between '0' and '65,535'.
         EXPECT_PARSE(cli, "-v1ms -v1us -v1ns");
         EXPECT(dbls[0] == 1e-3);
 #if defined(_MSC_VER) && _MSC_VER != 1938
-        // Exclude these from MSVC 2022 17.8 because of bug in it's stream
+        // Exclude these from MSVC 2022 17.8 because of a bug in it's stream
         // library.
         EXPECT(dbls[1] == 1e-6);
         EXPECT(dbls[2] == 1e-9);
