@@ -11,7 +11,8 @@ Distributed under the Boost Software License, Version 1.0.
     - cmake ..
     - Commit CMakeDeps.cmake if changed
 4. Verify tests pass.
-    - bin\cli --test
+    - cd bin
+    - cli --test
 5. Verify code samples in the guide work as described.
     - docgen test
 6. Change "Unreleased" section in CHANGELOG.md to the new version.
