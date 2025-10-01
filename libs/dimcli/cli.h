@@ -658,7 +658,7 @@ public:
     // cli.badUsage() instead.
     void fail(
         int code,
-        const std::string & msg,
+        const std::string & msg = {},
         const std::string & detail = {}
     );
 
