@@ -661,6 +661,10 @@ public:
         const std::string & msg = {},
         const std::string & detail = {}
     );
+    // Sets cli.exitCode() to 0 and clears errMsg, errDetail. Intended to be
+    // called from actions to report success after, possibly, having set an
+    // error prematurely.
+    void success() { fail(kExitOk); }
 
     // Returns true if the named command has been defined; used by the help
     // command implementation. Not reliable before cli.parse() has been called
