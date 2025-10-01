@@ -1989,7 +1989,7 @@ void execTests() {
 
     {
         cli = {};
-        CliTest(cli).action([](auto &) {});
+        CliTest(cli).action([](auto & cli) { cli.success(); });
         EXPECT(cli.exec(nargsNone, (char **) argsNone));
         EXPECT(cli.exitCode() == Dim::kExitOk);
         out.clear();
