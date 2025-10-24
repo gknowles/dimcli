@@ -46,7 +46,7 @@ jobs:
           name: Install
           command: |
             export <<parameters.env>>
-            # apt-get update -y
+            apt-get update -y
             apt-get install cmake -y
             apt-get install locales-all -y
       - run:
