@@ -522,11 +522,12 @@ public:
     // Error information can be extracted after cli.parse() completes, see
     // cli.errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
-
-    // "args" is non-const so that response files can be expanded in place and
-    // to allow it to be modified by before actions.
-    [[nodiscard]] bool parse(std::vector<std::string> & args);
+    [[nodiscard]] bool parse(const std::vector<std::string> & args);
     [[nodiscard]] bool parse(std::vector<std::string> && args);
+
+    // Upon a successful return "args" contains the argument list after
+    // response file expansion and before actions are applied.
+    [[nodiscard]] bool parse(std::vector<std::string> & args);
 
     // Sets all options to their defaults, called internally when parsing
     // starts.
@@ -638,6 +639,11 @@ public:
     // processing cli.parse() or cli.exec().
     bool parseAborted() const;
 
+    // Returns true if the named command has been defined; used by the help
+    // command implementation. Not reliable before cli.parse() has been called
+    // and had a chance to update the internal data structures.
+    bool commandExists(const std::string & name) const;
+
     // Executes the action of the matched command. Just like cli.parse(),
     // cli.exec() returns false if cli.parseAborted() is true.
     //
@@ -665,11 +671,6 @@ public:
     // called from actions to report success after, possibly, having set an
     // error prematurely.
     void success() { fail(kExitOk); }
-
-    // Returns true if the named command has been defined; used by the help
-    // command implementation. Not reliable before cli.parse() has been called
-    // and had a chance to update the internal data structures.
-    bool commandExists(const std::string & name) const;
 
     //-----------------------------------------------------------------------
     // RENDERING HELP TEXT

@@ -244,16 +244,9 @@ struct Cli::OptIndex {
         bool forHelpText,
         bool forAllCmd
     );
-    static bool includeOptAfter(
-        OptBase & opt,
-        const string & cmd
-    );
+    static bool includeOptAfter(OptBase & opt, const string & cmd);
 
-    void index(
-        const Cli & cli,
-        const string & cmd,
-        bool forHelpText
-    );
+    void index(const Cli & cli, const string & cmd, bool forHelpText);
     void index(OptBase & opt);
 
     //-----------------------------------------------------------------------
@@ -280,6 +273,8 @@ struct Cli::OptIndex {
         Cli & cli
     );
 
+    // Members just to get access to protected members of OptBase.
+    static void doAfters(OptBase & opt, Cli & cli);
 
 private:
     bool indexOperandName(
@@ -2296,14 +2291,21 @@ static bool badMinMatched(
 }
 
 //===========================================================================
-bool Cli::parse(vector<string> & args) {
-    Config::touchAllCmds(*this);
-    resetValues();
+// static
+void Cli::OptIndex::doAfters(OptBase & opt, Cli & cli) {
+    opt.doAfterActions(cli);
+}
 
-    OptIndex ndx;
-    ndx.index(*this, "", false);
+//===========================================================================
+static bool parse(Cli & cli, vector<string> & args) {
+    Cli::Config::touchAllCmds(cli);
+    cli.resetValues();
 
-    if (commandRequired(*m_cfg) && !ndx.m_allowCommands) {
+    Cli::OptIndex ndx;
+    ndx.index(cli, "", false);
+    auto & cfg = Cli::Config::get(cli);
+
+    if (commandRequired(cfg) && !ndx.m_allowCommands) {
         // Command processing requires that the command be unambiguously
         // identifiable and can't be used when the top level has an operand
         // that requires look ahead to match. Which is caused by the first
@@ -2315,23 +2317,23 @@ bool Cli::parse(vector<string> & args) {
     if (!args.empty()) {
 #if !defined(DIMCLI_LIB_NO_ENV)
         // Insert environment options
-        if (m_cfg->envOpts.size()) {
-            if (auto val = getenv(m_cfg->envOpts.c_str()))
-                replace(args, 1, 0, toArgv(val));
+        if (cfg.envOpts.size()) {
+            if (auto val = getenv(cfg.envOpts.c_str()))
+                replace(args, 1, 0, Cli::toArgv(val));
         }
 #endif
 #ifdef DIMCLI_LIB_FILESYSTEM
         // Expand response files
-        if (m_cfg->responseFiles) {
+        if (cfg.responseFiles) {
             vector<string> ancestors;
-            if (!expandResponseFiles(*this, args, ancestors))
+            if (!expandResponseFiles(cli, args, ancestors))
                 return false;
         }
 #endif
         // Before actions
-        for (auto && fn : m_cfg->befores) {
-            fn(*this, args);
-            if (parseAborted())
+        for (auto && fn : cfg.befores) {
+            fn(cli, args);
+            if (cli.parseAborted())
                 return false;
             if (args.empty())
                 break;
@@ -2340,26 +2342,29 @@ bool Cli::parse(vector<string> & args) {
     // The 0th argument (name of this program) must always be present.
     if (args.empty()) {
         assert(!"At least one argument (the program name) required.");
-        fail(kExitSoftware, "No arguments (not even program name) provided.");
+        cli.fail(
+            kExitSoftware,
+            "No arguments (not even program name) provided."
+        );
         return false;
     }
 
     // Extract raw values and match them to opts.
     vector<RawValue> rawValues;
-    if (!ndx.parseToRawValues(&rawValues, args, *this))
+    if (!ndx.parseToRawValues(&rawValues, args, cli))
         return false;
 
     // Parse values and copy them to defined opts.
-    m_cfg->command = "";
+    cfg.command = "";
     for (auto && val : rawValues) {
         switch (val.type) {
         case RawValue::kCommand:
-            m_cfg->command = val.name;
+            cfg.command = val.name;
             continue;
         default:
             break;
         }
-        if (!parseValue(*val.opt, val.name, val.pos, val.ptr))
+        if (!cli.parseValue(*val.opt, val.name, val.pos, val.ptr))
             return false;
     }
 
@@ -2369,27 +2374,27 @@ bool Cli::parse(vector<string> & args) {
         if (~oprName.flags & fNameOptional) {
             // Report required operands that are missing.
             if (!opt || opt.size() < (size_t) opt.minSize())
-                return badMinMatched(*this, opt, oprName.name);
+                return badMinMatched(cli, opt, oprName.name);
         }
     }
     for (auto && nv : ndx.m_shortNames) {
         auto & opt = *nv.second.opt;
         if (opt && opt.size() < (size_t) opt.minSize())
-            return badMinMatched(*this, opt);
+            return badMinMatched(cli, opt);
     }
     for (auto && nv : ndx.m_longNames) {
         auto & opt = *nv.second.opt;
         if (opt && opt.size() < (size_t) opt.minSize())
-            return badMinMatched(*this, opt);
+            return badMinMatched(cli, opt);
     }
 
     // After actions
-    for (auto && opt : m_cfg->opts) {
-        if (!ndx.includeOptAfter(*opt, commandMatched())) {
+    for (auto && opt : cfg.opts) {
+        if (!ndx.includeOptAfter(*opt, cli.commandMatched())) {
             continue;
         }
-        opt->doAfterActions(*this);
-        if (parseAborted())
+        Cli::OptIndex::doAfters(*opt, cli);
+        if (cli.parseAborted())
             return false;
     }
 
@@ -2397,14 +2402,25 @@ bool Cli::parse(vector<string> & args) {
 }
 
 //===========================================================================
-bool Cli::parse(vector<string> && args) {
-    return parse(args);
+bool Cli::parse(size_t argc, char * argv[]) {
+    auto args = toArgv(argc, argv);
+    return ::parse(*this, args);
 }
 
 //===========================================================================
-bool Cli::parse(size_t argc, char * argv[]) {
-    auto args = toArgv(argc, argv);
-    return parse(move(args));
+bool Cli::parse(vector<string> && args) {
+    return ::parse(*this, args);
+}
+
+//===========================================================================
+bool Cli::parse(const vector<string> & args) {
+    auto tmp = args;
+    return ::parse(*this, tmp);
+}
+
+//===========================================================================
+bool Cli::parse(vector<string> & args) {
+    return ::parse(*this, args);
 }
 
 //===========================================================================
@@ -3067,10 +3083,7 @@ void Cli::printCommands(string * outPtr) {
 
 //===========================================================================
 // static
-string Cli::OptIndex::desc(
-    const Cli::OptBase & opt,
-    bool withMarkup
-) {
+string Cli::OptIndex::desc(const Cli::OptBase & opt, bool withMarkup) {
     string suffix;
     if (!withMarkup) {
         // Raw description without any markup.
