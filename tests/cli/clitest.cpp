@@ -588,7 +588,28 @@ Options:
 
 //===========================================================================
 void parseTests() {
+    int line = 0;
     CliTest cli;
+
+    {
+        cli = {};
+        cli.opt<string>("[b]");
+        char arg0[] = "a";
+        char arg1[] = "b";
+        char * argv[] = { arg0, arg1, nullptr };
+        auto argc = sizeof argv / sizeof *argv - 1;
+        bool rc = false;
+        rc = cli.parse(argc, argv);
+        EXPECT(rc);
+        vector<string> args = { arg0, arg1 };
+        rc = cli.parse(const_cast<const vector<string> &>(args));
+        EXPECT(rc);
+        rc = cli.parse(move(args));
+        EXPECT(rc);
+        args = { arg0, arg1 };
+        rc = cli.parse(args);
+        EXPECT(rc);
+    }
 
     cli = {};
     EXPECT_PARSE(cli, "-x", false);

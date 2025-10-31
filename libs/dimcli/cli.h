@@ -522,6 +522,7 @@ public:
     // Error information can be extracted after cli.parse() completes, see
     // cli.errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
+    [[nodiscard]] bool parse(size_t argc, const char * argv[]);
     [[nodiscard]] bool parse(const std::vector<std::string> & args);
     [[nodiscard]] bool parse(std::vector<std::string> && args);
 
