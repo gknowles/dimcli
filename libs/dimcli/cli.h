@@ -451,14 +451,15 @@ public:
     // Function signature of actions that run before options are populated.
     using BeforeFn = void(Cli & cli, std::vector<std::string> & args);
 
-    // Actions taken after environment variable and response file expansion
-    // but before any individual arguments are parsed. The before action
-    // function should:
+    // Actions to run after environment variable and response file expansion
+    // but before any individual arguments are parsed. They are run in order of
+    // highest (largest number) priority first, and order added second. Each
+    // before action function should:
     //  - Inspect and possibly modify the raw arguments coming in.
     //  - Call cli.badUsage() for errors.
     //  - Call cli.parseExit() if parsing should stop, but there was no error.
-    Cli & before(std::function<BeforeFn> fn) &;
-    Cli && before(std::function<BeforeFn> fn) &&;
+    Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
+    Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
 
 #if !defined(DIMCLI_LIB_NO_ENV)
     // Environment variable to get initial options from. Defaults to the empty
@@ -495,23 +496,24 @@ public:
     std::ostream & conout();
 
     // Actions to run after parsing has completed and immediately before the
-    // command action is executed. Before exec actions are run in the order
-    // they were added.
+    // command action is executed. They are run in order of highest (largest
+    // number) priority first, and when added second.
     //
     // Before exec actions should follow the same guidelines as for command
     // actions; see cli.action() above. If one calls cli.badUsage(),
     // cli.parseExit(), or cli.fail(), remaining before exec actions and the
     // command action are not run. All after exec actions will still be run.
-    Cli & beforeExec(std::function<ActionFn> fn) &;
-    Cli && beforeExec(std::function<ActionFn> fn) &&;
+    Cli & beforeExec(std::function<ActionFn> fn, int priority = 1) &;
+    Cli && beforeExec(std::function<ActionFn> fn, int priority = 1) &&;
 
-    // Actions to run after the sequence of before exec and command actions
-    // has been completed. The after exec action should:
+    // Actions to run after the sequence of before exec and command actions has
+    // been completed. They are run in order of highest (largest number)
+    // priority first, and order added second. Each after exec action should:
     //  - Inspect cli.exitCode() to see how the command ended, if that effects
     //    what it does.
     //  - Do something useful.
-    Cli & afterExec(std::function<ActionFn> fn) &;
-    Cli && afterExec(std::function<ActionFn> fn) &&;
+    Cli & afterExec(std::function<ActionFn> fn, int priority = 1) &;
+    Cli && afterExec(std::function<ActionFn> fn, int priority = 1) &&;
 
     //-----------------------------------------------------------------------
     // PARSING
@@ -964,6 +966,13 @@ private:
         int flags
     );
 
+    template <typename Fn>
+    static void addAction(
+        std::vector<std::pair<std::function<Fn>, int>> & actions,
+        std::function<Fn> && fn,
+        int priority
+    );
+
     void addOpt(std::unique_ptr<OptBase> opt);
     template <typename A> A & addOpt(std::unique_ptr<A> ptr);
 
@@ -1078,6 +1087,26 @@ std::shared_ptr<V> Cli::getProxy(T * ptr) {
 
     // Since there was no existing proxy to the raw value, create one.
     return std::make_shared<V>(ptr);
+}
+
+//===========================================================================
+template <typename Fn>
+// static
+void Cli::addAction(
+    std::vector<std::pair<std::function<Fn>, int>> & actions,
+    std::function<Fn> && fn,
+    int priority
+) {
+    auto where = std::upper_bound(
+        actions.begin(),
+        actions.end(),
+        priority,
+        [](int priority, auto && iter) {
+            // stable sort, numerically highest priority first
+            return priority > iter.second;
+        }
+    );
+    actions.insert(where, std::make_pair(std::move(fn), priority));
 }
 
 //===========================================================================
@@ -1618,8 +1647,8 @@ public:
     // (inclusive) of low to high.
     A & range(const T & low, const T & high);
 
-    // Causes a check whether the option value was set during parsing, and
-    // reports cli.badUsage() if it wasn't.
+    // Causes a check that the option value was set during parsing, and reports
+    // cli.badUsage() if it wasn't.
     A & require();
 
     // Enables prompting. When the option hasn't been provided on the command
@@ -1653,9 +1682,10 @@ public:
 
     // Action to take immediately after each value is parsed, unlike parsing
     // itself where there can only be one action, any number of check actions
-    // can be added. They will be called in the order they were added and if
-    // any of them return false it stops processing. As an example,
-    // opt.clamp() and opt.range() both do their job by adding check actions.
+    // can be added. They are run in order of highest (largest number) priority
+    // first, and order added second. If any of them return false it stops
+    // processing. As an example, opt.clamp() and opt.range() both do their job
+    // by adding check actions.
     //
     // The function should:
     //  - Check the options new value, possibly in relation to other options.
@@ -1663,19 +1693,20 @@ public:
     //  - Call cli.parseExit() if the program should stop without an error.
     //
     // The opt is fully populated so *opt, opt.from(), etc are all available.
-    A & check(std::function<ActionFn> fn);
+    A & check(std::function<ActionFn> fn, int priority = 1);
 
-    // Action to run after all arguments have been parsed, any number of
-    // after actions can be added and will, for each option, be called in the
-    // order they're added. When using subcommands, the after actions bound
-    // to unmatched subcommands are not executed. The function should:
+    // Action to run after all arguments have been parsed, any number of after
+    // actions can be added and will, for each option, be called in order of
+    // highest (largest number) priority first, and order added second. When
+    // using subcommands, the after actions bound to unmatched subcommands are
+    // not executed. The function should:
     //  - Do something interesting.
     //  - Call cli.badUsage() and return on error.
     //  - Call cli.parseExit() if processing should stop without error.
     //
     // Because after actions are not tied to a specific argument, the val
     // parameter passed to the function is always empty.
-    A & after(std::function<ActionFn> fn);
+    A & after(std::function<ActionFn> fn, int priority = 1);
 
     //-----------------------------------------------------------------------
     // QUERIES
@@ -1691,7 +1722,7 @@ protected:
     void act(
         Cli & cli,
         const std::string & value,
-        const std::vector<std::function<ActionFn>> & actions
+        const std::vector<std::pair<std::function<ActionFn>, int>> & actions
     );
     bool inverted() const final;
 
@@ -1704,8 +1735,8 @@ protected:
     bool checkLimits(Cli & cli, const std::string & val, const U & x, long);
 
     std::function<ActionFn> m_parse;
-    std::vector<std::function<ActionFn>> m_checks;
-    std::vector<std::function<ActionFn>> m_afters;
+    std::vector<std::pair<std::function<ActionFn>, int>> m_checks;
+    std::vector<std::pair<std::function<ActionFn>, int>> m_afters;
 
     T m_implicitValue = {};
     T m_defValue = {};
@@ -1757,11 +1788,11 @@ template <typename A, typename T>
 inline void Cli::OptShim<A, T>::act(
     Cli & cli,
     const std::string & val,
-    const std::vector<std::function<ActionFn>> & actions
+    const std::vector<std::pair<std::function<ActionFn>, int>> & actions
 ) {
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
-        fn(cli, *self, val);
+        fn.first(cli, *self, val);
         if (cli.parseAborted())
             break;
     }
@@ -1921,15 +1952,15 @@ A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn) {
-    this->m_checks.push_back(std::move(fn));
+A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn, int priority) {
+    Cli::addAction(m_checks, std::move(fn), priority);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn) {
-    this->m_afters.push_back(std::move(fn));
+A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn, int priority) {
+    Cli::addAction(m_afters, std::move(fn), priority);
     return static_cast<A &>(*this);
 }
 

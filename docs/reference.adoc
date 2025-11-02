@@ -37,7 +37,7 @@ Cli::OptVec&lt;T>.
 2+| Configure
 
 | cli.<<guide.adoc#before-actions, before>>
-| Add action taken after environment variable and response file expansion but
+| Add action to run after environment variable and response file expansion but
 before any individual arguments are parsed.
 
 | cli.conin
@@ -171,8 +171,7 @@ exits. An empty progName defaults to argv[0].
 
 | opt.<<guide.adoc#after-actions, after>>
 | Add action to run after all arguments have been parsed, any number of after
-actions can be added and will, for each option, be called in the order they're
-added.
+actions can be added.
 
 | opt.allCmds
 | Change option to be a member of all known commands, with or without also
@@ -183,9 +182,8 @@ including the top level.
 names removed and are multiplied by the factor.
 
 | opt.<<guide.adoc#check-actions, check>>
-| Add action to take immediately after each value is parsed, unlike parsing
-itself where there can only be one action, any number of check actions can be
-added.
+| Add action to run immediately after each value is parsed, any number of check
+actions can be added.
 
 | opt.<<guide.adoc#choice, choice>>
 | Adds a choice, when choices have been added only values that match one of the
@@ -231,7 +229,7 @@ the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.
 (inclusive) of low to high.
 
 | opt.<<guide.adoc#require, require>>
-| Causes a check whether the option value was set during parsing, and reports
+| Causes a check that the option value was set during parsing, and reports
 badUsage() if it wasn't.
 
 | opt.<<guide.adoc#si-units, siUnits>>
@@ -363,10 +361,12 @@ to run "prog help command" in addition to the more awkward "prog command
 Actions are executed when cli.exec() is called by the application.
 
 | cli.<<guide.adoc#exec-actions, afterExec>>
-| Action taken after the currently selected command is run.
+| Action taken after the currently selected command is run, any number can be
+added.
 
 | cli.<<guide.adoc#exec-actions, beforeExec>>
-| Action taken immediately before the currently selected command is run.
+| Action taken immediately before the currently selected command is run, any
+number can be added.
 
 | cli.<<guide.adoc#external-commands, unknownArgs(bool)>>
 | Makes all arguments following the command appear in cli.unknownArgs() instead

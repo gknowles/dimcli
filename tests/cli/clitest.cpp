@@ -2741,6 +2741,7 @@ Options:
 
 //===========================================================================
 void beforeTests() {
+    int line = 0;
     CliTest cli;
     CliTest(cli).before([](auto & cli, auto & args) {
         if (args.size() > 1)
@@ -2748,6 +2749,28 @@ void beforeTests() {
     });
     EXPECT_PARSE(cli, "one two", false);
     EXPECT_ERR(cli, "Error: Too many args\n");
+
+    {
+        cli = {};
+        auto & vals = cli.optVec<string>("[val]");
+        cli.before([](auto &, auto & args) { args.push_back("a"); });
+        cli.before([](auto &, auto & args) { args.push_back("b"); });
+        vector<string> expected = { "a", "b" };
+        EXPECT_PARSE(cli);
+        EXPECT(*vals == expected);
+    }
+
+    {
+        cli = {};
+        auto & vals = cli.optVec<string>("[val]");
+        cli.before([](auto &, auto & args) { args.push_back("a"); });
+        cli.before([](auto &, auto & args) { args.push_back("b"); }, 3);
+        cli.before([](auto &, auto & args) { args.push_back("c"); }, 2);
+        cli.before([](auto &, auto & args) { args.push_back("d"); }, 2);
+        vector<string> expected = { "b", "c", "d", "a" };
+        EXPECT_PARSE(cli);
+        EXPECT(*vals == expected);
+    }
 }
 
 

@@ -166,9 +166,9 @@ struct RawValue {
 } // namespace
 
 struct Cli::Config {
-    vector<function<BeforeFn>> befores;
-    vector<function<ActionFn>> execBefores;
-    vector<function<ActionFn>> execAfters;
+    vector<pair<function<BeforeFn>, int>> befores;
+    vector<pair<function<ActionFn>, int>> execBefores;
+    vector<pair<function<ActionFn>, int>> execAfters;
     bool allowUnknown = false;
     function<ActionFn> unknownCmd;
     unordered_map<string, CommandConfig> cmds;
@@ -1566,14 +1566,14 @@ const string & Cli::cmdSortKey() const {
 }
 
 //===========================================================================
-Cli & Cli::before(function<BeforeFn> fn) & {
-    m_cfg->befores.push_back(move(fn));
+Cli & Cli::before(function<BeforeFn> fn, int priority) & {
+    Cli::addAction(m_cfg->befores, move(fn), priority);
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::before(function<BeforeFn> fn) && {
-    return move(before(fn));
+Cli && Cli::before(function<BeforeFn> fn, int priority) && {
+    return move(before(move(fn), priority));
 }
 
 #if !defined(DIMCLI_LIB_NO_ENV)
@@ -1652,25 +1652,25 @@ ostream & Cli::conout() {
 }
 
 //===========================================================================
-Cli & Cli::beforeExec(function<ActionFn> fn) & {
-    m_cfg->execBefores.push_back(move(fn));
+Cli & Cli::beforeExec(function<ActionFn> fn, int priority) & {
+    addAction(m_cfg->execBefores, move(fn), priority);
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::beforeExec(function<ActionFn> fn) && {
-    return move(beforeExec(fn));
+Cli && Cli::beforeExec(function<ActionFn> fn, int priority) && {
+    return move(beforeExec(move(fn), priority));
 }
 
 //===========================================================================
-Cli & Cli::afterExec(function<ActionFn> fn) & {
-    m_cfg->execAfters.push_back(move(fn));
+Cli & Cli::afterExec(function<ActionFn> fn, int priority) & {
+    Cli::addAction(m_cfg->execAfters, move(fn), priority);
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::afterExec(function<ActionFn> fn) && {
-    return move(afterExec(fn));
+Cli && Cli::afterExec(function<ActionFn> fn, int priority) && {
+    return move(afterExec(move(fn), priority));
 }
 
 
@@ -2332,7 +2332,7 @@ static bool parse(Cli & cli, vector<string> & args) {
 #endif
         // Before actions
         for (auto && fn : cfg.befores) {
-            fn(cli, args);
+            fn.first(cli, args);
             if (cli.parseAborted())
                 return false;
             if (args.empty())
@@ -2640,16 +2640,19 @@ bool Cli::exec() {
     } else {
         fail(kExitOk, {});
         for (auto&& fn : m_cfg->execBefores) {
-            fn(*this);
-            if (exitCode() || parseAborted())
+            fn.first(*this);
+            if (exitCode() || parseAborted()) {
+                // When a before exec fails, following before execs and the
+                // action itself are skipped.
                 goto AFTERS;
+            }
         }
         cmdFn(*this);
     }
 
 AFTERS:
     for (auto&& fn : m_cfg->execAfters)
-        fn(*this);
+        fn.first(*this);
     return !parseAborted();
 }
 
