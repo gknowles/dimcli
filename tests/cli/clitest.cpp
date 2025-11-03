@@ -609,6 +609,7 @@ void parseTests() {
         args = { arg0, arg1 };
         rc = cli.parse(args);
         EXPECT(rc);
+        EXPECT(cli.rawArgs() == args);
     }
 
     cli = {};

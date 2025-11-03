@@ -91,12 +91,15 @@ miscellaneous state. Returns true if processing should continue.
 | cli.<<guide.adoc#basic-usage, exitCode>>
 | EX_OK (0), EX_USAGE, or any value set by user defined actions.
 
-| cli.<<guide.adoc#flag-options, progName>>
-| Program name received in argv[0]
-
 | cli.<<guide.adoc#exec-actions, parseAborted>>
 | Returns whether cli.badUsage() or cli.parseExit() was called while processing
 cli.parse() or cli.exec().
+
+| cli.<<guide.adoc#flag-options, progName>>
+| Program name received in argv[0]
+
+| cli.rawArgs
+| The unprocessed args that were initially passed to cli.parse().
 
 2+h| Helpers
 

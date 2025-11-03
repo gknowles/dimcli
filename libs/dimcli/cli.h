@@ -625,6 +625,9 @@ public:
     // empty.
     const std::string & errDetail() const;
 
+    // The unprocessed args that were initially passed to cli.parse().
+    const std::vector<std::string> & rawArgs() const;
+
     // Program name received in argv[0]
     const std::string & progName() const;
 

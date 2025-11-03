@@ -186,6 +186,7 @@ struct Cli::Config {
     int exitCode = kExitOk;
     string errMsg;
     string errDetail;
+    vector<string> rawArgs;
     string progName;
     string command;
     vector<string> unknownArgs;
@@ -2304,6 +2305,7 @@ static bool parse(Cli & cli, vector<string> & args) {
     Cli::OptIndex ndx;
     ndx.index(cli, "", false);
     auto & cfg = Cli::Config::get(cli);
+    cfg.rawArgs = args;
 
     if (commandRequired(cfg) && !ndx.m_allowCommands) {
         // Command processing requires that the command be unambiguously
@@ -2437,6 +2439,7 @@ Cli & Cli::resetValues() & {
     m_cfg->exitCode = kExitOk;
     m_cfg->errMsg.clear();
     m_cfg->errDetail.clear();
+    m_cfg->rawArgs.clear();
     m_cfg->progName.clear();
     m_cfg->command.clear();
     m_cfg->unknownArgs.clear();
@@ -2602,6 +2605,11 @@ const string & Cli::errMsg() const {
 //===========================================================================
 const string & Cli::errDetail() const {
     return m_cfg->errDetail;
+}
+
+//===========================================================================
+const vector<string> & Cli::rawArgs() const {
+    return m_cfg->rawArgs;
 }
 
 //===========================================================================
