@@ -1417,9 +1417,9 @@ Level 2 selected.</code></pre>
 <div class="sect2">
 <h3 id="before-actions">Before Actions</h3>
 <div class="paragraph">
-<p>It&#8217;s unusual to want a before action. They operate on the entire argument
-list, after environment variable and response file expansion, but before any
-individual arguments are parsed. The before action should:</p>
+<p>Before actions operate on the entire argument list, after environment variable
+and response file expansion, but before any individual arguments are parsed.
+The before action should:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1437,8 +1437,8 @@ in arg0 when you&#8217;re done.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>There can be any number of before actions, they are executed in the order
-they are added.</p>
+<p>There can be any number of before actions, they are called in order of priority
+(largest first) with the order added as the tie breaker.</p>
 </div>
 <div class="paragraph">
 <p>Let&#8217;s test for empty command lines and add "--help" to them. But first, our
@@ -1604,8 +1604,8 @@ std::function compatible object that accepts references to cli, opt, and
 string as parameters and returns bool.</p>
 </div>
 <div class="paragraph">
-<p>An option can have any number of check actions and they are called in the
-order they were added.</p>
+<p>An option can have any number of check actions and they are called in order
+of priority (largest first) with the order added as the tie breaker.</p>
 </div>
 <div class="paragraph">
 <p>The function should:</p>
@@ -1674,10 +1674,10 @@ $ a.out --socks 3
 <div class="paragraph">
 <p>After actions run after all arguments have been parsed. For example,
 opt.prompt() and opt.require() are both implemented as after actions. Any
-number of after actions can be added and will, for every (not just the
-ones referenced by the command line!) registered option, be called in the
-order they&#8217;re added. They are called with the three parameters, like other
-option actions, that are references to cli, opt, and the value string
+number of after actions can be added and will, for every (not just the ones
+referenced by the command line!) registered option, be called. These calls are
+in order of priority and appearance. Like other option actions they are called
+with the three parameters that are references to cli, opt, and the value string
 respectively. However the value string is always empty(), so any information
 about the value must come from the opt reference.</p>
 </div>
