@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
 - Added - cli.success() and cli.fail() overloads with just the exit code
-- Added - cli.parse() const overloads for vector and argv
+- Added - cli.parse() overloads for const vector and const argv
 - Added - Priority parameter when adding actions
 - Added - cli.rawArgs() to inspect the initial unprocessed args
 
