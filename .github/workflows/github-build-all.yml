@@ -51,6 +51,7 @@ jobs:
         set generator=Visual Studio 16 2019
         if "${{matrix.toolset}}" == "v142" set generator=Visual Studio 17 2022
         if "${{matrix.toolset}}" == "v143" set generator=Visual Studio 17 2022
+        if "${{matrix.toolset}}" == "v145" set generator=Visual Studio 18 2026
         cmake .. -G "%generator%" -A ${{matrix.platform}}^
           -T ${{matrix.toolset}}
         cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}}^
