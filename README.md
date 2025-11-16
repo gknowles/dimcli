@@ -135,27 +135,27 @@ c:\dimcli on a windows machine):
   - open dimcli\build\dimcli.sln
 
 ## Random Thoughts
-Why not a single header file?
+### Why not a single header file?
 
 - On large projects with many binaries (tests, utilities, etc) it's good for
   compile times to move as much stuff out of the headers as you easily can.
 - Inflicting <Windows.h> (and to a much lesser extent <termios.h> & <unistd.h>)
   on all clients seems a bridge too far.
 
-Sources of inspiration:
+### Sources of inspiration:
 
 - LLVM CommandLine module
 - click - Python command line interface creation kit
 - My own bad experiences
 
-Things that were harder than expected:
+### Things that were harder than expected:
 
 - Parsing command lines with bash style quoting
 - Response files - because of the need to transcode UTF-16 on Windows
 - Password prompting - there's no standard way to disable console echo :(
 - Build system - you can do a lot with CMake, but it's not always easy
 
-Build hosting services:
+### Build hosting services:
 
 Now almost a decade later I can say that the automated testing enabled by build
 hosting services is wonderful. But they have also been the biggest ongoing
@@ -165,7 +165,7 @@ to AppVeyor to GitHub Workflow to Circle CI, where the changes are all because
 of a lack of support, performance, or dropping support. Perhaps it's different
 with the paid tiers, but they don't make sense for a small volunteer project.
 
-Other interesting C++ command line parsers:
+### Other interesting C++ command line parsers:
 
 - [program_options](http://www.boost.org/doc/libs/release/libs/program_options/)
   \- from boost
