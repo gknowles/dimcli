@@ -10,10 +10,10 @@
 name: build-coverage
 
 on:
-  push:
-    branches: [ master, dev ]
-  pull_request:
-    branches: [ master, dev ]
+#  push:
+#    branches: [ master, dev ]
+#  pull_request:
+#    branches: [ master, dev ]
   workflow_dispatch: {}
 
 jobs:
