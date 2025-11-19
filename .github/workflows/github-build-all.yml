@@ -10,10 +10,10 @@
 name: build-all
 
 on:
-#  push:
-#    branches: [ master, dev ]
-#  pull_request:
-#    branches: [ master, dev ]
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
   workflow_dispatch: {}
 
 jobs:
@@ -23,10 +23,8 @@ jobs:
       matrix:
         platform: [Win32, x64]
         configuration: [Debug, Release]
-        toolset: [v140, v141, v142, v143]
+        toolset: [v141, v142, v143]
         include:
-          - toolset: v140
-            image: windows-2019
           - toolset: v141
             image: windows-2019
           - toolset: v142
@@ -85,10 +83,6 @@ jobs:
           - CXX=g++-13 CC=gcc-13
           - CXX=g++-14 CC=gcc-14
         include:
-          - env: CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON
-            image: ubuntu-22.04
-            configuration: Debug
-            coverage: true
           - env: CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
             image: ubuntu-22.04
           - env: CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
