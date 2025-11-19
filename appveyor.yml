@@ -9,15 +9,6 @@ environment:
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
-    - TOOLSET: v141
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      GENERATOR: Visual Studio 16 2019
-    - TOOLSET: v142
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-      GENERATOR: Visual Studio 17 2022
-    - TOOLSET: v143
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-      GENERATOR: Visual Studio 17 2022
 
     - CXX: clang++-6.0
       CC: clang-6.0
