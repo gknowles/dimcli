@@ -23,10 +23,8 @@ jobs:
       matrix:
         platform: [Win32, x64]
         configuration: [Debug, Release]
-        toolset: [v141, v142, v143]
+        toolset: [v142, v143]
         include:
-          - toolset: v141
-            image: windows-2019
           - toolset: v142
             image: windows-2025
           - toolset: v143
@@ -76,7 +74,6 @@ jobs:
           - CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
           - CXX=clang++-19 CC=clang-19 INSTALL_LLVM=19
           - CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
-          - CXX=g++-9 CC=gcc-9
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11
           - CXX=g++-12 CC=gcc-12
@@ -99,8 +96,6 @@ jobs:
             image: ubuntu-24.04
           - env: CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
             image: ubuntu-24.04
-          - env: CXX=g++-9 CC=gcc-9
-            image: ubuntu-22.04
           - env: CXX=g++-10 CC=gcc-10
             image: ubuntu-22.04
           - env: CXX=g++-11 CC=gcc-11
