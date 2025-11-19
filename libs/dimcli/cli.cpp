@@ -4295,6 +4295,7 @@ unsigned Cli::consoleWidth(bool /* queryWidth */) {
 
 #pragma pack(push)
 #pragma pack()
+#define _WIN32_WINNT _WIN32_WINNT_WIN2K
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define UNICODE
