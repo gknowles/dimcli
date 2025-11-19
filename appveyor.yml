@@ -6,31 +6,6 @@
 version: "{build}"
 environment:
   matrix:
-    - CXX: g++-7
-      CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      BUILD_COVERAGE: ON
-    - CXX: clang++-6.0
-      CC: clang-6.0
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      INSTALL_COMPILER: ON
-    - CXX: clang++-10
-      CC: clang-10
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: clang++-11
-      CC: clang-11
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: g++-7
-      CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: g++-10
-      CC: gcc-10
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      INSTALL_COMPILER: ON
-    - CXX: g++-11
-      CC: gcc-11
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      INSTALL_COMPILER: ON
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
@@ -43,6 +18,29 @@ environment:
     - TOOLSET: v143
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       GENERATOR: Visual Studio 17 2022
+
+    - CXX: clang++-6.0
+      CC: clang-6.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - CXX: clang++-10
+      CC: clang-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: clang++-11
+      CC: clang-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: g++-10
+      CC: gcc-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
+    - CXX: g++-11
+      CC: gcc-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      INSTALL_COMPILER: ON
 matrix:
   exclude:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -72,6 +70,7 @@ for:
           -DCMAKE_INSTALL_PREFIX=publish
           -DINSTALL_LIBS:BOOL=ON
       - cmake --build . --target install --config %CONFIGURATION%
+      - cd ..
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -83,7 +82,6 @@ for:
                 sudo apt-get install -y ${CC} ${CXX}
             fi
     build_script:
-      - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
       - cmake --build . --config ${CONFIGURATION}
