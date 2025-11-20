@@ -23,8 +23,8 @@ environment:
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE: gcc-8
-      UNINSTALL_BEFORE: gcc-9
+      INSTALL_BEFORE:
+      UNINSTALL_BEFORE: cpp-9 gcc-9
 #    - CXX: clang++-8
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
@@ -33,7 +33,7 @@ environment:
       CC: clang-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
-      UNINSTALL_BEFORE: gcc-11
+      UNINSTALL_BEFORE: cpp-11 gcc-11
 #    - CXX: clang++-10
 #      CC: clang-10
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -118,4 +118,4 @@ for:
             fi
 
 test_script:
-  - '"bin/cli" --test'
+  - '"bin/cli" --test --verbose'
