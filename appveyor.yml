@@ -44,15 +44,15 @@ environment:
 #      CC: clang-12
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
 
-    - CXX: g++-7
-      CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-    - CXX: g++-8
-      CC: gcc-8
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-    - CXX: g++-9
-      CC: gcc-9
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+#    - CXX: g++-7
+#      CC: gcc-7
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#    - CXX: g++-8
+#      CC: gcc-8
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+#    - CXX: g++-9
+#      CC: gcc-9
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
 matrix:
   exclude:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
@@ -99,7 +99,7 @@ for:
       - sh: |
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get update
-                apt list --installed
+                dpkg -S /usr/include/c++/9/memory
                 sudo apt-get remove -y ${UNINSTALL_BEFORE}
                 sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
             fi
