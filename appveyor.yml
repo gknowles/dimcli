@@ -23,8 +23,8 @@ environment:
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE: libstdc++-8-dev
-      UNINSTALL_BEFORE: libstdc++-9-dev
+      INSTALL_BEFORE: libc++-7-dev
+      CXXFLAGS: -stdlib=libc++
 #    - CXX: clang++-8
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
@@ -33,8 +33,8 @@ environment:
       CC: clang-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE: libstdc++-8-dev
-      UNINSTALL_BEFORE: libstdc++-11-dev
+      INSTALL_BEFORE: libc++-9-dev
+      CXXFLAGS: -stdlib=libc++
 #    - CXX: clang++-10
 #      CC: clang-10
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
@@ -100,7 +100,6 @@ for:
       - sh: |
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get update
-                dpkg -S /usr/include/c++/9/memory
                 sudo apt-get remove -y ${UNINSTALL_BEFORE}
                 sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
             fi
