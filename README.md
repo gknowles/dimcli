@@ -9,7 +9,7 @@ Distributed under the Boost Software License, Version 1.0.
 | :----: | :---------------------------------------: | :-------------: |
 | master | [![Build Status][cir-image-master]][cir-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
 
-| Branch | MSVC 2015&#8209;2017 <br> CLANG 6&#8209;12 <br> GCC 7&#8209;9 | MSVC 2019&#8209;2022 <br> CLANG 13&#8209;20 <br> GCC 10&#8209;14 | Test Coverage |
+| Branch | MSVC 2015&#8209;2017 <br> CLANG 6&#8209;12 <br> GCC 7&#8209;9 | MSVC 2019&#8209;2022 <br> CLANG 13&#8209;21 <br> GCC 10&#8209;14 | Test Coverage |
 | :----: | :-----------------------------------: | :--------------------------------------: | :-----------: |
 | dev    | [![Build Status][av-image-dev]][av-link-dev] | [![Build Status][gh-image-dev]][gh-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
 
@@ -20,7 +20,7 @@ Distributed under the Boost Software License, Version 1.0.
 
 [av-image-dev]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/dev?svg=true "AppVeyor"
 [av-link-dev]: https://ci.appveyor.com/project/gknowles/dimcli/branch/dev
-[gh-image-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg "GitHub"
+[gh-image-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Adev "GitHub"
 [gh-link-dev]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Adev
 [cc-image-dev]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
 [cc-link-dev]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev

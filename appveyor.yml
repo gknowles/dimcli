@@ -109,8 +109,6 @@ for:
                 sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
             fi
     build_script:
-      - locale -a
-      - export LANG=en_US.utf8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
       - cmake --build . --config ${CONFIGURATION}
@@ -122,4 +120,4 @@ for:
             fi
 
 test_script:
-  - '"bin/cli" --test --verbose --locale=en_US.utf8'
+  - '"bin/cli" --test --locale=en_US.utf8'
