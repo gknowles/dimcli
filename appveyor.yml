@@ -23,6 +23,7 @@ environment:
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       INSTALL_COMPILER: ON
+      INSTALL_BEFORE: g++-8
 #    - CXX: clang++-8
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
@@ -40,10 +41,10 @@ environment:
 #    - CXX: clang++-12
 #      CC: clang-12
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-#
-#    - CXX: g++-7
-#      CC: gcc-7
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
 #    - CXX: g++-8
 #      CC: gcc-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -100,7 +101,7 @@ for:
       - sh: |
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get update
-                sudo apt-get install -y ${CC} ${CXX}
+                sudo apt-get install -y ${INSTALL_BEFORE} ${CC} ${CXX}
             fi
     build_script:
       - mkdir -p build && cd build
