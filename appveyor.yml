@@ -34,15 +34,15 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
       UNINSTALL_BEFORE: cpp-11 gcc-11
-#    - CXX: clang++-10
-#      CC: clang-10
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-#    - CXX: clang++-11
-#      CC: clang-11
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-#    - CXX: clang++-12
-#      CC: clang-12
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - CXX: clang++-10
+      CC: clang-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-11
+      CC: clang-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-12
+      CC: clang-12
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
 
     - CXX: g++-7
       CC: gcc-7
@@ -107,6 +107,7 @@ for:
                 sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
             fi
     build_script:
+      - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
       - cmake --build . --config ${CONFIGURATION}
