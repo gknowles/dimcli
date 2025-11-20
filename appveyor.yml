@@ -15,15 +15,15 @@ environment:
 #      GENERATOR: Visual Studio 16 2019
 #      WINDOWS_SDK: 10.0.19041.0
 
-    - CXX: clang++-6.0
-      CC: clang-6.0
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
-      INSTALL_COMPILER: ON
+#    - CXX: clang++-6.0
+#      CC: clang-6.0
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+#      INSTALL_COMPILER: ON
     - CXX: clang++-7
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE: libstdc++-7-dev
+      INSTALL_BEFORE: libstdc++-8-dev
       UNINSTALL_BEFORE: libstdc++-9-dev
 #    - CXX: clang++-8
 #      CC: clang-8
@@ -33,7 +33,7 @@ environment:
       CC: clang-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE: libstdc++-7-dev
+      INSTALL_BEFORE: libstdc++-8-dev
       UNINSTALL_BEFORE: libstdc++-11-dev
 #    - CXX: clang++-10
 #      CC: clang-10
