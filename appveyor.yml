@@ -23,8 +23,8 @@ environment:
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE:
-      UNINSTALL_BEFORE: cpp-9 gcc-9
+      INSTALL_BEFORE: libstdc++-7-dev
+      UNINSTALL_BEFORE: libstdc++-9-dev
 #    - CXX: clang++-8
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
@@ -33,7 +33,8 @@ environment:
       CC: clang-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
-      UNINSTALL_BEFORE: cpp-11 gcc-11
+      INSTALL_BEFORE: libstdc++-7-dev
+      UNINSTALL_BEFORE: libstdc++-11-dev
 #    - CXX: clang++-10
 #      CC: clang-10
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
