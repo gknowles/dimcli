@@ -167,9 +167,10 @@ Now almost a decade later I can say that the automated testing enabled by build
 hosting services is wonderful. But they have also been the biggest ongoing
 annoyance, pain, and frustration. All stemming from the desire to test under a
 wide range of compilers and not just the newest ones. It's gone from Travis CI
-to AppVeyor to GitHub Workflow to Circle CI, where the changes are all because
-of a lack of support, performance, or dropping support. Perhaps it's different
-with the paid tiers, but they don't make sense for a small volunteer project.
+to AppVeyor to GitHub Workflow to Circle CI to a mix, where the changes are all
+because of a lack of support, performance, or dropping support. Perhaps it's
+different with the paid tiers, but they don't make sense for a small volunteer
+project.
 
 ### Other interesting C++ command line parsers:
 
