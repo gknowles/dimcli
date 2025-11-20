@@ -23,8 +23,8 @@ environment:
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       INSTALL_COMPILER: ON
-      INSTALL_BEFORE: g++-8
-      UNINSTALL_BEFORE: g++-9
+      INSTALL_BEFORE: gcc-8
+      UNINSTALL_BEFORE: gcc-9
 #    - CXX: clang++-8
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
@@ -33,6 +33,7 @@ environment:
       CC: clang-9
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
+      UNINSTALL_BEFORE: gcc-11
 #    - CXX: clang++-10
 #      CC: clang-10
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -103,7 +104,7 @@ for:
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get update
                 sudo apt-get remove -y ${UNINSTALL_BEFORE}
-                sudo apt-get install -y ${INSTALL_BEFORE} ${CC} ${CXX}
+                sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
             fi
     build_script:
       - mkdir -p build && cd build
