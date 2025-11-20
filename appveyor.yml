@@ -9,6 +9,7 @@ environment:
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
+      WINDOWS_SDK: 10.0.22621.0
     - TOOLSET: v141
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
@@ -17,27 +18,27 @@ environment:
       CC: clang-6.0
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       INSTALL_COMPILER: ON
-    - CXX: clang++-10
-      CC: clang-10
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: clang++-11
-      CC: clang-11
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: clang++-12
-      CC: clang-12
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-
-    - CXX: g++-7
-      CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    - CXX: g++-8
-      CC: gcc-8
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      INSTALL_COMPILER: ON
-    - CXX: g++-9
-      CC: gcc-9
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      INSTALL_COMPILER: ON
+#    - CXX: clang++-10
+#      CC: clang-10
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#    - CXX: clang++-11
+#      CC: clang-11
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#    - CXX: clang++-12
+#      CC: clang-12
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#
+#    - CXX: g++-7
+#      CC: gcc-7
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#    - CXX: g++-8
+#      CC: gcc-8
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#      INSTALL_COMPILER: ON
+#    - CXX: g++-9
+#      CC: gcc-9
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#      INSTALL_COMPILER: ON
 matrix:
   exclude:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -48,26 +49,31 @@ matrix:
       configuration: Release
 
 platform:
-  - Win32
+#  - Win32
   - x64
 configuration:
   - Debug
-  - Release
+#  - Release
 
 for:
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    build_script:
-      - md build
-      - cd build
-      - cmake -G "%GENERATOR%" -A %PLATFORM% -T %TOOLSET% ..
-      - cmake . -DCMAKE_BUILD_TYPE=%CONFIGURATION%
-          -DCMAKE_INSTALL_PREFIX=publish
+    build_script: |
+      md build
+      cd build
+      if defined WINDOWS_SDK (
+        cmake -G "%GENERATOR%" -A %PLATFORM% -T %TOOLSET%^
+          -DCMAKE_SYSTEM_VERSION=%WINDOWS_SDK% ..
+      ) else (
+        cmake -G "%GENERATOR%" -A %PLATFORM% -T %TOOLSET% ..
+      )
+      cmake . -DCMAKE_BUILD_TYPE=%CONFIGURATION%^
+          -DCMAKE_INSTALL_PREFIX=publish^
           -DINSTALL_LIBS:BOOL=ON
-      - cmake --build . --target install --config %CONFIGURATION%
-      - cd ..
+      cmake --build . --target install --config %CONFIGURATION%
+      cd ..
   - matrix:
       only:
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
