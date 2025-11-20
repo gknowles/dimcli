@@ -9,7 +9,7 @@ Distributed under the Boost Software License, Version 1.0.
 | :----: | :---------------------------------------: | :-------------: |
 | master | [![Build Status][cir-image-master]][cir-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
 
-| Branch | MSVC 2015-2017 / CLANG 6-12 / GCC 7-9 | MSVC 2019-2022 / CLANG 13-20 / GCC 10-14 | Test Coverage |
+| Branch | MSVC 2015&#8209;2017 / CLANG 6&#8209;12 / GCC 7&#8209;9 | MSVC 2019&#8209;2022 / CLANG 13&#8209;20 / GCC 10&#8209;14 | Test Coverage |
 | :----: | :-----------------------------------: | :--------------------------------------: | :-----------: |
 | dev    | [![Build Status][av-image-dev]][av-link-dev] | [![Build Status][gh-image-dev]][gh-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
 
