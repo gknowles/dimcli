@@ -44,7 +44,7 @@ environment:
 
     - CXX: g++-7
       CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
 #    - CXX: g++-8
 #      CC: gcc-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -69,11 +69,11 @@ matrix:
       configuration: Release
 
 platform:
-#  - Win32
+  - Win32
   - x64
 configuration:
   - Debug
-#  - Release
+  - Release
 
 for:
   - matrix:
