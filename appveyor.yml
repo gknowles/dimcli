@@ -47,18 +47,12 @@ environment:
     - CXX: g++-7
       CC: gcc-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-#    - CXX: g++-8
-#      CC: gcc-8
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-#      INSTALL_COMPILER: ON
-#    - CXX: g++-9
-#      CC: gcc-9
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
-#      INSTALL_COMPILER: ON
-#    - CXX: g++-10
-#      CC: gcc-10
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
-#      INSTALL_COMPILER: ON
+    - CXX: g++-8
+      CC: gcc-8
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+    - CXX: g++-9
+      CC: gcc-9
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
 matrix:
   exclude:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
