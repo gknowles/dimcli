@@ -27,6 +27,7 @@ const char kCommand[] = "test";
 
 static int s_errors;
 static bool s_verbose;
+static string s_locale;
 
 
 /****************************************************************************
@@ -2422,12 +2423,12 @@ void unitsTests() {
 #if defined(_MSC_VER) && _MSC_VER <= 1900
     // Don't directly construct locale("en_US") in MSVC 2015 because of a bug
     // in the locale implementation that may cause it to hang in debug builds.
-    setlocale(LC_ALL, "en_US");
+    setlocale(LC_ALL, s_locale.c_str());
     EXPECT(true);
     locale loc("");
     EXPECT(true);
 #else
-    locale loc("en_US");
+    locale loc(s_locale.c_str());
     EXPECT(true);
 #endif
 
@@ -2921,6 +2922,7 @@ int main(int argc, char * argv[]) {
     auto & test = cli.opt<bool>("test.").desc("Run tests.");
     auto & prompt = cli.opt<bool>("prompt.").desc("Run tests with prompting.");
     cli.opt(&s_verbose, "verbose.").desc("Display progress through tests.");
+    cli.opt(&s_locale, "locale", "en_US").desc("Locale to use in tests.");
     auto & echo = cli.optVec<string>("?e")
         .desc("List arguments from the command line.")
         .valueDesc("ANY...")

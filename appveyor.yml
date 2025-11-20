@@ -110,7 +110,7 @@ for:
             fi
     build_script:
       - locale -a
-      - export LANG=en_US.UTF-8
+      - export LANG=en_US.utf8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
       - cmake --build . --config ${CONFIGURATION}
@@ -122,4 +122,4 @@ for:
             fi
 
 test_script:
-  - '"bin/cli" --test --verbose'
+  - '"bin/cli" --test --verbose --locale=en_US.utf8'
