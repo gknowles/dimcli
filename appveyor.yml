@@ -9,11 +9,11 @@ environment:
     - TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
-      WINDOWS_SDK: 10.0.19041.0
+      WINDOWS_SDK: 8.1
     - TOOLSET: v141
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       GENERATOR: Visual Studio 16 2019
-      WINDOWS_SDK: 10.0.22000.1
+      WINDOWS_SDK: 10.0.19041.0
 
     - CXX: clang++-6.0
       CC: clang-6.0
@@ -27,11 +27,10 @@ environment:
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
 #      INSTALL_COMPILER: ON
-#    - CXX: clang++-9
-#      CC: clang-9
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-#      INSTALL_COMPILER: ON
-
+    - CXX: clang++-9
+      CC: clang-9
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      INSTALL_COMPILER: ON
 #    - CXX: clang++-10
 #      CC: clang-10
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
