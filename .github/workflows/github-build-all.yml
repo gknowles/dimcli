@@ -74,7 +74,7 @@ jobs:
           - CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
           - CXX=clang++-19 CC=clang-19 INSTALL_LLVM=19
           - CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
-          - CXX=clang++-21 CC=clang-21 INSTALL_LLVM=20
+          - CXX=clang++-21 CC=clang-21 INSTALL_LLVM=21
           - CXX=g++-10 CC=gcc-10
           - CXX=g++-11 CC=gcc-11
           - CXX=g++-12 CC=gcc-12
