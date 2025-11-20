@@ -34,26 +34,33 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       INSTALL_COMPILER: ON
       UNINSTALL_BEFORE: cpp-11 gcc-11
-    - CXX: clang++-10
-      CC: clang-10
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-    - CXX: clang++-11
-      CC: clang-11
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-    - CXX: clang++-12
-      CC: clang-12
+#    - CXX: clang++-10
+#      CC: clang-10
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+#    - CXX: clang++-11
+#      CC: clang-11
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+#    - CXX: clang++-12
+#      CC: clang-12
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-13
+      CC: clang-13
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
 
     - CXX: g++-7
       CC: gcc-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
 #    - CXX: g++-8
 #      CC: gcc-8
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
 #      INSTALL_COMPILER: ON
 #    - CXX: g++-9
 #      CC: gcc-9
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+#      INSTALL_COMPILER: ON
+    - CXX: g++-10
+      CC: gcc-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
 #      INSTALL_COMPILER: ON
 matrix:
   exclude:
