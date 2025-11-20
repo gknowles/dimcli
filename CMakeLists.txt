@@ -248,7 +248,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2c")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10")
         # The libstdc++6 library, as of 2021-06-15, no longer works with
         # Clang++-6 in c++2a mode, failing with a reference to the unknown
         # std::is_constant_evaluated().
