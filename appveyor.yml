@@ -21,13 +21,13 @@ environment:
       INSTALL_COMPILER: ON
     - CXX: clang++-7
       CC: clang-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
       INSTALL_COMPILER: ON
       INSTALL_BEFORE:
       UNINSTALL_BEFORE: cpp-9 gcc-9
 #    - CXX: clang++-8
 #      CC: clang-8
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
 #      INSTALL_COMPILER: ON
     - CXX: clang++-9
       CC: clang-9
@@ -114,6 +114,7 @@ for:
                 sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
             fi
     build_script:
+      - locale -a
       - export LANG=en_US.UTF-8
       - mkdir -p build && cd build
       - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
