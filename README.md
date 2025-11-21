@@ -5,16 +5,15 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| Branch | MSVC 2015-2022 / CLANG 7-20 / GCC 7-15    | Test Coverage   |
-| :----: | :---------------------------------------: | :-------------: |
-| master | [![Build Status][cir-image-master]][cir-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
-
 | Branch | MSVC 2015&#8209;2017 <br> CLANG 6, 10&#8209;12 <br> GCC 7&#8209;9 | MSVC 2019&#8209;2022 <br> CLANG 13&#8209;21 <br> GCC 10&#8209;14 | Test Coverage |
 | :----: | :-----------------------------------: | :--------------------------------------: | :-----------: |
+| master | [![Build Status][av-image-master]][av-link-master] | [![Build Status][gh-image-master]][gh-link-master] | [![Coverage][cc-image-master]][cc-link-master] |
 | dev    | [![Build Status][av-image-dev]][av-link-dev] | [![Build Status][gh-image-dev]][gh-link-dev] | [![Coverage][cc-image-dev]][cc-link-dev] |
 
-[cir-image-master]: https://dl.circleci.com/status-badge/img/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/master.svg?style=shield "CircleCI"
-[cir-link-master]: https://dl.circleci.com/status-badge/redirect/circleci/MLx4BgzsXTx5iSKy2ZwHpt/WUtiRhsf6NEWyoscrtp47G/tree/master
+[av-image-master]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
+[av-link-master]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
+[gh-image-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Amaster "GitHub"
+[gh-link-master]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Amaster
 [cc-image-master]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
 [cc-link-master]: https://app.codecov.io/gh/gknowles/dimcli/tree/master
 
