@@ -107,10 +107,10 @@ enum NameFlags {
     fNameFinal     = 0x40, // is a final option, rest of args are now operands
 };
 struct OptName {
-    Cli::OptBase * opt;
-    unsigned flags;
+    Cli::OptBase * opt = {};
+    unsigned flags = {};
     string name;    // name of argument (only for operands)
-    int pos;        // used to sort option names in declaration order
+    int pos = {};   // used to sort option names in declaration order
 };
 
 struct OptKey {
@@ -2415,8 +2415,7 @@ bool Cli::parse(vector<string> && args) {
 
 //===========================================================================
 bool Cli::parse(size_t argc, char * argv[]) {
-    auto args = toArgv(argc, argv);
-    return parse(move(args));
+    return parse(argc, const_cast<const char **>(argv));
 }
 
 //===========================================================================
