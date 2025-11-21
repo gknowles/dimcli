@@ -6,52 +6,39 @@
 version: "{build}"
 environment:
   matrix:
-#    - TOOLSET: v140
-#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-#      GENERATOR: Visual Studio 16 2019
-#      WINDOWS_SDK: 8.1
-#    - TOOLSET: v141
-#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-#      GENERATOR: Visual Studio 16 2019
-#      WINDOWS_SDK: 10.0.19041.0
+    - TOOLSET: v140
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+      WINDOWS_SDK: 8.1
+    - TOOLSET: v141
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+      WINDOWS_SDK: 10.0.19041.0
 
-#    - CXX: clang++-6.0
-#      CC: clang-6.0
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
-#      INSTALL_COMPILER: ON
-    - CXX: clang++-7
-      CC: clang-7
-      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+    - CXX: clang++-6.0
+      CC: clang-6.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
       INSTALL_COMPILER: ON
-      CFLAGS: -stdlib=libc++
-      LDFLAGS: -lc++abi
-#    - CXX: clang++-8
-#      CC: clang-8
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-#      INSTALL_COMPILER: ON
-    - CXX: clang++-9
-      CC: clang-9
+
+    - CXX: clang++-10
+      CC: clang-10
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      INSTALL_COMPILER: ON
-#    - CXX: clang++-10
-#      CC: clang-10
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-#    - CXX: clang++-11
-#      CC: clang-11
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-#    - CXX: clang++-12
-#      CC: clang-12
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-11
+      CC: clang-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-12
+      CC: clang-12
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
 
-#    - CXX: g++-7
-#      CC: gcc-7
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-#    - CXX: g++-8
-#      CC: gcc-8
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-#    - CXX: g++-9
-#      CC: gcc-9
-#      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+    - CXX: g++-8
+      CC: gcc-8
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+    - CXX: g++-9
+      CC: gcc-9
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
 matrix:
   exclude:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
@@ -70,7 +57,7 @@ platform:
   - x64
 configuration:
   - Debug
-#  - Release
+  - Release
 
 for:
   - matrix:
@@ -113,4 +100,4 @@ for:
             fi
 
 test_script:
-  - '"bin/cli" --test --verbose --locale=en_US.utf8'
+  - '"bin/cli" --test --locale=en_US.utf8'

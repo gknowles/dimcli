@@ -2918,6 +2918,7 @@ int main(int argc, char * argv[]) {
 
     Dim::CliLocal cli;
     cli.helpNoArgs();
+    cli.envOpts("CLIOPTS");
     cli.footer("On parsing failures, lists arguments from command line.");
     auto & test = cli.opt<bool>("test.").desc("Run tests.");
     auto & prompt = cli.opt<bool>("prompt.").desc("Run tests with prompting.");
