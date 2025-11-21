@@ -23,6 +23,8 @@ environment:
       CC: clang-7
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
       INSTALL_COMPILER: ON
+      CFLAGS: -stdlib=libc++
+      LDFLAGS: -lc++abi
 #    - CXX: clang++-8
 #      CC: clang-8
 #      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
