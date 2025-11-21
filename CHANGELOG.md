@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unreleased
+
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
 - Added - cli.parse() overloads for const vector and const argv
