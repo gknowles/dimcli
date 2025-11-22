@@ -20,7 +20,7 @@ Distributed under the Boost Software License, Version 1.0.
 8. Verify copyright dates are current.
     - cmtupd -u
     - Commit updated files
-9. Push to github.
+9. Push to github with description of "Update version to X.Y.Z"
 10. Wait for CI to succeed.
 11. Merge to master.
     1. git fetch origin master    # Fetch any possible changes from master.
