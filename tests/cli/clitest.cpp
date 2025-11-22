@@ -1862,7 +1862,7 @@ void responseTests(const string & rawProgName) {
     int line = 0;
     CliTest cli;
 
-    auto progName = fs::path(rawProgName).parent_path();
+    auto progName = fs::path(rawProgName);
     auto dir = progName.parent_path();
     error_code ec;
     if (!dir.empty()) {
