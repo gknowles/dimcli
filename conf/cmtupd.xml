@@ -46,6 +46,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/cmtupd
       <File regex=".*\.adoc"/>
       <File regex=".*\.md"/>
       <File regex=".*\.natvis"/> <!-- xml -->
+      <File regex=".*\.wiki"/>
       <File regex=".*\.xml"/>
       <File regex=".*\.xml\.sample"/>
       <File regex=".*\.xsd"/>
