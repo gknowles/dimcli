@@ -5,7 +5,7 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| Branch | MSVC 2015&#8209;2017 <br> CLANG 6, 10&#8209;12 <br> GCC 7&#8209;9 | MSVC 2019&#8209;2022 <br> CLANG 13&#8209;21 <br> GCC 10&#8209;14 | Test Coverage |
+| Branch | MSVC 2015-2017<br> CLANG 6, 10-12<br> GCC 7-9 | MSVC 2019-2022<br> CLANG 13-21<br> GCC 10-14 | Test Coverage |
 | :----: | :-----------------------: | :-----------------------: | :-------------------: |
 | master | [![Build Status][11]][12] | [![Build Status][13]][14] | [![Coverage][15]][16] |
 | dev    | [![Build Status][21]][22] | [![Build Status][23]][24] | [![Coverage][25]][26] |
@@ -33,7 +33,7 @@ C++ command line parser toolkit for kids of all ages.
   - Copyable
   - Either assignable or constructible from string, has an istream extraction
     operator, or has a specialization of Cli&#58;:Convert::fromString&lt;T>().
-- Render help text
+- Renders help text and usage errors.
 - Option definitions can be scattered across multiple files.
 - Git style subcommands.
 - Response files (requires `<filesystem>` support).
@@ -165,16 +165,16 @@ c:\dimcli on a windows machine):
 Now almost a decade later I can say that the automated testing enabled by build
 hosting services is wonderful. But they have also been the biggest ongoing
 annoyance, pain, and frustration. All stemming from the desire to test under a
-wide range of compilers and not just the newest ones. It's gone from Travis CI
-to AppVeyor to GitHub Workflow to Circle CI to a mix, where the changes are all
-because of a lack of support, performance, or dropping support. Perhaps it's
-different with the paid tiers, but they don't make sense for a small volunteer
-project.
+wide range of compilers and not just the newest ones. This project has gone
+from Travis CI to AppVeyor to GitHub Workflow to Circle CI to a mix, where the
+changes are all because of a lack of support, performance, or dropping support.
+Perhaps it's different with the paid tiers, but they don't make sense for a
+small volunteer project like this one.
 
 ### Other interesting C++ command line parsers:
 
-- [program_options](http://www.boost.org/doc/libs/release/libs/program_options/)
-  \- from boost
+- [program_options](
+    http://www.boost.org/doc/libs/release/libs/program_options/) - from boost
 - [gflags](https://gflags.github.io/gflags/) - from google
 - [tclap](http://tclap.sourceforge.net) - header only
 - [args](https://github.com/Taywee/args) - single header
