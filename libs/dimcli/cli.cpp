@@ -17,6 +17,7 @@
 #include <cwchar>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <locale>
 #include <sstream>
 
