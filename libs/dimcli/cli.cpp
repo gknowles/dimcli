@@ -12,9 +12,9 @@
 #include "cli.h"
 
 #include <algorithm>
-#include <atomic>
 #include <cstdlib>
 #include <cstring>
+#include <cwchar>
 #include <fstream>
 #include <iostream>
 #include <locale>
@@ -125,11 +125,6 @@ enum NameListType {
     kNameDisable,    // include names that disable
     kNameAll,        // include all names
     kNameNonDefault, // include names that change from the default
-};
-
-struct CodecvtWchar : codecvt<wchar_t, char, mbstate_t> {
-    // public destructor required for use with wstring_convert
-    ~CodecvtWchar() {}
 };
 
 struct ParseState {
@@ -422,9 +417,26 @@ static string trim(const string & val) {
 
 //===========================================================================
 static string intToString(const Cli::Convert & cvt, int val) {
-    string tmp;
-    (void) cvt.toString(tmp, val);
-    return tmp;
+    string out;
+    (void) cvt.toString(out, val);
+    return out;
+}
+
+//===========================================================================
+static bool parseWcsz(string * out, wstring_view src) {
+    out->resize(4 * src.size());
+    auto dst = out->data();
+    mbstate_t state = {};
+    size_t mblen = 0;
+    for (auto&& ch : src) {
+        assert(out->data() + out->size() - dst > MB_CUR_MAX);
+        mblen = wcrtomb(dst, ch, &state);
+        if (mblen == -1)
+            break;
+        dst += mblen;
+    }
+    out->resize(dst - out->data());
+    return mblen != -1;
 }
 
 //===========================================================================
@@ -1785,13 +1797,10 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     if (content.size() < 2)
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
-        wstring_convert<CodecvtWchar> wcvt("");
         auto base = reinterpret_cast<const wchar_t *>(content.data());
-        auto tmp = (string) wcvt.to_bytes(
-            base + 1,
-            base + content.size() / sizeof *base
-        );
-        if (tmp.empty())
+        wstring_view wtmp(base + 1, base + content.size() / sizeof *base);
+        string tmp;
+        if (!parseWcsz(&tmp, wtmp))
             return false;
         content = tmp;
     } else if (content.size() >= 3
@@ -3753,10 +3762,14 @@ vector<string> Cli::toArgv(size_t argc, const char * argv[]) {
 vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
-    wstring_convert<CodecvtWchar> wcvt("BAD_ENCODING");
     for (unsigned i = 0; i < argc && argv[i]; ++i) {
-        auto tmp = (string) wcvt.to_bytes(argv[i]);
-        out.push_back(move(tmp));
+        wstring_view warg(argv[i]);
+        string tmp;
+        if (!parseWcsz(&tmp, warg)) {
+            out.push_back("BAD_ENCODING"s);
+        } else {
+            out.push_back(move(tmp));
+        }
     }
     if (argc != out.size() || argv[argc])
         assert(!"Bad arguments, argc and null terminator don't agree.");
