@@ -129,7 +129,6 @@
 #include <cstddef>
 #include <functional>
 #include <limits>
-#include <list>
 #include <memory>
 #include <sstream>
 #include <string>
