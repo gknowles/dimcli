@@ -21,6 +21,10 @@
 #include <locale>
 #include <sstream>
 
+#ifdef DIMCLI_LIB_BUILD_COVERAGE
+#include <atomic>
+#endif
+
 using namespace std;
 using namespace Dim;
 #ifdef DIMCLI_LIB_FILESYSTEM
