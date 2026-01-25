@@ -89,7 +89,7 @@ void errTest(int line, Dim::Cli & cli, const string & errText) {
     auto tmp = os.str();
     EXPECT(tmp == errText);
     if (tmp != errText)
-        cerr << tmp;
+        cerr << "Found '" << tmp << "', expected '" << errText << "'" << endl;
 }
 
 //===========================================================================
