@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <cuchar>
 #include <cwchar>
 #include <fstream>
 #include <iostream>
@@ -428,19 +429,42 @@ static string intToString(const Cli::Convert & cvt, int val) {
 }
 
 //===========================================================================
-static bool parseWcsz(string * out, wstring_view src) {
-    out->resize(4 * src.size());
+static bool parseStr(string * out, const char16_t * src, size_t len) {
+    out->resize(4 * len + 1);
     auto dst = out->data();
     mbstate_t state = {};
     size_t mblen = 0;
-    for (auto&& ch : src) {
+    for (auto i = 0; i < len; ++i) {
         assert(out->data() + out->size() - dst > MB_CUR_MAX);
-        mblen = wcrtomb(dst, ch, &state);
-        if (mblen == -1)
-            break;
+        mblen = c16rtomb(dst, src[i], &state);
+        if (mblen == -1) {
+            out->resize(dst - out->data());
+            return false;
+        }
         dst += mblen;
     }
-    out->resize(dst - out->data());
+    dst += c16rtomb(dst, 0, &state);
+    out->resize(dst - out->data() - 1);
+    return mblen != -1;
+}
+
+//===========================================================================
+static bool parseStr(string * out, const wchar_t * src, size_t len) {
+    out->resize(4 * len + 1);
+    auto dst = out->data();
+    mbstate_t state = {};
+    size_t mblen = 0;
+    for (auto i = 0; i < len; ++i) {
+        assert(out->data() + out->size() - dst > MB_CUR_MAX);
+        mblen = wcrtomb(dst, src[i], &state);
+        if (mblen == -1) {
+            out->resize(dst - out->data());
+            return false;
+        }
+        dst += mblen;
+    }
+    dst += wcrtomb(dst, 0, &state);
+    out->resize(dst - out->data() - 1);
     return mblen != -1;
 }
 
@@ -1802,10 +1826,9 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     if (content.size() < 2)
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
-        auto base = reinterpret_cast<const wchar_t *>(content.data());
-        wstring_view wtmp(base + 1, base + content.size() / sizeof *base);
+        auto base = reinterpret_cast<const char16_t *>(content.data());
         string tmp;
-        if (!parseWcsz(&tmp, wtmp))
+        if (!parseStr(&tmp, base + 1, content.size() / sizeof *base - 1))
             return false;
         content = tmp;
     } else if (content.size() >= 3
@@ -3770,7 +3793,7 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     for (unsigned i = 0; i < argc && argv[i]; ++i) {
         wstring_view warg(argv[i]);
         string tmp;
-        if (!parseWcsz(&tmp, warg)) {
+        if (!parseStr(&tmp, warg.data(), warg.size())) {
             out.push_back("BAD_ENCODING"s);
         } else {
             out.push_back(move(tmp));
