@@ -38,6 +38,11 @@ static string s_locale;
 
 #define EXPECT(...) \
     failed(bool(__VA_ARGS__), line ? line : __LINE__, #__VA_ARGS__)
+#define EXPECT_EQUAL(a, ...) \
+    equalTest(line ? line : __LINE__, #a, #__VA_ARGS__, a, __VA_ARGS__)
+#define EXPECT_EQUAL_IF(t, a, ...) \
+    bool(t) ? EXPECT_EQUAL(a, __VA_ARGS__) \
+            : failed(bool(t), line ? line : __LINE__, #t);
 #define EXPECT_PARSE(...) parseTest(__LINE__, __VA_ARGS__)
 #define EXPECT_ERR(cli, text) errTest(__LINE__, cli, text)
 #define EXPECT_HELP(cli, cmd, text) helpTest(__LINE__, cli, cmd, text)
@@ -48,7 +53,7 @@ static string s_locale;
 #define EXPECT_ASSERT(text) assertTest(__LINE__, text)
 
 //===========================================================================
-void failed(bool success, int line, const char msg[]) {
+static void failed(bool success, int line, const char msg[]) {
     if (success) {
         if (s_verbose)
             cout << "Line " << line << ": ok" << endl;
@@ -59,7 +64,45 @@ void failed(bool success, int line, const char msg[]) {
 }
 
 //===========================================================================
-void parseTest(
+ostream & operator<<(ostream & os, const vector<string> & vals) {
+    if (!vals.empty()) {
+        auto i = vals.begin();
+        os << *i++;
+        for (; i != vals.end(); ++i)
+            os << ", " << *i;
+    }
+    return os;
+}
+
+//===========================================================================
+template <typename T, typename U>
+static void equalTest(
+    int line,
+    const char msgA[],
+    const char msgB[],
+    const T & a,
+    const U & b
+) {
+    if (a == b) {
+        if (s_verbose)
+            cout << "Line " << line << ": ok" << endl;
+        return;
+    }
+    cerr << "Line " << line << ": EXPECT(" << msgA << " == " << msgB
+        << ") failed" << endl;
+    Dim::Cli::Convert cvt;
+    string valA, valB;
+    if (!cvt.toString<T>(valA, a))
+        valA = "<UNSTRINGABLE>";
+    if (!cvt.toString<U>(valB, b))
+        valB = "<UNSTRINGABLE>";
+    cerr << "'" << msgA << "' found '" << valA << "'"
+        << ", expected '" << valB << "'" << endl;
+    s_errors += 1;
+}
+
+//===========================================================================
+static void parseTest(
     int line,
     Dim::Cli & cli,
     const string & cmdline = {},
@@ -77,23 +120,21 @@ void parseTest(
             if (!cli.errDetail().empty())
                 cerr << cli.errDetail() << endl;
         }
-        EXPECT(rc == continueFlag);
-        EXPECT(exitCode == cli.exitCode());
+        EXPECT_EQUAL(rc, continueFlag);
+        EXPECT_EQUAL(exitCode, cli.exitCode());
     }
 }
 
 //===========================================================================
-void errTest(int line, Dim::Cli & cli, const string & errText) {
+static void errTest(int line, Dim::Cli & cli, const string & errText) {
     ostringstream os;
     cli.printError(os);
     auto tmp = os.str();
-    EXPECT(tmp == errText);
-    if (tmp != errText)
-        cerr << "Found '" << tmp << "', expected '" << errText << "'" << endl;
+    EXPECT_EQUAL(tmp, errText);
 }
 
 //===========================================================================
-void helpTest(
+static void helpTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
@@ -102,13 +143,13 @@ void helpTest(
     ostringstream os;
     cli.printHelp(os, kCommand, cmd);
     auto tmp = os.str();
-    EXPECT(tmp == helpText);
+    EXPECT_EQUAL(tmp, helpText);
     if (tmp != helpText)
         cerr << tmp;
 }
 
 //===========================================================================
-void usageTest(
+static void usageTest(
     int line,
     Dim::Cli & cli,
     const string & cmd,
@@ -117,24 +158,24 @@ void usageTest(
     ostringstream os;
     cli.printUsageEx(os, kCommand, cmd);
     auto tmp = os.str();
-    EXPECT(tmp == usageText);
+    EXPECT_EQUAL(tmp, usageText);
     if (tmp != usageText)
         cerr << tmp;
 }
 
 //===========================================================================
-void toArgvTest(
+static void toArgvTest(
     int line,
     function<vector<string>(const string &)> fn,
     const string & cmdline,
     const vector<string> & argv
 ) {
     auto args = fn(cmdline);
-    EXPECT(args == argv);
+    EXPECT_EQUAL(args, argv);
 }
 
 //===========================================================================
-void toCmdlineTest(
+static void toCmdlineTest(
     int line,
     function<string(size_t, char**)> fn,
     function<vector<string>(const string &)> fnv,
@@ -143,8 +184,8 @@ void toCmdlineTest(
 ) {
     auto pargs = Dim::Cli::toPtrArgv(argv);
     auto tmp = fn(pargs.size(), (char **) pargs.data());
-    EXPECT(tmp == cmdline);
-    EXPECT(argv == fnv(cmdline));
+    EXPECT_EQUAL(tmp, cmdline);
+    EXPECT_EQUAL(argv, fnv(cmdline));
     if (tmp != cmdline || argv != fnv(cmdline))
         cerr << tmp << endl;
 }
@@ -179,20 +220,18 @@ static void assertHandler(const char expr[], unsigned line) {
 }
 
 //===========================================================================
-void assertTest(int line, const char text[]) {
+static void assertTest(int line, const char text[]) {
     string tmp;
     for (auto && ai : s_asserts) {
         tmp += ai.text;
         tmp += '\n';
     }
-    EXPECT(tmp == text);
-    if (tmp != text)
-        cerr << tmp;
+    EXPECT_EQUAL(tmp, text);
     s_asserts.clear();
 }
 
 //===========================================================================
-void assertTests() {
+static void assertTests() {
     CliTest cli;
 
     // No assert handler
@@ -490,7 +529,7 @@ ostream & operator<<(ostream & os, const ExtractWithInsert & in) {
 }
 
 //===========================================================================
-void valueTests() {
+static void valueTests() {
     int line = 0;
     CliTest cli;
 
@@ -508,7 +547,7 @@ void valueTests() {
                 }
             });
         EXPECT_PARSE(cli, "-n2 -n3");
-        EXPECT(*sum == 6);
+        EXPECT_EQUAL(*sum, 6);
     }
 
     // parsing failure
@@ -517,9 +556,9 @@ void valueTests() {
         auto & opt = cli.opt("[VALUE]", ExtractNoInsert::kBad)
             .desc("Value to attempt to parse.");
         EXPECT_PARSE(cli, "g");
-        EXPECT(*opt == ExtractNoInsert::kGood);
+        EXPECT_EQUAL(*opt, ExtractNoInsert::kGood);
         EXPECT_PARSE(cli, "b", false);
-        EXPECT(*opt == ExtractNoInsert::kInvalid);
+        EXPECT_EQUAL(*opt, ExtractNoInsert::kInvalid);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] [VALUE]
   VALUE     Value to attempt to parse.
@@ -535,9 +574,9 @@ Options:
         auto & opt = cli.opt("[VALUE]", ExtractWithInsert::kGood)
             .desc("Value to attempt to parse.");
         EXPECT_PARSE(cli);
-        EXPECT(*opt == ExtractWithInsert::kGood);
+        EXPECT_EQUAL(*opt, ExtractWithInsert::kGood);
         EXPECT_PARSE(cli, "b", false);
-        EXPECT(*opt == ExtractWithInsert::kInvalid);
+        EXPECT_EQUAL(*opt, ExtractWithInsert::kInvalid);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] [VALUE]
   VALUE     Value to attempt to parse. (default: g)
@@ -548,11 +587,11 @@ Options:
 
         opt.defaultValue(ExtractWithInsert::kInOnly);
         EXPECT_PARSE(cli);
-        EXPECT(*opt == ExtractWithInsert::kInOnly);
+        EXPECT_EQUAL(*opt, ExtractWithInsert::kInOnly);
         EXPECT_PARSE(cli, "g");
-        EXPECT(*opt == ExtractWithInsert::kGood);
+        EXPECT_EQUAL(*opt, ExtractWithInsert::kGood);
         EXPECT_PARSE(cli, "i");
-        EXPECT(*opt == ExtractWithInsert::kInOnly);
+        EXPECT_EQUAL(*opt, ExtractWithInsert::kInOnly);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] [VALUE]
   VALUE     Value to attempt to parse.
@@ -568,7 +607,7 @@ Options:
         auto & opt = cli.opt<complex<double>>("complex")
             .desc("Complex number to parse.");
         EXPECT_PARSE(cli, "--complex=(1.0,2)");
-        EXPECT(*opt == complex<double>{1.0,2.0});
+        EXPECT_EQUAL(*opt, complex<double>{1.0,2.0});
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -588,7 +627,7 @@ Options:
 ***/
 
 //===========================================================================
-void parseTests() {
+static void parseTests() {
     int line = 0;
     CliTest cli;
 
@@ -610,7 +649,7 @@ void parseTests() {
         args = { arg0, arg1 };
         rc = cli.parse(args);
         EXPECT(rc);
-        EXPECT(cli.rawArgs() == args);
+        EXPECT_EQUAL(cli.rawArgs(), args);
     }
 
     cli = {};
@@ -674,7 +713,7 @@ void parseTests() {
 ***/
 
 //===========================================================================
-void choiceTests() {
+static void choiceTests() {
     int line = 0;
     CliTest cli;
     enum class State { go, wait, stop };
@@ -701,7 +740,7 @@ Options:
 Usage: test [--streetlight=COLOR] [--help]
 )");
     EXPECT_PARSE(cli, "--streetlight red");
-    EXPECT(*state == State::stop);
+    EXPECT_EQUAL(*state, State::stop);
 
     EXPECT_PARSE(cli, "--streetlight white", false);
     EXPECT_ERR(cli, 1 + R"(
@@ -740,16 +779,17 @@ Options:
   --help    Show this message and exit.
 )");
     EXPECT_PARSE(cli, "red");
-    EXPECT(state2.size() == 1 && state2[0] == State::stop);
+    EXPECT_EQUAL(state2.size(), 1);
+    EXPECT_EQUAL(state2[0], State::stop);
     EXPECT_PARSE(cli, "white", false);
     EXPECT_ERR(cli, 1 + R"(
 Error: Invalid 'STREETLIGHTS' value: white
 Must be 'green', 'yellow', or 'red'.
 )");
 
-    EXPECT(state2.defaultValue() == State::go);
+    EXPECT_EQUAL(state2.defaultValue(), State::go);
     state2.defaultValue(State::wait);
-    EXPECT(state2.defaultValue() == State::wait);
+    EXPECT_EQUAL(state2.defaultValue(), State::wait);
 
     cli = {};
     auto & nums = cli.optVec<unsigned>("n")
@@ -782,7 +822,7 @@ Must be 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
 ***/
 
 //===========================================================================
-void helpTextTests() {
+static void helpTextTests() {
     int line = 0;
     CliTest cli;
     ostringstream out;
@@ -801,7 +841,7 @@ void helpTextTests() {
     }
     cli.printText(out, raw);
     auto tmp = out.str();
-    EXPECT(tmp == 1 + R"(
+    EXPECT_EQUAL(tmp, 1 + R"(
 AAAAA   aaaaaaaa
   BBBBB  bbbbbbbb
     CCCCC  cccccccc
@@ -815,7 +855,7 @@ AAAAA   aaaaaaaa
     raw = "\f\aone\a\ttwo\n";
     cli.printText(out, raw);
     tmp = out.str();
-    EXPECT(tmp == "\aone\a       two");
+    EXPECT_EQUAL(tmp, "\aone\a       two");
 
     // indent and unindent wrapped lines
     out.str({});
@@ -826,7 +866,7 @@ AAAAA   aaaaaaaa
         "\n";
     cli.printText(out, raw);
     tmp = out.str();
-    EXPECT(tmp == 1 + R"(
+    EXPECT_EQUAL(tmp, 1 + R"(
 none      The quick brown fox jumped over the
           lazy dog.
 child +2  The quick brown fox jumped over the
@@ -844,7 +884,7 @@ para +2     The quick brown fox jumped over the
         "\n";
     cli.printText(out, raw);
     tmp = out.str();
-    EXPECT(tmp == 1 + R"(
+    EXPECT_EQUAL(tmp, 1 + R"(
 Default indenting starts on first column and
 stays there.
 Line with child wrapped lines indented 2
@@ -862,7 +902,7 @@ unindented kids.
         "\n";
     cli.printText(out, raw);
     tmp = out.str();
-    EXPECT(tmp == 1 + R"(
+    EXPECT_EQUAL(tmp, 1 + R"(
 one         1           first
 two         2           second
 three       3           third
@@ -875,14 +915,14 @@ three       3           third
         "\n";
     cli.printText(out, raw);
     tmp = out.str();
-    EXPECT(tmp == 1 + R"(
+    EXPECT_EQUAL(tmp, 1 + R"(
 A1          A2
 B1          B2          B3
 )");
 }
 
 //===========================================================================
-void helpTests() {
+static void helpTests() {
     int line = 0;
     CliTest cli;
     istringstream in;
@@ -921,7 +961,7 @@ Usage: test
         cli.opt("s special !S", false).desc("snowflake");
         cli.group("name").title("Name options")
             .optVec<string>("name");
-        EXPECT(cli.title() == "Name options");
+        EXPECT_EQUAL(cli.title(), "Name options");
         cli.group({}).optVec<string>("[KEY]").desc(
             "it's the key arguments with a very long description that "
             "wraps the line at least once, maybe more.");
@@ -957,19 +997,20 @@ Usage: test [-C] [-C, N, c, n] [-c COUNT] [-n, --quantity=NUM] [--n2=NUM]
             [-s, --special] [--help] [KEY...]
 )");
         out.str({});
-        EXPECT(cli.printUsage(out, kCommand, "") == Dim::kExitOk);
-        EXPECT(out.str() == "Usage: test [OPTIONS] [KEY...]\n");
+        auto code = cli.printUsage(out, kCommand, "");
+        EXPECT_EQUAL(code, Dim::kExitOk);
+        EXPECT_EQUAL(out.str(), "Usage: test [OPTIONS] [KEY...]\n");
         out.str({});
         cli.printOperands(out, "");
         auto tmp = out.str();
-        EXPECT(tmp == 1 + R"(
+        EXPECT_EQUAL(tmp, 1 + R"(
   KEY       it's the key arguments with a very long description that wraps the
             line at least once, maybe more.)"
         );
         out.str({});
         cli.printOptions(out, "");
         tmp = out.str();
-        EXPECT(tmp == R"(
+        EXPECT_EQUAL(tmp, R"(
 Long explanation of this very short set of options, it's so long that it even
 wraps around to the next line:
   -C                          quantity alias w/o value desc (default: 0)
@@ -991,7 +1032,7 @@ Name options:
         out.str({});
         cli.printCommands(out);
         tmp = out.str();
-        EXPECT(tmp == "");
+        EXPECT_EQUAL(tmp, "");
 
         // with maxWidth of 70
         cli.maxWidth(15);         // for coverage of maxWidth < 20
@@ -1099,11 +1140,7 @@ Options:
         out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli, "--version", false, Dim::kExitOk);
-        auto tmp = out.str();
-        string expect = "test version 1.0\n";
-        EXPECT(tmp == expect);
-        if (tmp != expect)
-            cout << tmp;
+        EXPECT_EQUAL(out.str(), "test version 1.0\n");
     }
 
     // helpNoArgs (aka before action)
@@ -1115,7 +1152,7 @@ Options:
         cli.iostreams(nullptr, &out);
         EXPECT_PARSE(cli, {}, false, Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
-        EXPECT(out.str() == 1 + R"(
+        EXPECT_EQUAL(out.str(), 1 + R"(
 Usage: test [OPTIONS]
 
 Options:
@@ -1132,9 +1169,9 @@ Options:
         cli.opt(&count, "c ?count").implicitValue(3);
         cli.opt(&help, "? h help");
         EXPECT_PARSE(cli, "-hc2 -?");
-        EXPECT(count == 2);
+        EXPECT_EQUAL(count, 2);
         EXPECT_PARSE(cli, "--count");
-        EXPECT(count == 3);
+        EXPECT_EQUAL(count, 3);
 
         cli = {};
         cli.opt("help. ?", false)
@@ -1148,7 +1185,7 @@ Options:
         out.str({});
         cli.iostreams(nullptr, &out);
         EXPECT_PARSE(cli, "-?", false, Dim::kExitOk);
-        EXPECT(out.str() == 1 + R"(
+        EXPECT_EQUAL(out.str(), 1 + R"(
 Usage: test [OPTIONS]
 
 Options:
@@ -1161,16 +1198,18 @@ Options:
         cli = {};
         cli.opt(cli.helpOpt(), "no-help.", false).show(false);
         CliTest(cli).header("");
-        EXPECT(cli.header().size() == 1 && cli.header()[0] == '\0');
+        EXPECT_EQUAL(cli.header().size(), 1);
+        EXPECT_EQUAL(cli.header()[0], '\0');
         cli.header("Multiline header:\n"
                    "- second line\n");
         CliTest(cli).footer("");
-        EXPECT(cli.footer().size() == 1 && cli.footer()[0] == '\0');
+        EXPECT_EQUAL(cli.footer().size(), 1);
+        EXPECT_EQUAL(cli.footer()[0], '\0');
         cli.footer("Multiline footer:\n"
                    "- first reference\n"
                    "- second reference\n");
         CliTest(cli).desc("Description.");
-        EXPECT(cli.desc() == "Description.");
+        EXPECT_EQUAL(cli.desc(), "Description.");
         EXPECT_HELP(cli, "", 1 + R"(
 Multiline header:
 - second line
@@ -1199,7 +1238,7 @@ Multiline footer:
         cli = {};
         cli.group("One").sortKey("1")
             .opt("1", true).desc("First option.");
-        EXPECT(cli.sortKey() == "1");
+        EXPECT_EQUAL(cli.sortKey(), "1");
         CliTest(cli).group("Two").sortKey("2").opt("2", true)
             .desc("Second option.");
         cli.group("Three").sortKey("3").opt("3", true).desc("Third option.");
@@ -1228,7 +1267,7 @@ Three:
 ***/
 
 //===========================================================================
-void nameTests() {
+static void nameTests() {
     int line = 0;
     CliTest cli;
 
@@ -1237,7 +1276,7 @@ void nameTests() {
         int val;
         cli.opt(&val, "a ?b (c) ?(d) ?(?e). ())) gg ?hh.");
         EXPECT_PARSE(cli, "-a 1 -b -c3 -d --?e -)6");
-        EXPECT(val == 6);
+        EXPECT_EQUAL(val, 6);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -1258,7 +1297,7 @@ Options:
 ***/
 
 //===========================================================================
-void cmdTests() {
+static void cmdTests() {
     int line = 0;
     CliTest cli;
     istringstream in;
@@ -1268,14 +1307,14 @@ void cmdTests() {
     {
         cli = {};
         cli.command({}, "Basic options");
-        EXPECT(cli.sortKey() == "Basic options");
+        EXPECT_EQUAL(cli.sortKey(), "Basic options");
     }
 
     // subcommands - multiple handles to shared configuration
     {
         Dim::Cli c1;
         auto & a1 = c1.command("one").cmdTitle("Primary").opt("a", 1);
-        EXPECT(c1.cmdTitle() == "Primary");
+        EXPECT_EQUAL(c1.cmdTitle(), "Primary");
         c1.desc("First sentence of description. Rest of one's description.");
         Dim::Cli c2;
         auto & a2 = c2.command("two").cmdGroup("Additional").opt("a", 2);
@@ -1284,9 +1323,9 @@ void cmdTests() {
         c2.opt("b", 99).command("three");
 
         EXPECT_PARSE(c1, "one -a3");
-        EXPECT(*a1 == 3);
-        EXPECT(*a2 == 2);
-        EXPECT(c2.commandMatched() == "one");
+        EXPECT_EQUAL(*a1, 3);
+        EXPECT_EQUAL(*a2, 2);
+        EXPECT_EQUAL(c2.commandMatched(), "one");
         EXPECT_PARSE(c1, "-a", false);
         EXPECT_ERR(c2, "Error: Unknown option: -a\n");
         EXPECT_PARSE(c1, "two -a", false);
@@ -1298,7 +1337,7 @@ void cmdTests() {
         EXPECT_ERR(c1, "Error: No command given.\n");
         EXPECT_PARSE(c1, "one");
         EXPECT(c1.exec());
-        EXPECT(c1.exitCode() == Dim::kExitSoftware);
+        EXPECT_EQUAL(c1.exitCode(), Dim::kExitSoftware);
         EXPECT_ERR(c1, "Error: Command 'one' has not been implemented.\n");
 
         EXPECT_HELP(c1, "one", 1 + R"(
@@ -1339,7 +1378,7 @@ Options:
         cli = {};
         cli.command("1a").cmdGroup("First").cmdSortKey("1");
 
-        EXPECT(cli.cmdSortKey() == "1");
+        EXPECT_EQUAL(cli.cmdSortKey(), "1");
         cli.command("1b");
         CliTest(cli).command("2a").cmdGroup("Second").cmdSortKey("2")
             .cmdTitle("Second");
@@ -1368,8 +1407,8 @@ Options:
         auto & p1 = cli.opt<int>("<1>");
         cli.command("one");
         EXPECT_PARSE(cli, "5 one");
-        EXPECT(*p1 == 5);
-        EXPECT(cli.commandMatched() == "one");
+        EXPECT_EQUAL(*p1, 5);
+        EXPECT_EQUAL(cli.commandMatched(), "one");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] COMMAND [ARGS...]
 
@@ -1449,9 +1488,9 @@ Options:
             return true;
         });
         EXPECT_PARSE(cli, "unknown a b c");
-        EXPECT(cli.commandMatched() == "unknown");
+        EXPECT_EQUAL(cli.commandMatched(), "unknown");
         auto args = CliTest(cli).unknownArgs();
-        EXPECT(args == vector<string>{"a", "b", "c"});
+        EXPECT_EQUAL(args, vector<string>{"a", "b", "c"});
         EXPECT_PARSE(cli, "");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] [COMMAND] [ARGS...]
@@ -1469,11 +1508,11 @@ Usage: test unknown [ARGS...]
         cli = {};
         CliTest(cli).unknownArgs(true);
         EXPECT_PARSE(cli, "a b c");
-        EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
+        EXPECT_EQUAL(cli.unknownArgs(), vector<string>{"a", "b", "c"});
         cli = {};
         cli.command("echo").unknownArgs(true);
         EXPECT_PARSE(cli, "echo a b c");
-        EXPECT(cli.unknownArgs() == vector<string>{"a", "b", "c"});
+        EXPECT_EQUAL(cli.unknownArgs(), vector<string>{"a", "b", "c"});
     }
 
     // helpCmd
@@ -1505,9 +1544,10 @@ Options:
         EXPECT_PARSE(cli, "help help");
         out.str({});
         cli.iostreams(nullptr, &out);
-        EXPECT(!cli.exec() && cli.exitCode() == Dim::kExitOk);
+        EXPECT(!cli.exec());
+        EXPECT_EQUAL(cli.exitCode(), Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
-        EXPECT(out.str() == helpText);
+        EXPECT_EQUAL(out.str(), helpText);
         EXPECT_USAGE(cli, "", 1 + R"(
 Usage: test [--help] COMMAND [ARGS...]
 )");
@@ -1517,16 +1557,18 @@ Usage: test help [-u, --usage] [--help] [COMMAND]
         EXPECT_PARSE(cli, "help notACmd");
         out.str({});
         EXPECT(!cli.exec());
-        EXPECT(cli.printError(out) == Dim::kExitUsage);
-        EXPECT(out.str() == 1 + R"(
+        auto code = cli.printError(out);
+        EXPECT_EQUAL(code, Dim::kExitUsage);
+        EXPECT_EQUAL(out.str(), 1 + R"(
 Error: Command 'help': Help requested for unknown command: notACmd
 )");
         EXPECT_PARSE(cli, "help help --usage");
         out.str({});
         cli.iostreams(nullptr, &out);
-        EXPECT(!cli.exec() && cli.exitCode() == Dim::kExitOk);
+        EXPECT(!cli.exec());
+        EXPECT_EQUAL(cli.exitCode(), Dim::kExitOk);
         cli.iostreams(nullptr, nullptr);
-        EXPECT(out.str() == 1 + R"(
+        EXPECT_EQUAL(out.str(), 1 + R"(
 Usage: test help [-u, --usage] [--help] [COMMAND]
 )");
     }
@@ -1602,23 +1644,23 @@ c\d)", {"ab$c\\d"});
     // argv to/from cmdline
     const char cmdline[] = "a b c";
     auto a1 = cli.toArgv(cmdline);
-    EXPECT(cli.toCmdline(a1) == cmdline);
+    EXPECT_EQUAL(cli.toCmdline(a1), cmdline);
     auto p1 = cli.toPtrArgv(a1);
-    EXPECT(cli.toCmdline(p1.size(), p1.data()) == cmdline);
+    EXPECT_EQUAL(cli.toCmdline(p1.size(), p1.data()), cmdline);
     a1 = cli.toArgv(p1.size(), p1.data());
-    EXPECT(cli.toCmdline(a1) == cmdline);
+    EXPECT_EQUAL(cli.toCmdline(a1), cmdline);
 
     const wchar_t * wargv[] = { L"a", L"b", L"c", NULL };
     auto wargc = sizeof wargv / sizeof *wargv - 1;
     a1 = cli.toArgv(wargc, wargv);
-    EXPECT(cli.toCmdline(a1) == cmdline);
+    EXPECT_EQUAL(cli.toCmdline(a1), cmdline);
     auto c1 = cli.toCmdline(wargc, wargv);
-    EXPECT(c1 == cmdline);
+    EXPECT_EQUAL(c1, cmdline);
 
-    EXPECT(cli.toCmdlineL("a", 'b', "c"s) == cmdline);
-    EXPECT(cli.toGlibCmdlineL("a", 'b', "c"s) == cmdline);
-    EXPECT(cli.toGnuCmdlineL("a", 'b', "c"s) == cmdline);
-    EXPECT(cli.toWindowsCmdlineL("a", 'b', "c"s) == cmdline);
+    EXPECT_EQUAL(cli.toCmdlineL("a", 'b', "c"s), cmdline);
+    EXPECT_EQUAL(cli.toGlibCmdlineL("a", 'b', "c"s), cmdline);
+    EXPECT_EQUAL(cli.toGnuCmdlineL("a", 'b', "c"s), cmdline);
+    EXPECT_EQUAL(cli.toWindowsCmdlineL("a", 'b', "c"s), cmdline);
 }
 
 
@@ -1678,16 +1720,16 @@ void optCheckTests() {
         cli = {};
         auto & count = cli.opt("c", 1).require();
         EXPECT_PARSE(cli, "-c10");
-        EXPECT(*count == 10);
+        EXPECT_EQUAL(*count, 10);
         EXPECT_PARSE(cli, {}, false);
-        EXPECT(*count == 1);
+        EXPECT_EQUAL(*count, 1);
         EXPECT_ERR(cli, "Error: No value given for -c\n");
         cli = {};
         auto & imp = cli.opt<int>("?index i").require().implicitValue(5);
         EXPECT_PARSE(cli, "--index=10");
-        EXPECT(*imp == 10);
+        EXPECT_EQUAL(*imp, 10);
         EXPECT_PARSE(cli, "--index");
-        EXPECT(*imp == 5);
+        EXPECT_EQUAL(*imp, 5);
         EXPECT_PARSE(cli, {}, false);
         EXPECT_ERR(cli, "Error: No value given for --index\n");
     }
@@ -1698,16 +1740,16 @@ void optCheckTests() {
         auto & count = cli.opt("<count>", 2).clamp(1, 10);
         auto & letter = cli.opt<char>("<letter>").range('a', 'z');
         EXPECT_PARSE(cli, "20 a");
-        EXPECT(*count == 10);
-        EXPECT(*letter == 'a');
+        EXPECT_EQUAL(*count, 10);
+        EXPECT_EQUAL(*letter, 'a');
         EXPECT_PARSE(cli, "5 0", false);
-        EXPECT(*count == 5);
+        EXPECT_EQUAL(*count, 5);
         EXPECT_ERR(cli, 1 + R"(
 Error: Out of range 'letter' value: 0
 Must be between 'a' and 'z'.
 )");
         EXPECT_PARSE(cli, "-- -5", false);
-        EXPECT(*count == 1);
+        EXPECT_EQUAL(*count, 1);
         EXPECT_ERR(cli, "Error: Option 'letter' missing value.\n");
     }
     // range error with no detail
@@ -1717,24 +1759,24 @@ Must be between 'a' and 'z'.
         auto & y = cli.opt<Abc>("<y>").range(Abc::first, Abc::c);
         auto & z = cli.opt<Abc>("<z>").range(Abc::a, Abc::last);
         EXPECT_PARSE(cli, "first last first", false);
-        EXPECT(*x == Abc::first);
-        EXPECT(*y == Abc::invalid);
-        EXPECT(*z == Abc::invalid);
+        EXPECT_EQUAL(*x, Abc::first);
+        EXPECT_EQUAL(*y, Abc::invalid);
+        EXPECT_EQUAL(*z, Abc::invalid);
         EXPECT_ERR(cli, 1 + R"(
 Error: Out of range 'x' value: first
 Must be between 'a' and 'c'.
 )");
         EXPECT_PARSE(cli, "a last first", false);
-        EXPECT(*x == Abc::a);
-        EXPECT(*y == Abc::last);
-        EXPECT(*z == Abc::invalid);
+        EXPECT_EQUAL(*x, Abc::a);
+        EXPECT_EQUAL(*y, Abc::last);
+        EXPECT_EQUAL(*z, Abc::invalid);
         EXPECT_ERR(cli, 1 + R"(
 Error: Out of range 'y' value: last
 )");
         EXPECT_PARSE(cli, "a a first", false);
-        EXPECT(*x == Abc::a);
-        EXPECT(*y == Abc::a);
-        EXPECT(*z == Abc::first);
+        EXPECT_EQUAL(*x, Abc::a);
+        EXPECT_EQUAL(*y, Abc::a);
+        EXPECT_EQUAL(*z, Abc::first);
         EXPECT_ERR(cli, 1 + R"(
 Error: Out of range 'z' value: first
 )");
@@ -1777,9 +1819,10 @@ Other:
   --help        Show this message and exit.
 )");
         EXPECT_PARSE(cli, "-o");
-        EXPECT(*orange == "orange");
-        EXPECT(orange.from() == "-o");
-        EXPECT(orange.pos() == 1 && orange.size() == 1);
+        EXPECT_EQUAL(*orange, "orange");
+        EXPECT_EQUAL(orange.from(), "-o");
+        EXPECT_EQUAL(orange.pos(), 1);
+        EXPECT_EQUAL(orange.size(), 1);
     }
 
     {
@@ -1814,9 +1857,9 @@ Options:
         auto & opt = cli.opt("x", 1).flagValue(true);
         cli.opt(opt, "y !z", 2).flagValue();
         EXPECT_PARSE(cli, "-y");
-        EXPECT(*opt == 2);
+        EXPECT_EQUAL(*opt, 2);
         EXPECT_PARSE(cli, "-z");
-        EXPECT(*opt == 1);
+        EXPECT_EQUAL(*opt, 1);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -1835,7 +1878,7 @@ Options:
         cli.optVec(&vals, "x").defaultValue(1).flagValue();
         cli.optVec(&vals, "y !z").defaultValue(2).flagValue(true);
         EXPECT_PARSE(cli, "-x");
-        EXPECT(vals == vector<int>{1});
+        EXPECT_EQUAL(vals, vector<int>{1});
         EXPECT_PARSE(cli, "-z");
         EXPECT(vals.empty());
     }
@@ -1891,20 +1934,20 @@ void responseTests(const string & rawProgName) {
     cli = {};
     auto & args = cli.optVec<string>("[ARGS]");
     EXPECT_PARSE(cli, "@test/a.rsp");
-    EXPECT(*args == vector<string>{"1", "x", "y", "2"});
+    EXPECT_EQUAL(*args, vector<string>{"1", "x", "y", "2"});
 
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid response file: test/does_not_exist.rsp\n");
     CliTest(cli).responseFiles(false);
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp");
-    EXPECT(args && args[0] == "@test/does_not_exist.rsp");
+    EXPECT_EQUAL_IF(args, args[0], "@test/does_not_exist.rsp");
     cli.responseFiles(true);
 
     EXPECT_PARSE(cli, "@test/none.rsp");
-    EXPECT(args.size() == 0);
+    EXPECT_EQUAL(args.size(), 0);
 
     EXPECT_PARSE(cli, "@test/cL.rsp @test/f.rsp");
-    EXPECT(*args == vector<string>{"c1", "c2", "f"});
+    EXPECT_EQUAL(*args, vector<string>{"c1", "c2", "f"});
 
     EXPECT_PARSE(cli, "@test/gBad.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid encoding: eBad.rsp\n");
@@ -1963,7 +2006,7 @@ void filesystemTests() {
         cli.opt(&path, "path", path)
             .desc("std::filesystem::path");
         EXPECT_PARSE(cli, "--path one");
-        EXPECT(path == "one");
+        EXPECT_EQUAL(path, "one");
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -2002,31 +2045,35 @@ void execTests() {
     {
         cli = {};
         auto rc = cli.parse(nargsUnknown, (char **) argsUnknown);
-        EXPECT(rc == false && cli.printError(out) == Dim::kExitUsage);
-        EXPECT(out.str() == "Error: Unexpected argument: unknown\n");
+        EXPECT(!rc);
+        EXPECT_EQUAL(cli.printError(out), Dim::kExitUsage);
+        EXPECT_EQUAL(out.str(), "Error: Unexpected argument: unknown\n");
         out.clear();
         out.str({});
         rc = cli.parse(nargsNone, (char **) argsNone);
-        EXPECT(rc && cli.printError(out) == Dim::kExitOk && out.str() == "");
+        EXPECT(rc);
+        EXPECT_EQUAL(cli.printError(out), Dim::kExitOk);
+        EXPECT_EQUAL(out.str(), "");
     }
 
     {
         cli = {};
         CliTest(cli).action([](auto & cli) { cli.success(); });
         EXPECT(cli.exec(nargsNone, (char **) argsNone));
-        EXPECT(cli.exitCode() == Dim::kExitOk);
+        EXPECT_EQUAL(cli.exitCode(), Dim::kExitOk);
         out.clear();
         out.str({});
         EXPECT(cli.exec(nargsNone, (char **) argsNone));
-        EXPECT(cli.printError(out) == Dim::kExitOk && out.str() == "");
+        EXPECT_EQUAL(cli.printError(out), Dim::kExitOk);
+        EXPECT_EQUAL(out.str(), "");
         EXPECT(cli.exec(vargsNone));
-        EXPECT(cli.exitCode() == Dim::kExitOk);
+        EXPECT_EQUAL(cli.exitCode(), Dim::kExitOk);
         out.clear();
         out.str({});
         cli = {};
         EXPECT(!cli.exec(vargsNone));
-        EXPECT(cli.printError(out) == Dim::kExitUsage);
-        EXPECT(out.str() == "Error: No command given.\n");
+        EXPECT_EQUAL(cli.printError(out), Dim::kExitUsage);
+        EXPECT_EQUAL(out.str(), "Error: No command given.\n");
     }
 
     {
@@ -2035,16 +2082,19 @@ void execTests() {
         int afters = 0;
         CliTest(cli).beforeExec([&](auto &) { ++befores; });
         CliTest(cli).afterExec([&](auto &) { ++afters; });
-        EXPECT(!cli.exec(vargsNone) && cli.exitCode() == Dim::kExitUsage);
-        EXPECT(befores == 1);
-        EXPECT(afters == 1);
+        EXPECT(!cli.exec(vargsNone));
+        EXPECT_EQUAL(cli.exitCode(), Dim::kExitUsage);
+        EXPECT_EQUAL(befores, 1);
+        EXPECT_EQUAL(afters, 1);
         befores = afters = 0;
         cli.beforeExec([&](auto & cli) {
             ++befores;
             cli.parseExit();
         });
-        EXPECT(!cli.exec(vargsNone) && cli.exitCode() == Dim::kExitOk);
-        EXPECT(befores == 2 && afters == 1);
+        EXPECT(!cli.exec(vargsNone));
+        EXPECT_EQUAL(cli.exitCode(), Dim::kExitOk);
+        EXPECT_EQUAL(befores, 2);
+        EXPECT_EQUAL(afters, 1);
     }
 }
 
@@ -2066,10 +2116,10 @@ void vectorTests() {
         auto & strs = cli.optVec<string>("r ?s").implicitValue("a")
             .desc("String array.");
         EXPECT_PARSE(cli, "-s1 -s -r 2 -s3");
-        EXPECT(strs.size() == 4);
-        EXPECT(strs.pos(2) == 4);
-        EXPECT(strs.pos() == 5);
-        EXPECT(*strs == vector<string>({"1"s, "a"s, "2"s, "3"s}));
+        EXPECT_EQUAL(strs.size(), 4);
+        EXPECT_EQUAL(strs.pos(2), 4);
+        EXPECT_EQUAL(strs.pos(), 5);
+        EXPECT_EQUAL(*strs, vector<string>({"1"s, "a"s, "2"s, "3"s}));
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -2090,7 +2140,7 @@ Options:
   --help           Show this message and exit.
 )");
         EXPECT_PARSE(cli, "--string=a -sb");
-        EXPECT(*strs == vector<string>({"a"s, "b"s}));
+        EXPECT_EQUAL(*strs, vector<string>({"a"s, "b"s}));
     }
 
     // optVec<bool>
@@ -2100,8 +2150,8 @@ Options:
         cli.optVec<bool>(&v0, "[ZERO]").desc("External bool");
         auto & v1 = cli.optVec<bool>("[ONE]").desc("Internal bool.");
         EXPECT_PARSE(cli, "0");
-        EXPECT(v0.size() == 1 && v0[0] == 0);
-        EXPECT(v1.size() == 0);
+        EXPECT_EQUAL_IF((v0.size() == 1), v0[0], 0);
+        EXPECT_EQUAL(v1.size(), 0);
     }
 
     // vector option with size
@@ -2109,7 +2159,7 @@ Options:
         cli = {};
         auto & v0 = cli.optVec<int>("0").size(0).desc("None allowed.");
         EXPECT_PARSE(cli, "");
-        EXPECT(v0.size() == 0);
+        EXPECT_EQUAL(v0.size(), 0);
         EXPECT_PARSE(cli, "-00", false);
         EXPECT_ERR(cli, 1 + R"(
 Error: Too many '-0' values: 0
@@ -2118,8 +2168,8 @@ The maximum number of values is 0.
         auto & v1 = cli.optVec<int>("1").size(1).desc("Not more than one.");
         auto & vn = cli.optVec<int>("N").desc("Unlimited.");
         EXPECT_PARSE(cli, "-11");
-        EXPECT(v1.size() == 1 && v1[0] == 1);
-        EXPECT(vn.size() == 0);
+        EXPECT_EQUAL_IF(v1.size() == 1, v1[0], 1);
+        EXPECT_EQUAL(vn.size(), 0);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -2138,7 +2188,7 @@ Options:
         auto & v0 = cli.optVec<int>("[ONE]").size(1, 2);
         EXPECT_PARSE(cli, "1 2 3", false);
         EXPECT_ERR(cli, "Error: Unexpected argument: 3\n");
-        EXPECT(v0.size() == 0);
+        EXPECT_EQUAL(v0.size(), 0);
     }
 
     // vector operand with 0 size (ignored)
@@ -2146,7 +2196,7 @@ Options:
         cli = {};
         auto & v0 = cli.optVec<int>("<ONE>").size(0);
         EXPECT_PARSE(cli, "", true);
-        EXPECT(v0.size() == 0);
+        EXPECT_EQUAL(v0.size(), 0);
     }
 
     // vector with too few values
@@ -2199,7 +2249,7 @@ Must have 2 or more values.
 Error: Option 'ONE' missing value.
 Must have 1 to 2 values.
 )");
-        EXPECT(v0.size() == 0);
+        EXPECT_EQUAL(v0.size(), 0);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] ONE...
   ONE       The one and only? (limit: 1 to 2)
@@ -2229,8 +2279,8 @@ Options:
         auto & v1 = cli.optVec<int>("<ONE>");
         auto & v2 = cli.optVec<int>("<TWO>");
         EXPECT_PARSE(cli, "1 2 3");
-        EXPECT(*v1 == vector<int>{1, 2});
-        EXPECT(*v2 == vector<int>{3});
+        EXPECT_EQUAL(*v1, vector<int>{1, 2});
+        EXPECT_EQUAL(*v2, vector<int>{3});
     }
     {
         cli = {};
@@ -2241,8 +2291,8 @@ Options:
         EXPECT_PARSE(cli, "1 2 3");
         EXPECT(v0->empty());
         EXPECT(v1->empty());
-        EXPECT(*v2 == vector<int>{1});
-        EXPECT(*v3 == vector<int>{2, 3});
+        EXPECT_EQUAL(*v2, vector<int>{1});
+        EXPECT_EQUAL(*v3, vector<int>{2, 3});
 
         EXPECT_PARSE(cli, "1 2", false);
         EXPECT_ERR(cli, 1 + R"(
@@ -2250,21 +2300,21 @@ Error: Option 'THREE' missing value.
 Must have 2 values.
 )");
         EXPECT(v0->empty());
-        EXPECT(*v1 == vector<int>{1});
-        EXPECT(*v2 == vector<int>{2});
+        EXPECT_EQUAL(*v1, vector<int>{1});
+        EXPECT_EQUAL(*v2, vector<int>{2});
         EXPECT(v3->empty());
 
         EXPECT_PARSE(cli, "1 2 3 4");
         EXPECT(v0->empty());
-        EXPECT(*v1 == vector<int>{1});
-        EXPECT(*v2 == vector<int>{2});
-        EXPECT(*v3 == vector<int>{3, 4});
+        EXPECT_EQUAL(*v1, vector<int>{1});
+        EXPECT_EQUAL(*v2, vector<int>{2});
+        EXPECT_EQUAL(*v3, vector<int>{3, 4});
 
         EXPECT_PARSE(cli, "1 2 3 4 5");
-        EXPECT(*v0 == vector<int>{1, 2});
-        EXPECT(*v1 == vector<int>{});
-        EXPECT(*v2 == vector<int>{3});
-        EXPECT(*v3 == vector<int>{4, 5});
+        EXPECT_EQUAL(*v0, vector<int>{1, 2});
+        EXPECT_EQUAL(*v1, vector<int>{});
+        EXPECT_EQUAL(*v2, vector<int>{3});
+        EXPECT_EQUAL(*v3, vector<int>{4, 5});
     }
 
     // value list argument matching
@@ -2273,7 +2323,7 @@ Must have 2 values.
         auto & m = cli.optVec<int>("*m").size(1, 2);
         auto & x = cli.opt<int>("[x]");
         EXPECT_PARSE(cli, "-m 1 2");
-        EXPECT(*m == vector<int>{1, 2});
+        EXPECT_EQUAL(*m, vector<int>{1, 2});
         EXPECT(!x);
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS] [x]
@@ -2285,22 +2335,22 @@ Options:
 )");
 
         EXPECT_PARSE(cli, "-m 1 2 3");
-        EXPECT(*m == vector<int>{1, 2});
-        EXPECT(*x == 3);
+        EXPECT_EQUAL(*m, vector<int>{1, 2});
+        EXPECT_EQUAL(*x, 3);
 
         EXPECT_PARSE(cli, "3 -m 1 2");
-        EXPECT(*m == vector<int>{1, 2});
-        EXPECT(*x == 3);
+        EXPECT_EQUAL(*m, vector<int>{1, 2});
+        EXPECT_EQUAL(*x, 3);
 
         m.size(1, -1);
         auto & z = cli.opt<bool>("z");
         EXPECT_PARSE(cli, "-m 1 2 3");
-        EXPECT(*m == vector<int>{1, 2, 3});
+        EXPECT_EQUAL(*m, vector<int>{1, 2, 3});
         EXPECT(!x);
         EXPECT(!*z);
         EXPECT_PARSE(cli, "-m 1 2 -z 3");
-        EXPECT(*m == vector<int>{1, 2});
-        EXPECT(*x == 3);
+        EXPECT_EQUAL(*m, vector<int>{1, 2});
+        EXPECT_EQUAL(*x, 3);
         EXPECT(*z);
     }
 }
@@ -2332,37 +2382,37 @@ void basicTests() {
         auto & special = cli.opt("s special !S", false).desc("snowflake");
         auto & name = cli.group("name").title("Name options")
             .optVec<string>("name");
-        EXPECT(cli.title() == "Name options");
+        EXPECT_EQUAL(cli.title(), "Name options");
         auto & keys = cli.group({}).optVec<string>("[KEY]");
         EXPECT_PARSE(cli, "-n3");
-        EXPECT(*num == 3);
+        EXPECT_EQUAL(*num, 3);
         EXPECT(!*special);
         EXPECT(!name);
         EXPECT(!keys);
 
         EXPECT_PARSE(cli, "--name two");
-        EXPECT(*num == 0);
-        EXPECT(name.size() == 1 && (*name)[0] == "two");
+        EXPECT_EQUAL(*num, 0);
+        EXPECT_EQUAL_IF(name.size() == 1, (*name)[0], "two");
 
         EXPECT_PARSE(cli, "--name=three");
-        EXPECT(name.size() == 1 && (*name)[0] == "three");
+        EXPECT_EQUAL_IF(name.size() == 1, (*name)[0], "three");
 
         EXPECT_PARSE(cli, "--name= key");
-        EXPECT(*name == vector<string>({""s}));
-        EXPECT(*keys == vector<string>({"key"s}));
+        EXPECT_EQUAL(*name, vector<string>({""s}));
+        EXPECT_EQUAL(*keys, vector<string>({"key"s}));
 
         EXPECT_PARSE(cli, "-s-name=four key --name four");
         EXPECT(*special);
-        EXPECT(*name == vector<string>({"four"s, "four"s}));
-        EXPECT(*keys == vector<string>({"key"s}));
+        EXPECT_EQUAL(*name, vector<string>({"four"s, "four"s}));
+        EXPECT_EQUAL(*keys, vector<string>({"key"s}));
 
         EXPECT_PARSE(cli, "key extra");
-        EXPECT(*keys == vector<string>({"key"s, "extra"s}));
+        EXPECT_EQUAL(*keys, vector<string>({"key"s, "extra"s}));
 
         EXPECT_PARSE(cli, "- -- -s");
         EXPECT(!special && !*special);
         *num += 2;
-        EXPECT(*num == 2);
+        EXPECT_EQUAL(*num, 2);
         *special = name->empty();
         EXPECT(*special);
     }
@@ -2437,14 +2487,13 @@ void unitsTests() {
         cli = {};
         auto & dbls = cli.optVec<double>("[V]").siUnits("b");
         EXPECT_PARSE(cli, "1 1k 1b 1kb 1Mb 1kib 1000mb");
-        EXPECT(dbls[0] == 1
-            && dbls[1] == 1000
-            && dbls[2] == 1
-            && dbls[3] == 1000
-            && dbls[4] == 1'000'000
-            && dbls[5] == 1024
-            && dbls[6] == 1
-        );
+        EXPECT_EQUAL(dbls[0], 1);
+        EXPECT_EQUAL(dbls[1], 1000);
+        EXPECT_EQUAL(dbls[2], 1);
+        EXPECT_EQUAL(dbls[3], 1000);
+        EXPECT_EQUAL(dbls[4], 1'000'000);
+        EXPECT_EQUAL(dbls[5], 1024);
+        EXPECT_EQUAL(dbls[6], 1);
         EXPECT_PARSE(cli, "b", false);
         EXPECT_ERR(cli, "Error: Invalid 'V' value: b\n");
         EXPECT_PARSE(cli, "1B", false);
@@ -2455,7 +2504,8 @@ void unitsTests() {
 
         dbls.siUnits("b", cli.fUnitBinaryPrefix);
         EXPECT_PARSE(cli, "1k 1ki");
-        EXPECT(dbls[0] == 1024 && dbls[1] == 1024);
+        EXPECT_EQUAL(dbls[0], 1024);
+        EXPECT_EQUAL(dbls[1], 1024);
         EXPECT_PARSE(cli, "1000m", false);
         EXPECT_ERR(cli, 1 + R"(
 Error: Invalid 'V' value: 1000m
@@ -2464,12 +2514,11 @@ Units symbol 'm' not recognized.
 
         dbls.siUnits("b", cli.fUnitInsensitive);
         EXPECT_PARSE(cli, "1 1b 1B 1kB 1Kb");
-        EXPECT(dbls[0] == 1
-            && dbls[1] == 1
-            && dbls[2] == 1
-            && dbls[3] == 1000
-            && dbls[4] == 1000
-        );
+        EXPECT_EQUAL(dbls[0], 1);
+        EXPECT_EQUAL(dbls[1], 1);
+        EXPECT_EQUAL(dbls[2], 1);
+        EXPECT_EQUAL(dbls[3], 1000);
+        EXPECT_EQUAL(dbls[4], 1000);
         EXPECT_PARSE(cli, "1000u", false);
         EXPECT_ERR(cli, 1 + R"(
 Error: Invalid 'V' value: 1000u
@@ -2479,7 +2528,8 @@ Units symbol 'u' not recognized.
         // with fUnitRequire
         dbls.siUnits("b", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1b 1kb");
-        EXPECT(dbls[0] == 1 && dbls[1] == 1000);
+        EXPECT_EQUAL(dbls[0], 1);
+        EXPECT_EQUAL(dbls[1], 1000);
         EXPECT_PARSE(cli, "1", false);
         EXPECT_ERR(cli, 1 + R"(
 Error: Invalid 'V' value: 1
@@ -2500,17 +2550,17 @@ Units symbol 'k' not recognized.
         EXPECT_ERR(cli, "Error: Invalid 'V' value: 1x23kb\n");
         dbls.siUnits("", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1k");
-        EXPECT(dbls[0] == 1000);
+        EXPECT_EQUAL(dbls[0], 1000);
 
         // to int, double, string, complex
         auto & sv = cli.opt<string>("s").siUnits();
         EXPECT_PARSE(cli, "-s 1M");
-        EXPECT(*sv == "1000000");
+        EXPECT_EQUAL(*sv, "1000000");
 
         auto & si = cli.opt<int>("i").siUnits();
         si.imbue(loc);
         EXPECT_PARSE(cli, "-i2G");
-        EXPECT(*si == 2'000'000'000);
+        EXPECT_EQUAL(*si, 2'000'000'000);
         EXPECT_PARSE(cli, "-i6G", false);
         EXPECT_ERR(cli, 1 + R"(
 Error: Out of range '-i' value: 6G
@@ -2521,7 +2571,7 @@ Must be between '-2,147,483,648' and '2,147,483,647'.
 
         auto & sd = cli.opt<double>("d").siUnits();
         EXPECT_PARSE(cli, "-d2.k");
-        EXPECT(*sd == 2000);
+        EXPECT_EQUAL(*sd, 2000);
 
         EnumAB seRaw;
         auto & se = cli.opt(&seRaw, "e").siUnits();
@@ -2556,9 +2606,9 @@ Options:
   --help           Show this message and exit.
 )");
         EXPECT_PARSE(cli, "-s 1.5m");
-        EXPECT(*sht == 90);
+        EXPECT_EQUAL(*sht, 90);
         EXPECT_PARSE(cli, "-s100ms");
-        EXPECT(*sht == 0);
+        EXPECT_EQUAL(*sht, 0);
         EXPECT_PARSE(cli, "-s1y", false);
         EXPECT_ERR(cli, 1 + R"(
 Error: Out of range '-s' value: 1y
@@ -2566,28 +2616,28 @@ Must be between '0' and '65,535'.
 )");
         auto & lng = cli.opt<long>("l").timeUnits();
         EXPECT_PARSE(cli, "-l1y");
-        EXPECT(*lng == 31'536'000);
+        EXPECT_EQUAL(*lng, 31'536'000);
         auto & dbl = cli.opt<double>("d").timeUnits();
         EXPECT_PARSE(cli, "-d 1.5 -s 1.4");
-        EXPECT(*dbl == 1.5 && *sht == 1);
+        EXPECT_EQUAL(*dbl, 1.5);
+        EXPECT_EQUAL(*sht, 1);
         EXPECT_PARSE(cli, "-s 1.6");
-        EXPECT(*sht == 2);
+        EXPECT_EQUAL(*sht, 2);
         auto & dbls = cli.optVec<double>("v").timeUnits();
         EXPECT_PARSE(cli, "-v1s -v1m -v1h -v1d -v1w -v1y");
-        EXPECT(dbls[0] == 1
-            && dbls[1] == 60 * dbls[0]
-            && dbls[2] == 60 * dbls[1]
-            && dbls[3] == 24 * dbls[2]
-            && dbls[4] == 7 * dbls[3]
-            && dbls[5] == 365 * dbls[3]
-        );
+        EXPECT_EQUAL(dbls[0], 1);
+        EXPECT_EQUAL(dbls[1], 60 * dbls[0]);
+        EXPECT_EQUAL(dbls[2], 60 * dbls[1]);
+        EXPECT_EQUAL(dbls[3], 24 * dbls[2]);
+        EXPECT_EQUAL(dbls[4], 7 * dbls[3]);
+        EXPECT_EQUAL(dbls[5], 365 * dbls[3]);
         EXPECT_PARSE(cli, "-v1ms -v1us -v1ns");
-        EXPECT(dbls[0] == 1e-3);
+        EXPECT_EQUAL(dbls[0], 1e-3);
 #if defined(_MSC_VER) && _MSC_VER != 1938
         // Exclude these from MSVC 2022 17.8 because of a bug in it's stream
         // library.
-        EXPECT(dbls[1] == 1e-6);
-        EXPECT(dbls[2] == 1e-9);
+        EXPECT_EQUAL(dbls[1], 1e-6);
+        EXPECT_EQUAL(dbls[2], 1e-9);
 #endif
     }
 
@@ -2598,11 +2648,11 @@ Must be between '0' and '65,535'.
             .anyUnits({{"yd", 36}, {"ft", 12}, {"in", 1}, {"mil", 0.001}})
             .desc("Length, in inches");
         EXPECT_PARSE(cli, "-l 100yd");
-        EXPECT(*length == 3600);
+        EXPECT_EQUAL(*length, 3600);
         EXPECT_PARSE(cli, "-l 300ft");
-        EXPECT(*length == 3600);
+        EXPECT_EQUAL(*length, 3600);
         EXPECT_PARSE(cli, "-l 3600");
-        EXPECT(*length == 3600);
+        EXPECT_EQUAL(*length, 3600);
     }
 }
 
@@ -2633,21 +2683,21 @@ Options:
   --help             Show this message and exit.
 )");
         EXPECT_PARSE(cli, "--password=hi");
-        EXPECT(*pass == "hi");
+        EXPECT_EQUAL(*pass, "hi");
         in.clear();
         in.str("secret\nsecret\n");
         out.str({});
         CliTest(cli).iostreams(&in, &out);
         EXPECT_PARSE(cli);
-        EXPECT(*pass == "secret");
-        EXPECT(out.str() == "Password: \nEnter again to confirm: \n");
-        EXPECT(in.get() == EOF);
+        EXPECT_EQUAL(*pass, "secret");
+        EXPECT_EQUAL(out.str(), "Password: \nEnter again to confirm: \n");
+        EXPECT_EQUAL(in.get(), EOF);
         in.clear();
         in.str("secret\nmistype_secret\n");
         out.str({});
         EXPECT_PARSE(cli, {}, false);
         EXPECT_ERR(cli, "Error: Confirm failed, entries not the same.\n");
-        EXPECT(in.get() == EOF);
+        EXPECT_EQUAL(in.get(), EOF);
         if (prompt) {
             cli.iostreams(nullptr, nullptr);
             cout << "Expects password to be confirmed (empty is ok)." << endl
@@ -2669,8 +2719,9 @@ Options:
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli, {}, false, Dim::kExitOk);
         EXPECT(!*ask);
-        EXPECT(out.str() == "Are you sure? [y/N]: ");
-        EXPECT(in.get() == EOF);
+        EXPECT_EQUAL(out.str(), "Are you sure? [y/N]: ");
+        auto ch = in.get();
+        EXPECT_EQUAL(ch, EOF);
         if (prompt) {
             cli.iostreams(nullptr, nullptr);
             cout << "Expects answer to be no." << endl
@@ -2689,8 +2740,8 @@ Options:
         out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
-        EXPECT(out.str() == "Name: \n");
-        EXPECT(ask.size() && ask[0] == "jack");
+        EXPECT_EQUAL(out.str(), "Name: \n");
+        EXPECT_EQUAL_IF(ask.size(), ask[0], "jack");
     }
 
     // prompt with default
@@ -2702,8 +2753,8 @@ Options:
         out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
-        EXPECT(out.str() == "Name [jill]: ");
-        EXPECT(*ask == "jack");
+        EXPECT_EQUAL(out.str(), "Name [jill]: ");
+        EXPECT_EQUAL(*ask, "jack");
     }
 
     // prompt with parse error
@@ -2715,9 +2766,9 @@ Options:
         out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli, {}, false, Dim::kExitUsage);
-        EXPECT(out.str() == "Cookies [0]: ");
+        EXPECT_EQUAL(out.str(), "Cookies [0]: ");
         EXPECT_ERR(cli, "Error: Invalid '--cookies' value: nine\n");
-        EXPECT(*cookies == 0);
+        EXPECT_EQUAL(*cookies, 0);
     }
 
     // prompt with unnamed operand
@@ -2729,8 +2780,8 @@ Options:
         out.str({});
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
-        EXPECT(out.str() == ": ");
-        EXPECT(*ask == "jack");
+        EXPECT_EQUAL(out.str(), ": ");
+        EXPECT_EQUAL(*ask, "jack");
     }
 }
 
@@ -2759,7 +2810,7 @@ void beforeTests() {
         cli.before([](auto &, auto & args) { args.push_back("b"); });
         vector<string> expected = { "a", "b" };
         EXPECT_PARSE(cli);
-        EXPECT(*vals == expected);
+        EXPECT_EQUAL(*vals, expected);
     }
 
     {
@@ -2771,7 +2822,7 @@ void beforeTests() {
         cli.before([](auto &, auto & args) { args.push_back("d"); }, 2);
         vector<string> expected = { "b", "c", "d", "a" };
         EXPECT_PARSE(cli);
-        EXPECT(*vals == expected);
+        EXPECT_EQUAL(*vals, expected);
     }
 }
 
@@ -2795,11 +2846,11 @@ void envTests() {
     result = putenv((char *) "TEST_OPTS=");
     EXPECT(!result);
     EXPECT_PARSE(cli, "c d");
-    EXPECT(*args == vector<string>{"c", "d"});
+    EXPECT_EQUAL(*args, vector<string>{"c", "d"});
     result = putenv((char *) "TEST_OPTS=a b");
     EXPECT(!result);
     EXPECT_PARSE(cli, "c d");
-    EXPECT(*args == vector<string>{"a", "b", "c", "d"});
+    EXPECT_EQUAL(*args, vector<string>{"a", "b", "c", "d"});
 #endif
 }
 
@@ -2821,7 +2872,7 @@ void finalOptTests() {
         cli.opt<int>("[A]");
         auto & b = cli.optVec<int>("[B]").finalOpt();
         EXPECT_PARSE(cli, "1 2 3");
-        EXPECT(*b == vector<int>{2, 3});
+        EXPECT_EQUAL(*b, vector<int>{2, 3});
     }
     // optional finalOpt operand after required operand
     {
@@ -2829,7 +2880,7 @@ void finalOptTests() {
         cli.opt<int>("<A>");
         auto & b = cli.optVec<int>("[B]!");
         EXPECT_PARSE(cli, "1 2 3");
-        EXPECT(*b == vector<int>{2, 3});
+        EXPECT_EQUAL(*b, vector<int>{2, 3});
     }
     // required finalOpt operand after required operand
     // trailing option looking argument interpreted as operand
@@ -2838,7 +2889,7 @@ void finalOptTests() {
         cli.opt<int>("<A>");
         auto & b = cli.optVec<int>("<B>!");
         EXPECT_PARSE(cli, "1 2 -1");
-        EXPECT(*b == vector<int>{2, -1});
+        EXPECT_EQUAL(*b, vector<int>{2, -1});
     }
 
     // finalOpt option
@@ -2849,12 +2900,12 @@ void finalOptTests() {
         auto & c = cli.optVec<string>("[C]");
         EXPECT_PARSE(cli, "-a -b");
         EXPECT(!b);
-        EXPECT(*c == vector<string>{"-b"});
+        EXPECT_EQUAL(*c, vector<string>{"-b"});
         EXPECT_PARSE(cli, "-b 1 -b");
-        EXPECT(*b == 1);
-        EXPECT(*c == vector<string>{"-b"});
+        EXPECT_EQUAL(*b, 1);
+        EXPECT_EQUAL(*c, vector<string>{"-b"});
         EXPECT_PARSE(cli, "--lname -a");
-        EXPECT(*c == vector<string>{"-a"});
+        EXPECT_EQUAL(*c, vector<string>{"-a"});
     }
 }
 
