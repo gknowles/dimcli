@@ -429,7 +429,7 @@ static string intToString(const Cli::Convert & cvt, int val) {
 }
 
 //===========================================================================
-static bool parseStr(string * out, const char16_t * src, size_t len) {
+inline static bool parseStr(string * out, const char16_t * src, size_t len) {
     out->resize(4 * len + 1);
     auto dst = out->data();
     mbstate_t state = {};
@@ -1826,7 +1826,7 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     if (content.size() < 2)
         return true;
     if (content[0] == '\xff' && content[1] == '\xfe') {
-        auto base = reinterpret_cast<const char16_t *>(content.data());
+        auto base = reinterpret_cast<const wchar_t *>(content.data());
         string tmp;
         if (!parseStr(&tmp, base + 1, content.size() / sizeof *base - 1))
             return false;
