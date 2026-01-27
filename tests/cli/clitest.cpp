@@ -1972,7 +1972,12 @@ static void responseTests(const string & rawProgName) {
     //EXPECT_EQUAL(*args, vector<string>{"d1", "d2", "h1", "h2"});
 
     // Response file with invalid encoding.
-    writeRsp("test/eBad.rsp", "\xff\xfe\x00\xd8\x20\x20");
+    if (sizeof(wchar_t) == 2) {
+        writeRsp("test/eBad.rsp", "\xff\xfe\0\xd8\x20\x20");
+    } else {
+        assert(sizeof(wchar_t) == 4);
+        writeRsp("test/eBad.rsp", "\xff\xfe\0\0\0\xd8\0\0\x20\x20\0\0");
+    }
     writeRsp("test/gBad.rsp", "@eBad.rsp");
     EXPECT_PARSE(cli, "@test/gBad.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid encoding: eBad.rsp\n");
