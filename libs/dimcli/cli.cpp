@@ -429,32 +429,12 @@ static string intToString(const Cli::Convert & cvt, int val) {
 }
 
 //===========================================================================
-inline static bool parseStr(string * out, const char16_t * src, size_t len) {
-    out->resize(4 * len + 1);
-    auto dst = out->data();
-    mbstate_t state = {};
-    size_t mblen = 0;
-    for (auto i = 0; i < len; ++i) {
-        assert(out->data() + out->size() - dst > MB_CUR_MAX);
-        mblen = c16rtomb(dst, src[i], &state);
-        if (mblen == -1) {
-            out->resize(dst - out->data());
-            return false;
-        }
-        dst += mblen;
-    }
-    dst += c16rtomb(dst, 0, &state);
-    out->resize(dst - out->data() - 1);
-    return mblen != -1;
-}
-
-//===========================================================================
 static bool parseStr(string * out, const wchar_t * src, size_t len) {
     out->resize(4 * len + 1);
     auto dst = out->data();
     mbstate_t state = {};
     size_t mblen = 0;
-    for (auto i = 0; i < len; ++i) {
+    for (auto i = 0u; i < len; ++i) {
         assert(out->data() + out->size() - dst > MB_CUR_MAX);
         mblen = wcrtomb(dst, src[i], &state);
         if (mblen == -1) {
