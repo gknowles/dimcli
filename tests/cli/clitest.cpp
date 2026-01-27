@@ -1893,13 +1893,13 @@ Options:
 
 //===========================================================================
 template<typename T, int N>
-void writeRsp(const char path[], T const (&data)[N]) {
+static void writeRsp(const char path[], T const (&data)[N]) {
     fstream f(path, ios::out | ios::trunc | ios::binary);
     f.write((char *) data, sizeof *data * (N - 1));
 }
 
 //===========================================================================
-void responseTests(const string & rawProgName) {
+static void responseTests(const string & rawProgName) {
 #ifdef FILESYSTEM
     namespace fs = FILESYSTEM;
     int line = 0;
@@ -1916,48 +1916,77 @@ void responseTests(const string & rawProgName) {
         fs::current_path(dir, ec);
         EXPECT(!ec);
     }
-    if (!fs::is_directory("test"))
-        fs::create_directories("test");
-    writeRsp("test/a.rsp", "1 @bu8.rsp 2\n");
-    writeRsp("test/bu8.rsp", u8"\ufeffx\ny\n");
-    writeRsp("test/cL.rsp", L"\ufeffc1 c2");
-    writeRsp("test/du.rsp", u"\ufeffd1 d2");
-    writeRsp("test/eBad.rsp", "\xff\xfe\x00\xd8\x20\x20");
-    writeRsp("test/f.rsp", "f");
-    writeRsp("test/gBad.rsp", "@eBad.rsp");
-    writeRsp("test/hU.rsp", U"\ufeffh1 h2");
-    writeRsp("test/none.rsp", " ");
-    writeRsp("test/reA.rsp", "@reB.rsp");
-    writeRsp("test/reB.rsp", "@reA.rsp");
-    writeRsp("test/reX.rsp", "@reX.rsp");
+    if (!fs::is_directory("test")) {
+        auto rc = fs::create_directories("test", ec);
+        EXPECT(rc);
+        if (!rc) {
+            cerr << "Error creating 'test' directory ("
+                << ec << ")." << endl;
+            return;
+        }
+    }
+
+    // Remove all test/*.rsp files.
+    for (auto fp : fs::directory_iterator("test", ec)) {
+        if (fp.path().extension() == ".rsp") {
+            if (!fs::remove(fp.path(), ec)) {
+                cerr << "Error removing '" << fp << " (" << ec << ")." << endl;
+            }
+        }
+    }
 
     cli = {};
     auto & args = cli.optVec<string>("[ARGS]");
-    EXPECT_PARSE(cli, "@test/a.rsp");
-    EXPECT_EQUAL(*args, vector<string>{"1", "x", "y", "2"});
 
+    // Missing response file
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid response file: test/does_not_exist.rsp\n");
+
+    // Respose files disabled
     CliTest(cli).responseFiles(false);
     EXPECT_PARSE(cli, "@test/does_not_exist.rsp");
     EXPECT_EQUAL_IF(args, args[0], "@test/does_not_exist.rsp");
     cli.responseFiles(true);
 
+    // Empty (whitespace only) response file.
+    writeRsp("test/none.rsp", " ");
     EXPECT_PARSE(cli, "@test/none.rsp");
     EXPECT_EQUAL(args.size(), 0);
 
+    // Nested response files.
+    writeRsp("test/a.rsp", "1 @bu8.rsp 2\n");
+    writeRsp("test/bu8.rsp", u8"\ufeffx\ny\n");
+    EXPECT_PARSE(cli, "@test/a.rsp");
+    EXPECT_EQUAL(*args, vector<string>{"1", "x", "y", "2"});
+
+    // wchar_t response file, bent to pass whether 16 or 32bit.
+    writeRsp("test/cL.rsp", L"\ufeffc1 c2");
+    writeRsp("test/f.rsp", "f");
     EXPECT_PARSE(cli, "@test/cL.rsp @test/f.rsp");
     EXPECT_EQUAL(*args, vector<string>{"c1", "c2", "f"});
 
+    // Explicitly UTF-16 or UTF-32.
+    writeRsp("test/du.rsp", u"\ufeffd1 d2");
+    writeRsp("test/hU.rsp", U"\ufeffh1 h2");
+    //EXPECT_PARSE(cli, "@test/du.rsp @test/hU.rsp");
+    //EXPECT_EQUAL(*args, vector<string>{"d1", "d2", "h1", "h2"});
+
+    // Response file with invalid encoding.
+    writeRsp("test/eBad.rsp", "\xff\xfe\x00\xd8\x20\x20");
+    writeRsp("test/gBad.rsp", "@eBad.rsp");
     EXPECT_PARSE(cli, "@test/gBad.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid encoding: eBad.rsp\n");
 
+    // Recursive response files.
+    writeRsp("test/reA.rsp", "@reB.rsp");
+    writeRsp("test/reB.rsp", "@reA.rsp");
+    writeRsp("test/reX.rsp", "@reX.rsp");
     EXPECT_PARSE(cli, "@test/reA.rsp", false);
     EXPECT_ERR(cli, "Error: Recursive response file: reA.rsp\n");
-
     EXPECT_PARSE(cli, "@test/reX.rsp", false);
     EXPECT_ERR(cli, "Error: Recursive response file: reX.rsp\n");
 
+    // Error reading (not opening) response file.
 #ifdef _MSC_VER
     {
         fstream f("test/f.rsp", ios::in, _SH_DENYRW);
@@ -1972,7 +2001,7 @@ void responseTests(const string & rawProgName) {
         }
         auto rc = cli.parse({ kCommand, "@test/f.rsp" });
         if (rc && args.size() == 1 && args[0] == "f") {
-            // Unable to generate error reading file
+            // Unable to test error reading file.
         } else {
             EXPECT_PARSE(cli, "@test/f.rsp", false);
             EXPECT_ERR(cli, "Error: Read error: test/f.rsp\n");
@@ -1992,7 +2021,7 @@ void responseTests(const string & rawProgName) {
 ***/
 
 //===========================================================================
-void filesystemTests() {
+static void filesystemTests() {
 #ifdef FILESYSTEM
     int line = 0;
     CliTest cli;
@@ -2029,7 +2058,7 @@ Options:
 ***/
 
 //===========================================================================
-void execTests() {
+static void execTests() {
     int line = 0;
     CliTest cli;
     ostringstream out;
@@ -2106,7 +2135,7 @@ void execTests() {
 ***/
 
 //===========================================================================
-void vectorTests() {
+static void vectorTests() {
     int line = 0;
     CliTest cli;
 
@@ -2363,7 +2392,7 @@ Options:
 ***/
 
 //===========================================================================
-void basicTests() {
+static void basicTests() {
     int line = 0;
     CliTest cli;
 
@@ -2467,7 +2496,7 @@ istream & operator>>(istream & is, EnumAB & val) {
 }
 
 //===========================================================================
-void unitsTests() {
+static void unitsTests() {
     int line = 0;
     CliTest cli;
 #if defined(_MSC_VER) && _MSC_VER <= 1900
@@ -2664,7 +2693,7 @@ Must be between '0' and '65,535'.
 ***/
 
 //===========================================================================
-void promptTests(bool prompt) {
+static void promptTests(bool prompt) {
     int line = 0;
     CliTest cli;
     istringstream in;
@@ -2793,7 +2822,7 @@ Options:
 ***/
 
 //===========================================================================
-void beforeTests() {
+static void beforeTests() {
     int line = 0;
     CliTest cli;
     CliTest(cli).before([](auto & cli, auto & args) {
@@ -2834,7 +2863,7 @@ void beforeTests() {
 ***/
 
 //===========================================================================
-void envTests() {
+static void envTests() {
 #if !defined(DIMCLI_LIB_NO_ENV)
     int line = 0;
     CliTest cli;
@@ -2862,7 +2891,7 @@ void envTests() {
 ***/
 
 //===========================================================================
-void finalOptTests() {
+static void finalOptTests() {
     int line = 0;
     CliTest cli;
 
