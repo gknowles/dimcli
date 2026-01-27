@@ -779,7 +779,7 @@ Options:
   --help    Show this message and exit.
 )");
     EXPECT_PARSE(cli, "red");
-    EXPECT_EQUAL(state2.size(), 1);
+    EXPECT_EQUAL(state2.size(), 1u);
     EXPECT_EQUAL(state2[0], State::stop);
     EXPECT_PARSE(cli, "white", false);
     EXPECT_ERR(cli, 1 + R"(
@@ -1972,10 +1972,12 @@ static void responseTests(const string & rawProgName) {
     //EXPECT_EQUAL(*args, vector<string>{"d1", "d2", "h1", "h2"});
 
     // Response file with invalid encoding.
-    if (sizeof(wchar_t) == 2) {
+    bool wide16 = // Avoids "conditional expression is constant" warning.
+        sizeof(wchar_t) == sizeof(char16_t);
+    if (wide16) {
         writeRsp("test/eBad.rsp", "\xff\xfe\0\xd8\x20\x20");
     } else {
-        assert(sizeof(wchar_t) == 4);
+        assert(sizeof(wchar_t) == sizeof(char32_t));
         writeRsp("test/eBad.rsp", "\xff\xfe\0\0\0\xd8\0\0\x20\x20\0\0");
     }
     writeRsp("test/gBad.rsp", "@eBad.rsp");
