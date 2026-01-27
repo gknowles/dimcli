@@ -102,6 +102,17 @@ static void equalTest(
 }
 
 //===========================================================================
+static void equalTest(
+    int line,
+    const char msgA[],
+    const char msgB[],
+    size_t a,
+    int b
+) {
+    equalTest(line, msgA, msgB, a, (size_t) b);
+}
+
+//===========================================================================
 static void parseTest(
     int line,
     Dim::Cli & cli,
@@ -779,7 +790,7 @@ Options:
   --help    Show this message and exit.
 )");
     EXPECT_PARSE(cli, "red");
-    EXPECT_EQUAL(state2.size(), 1u);
+    EXPECT_EQUAL(state2.size(), 1);
     EXPECT_EQUAL(state2[0], State::stop);
     EXPECT_PARSE(cli, "white", false);
     EXPECT_ERR(cli, 1 + R"(
