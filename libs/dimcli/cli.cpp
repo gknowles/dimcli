@@ -429,26 +429,6 @@ static string intToString(const Cli::Convert & cvt, int val) {
 }
 
 //===========================================================================
-static bool parseStr(string * out, const wchar_t * src, size_t len) {
-    out->resize(4 * len + 1);
-    auto dst = out->data();
-    mbstate_t state = {};
-    size_t mblen = 0;
-    for (auto i = 0u; i < len; ++i) {
-        assert(out->data() + out->size() - dst > MB_CUR_MAX);
-        mblen = wcrtomb(dst, src[i], &state);
-        if (mblen == -1) {
-            out->resize(dst - out->data());
-            return false;
-        }
-        dst += mblen;
-    }
-    dst += wcrtomb(dst, 0, &state);
-    out->resize(dst - out->data() - 1);
-    return mblen != -1;
-}
-
-//===========================================================================
 static bool parseBool(bool & out, const string & val) {
     static const unordered_map<string, bool> allowed = {
         { "1", true },
@@ -493,6 +473,38 @@ static bool parseBool(bool & out, const string & val) {
 CliLocal::CliLocal()
     : Cli(make_shared<Config>())
 {}
+
+
+/****************************************************************************
+*
+*   Cli::Convert
+*
+***/
+
+//===========================================================================
+template<>
+[[nodiscard]] bool Cli::Convert::toString<std::wstring>(
+    std::string & out,
+    const std::wstring & src
+) const {
+    out.resize(MB_LEN_MAX * src.size() + 1);
+    auto dst = out.data();
+    mbstate_t state = {};
+    size_t mblen = 0;
+
+    for (auto&& w : src) {
+        assert(out.data() + out.size() - dst > MB_LEN_MAX);
+        mblen = wcrtomb(dst, w, &state);
+        if (mblen == -1) {
+            out.resize(dst - out.data());
+            return false;
+        }
+        dst += mblen;
+    }
+    dst += wcrtomb(dst, 0, &state);
+    out.resize(dst - out.data() - 1);
+    return mblen != -1;
+}
 
 
 /****************************************************************************
@@ -1808,8 +1820,13 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
     if (content[0] == '\xff' && content[1] == '\xfe') {
         auto base = reinterpret_cast<const wchar_t *>(content.data());
         string tmp;
-        if (!parseStr(&tmp, base + 1, content.size() / sizeof *base - 1))
+        Cli::Convert cvt;
+        if (!cvt.toString(
+            tmp,
+            wstring(base + 1, content.size() / sizeof *base - 1))
+        ) {
             return false;
+        }
         content = tmp;
     } else if (content.size() >= 3
         && content[0] == '\xef'
@@ -3771,9 +3788,9 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
     out.reserve(argc);
     for (unsigned i = 0; i < argc && argv[i]; ++i) {
-        wstring_view warg(argv[i]);
         string tmp;
-        if (!parseStr(&tmp, warg.data(), warg.size())) {
+        Cli::Convert cvt;
+        if (!cvt.toString(tmp, argv[i])) {
             out.push_back("BAD_ENCODING"s);
         } else {
             out.push_back(move(tmp));

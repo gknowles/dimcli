@@ -1203,11 +1203,15 @@ private:
     ) const;
 
     template <typename T>
-    auto toString_impl(std::string & out, const T & src, int) const
+    auto toString_impl(std::string & out, const T & src, int, int) const
         -> decltype(std::declval<std::ostream &>() << src, bool());
 
+    template <typename T, typename = typename
+        std::enable_if<std::is_constructible<std::wstring, T>::value>::type>
+    bool toString_impl(std::string & out, const T & src, int, long) const;
+
     template <typename T>
-    bool toString_impl(std::string & out, const T & src, long) const;
+    bool toString_impl(std::string & out, const T & src, long, long) const;
 };
 
 //===========================================================================
@@ -1291,15 +1295,22 @@ template <typename T>
     std::string & out,
     const T & src
 ) const {
-    return toString_impl(out, src, 0);
+    return toString_impl(out, src, 0, 0);
 }
+
+//===========================================================================
+template<>
+[[nodiscard]] bool Cli::Convert::toString<std::wstring>(
+    std::string & out,
+    const std::wstring & src
+) const;
 
 //===========================================================================
 template <typename T>
 auto Cli::Convert::toString_impl(
     std::string & out,
     const T & src,
-    int
+    int, int
 ) const
     -> decltype(std::declval<std::ostream &>() << src, bool())
 {
@@ -1314,11 +1325,21 @@ auto Cli::Convert::toString_impl(
 }
 
 //===========================================================================
+template <typename T, typename>
+bool Cli::Convert::toString_impl(
+    std::string & out,
+    const T & src,
+    int, long
+) const {
+    return toString<std::wstring>(out, src);
+}
+
+//===========================================================================
 template <typename T>
 bool Cli::Convert::toString_impl(
     std::string & out,
     const T &,
-    long
+    long, long
 ) const {
     out.clear();
     return false;

@@ -29,6 +29,8 @@ static int s_errors;
 static bool s_verbose;
 static string s_locale;
 
+const wchar_t kInvalidCharsW[] = { 0xfeff, 0xd800, 0x2020, 0 };
+
 
 /****************************************************************************
 *
@@ -1668,10 +1670,14 @@ c\d)", {"ab$c\\d"});
     auto c1 = cli.toCmdline(wargc, wargv);
     EXPECT_EQUAL(c1, cmdline);
 
+    wargv[1] = kInvalidCharsW;
+    a1 = cli.toArgv(wargc, wargv);
+    EXPECT_EQUAL(a1, vector<string>{"a", "BAD_ENCODING", "c"});
+
     EXPECT_EQUAL(cli.toCmdlineL("a", 'b', "c"s), cmdline);
     EXPECT_EQUAL(cli.toGlibCmdlineL("a", 'b', "c"s), cmdline);
     EXPECT_EQUAL(cli.toGnuCmdlineL("a", 'b', "c"s), cmdline);
-    EXPECT_EQUAL(cli.toWindowsCmdlineL("a", 'b', "c"s), cmdline);
+    EXPECT_EQUAL(cli.toWindowsCmdlineL(L"a", 'b', "c"s), cmdline);
 }
 
 
@@ -1983,14 +1989,7 @@ static void responseTests(const string & rawProgName) {
     //EXPECT_EQUAL(*args, vector<string>{"d1", "d2", "h1", "h2"});
 
     // Response file with invalid encoding.
-    bool wide16 = // Avoids "conditional expression is constant" warning.
-        sizeof(wchar_t) == sizeof(char16_t);
-    if (wide16) {
-        writeRsp("test/eBad.rsp", "\xff\xfe\0\xd8\x20\x20");
-    } else {
-        assert(sizeof(wchar_t) == sizeof(char32_t));
-        writeRsp("test/eBad.rsp", "\xff\xfe\0\0\0\xd8\0\0\x20\x20\0\0");
-    }
+    writeRsp("test/eBad.rsp", kInvalidCharsW);
     writeRsp("test/gBad.rsp", "@eBad.rsp");
     EXPECT_PARSE(cli, "@test/gBad.rsp", false);
     EXPECT_ERR(cli, "Error: Invalid encoding: eBad.rsp\n");
