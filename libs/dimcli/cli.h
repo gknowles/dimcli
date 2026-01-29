@@ -879,7 +879,7 @@ public:
     // Copy array of pointers into vector of args.
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     static std::vector<std::string> toArgv(size_t argc, const char * argv[]);
-    // Copy array of wchar_t pointers into vector of UTF-8 encoded args.
+    // Copy array of wchar_t pointers into vector of default encoded args.
     static std::vector<std::string> toArgv(size_t argc, wchar_t * argv[]);
     static std::vector<std::string> toArgv(
         size_t argc,
