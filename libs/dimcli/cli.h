@@ -1299,13 +1299,6 @@ template <typename T>
 }
 
 //===========================================================================
-template<>
-[[nodiscard]] bool Cli::Convert::toString<std::wstring>(
-    std::string & out,
-    const std::wstring & src
-) const;
-
-//===========================================================================
 template <typename T>
 auto Cli::Convert::toString_impl(
     std::string & out,
@@ -1333,6 +1326,14 @@ bool Cli::Convert::toString_impl(
 ) const {
     return toString<std::wstring>(out, src);
 }
+
+//===========================================================================
+template <>
+bool Cli::Convert::toString_impl<std::wstring>(
+    std::string & out,
+    const std::wstring & src,
+    int, long
+) const;
 
 //===========================================================================
 template <typename T>

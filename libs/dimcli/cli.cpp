@@ -482,9 +482,10 @@ CliLocal::CliLocal()
 
 //===========================================================================
 template<>
-[[nodiscard]] bool Cli::Convert::toString<std::wstring>(
+bool Cli::Convert::toString_impl<std::wstring>(
     std::string & out,
-    const std::wstring & src
+    const std::wstring & src,
+    int, long
 ) const {
     out.resize(MB_LEN_MAX * src.size() + 1);
     auto dst = out.data();
