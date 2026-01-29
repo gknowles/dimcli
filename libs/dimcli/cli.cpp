@@ -12,10 +12,9 @@
 #include "cli.h"
 
 #include <algorithm>
+#include <climits>  // MB_LEN_MAX
 #include <cstdlib>
 #include <cstring>
-#include <cuchar>
-#include <cwchar>
 #include <fstream>
 #include <iostream>
 #include <list>
