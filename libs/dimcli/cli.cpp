@@ -481,6 +481,16 @@ CliLocal::CliLocal()
 ***/
 
 //===========================================================================
+locale Cli::Convert::imbue(const locale & loc) {
+    return m_interpreter.imbue(loc);
+}
+
+//===========================================================================
+std::locale Cli::Convert::getloc() const {
+    return m_interpreter.getloc();
+}
+
+//===========================================================================
 template<>
 bool Cli::Convert::toString_impl<std::wstring>(
     std::string & out,
@@ -691,11 +701,6 @@ Cli::OptBase::OptBase(const string & names, bool flag)
 }
 
 //===========================================================================
-locale Cli::OptBase::imbue(const locale & loc) {
-    return m_interpreter.imbue(loc);
-}
-
-//===========================================================================
 string Cli::OptBase::defaultPrompt() const {
     auto name = (string) m_fromName;
 
@@ -723,7 +728,7 @@ bool Cli::OptBase::withUnits(
     const unordered_map<string, long double> & units,
     int flags
 ) const {
-    auto & f = use_facet<ctype<char>>(m_interpreter.getloc());
+    auto & f = use_facet<ctype<char>>(getloc());
 
     auto pos = val.size();
     for (;;) {

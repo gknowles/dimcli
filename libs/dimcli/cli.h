@@ -1195,6 +1195,18 @@ public:
 
 class DIMCLI_LIB_DECL Cli::Convert {
 public:
+    //-----------------------------------------------------------------------
+    // CONFIGURATION
+
+    // Change the locale used when parsing values via iostream. Defaults to
+    // the user's preferred locale (aka locale("")) for arithmetic types and
+    // the "C" locale for everything else.
+    std::locale imbue(const std::locale & loc);
+    std::locale getloc() const;
+
+    //-----------------------------------------------------------------------
+    // CONVERSIONS
+
     // Converts from string to T.
     template <typename T>
     [[nodiscard]] bool fromString(T & out, const std::string & value) const;
@@ -1203,9 +1215,6 @@ public:
     // conversion fails or no conversion available.
     template <typename T>
     [[nodiscard]] bool toString(std::string & out, const T & src) const;
-
-protected:
-    mutable std::stringstream m_interpreter;
 
 private:
     template <typename T>
@@ -1244,6 +1253,8 @@ private:
 
     template <typename T>
     bool toString_impl(std::string & out, const T & src, long, long) const;
+
+    mutable std::stringstream m_interpreter;
 };
 
 //===========================================================================
@@ -1499,14 +1510,6 @@ public:
 public:
     OptBase(const std::string & names, bool flag);
     virtual ~OptBase() {}
-
-    //-----------------------------------------------------------------------
-    // CONFIGURATION
-
-    // Change the locale used when parsing values via iostream. Defaults to
-    // the user's preferred locale (aka locale("")) for arithmetic types and
-    // the "C" locale for everything else.
-    std::locale imbue(const std::locale & loc);
 
     //-----------------------------------------------------------------------
     // QUERIES

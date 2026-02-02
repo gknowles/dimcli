@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - cvt.toString() support for wchar_t and wstring
 - Added - cli.toArgv() and cli.toCmdline() variants that report errors on
           cvt.toString() failures.
+- Added - Convert configuration options: cvt.imbue() and cvt.getloc()
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
