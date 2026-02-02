@@ -876,6 +876,7 @@ public:
     // Parse cmdline into vector of args, using the default conventions
     // (Gnu or Windows) of the platform.
     static std::vector<std::string> toArgv(const std::string & cmdline);
+
     // Copy array of pointers into vector of args.
     static std::vector<std::string> toArgv(size_t argc, char * argv[]);
     static std::vector<std::string> toArgv(size_t argc, const char * argv[]);
@@ -885,11 +886,30 @@ public:
         size_t argc,
         const wchar_t * argv[]
     );
+
     // Copy args into vector of args. Arguments must be convertible to string
     // via cvt.toString().
     template <typename ...Args>
     static std::vector<std::string> toArgvL(Args &&... args);
 
+    //-----------------------------------------------------------------------
+    // Copy to vector of args, returns false and sets errmsg on transcoding or
+    // other conversion failures.
+    bool toArgv(
+        std::vector<std::string> & out,
+        size_t argc,
+        wchar_t * argv[]
+    );
+    bool toArgv(
+        std::vector<std::string> & out,
+        size_t argc,
+        const wchar_t * argv[]
+    );
+
+    template <typename ...Args>
+    bool toArgvL(std::vector<std::string> & out, Args &&... args) const;
+
+    //-----------------------------------------------------------------------
     // Create vector of pointers suitable for use with argc/argv APIs, has a
     // trailing null that is not included in the vectors size(). The return
     // values point into the source string vector and are only valid until that
@@ -898,6 +918,7 @@ public:
         const std::vector<std::string> & args
     );
 
+    //-----------------------------------------------------------------------
     // Parse according to glib conventions, based on the UNIX98 shell spec.
     static std::vector<std::string> toGlibArgv(const std::string & cmdline);
     // Parse using GNU conventions, same rules as buildargv().
@@ -914,10 +935,17 @@ public:
     static std::string toCmdline(size_t argc, const char * argv[]);
     static std::string toCmdline(size_t argc, wchar_t * argv[]);
     static std::string toCmdline(size_t argc, const wchar_t * argv[]);
+    // Calls cli.badUsage() and returns false if arguments are not convertible.
+    bool toCmdline(std::string & out, size_t argc, wchar_t * argv[]);
+    bool toCmdline(std::string & out, size_t argc, const wchar_t * argv[]);
     // Join arguments into command line, escaping as needed. Arguments must be
-    // convertible to string via cvt.toString().
+    // convertible to string via cvt.toString(), otherwise they are converted
+    // to "BAD_ENCODING".
     template <typename ...Args>
     static std::string toCmdlineL(Args &&... args);
+    // Calls cli.badUsage() and returns false if arguments are not convertible.
+    template <typename ...Args>
+    bool toCmdlineL(std::string & out, Args &&... args);
 
     // Join according to glib conventions, based on the UNIX98 shell spec.
     static std::string toGlibCmdline(const std::vector<std::string> & args);
@@ -983,6 +1011,10 @@ private:
 
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
+
+    struct ArgPackState;
+    template <typename T>
+    std::string argPackToString(ArgPackState & st, T & val);
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;
@@ -1284,7 +1316,7 @@ bool Cli::Convert::fromString_impl(
     //      template<> bool Cli::Convert::fromString<MyType>(
     //          MyType & out, const std::string & src) const { ... }
     //  - Parse action attached to the Opt<T> instance that does NOT call
-    //    opt.parseValue(), such as opt.choice().
+    //    opt.parseValue(), such as how opt.choice() works.
     assert(!"Unusable type, no conversion from string exists.");
     return false;
 }
@@ -1355,21 +1387,69 @@ bool Cli::Convert::toString_impl(
 *
 ***/
 
+struct DIMCLI_LIB_DECL Cli::ArgPackState {
+    Cli::Convert cvt;
+    int errpos = 0;
+    int next = 0;
+};
+
+//===========================================================================
+template <typename T>
+std::string Cli::argPackToString(Cli::ArgPackState & st, T & val) {
+    std::string out;
+    st.next += 1;
+    if (st.cvt.toString(out, std::forward<T>(val)) || st.errpos)
+        return out;
+    st.errpos = st.next;
+    std::string strpos;
+    (void) st.cvt.toString(strpos, st.errpos);
+    std::ostringstream os;
+    os.setf(os.hex, os.basefield);
+    for (auto i = 0; i < sizeof val; ++i) {
+        os << ((unsigned char *)&val)[i];
+        if (i == 15) {
+            os << "...";
+            break;
+        }
+    }
+    badUsage(
+        "Invalid 'arg" + strpos + "' value (hex)",
+        os.str(),
+        "Unable to convert argument to default string encoding."
+    );
+    return out;
+}
+
 //===========================================================================
 template <typename ...Args>
 std::vector<std::string> Cli::toArgvL(Args &&... args) {
     std::string tmp;
     Convert cvt;
     std::vector<std::string> out = {
-        ((void) cvt.toString(tmp, std::forward<Args>(args)), tmp)...
+    //  ( Calculate value to add to vector                  , value)
+        ( (void) cvt.toString(tmp, std::forward<Args>(args)), tmp )...
     };
     return out;
 }
 
 //===========================================================================
 template <typename ...Args>
+bool Cli::toArgvL(std::vector<std::string> & out, Args &&... args) const {
+    ArgPackState st;
+    out = { argPackToString(st, std::forward<Args>(args))... };
+    return st.errpos == 0;
+}
+
+//===========================================================================
+template <typename ...Args>
 std::string Cli::toCmdlineL(Args &&... args) {
     return toCmdline(toArgvL(std::forward<Args>(args)...));
+}
+
+//===========================================================================
+template <typename ...Args>
+bool Cli::toCmdlineL(std::string & out, Args &&... args) {
+    return toCmdline(out, toArgvL(std::forward<Args>(args)...));
 }
 
 //===========================================================================

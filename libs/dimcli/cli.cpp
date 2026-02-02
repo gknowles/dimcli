@@ -3786,10 +3786,10 @@ vector<string> Cli::toArgv(size_t argc, const char * argv[]) {
 // static
 vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
     vector<string> out;
+    string tmp;
+    Cli::Convert cvt;
     out.reserve(argc);
     for (unsigned i = 0; i < argc && argv[i]; ++i) {
-        string tmp;
-        Cli::Convert cvt;
         if (!cvt.toString(tmp, argv[i])) {
             out.push_back("BAD_ENCODING"s);
         } else {
@@ -3805,6 +3805,31 @@ vector<string> Cli::toArgv(size_t argc, wchar_t * argv[]) {
 // static
 vector<string> Cli::toArgv(size_t argc, const wchar_t * argv[]) {
     return toArgv(argc, (wchar_t **) argv);
+}
+
+//===========================================================================
+bool Cli::toArgv(
+    vector<string> & out,
+    size_t argc,
+    wchar_t * argv[]
+) {
+    ArgPackState st;
+    out.clear();
+    out.reserve(argc);
+    for (unsigned i = 0; i < argc && argv[i]; ++i)
+        out.push_back(argPackToString(st, argv[i]));
+    if (argc != out.size() || argv[argc])
+        assert(!"Bad arguments, argc and null terminator don't agree.");
+    return st.errpos == 0;
+}
+
+//===========================================================================
+bool Cli::toArgv(
+    vector<string> & out,
+    size_t argc,
+    const wchar_t * argv[]
+) {
+    return toArgv(out, argc, (wchar_t **) argv);
 }
 
 //===========================================================================
@@ -3852,6 +3877,19 @@ string Cli::toCmdline(size_t argc, wchar_t * argv[]) {
 // static
 string Cli::toCmdline(size_t argc, const wchar_t * argv[]) {
     return toCmdline(argc, (wchar_t **) argv);
+}
+
+//===========================================================================
+bool Cli::toCmdline(std::string & out, size_t argc, wchar_t * argv[]) {
+    vector<string> tmp;
+    auto success = toArgv(tmp, argc, argv);
+    out = toCmdline(tmp);
+    return success;
+}
+
+//===========================================================================
+bool Cli::toCmdline(std::string & out, size_t argc, const wchar_t * argv[]) {
+    return toCmdline(out, argc, (wchar_t **) argv);
 }
 
 

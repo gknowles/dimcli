@@ -624,9 +624,9 @@ Name selected using --name from argv[2]
 Hello Mary!
 ----
 
-If you want a little more control over error output you can use the two
-argument version of cli.parse() and then inspect the results with
-cli.exitCode(), cli.errMsg(), and cli.errDetail().
+If you want a little more control over error output you can use cli.parse() and
+then inspect the results with cli.exitCode(), cli.errMsg(), and
+cli.errDetail().
 
 [source, C++]
 ----

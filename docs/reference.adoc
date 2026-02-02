@@ -534,16 +534,25 @@ Only valid for columns in rows that are marked with '\f' (new table).
 |===
 2+| To Argv
 
+| cli.toArgv(out, argc, argv)
+| Copy array of wchar_t* to vector of strings. Uses cvt.toString() for
+conversions. On conversion error calls cli.badUsage() and returns false.
+
+| cli.toArgvL(out, arg0, ...)
+| Copy arguments to vector of strings. Uses cvt.toString(), on error calls
+cli.badUsage() and returns false.
+
 | Cli::toArgv(argc, argv)
-| Copy array of pointers to argument vector of strings (args).
+| Copy array of pointers to vector of string arguments (args).
 
 | Cli::toArgvL(arg0, ...)
-| Copy arguments to vector of strings. Uses cvt.toString to convert arguments.
+| Copy arguments to vector of strings. Uses cvt.toString() to convert
+arguments.
 
 | Cli::toPtrArgv(args)
 | Create vector of pointers suitable for use with argc/argv APIs, has a
-trailing null that is not included in size(). The return values point into the
-source vector of strings and are only valid until that vector is resized or
+trailing nullptr that is not included in size(). The return values point into
+the source vector of strings and are only valid until that vector is resized or
 destroyed.
 
 | Cli::toArgv(string)
@@ -561,11 +570,20 @@ conventions (Gnu or Windows) of the platform.
 
 2+h| To Command Line
 
-| Cli::toCmdline(argc,&nbsp;argv) +
-Cli::toCmdline(args)
+| cli.toCmdline(out,&nbsp;argc,&nbsp;argv)
 | Join arguments into a single command line, escaping as needed, that will
 parse back into those same arguments. Uses the default conventions (Gnu or
-Windows).
+Windows). Uses cvt.toString() for conversions. Reports conversion errors via
+cli.badUsage() and returns false when they occur.
+
+| cli.toCmdlineL(out,&nbsp;arg0,&nbsp;...)
+| Join discrete arguments into a single command line. Uses cvt.toString for
+conversions. On conversion error calls cli.badUsage() and returns false.
+
+| Cli::toCmdline(argc,&nbsp;argv) +
+Cli::toCmdline(args)
+| Join arguments into a single command line. Uses the default conventions (Gnu
+or Windows).
 
 | Cli::toCmdlineL(arg0, ...)
 | Join discrete arguments into a single command line. Uses cvt.toString to
