@@ -491,6 +491,11 @@ std::locale Cli::Convert::getloc() const {
 }
 
 //===========================================================================
+std::string Cli::Convert::badValue() const {
+    return m_interpreter.str();
+}
+
+//===========================================================================
 template<>
 bool Cli::Convert::toString_impl<std::wstring>(
     std::string & out,
@@ -506,6 +511,10 @@ bool Cli::Convert::toString_impl<std::wstring>(
         assert(out.data() + out.size() - dst > MB_LEN_MAX);
         mblen = wcrtomb(dst, w, &state);
         if (mblen == -1) {
+            auto bytes = src.size() * sizeof src[0];
+            std::string bad(bytes, '\0');
+            memcpy(bad.data(), src.data(), bytes);
+            m_interpreter.str(move(bad));
             out.resize(dst - out.data());
             return false;
         }
@@ -2526,6 +2535,31 @@ void Cli::badUsage(
 }
 
 //===========================================================================
+void Cli::badUsage(const Cli::ArgPackState & st) {
+    auto val = st.badValue();
+    std::string strpos;
+    (void) st.toString(strpos, st.errpos);
+    std::ostringstream os;
+    os.setf(os.hex, os.basefield);
+    os.fill('0');
+    for (auto i = 0; i < val.size(); ++i) {
+        if (i && i % 2 == 0)
+            os << ' ';
+        os.width(2);
+        os << (unsigned)(unsigned char)val[i];
+        if (i == 15) {
+            os << "...";
+            break;
+        }
+    }
+    badUsage(
+        "Invalid 'arg" + strpos + "' value (hex)",
+        os.str(),
+        "Unable to convert argument to default string encoding."
+    );
+}
+
+//===========================================================================
 void Cli::parseExit() {
     m_cfg->parseExit = true;
     m_cfg->exitCode = kExitOk;
@@ -3822,7 +3856,7 @@ bool Cli::toArgv(
     out.clear();
     out.reserve(argc);
     for (unsigned i = 0; i < argc && argv[i]; ++i)
-        out.push_back(argPackToString(st, argv[i]));
+        out.push_back(toString(st, argv[i]));
     if (argc != out.size() || argv[argc])
         assert(!"Bad arguments, argc and null terminator don't agree.");
     return st.errpos == 0;

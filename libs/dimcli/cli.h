@@ -907,7 +907,7 @@ public:
     );
 
     template <typename ...Args>
-    bool toArgvL(std::vector<std::string> & out, Args &&... args) const;
+    bool toArgvL(std::vector<std::string> & out, Args &&... args);
 
     //-----------------------------------------------------------------------
     // Create vector of pointers suitable for use with argc/argv APIs, has a
@@ -1013,8 +1013,8 @@ private:
     OptBase * findOpt(const void * value);
 
     struct ArgPackState;
-    template <typename T>
-    std::string argPackToString(ArgPackState & st, T & val);
+    template <typename T> std::string toString(ArgPackState & st, T && val);
+    void badUsage(const ArgPackState & st);
 
     std::shared_ptr<Config> m_cfg;
     std::string m_group;
@@ -1216,6 +1216,9 @@ public:
     template <typename T>
     [[nodiscard]] bool toString(std::string & out, const T & src) const;
 
+protected:
+    std::string badValue() const;
+
 private:
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int, int) const
@@ -1353,6 +1356,9 @@ auto Cli::Convert::toString_impl(
     m_interpreter.clear();
     m_interpreter.str({});
     if (!(m_interpreter << src)) {
+        std::string bad(sizeof src, '\0');
+        memcpy(bad.data(), &src, sizeof src);
+        m_interpreter.str(move(bad));
         out.clear();
         return false;
     }
@@ -1382,9 +1388,12 @@ bool Cli::Convert::toString_impl<std::wstring>(
 template <typename T>
 bool Cli::Convert::toString_impl(
     std::string & out,
-    const T &,
+    const T & src,
     long, long
 ) const {
+    std::string bad(sizeof src, '\0');
+    memcpy(bad.data(), &src, sizeof src);
+    m_interpreter.str(move(bad));
     out.clear();
     return false;
 }
@@ -1398,36 +1407,24 @@ bool Cli::Convert::toString_impl(
 *
 ***/
 
-struct DIMCLI_LIB_DECL Cli::ArgPackState {
-    Cli::Convert cvt;
+struct DIMCLI_LIB_DECL Cli::ArgPackState : Cli::Convert {
     int errpos = 0;
     int next = 0;
+
+    using Cli::Convert::badValue;
 };
 
 //===========================================================================
 template <typename T>
-std::string Cli::argPackToString(Cli::ArgPackState & st, T & val) {
+std::string Cli::toString(Cli::ArgPackState & st, T && val) {
     std::string out;
     st.next += 1;
-    if (st.cvt.toString(out, std::forward<T>(val)) || st.errpos)
+    if (!st.toString(out, std::forward<T>(val)) && !st.errpos) {
+        // First failure
+        st.errpos = st.next;
+        badUsage(st);
         return out;
-    st.errpos = st.next;
-    std::string strpos;
-    (void) st.cvt.toString(strpos, st.errpos);
-    std::ostringstream os;
-    os.setf(os.hex, os.basefield);
-    for (auto i = 0; i < sizeof val; ++i) {
-        os << ((unsigned char *)&val)[i];
-        if (i == 15) {
-            os << "...";
-            break;
-        }
     }
-    badUsage(
-        "Invalid 'arg" + strpos + "' value (hex)",
-        os.str(),
-        "Unable to convert argument to default string encoding."
-    );
     return out;
 }
 
@@ -1445,9 +1442,9 @@ std::vector<std::string> Cli::toArgvL(Args &&... args) {
 
 //===========================================================================
 template <typename ...Args>
-bool Cli::toArgvL(std::vector<std::string> & out, Args &&... args) const {
+bool Cli::toArgvL(std::vector<std::string> & out, Args &&... args) {
     ArgPackState st;
-    out = { argPackToString(st, std::forward<Args>(args))... };
+    out = { toString(st, std::forward<Args>(args))... };
     return st.errpos == 0;
 }
 
@@ -1460,7 +1457,10 @@ std::string Cli::toCmdlineL(Args &&... args) {
 //===========================================================================
 template <typename ...Args>
 bool Cli::toCmdlineL(std::string & out, Args &&... args) {
-    return toCmdline(out, toArgvL(std::forward<Args>(args)...));
+    std::vector<std::string> sargs;
+    auto success = toArgvL(sargs, std::forward<Args>(args)...);
+    out = toCmdline(sargs);
+    return success;
 }
 
 //===========================================================================
