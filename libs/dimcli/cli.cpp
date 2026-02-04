@@ -512,9 +512,7 @@ bool Cli::Convert::toString_impl<std::wstring>(
         mblen = wcrtomb(dst, w, &state);
         if (mblen == -1) {
             auto bytes = src.size() * sizeof src[0];
-            std::string bad(bytes, '\0');
-            memcpy(bad.data(), src.data(), bytes);
-            m_interpreter.str(move(bad));
+            m_interpreter.str(string((const char *) src.data(), bytes));
             out.resize(dst - out.data());
             return false;
         }
