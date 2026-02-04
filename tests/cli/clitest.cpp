@@ -277,6 +277,11 @@ static void assertTests() {
     EXPECT_ASSERT(1 + R"(
 !"Bad arguments, argc and null terminator don't agree."
 )");
+    vector<string> args;
+    cli.toArgv(args, 2, wargv1);
+    EXPECT_ASSERT(1 + R"(
+!"Bad arguments, argc and null terminator don't agree."
+)");
 
     // Bad arguments
     cli = {};
