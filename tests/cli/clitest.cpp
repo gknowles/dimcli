@@ -1620,6 +1620,7 @@ void argvTests() {
         EXPECT_CMDLINE(fn, fnv, {}, "");
         EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
         EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a \"b c\" d");
+        EXPECT_CMDLINE(fn, fnv, {"a", "", "c"}, "a \"\" c");
         EXPECT_CMDLINE(fn, fnv, {R"(\a)"}, R"(\a)");
         EXPECT_CMDLINE(fn, fnv, {R"(" \ " \")"}, R"("\" \ \" \\\"")");
     }
@@ -1634,6 +1635,7 @@ void argvTests() {
         EXPECT_CMDLINE(fn, fnv, {}, "");
         EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
         EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a b\\ c d");
+        EXPECT_CMDLINE(fn, fnv, {"a", "", "c"}, "a \"\" c");
     }
 
     // glib style
@@ -1652,6 +1654,7 @@ c\d)", {"ab$c\\d"});
         EXPECT_CMDLINE(fn, fnv, {}, "");
         EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
         EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a b\\ c d");
+        EXPECT_CMDLINE(fn, fnv, {"a", "", "c"}, "a '' c");
     }
 
     // argv to/from cmdline
@@ -1686,7 +1689,7 @@ c\d)", {"ab$c\\d"});
     EXPECT_ERR(cli, "Error: Invalid 'arg2' value (hex): fffe 00d8 2020\n"
         "Unable to convert argument to default string encoding.\n"
     );
-    EXPECT_EQUAL(cli.toCmdline(a1), "a  c");
+    EXPECT_EQUAL(cli.toCmdline(a1), "a \"\" c");
 }
 
 

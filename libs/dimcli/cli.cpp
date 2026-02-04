@@ -4078,18 +4078,26 @@ string Cli::toGlibCmdline(size_t, char * argv[]) {
     if (!*argv)
         return out;
     for (;;) {
-        for (auto ptr = *argv; *ptr; ++ptr) {
-            switch (*ptr) {
-                // Must escape
-            case '|': case '&': case ';': case '<': case '>': case '(':
-            case ')': case '$': case '`': case '\\': case '"': case '\'':
-            case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
-                // Should escape
-            case '*': case '?': case '[': case '#': case '~': case '=':
-            case '%':
-                out += '\\';
+        auto ptr = *argv;
+        if (!*ptr) {
+            out.append(2, '\'');
+        } else {
+            for (;;) {
+                switch (*ptr) {
+                    // Must escape
+                case '|': case '&': case ';': case '<': case '>': case '(':
+                case ')': case '$': case '`': case '\\': case '"': case '\'':
+                case ' ': case '\t': case '\r': case '\n': case '\f':
+                case '\v':
+                    // Should escape
+                case '*': case '?': case '[': case '#': case '~': case '=':
+                case '%':
+                    out += '\\';
+                }
+                out += *ptr;
+                if (!*++ptr)
+                    break;
             }
-            out += *ptr;
         }
         if (!*++argv)
             return out;
@@ -4175,7 +4183,6 @@ IN_UNQUOTED:
     out.push_back(move(arg));
     return out;
 
-
 IN_QUOTED:
     while (cur < last) {
         char ch = *cur++;
@@ -4196,13 +4203,20 @@ string Cli::toGnuCmdline(size_t, char * argv[]) {
     if (!*argv)
         return out;
     for (;;) {
-        for (auto ptr = *argv; *ptr; ++ptr) {
-            switch (*ptr) {
-            case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
-            case '\\': case '\'': case '"':
-                out += '\\';
+        auto ptr = *argv;
+        if (!*ptr) {
+            out.append(2, '"');
+        } else {
+            for (;;) {
+                switch (*ptr) {
+                case ' ': case '\t': case '\r': case '\n': case '\f':
+                case '\v': case '\\': case '\'': case '"':
+                    out += '\\';
+                }
+                out += *ptr;
+                if (!*++ptr)
+                    break;
             }
-            out += *ptr;
         }
         if (!*++argv)
             return out;
@@ -4338,18 +4352,24 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
         auto base = out.size();
         size_t backslashes = 0;
         auto ptr = *argv;
-        for (; *ptr; ++ptr) {
-            switch (*ptr) {
-            case '\\': backslashes += 1; break;
-            case ' ':
-            case '\t': goto QUOTE;
-            case '"':
-                out.append(backslashes + 1, '\\');
-                backslashes = 0;
-                break;
-            default: backslashes = 0; break;
+        if (!*ptr) {
+            out.append(2, '"');
+        } else {
+            for (;;) {
+                switch (*ptr) {
+                case '\\': backslashes += 1; break;
+                case ' ':
+                case '\t': goto QUOTE;
+                case '"':
+                    out.append(backslashes + 1, '\\');
+                    backslashes = 0;
+                    break;
+                default: backslashes = 0; break;
+                }
+                out += *ptr;
+                if (!*++ptr)
+                    break;
             }
-            out += *ptr;
         }
         goto NEXT;
 

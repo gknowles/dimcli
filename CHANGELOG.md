@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## Unreleased
 - Fixed - Use of std::wstring_convert class (deprecated C++17, removed C\++26)
 - Added - cvt.toString() support for wchar_t and wstring
-- Added - cli.toArgv() and cli.toCmdline() variants that report errors on
+- Added - cli.toArgv*() and cli.toCmdline*() variants that record error on
           cvt.toString() failures.
 - Added - Convert configuration options: cvt.imbue() and cvt.getloc()
+- Fixed - toCmdline*() leaves out blank (empty string) arguments
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
@@ -71,8 +72,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## dimcli 6.2.0 (2021-09-06)
 - Cosmetic - Stop using cmake recursively
-- Added - More cli.toArgv() and cli.toCmdline() overloads
-- Fixed - cli.toArgvL() and cli.toCmdlineL() not using std::forward()
+- Added - More Cli::toArgv() and Cli\::toCmdline() overloads
+- Fixed - Cli::toArgvL() and Cli\::toCmdlineL() not using std\::forward()
 - Fixed - Methods of temporaries returning Cli& can be bound to references
 - Added - Allow chaining of more cli methods
 
@@ -84,7 +85,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Cosmetic - Converted docs from Markdown to AsciiDoc
 - Cosmetic - Expand automated testing to include samples embedded in docs
 - Added - Detail to errors parsing values with units
-- Added - Variable argument cli.toArgvL() & cli.toCmdlineL()
+- Added - Variable argument Cli::toArgvL() and Cli\::toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
 - Changed - Allowed long named booleans an optional value (e.g. "=true")
 - Changed - Rename opt.unspecifiedValue() to opt.implicitValue()
@@ -146,7 +147,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Word wrap list of choices in error detail
 - Fixed - Parse errors for optVec report an empty string for the opt name
 - Added - Command groups for grouping subcommands in help text
-- Added - cli.toCmdline() static method
+- Added - Cli::toCmdline() static method
 
 ## dimcli 3.1.1 (2017-11-10)
 - Added - cli.exec() overloads that both parse() and exec()
@@ -174,7 +175,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## dimcli 2.0.0 (2017-02-25)
 - Added - optVec.operator[]
 - Changed - Rename opt.write*() functions to opt.print*()
-- Added - Reduce footprint to just two files (cli.h & cli.cpp)
+- Added - Reduce footprint to just two files (cli.h and cli.cpp)
 - Added - opt.writeUsageEx() includes option names in usage text
 - Fixed - opt.choice() should be usable when no string conversion exists
 - Fixed - Help text for choices not aligned
