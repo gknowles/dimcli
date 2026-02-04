@@ -635,8 +635,8 @@ if (!cli.parse(argc, argv))
 ----
 
 Because (unless you use CliLocal) there is a single program wide command line
-context, you can make an error handler that doesn't have to be passed the
-results.
+context, you can make an error handler that doesn't have the results passed to
+it directly.
 
 [source, C++]
 ----

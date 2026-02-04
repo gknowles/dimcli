@@ -211,10 +211,11 @@ to the low, if higher than high it's made merely high.
 at a single external value, each of which sets it to a different value, with
 one flagged as the default.
 
+| opt.fromString<T>
+| Inherited from <<string-conversions, Convert>>.
+
 | opt.imbue
-| Change the locale used when values for this opt are parsed via iostream.
-Defaults to the user's preferred locale (aka locale("")) for arithmetic types
-and the "C" locale for everything else.
+| Inherited from <<string-conversions, Convert>>.
 
 | opt.<<guide.adoc#optional-values, implicitValue>>
 | The implicit value is used for options with optional values when the
@@ -242,6 +243,9 @@ present, multiplies by the corresponding factor.
 | opt.<<guide.adoc#time-units, timeUnits>>
 | Adjusts the value to seconds when time units are present: removes the units
 (y, w, d, h, m, s, ms, us, ns) and multiplies by the required factor.
+
+| opt.toString<T>
+| Inherited from <<string-conversions, Convert>>.
 
 | optVec.<<guide.adoc#vector-options, size>>
 | Change the number of values that can be assigned to a vector option. Defaults
@@ -287,6 +291,9 @@ tied to a command line argument.
 
 | opt.defaultPrompt
 | Get default name to use in prompts when not tied to a command line.
+
+| opt.getloc
+| Inherited from <<string-conversions, Convert>>.
 
 | opt.<<guide.adoc#parse-actions, parseValue>>
 | Parse the string into the value, return false on error.
@@ -528,7 +535,7 @@ Only valid for columns in rows that are marked with '\f' (new table).
 | Default friendly name for type, such as NUM, FLOAT, or STRING.
 |===
 
-== Conversions
+== Argv Conversions
 
 [%autowidth]
 |===
@@ -601,14 +608,26 @@ Cli::toGnuCmdlineL
 | Cli::toWindowsCmdline +
 Cli::toWindowsCmdlineL
 | Join arguments using Windows conventions.
+|===
 
-2+h| Value to/from String
+== String Conversions
 
-| opt.fromString<T> +
-cvt.fromString<T>
-| Parses string into any supported type.
+[%autowidth]
+|===
+2+| Cli::Convert class
 
-| opt.toString<T> +
-cvt.toString<T>
-| Converts value of any supported type into a string.
+| cvt.getloc
+| Get locale used for conversion to/from string if done via iostream.
+
+| cvt.fromString<T>
+| Parses string into any supported type. Can be specialized for new types.
+
+| cvt.imbue
+| Change the locale used when values for this opt are parsed via iostream.
+Defaults to the user's preferred locale (aka locale("")) for arithmetic types
+and the "C" locale for everything else.
+
+| cvt.toString<T>
+| Converts value of any supported type into a string. Can be specialized for
+new types.
 |===
