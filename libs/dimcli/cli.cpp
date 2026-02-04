@@ -2540,7 +2540,7 @@ void Cli::badUsage(const Cli::ArgPackState & st) {
     std::ostringstream os;
     os.setf(os.hex, os.basefield);
     os.fill('0');
-    for (auto i = 0; i < val.size(); ++i) {
+    for (auto i = 0u; i < val.size(); ++i) {
         if (i && i % 2 == 0)
             os << ' ';
         os.width(2);
