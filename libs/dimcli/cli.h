@@ -127,6 +127,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstring>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -1357,7 +1358,7 @@ auto Cli::Convert::toString_impl(
     m_interpreter.str({});
     if (!(m_interpreter << src)) {
         std::string bad(sizeof src, '\0');
-        memcpy(bad.data(), &src, sizeof src);
+        std::memcpy(bad.data(), &src, sizeof src);
         m_interpreter.str(move(bad));
         out.clear();
         return false;
@@ -1392,7 +1393,7 @@ bool Cli::Convert::toString_impl(
     long, long
 ) const {
     std::string bad(sizeof src, '\0');
-    memcpy(bad.data(), &src, sizeof src);
+    std::memcpy(bad.data(), &src, sizeof src);
     m_interpreter.str(move(bad));
     out.clear();
     return false;
