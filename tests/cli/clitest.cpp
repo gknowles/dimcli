@@ -1686,19 +1686,37 @@ c\d)", {"ab$c\\d"});
     EXPECT_EQUAL(cli.toCmdlineL(s1, "a", 'b', "c"s), true);
     EXPECT_EQUAL(s1, cmdline);
     EXPECT_EQUAL(cli.toArgv(a1, wargc, wargv), false);
-    if (sizeof(wchar_t) == 2) {
-        EXPECT_ERR(cli, "Error: Invalid 'arg2' value (hex): "
-                "fffe 00d8 2020\n"
-            "Unable to convert argument to default string encoding.\n"
-        );
-    } else {
-        assert(sizeof(wchar_t) == 4);
-        EXPECT_ERR(cli, "Error: Invalid 'arg2' value (hex): "
-                "fffe 0000 00d8 0000 2020 0000\n"
-            "Unable to convert argument to default string encoding.\n"
-        );
-    }
+#if WCHAR_MAX < 0x10000
+    assert(sizeof(wchar_t) == 2);
+    EXPECT_ERR(cli, "Error: Invalid 'arg2' value (hex): "
+            "fffe 00d8 2020\n"
+        "Unable to convert argument to default string encoding.\n"
+    );
+#else
+    assert(sizeof(wchar_t) == 4);
+    EXPECT_ERR(cli, "Error: Invalid 'arg2' value (hex): "
+            "fffe 0000 00d8 0000 2020 0000\n"
+        "Unable to convert argument to default string encoding.\n"
+    );
+#endif
     EXPECT_EQUAL(cli.toCmdline(a1), "a \"\" c");
+    EXPECT_EQUAL(cli.toCmdline(s1, wargc, wargv), false);
+    EXPECT_EQUAL(s1, "a \"\" c");
+
+    wstring wlong = kInvalidCharsW;
+    wlong += L"abcdefghijklmnopqrstuvwxyz";
+    EXPECT_EQUAL(cli.toCmdlineL(s1, wlong), false);
+#if WCHAR_MAX < 0x10000
+    EXPECT_ERR(cli, "Error: Invalid 'arg1' value (hex): "
+        "fffe 00d8 2020 6100 6200 6300 6400 6500...\n"
+        "Unable to convert argument to default string encoding.\n"
+    );
+#else
+    EXPECT_ERR(cli, "Error: Invalid 'arg1' value (hex): "
+        "fffe 0000 00d8 0000 2020 0000 6100 0000...\n"
+        "Unable to convert argument to default string encoding.\n"
+    );
+#endif
 }
 
 
