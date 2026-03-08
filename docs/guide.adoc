@@ -115,8 +115,10 @@ All you need is:
 == Basics
 
 === Terminology
+The raw argv[] values passed to the program are "*arguments*".
+
 Following POSIX conventions, this document uses the terms "*options*" to refer
-to named arguments, some times known as switches or flags. And "*operands*" for
+to named arguments, sometimes known as switches or flags. And "*operands*" for
 positional arguments that are distinguished only by the order they appear on
 the command line after the options have been removed.
 
@@ -2702,7 +2704,7 @@ Usage: a.out help [-u, --usage] [--help] [COMMAND]
 
 
 === Going Your Own Way
-If generated help doesn't work for you, you can override the built-in help
+If the generated help doesn't work for you, you can override the built-in help
 with your own.
 
 [source, C++]

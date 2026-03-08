@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - cli.toArgv*() and cli.toCmdline*() variants that record error on
           cvt.toString() failures.
 - Added - Convert configuration options: cvt.imbue() and cvt.getloc()
-- Fixed - toCmdline*() leaves out blank (empty string) arguments
+- Fixed - toCmdline*() drops blank (empty string) arguments
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
