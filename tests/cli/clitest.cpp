@@ -2241,7 +2241,7 @@ Options:
         cli.optVec<bool>(&v0, "[ZERO]").desc("External bool");
         auto & v1 = cli.optVec<bool>("[ONE]").desc("Internal bool.");
         EXPECT_PARSE(cli, "0");
-        EXPECT_EQUAL_IF((v0.size() == 1), v0[0], 0);
+        EXPECT_EQUAL_IF((v0.size() == 1), v0[0], bool(0));
         EXPECT_EQUAL(v1.size(), 0);
     }
 
@@ -2832,7 +2832,7 @@ Options:
         cli.iostreams(&in, &out);
         EXPECT_PARSE(cli);
         EXPECT_EQUAL(out.str(), "Name: \n");
-        EXPECT_EQUAL_IF(ask.size(), ask[0], "jack");
+        EXPECT_EQUAL_IF(ask.size() > 0, ask[0], "jack");
     }
 
     // prompt with default
