@@ -1991,7 +1991,8 @@ static void responseTests(const string & rawProgName) {
     for (auto fp : fs::directory_iterator("test", ec)) {
         if (fp.path().extension() == ".rsp") {
             if (!fs::remove(fp.path(), ec)) {
-                cerr << "Error removing '" << fp << " (" << ec << ")." << endl;
+                cerr << "Error removing '" << fp.path() << " (" << ec << ")."
+                    << endl;
             }
         }
     }
