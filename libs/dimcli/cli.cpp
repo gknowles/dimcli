@@ -116,6 +116,14 @@ struct OptName {
     unsigned flags = {};
     string name;    // name of argument (only for operands)
     int pos = {};   // used to sort option names in declaration order
+
+    OptName() {}
+    OptName(Cli::OptBase * opt, unsigned flags, string name, int pos)
+        : opt(opt)
+        , flags(flags)
+        , name(name)
+        , pos(pos)
+    {}
 };
 
 struct OptKey {
