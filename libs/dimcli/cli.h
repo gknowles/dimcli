@@ -1246,13 +1246,13 @@ private:
         long, long, long
     ) const;
 
-    template <typename T>
-    auto toString_impl(std::string & out, const T & src, int, int) const
-        -> decltype(std::declval<std::ostream &>() << src, bool());
-
     template <typename T, typename = typename
         std::enable_if<std::is_constructible<std::wstring, T>::value>::type>
-    bool toString_impl(std::string & out, const T & src, int, long) const;
+    bool toString_impl(std::string & out, const T & src, int, int) const;
+
+    template <typename T>
+    auto toString_impl(std::string & out, const T & src, int, long) const
+        -> decltype(std::declval<std::ostream &>() << src, bool());
 
     template <typename T>
     bool toString_impl(std::string & out, const T & src, long, long) const;
@@ -1345,13 +1345,31 @@ template <typename T>
 }
 
 //===========================================================================
+template <typename T, typename>
+bool Cli::Convert::toString_impl(
+    std::string & out,
+    const T & src,
+    int, int
+) const {
+    return toString<std::wstring>(out, src);
+}
+
+//===========================================================================
+template <>
+bool Cli::Convert::toString_impl<std::wstring>(
+    std::string & out,
+    const std::wstring & src,
+    int, int
+) const;
+
+//===========================================================================
 template <typename T>
 auto Cli::Convert::toString_impl(
     std::string & out,
     const T & src,
-    int, int
+    int, long
 ) const
-    -> decltype(std::declval<std::ostream &>() << src, bool())
+-> decltype(std::declval<std::ostream &>() << src, bool())
 {
     m_interpreter.clear();
     m_interpreter.str({});
@@ -1363,24 +1381,6 @@ auto Cli::Convert::toString_impl(
     out = m_interpreter.str();
     return true;
 }
-
-//===========================================================================
-template <typename T, typename>
-bool Cli::Convert::toString_impl(
-    std::string & out,
-    const T & src,
-    int, long
-) const {
-    return toString<std::wstring>(out, src);
-}
-
-//===========================================================================
-template <>
-bool Cli::Convert::toString_impl<std::wstring>(
-    std::string & out,
-    const std::wstring & src,
-    int, long
-) const;
 
 //===========================================================================
 template <typename T>

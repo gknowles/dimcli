@@ -157,8 +157,6 @@ static void helpTest(
     cli.printHelp(os, kCommand, cmd);
     auto tmp = os.str();
     EXPECT_EQUAL(tmp, helpText);
-    if (tmp != helpText)
-        cerr << tmp;
 }
 
 //===========================================================================
@@ -2092,8 +2090,6 @@ static void filesystemTests() {
     {
         cli = {};
         fs::path path = "path";
-        ostringstream os;
-        os << path;
         cli.opt(&path, "path", path)
             .desc("std::filesystem::path");
         EXPECT_PARSE(cli, "--path one");
@@ -2102,9 +2098,7 @@ static void filesystemTests() {
 Usage: test [OPTIONS]
 
 Options:
-  --path=FILE  std::filesystem::path (default: )"
-        + os.str()
-        + R"()
+  --path=FILE  std::filesystem::path (default: path)
 
   --help       Show this message and exit.
 )");
