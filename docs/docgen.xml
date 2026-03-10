@@ -8,17 +8,17 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
 <Docs>
   <Site name="DIMCLI" favicon="favicon.ico" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
-    <Version tag="HEAD"/>
-    <Version tag="v7.5.0" default="true"/>
-    <Version tag="v7.4.0"/>
-    <Version tag="v7.3.0"/>
-    <Version tag="v7.2.0"/>
-    <Version tag="v7.1.1"/>
-    <Version tag="v7.1.0"/>
-    <Version tag="v7.0.0"/>
+    <Version tag="HEAD"   />
+    <Version tag="v7.5.0" layout="default" default="true"/>
+    <Version tag="v7.4.0" layout="default"/>
+    <Version tag="v7.3.0" layout="default"/>
+    <Version tag="v7.2.0" layout="default"/>
+    <Version tag="v7.1.1" layout="default"/>
+    <Version tag="v7.1.0" layout="default"/>
+    <Version tag="v7.0.0" layout="default"/>
     <Version tag="v6.2.1" layout="adoc"/>  <!-- layout missing in v6.2.1 -->
-    <Version tag="v6.2.0"/>
-    <Version tag="v6.1.0"/>
+    <Version tag="v6.2.0" layout="adoc"/>
+    <Version tag="v6.1.0" layout="adoc"/>
     <Version tag="v6.0.0" layout="v6"/>    <!-- first version with docgen -->
     <Version tag="v5.0.2" layout="md +ref"/>
     <Version tag="v5.0.1" layout="md +ref"/>
@@ -28,19 +28,41 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Version tag="v3.1.1" layout="md"/>
     <Version tag="v3.1.0" layout="md"/>
     <Version tag="v3.0.0" layout="md"/>
-    <Version tag="v2.0.0" layout="md"/>
-    <Version tag="v1.0.3" layout="md"/>
+    <Version tag="v2.0.0" layout="md v2"/>
+    <Version tag="v1.0.3" layout="md v1"/>
   </Site>
+  <Var name="lib">
+    <Page name="cli.h" file="../libs/dimcli/cli.h" url="cli.h" default="true"/>
+    <Page name="cli.cpp" file="../libs/dimcli/cli.cpp" url="cli.cpp"/>
+  </Var>
+  <Var name="tests">
+    <Page name="pch.h" file="../tests/cli/pch.h" url="pch.h"/>
+    <Page name="pch.cpp" file="../tests/cli/pch.cpp" url="pch.cpp"/>
+    <Page name="clitest.cpp" file="../tests/cli/clitest.cpp"
+        url="clitest.cpp"/>
+  </Var>
+  <Var name="code">
+    <Page name="View Code" url="code" test="false" pageLayout="code">
+      <Page name="dimcli">
+        <CopyOf ref="lib"/>
+      </Page>
+      <Page name="tests">
+        <CopyOf ref="tests"/>
+      </Page>
+    </Page>
+  </Var>
   <Layout name="default">
     <Page name="User's Guide" file="guide.adoc" default="true"/>
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
     <Page name="ReadMe" file="../README.md" site="false"/>
+    <CopyOf ref="code"/>
   </Layout>
   <Layout name="adoc">
     <Page name="User's Guide" file="guide.adoc" default="true"/>
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <CopyOf ref="code"/>
   </Layout>
   <Layout name="v6">
     <Page name="User's Guide" file="guide.adoc" default="true">
@@ -70,19 +92,49 @@ index 3374002..9d19b44 100644
     </Page>
     <Page name="Reference" file="reference.adoc"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <CopyOf ref="code"/>
   </Layout>
   <Layout name="md +ref">
     <Page name="User's Guide" file="src/guide.md" xrefFile="guide.md"
         default="true"/>
     <Page name="Reference" file="src/reference.md"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <CopyOf ref="code"/>
   </Layout>
   <Layout name="md">
     <Page name="User's Guide" file="README.md" url="guide" default="true"/>
     <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <CopyOf ref="code"/>
   </Layout>
-  <PageLayout name="default">
+  <Layout name="md v2">
+    <Page name="User's Guide" file="README.md" url="guide" default="true"/>
+    <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <Var name="lib">
+      <Page name="cli.h" file="../include/dimcli/cli.h" url="cli.h"/>
+      <Page name="cli.cpp" file="../src/cli.cpp" url="cli.cpp"/>
+    </Var>
+    <CopyOf ref="code"/>
+  </Layout>
+  <Layout name="md v1">
+    <Page name="User's Guide" file="README.md" url="guide" default="true"/>
+    <Page name="Change Log" file="../CHANGELOG.md" url="changelog"/>
+    <Var name="lib">
+      <Page name="cli.h" file="../include/dimcli/cli.h" url="cli.h"/>
+      <Page name="cli.cpp" file="../src/cli.cpp" url="cli.cpp"/>
+    </Var>
+    <Var name="tests">
+      <Page name="pch.h" file="../test/pch.h" url="pch.h"/>
+      <Page name="pch.cpp" file="../test/pch.cpp" url="pch.cpp"/>
+      <Page name="clitest.cpp" file="../test/clitest.cpp" url="clitest.cpp"/>
+    </Var>
+    <CopyOf ref="code"/>
+  </Layout>
+  <PageLayout name="default" scrollSpy="#toc">
     <Column content="toc" maxWidth="25%"/>
+    <Column content="body"/>
+  </PageLayout>
+  <PageLayout name="code">
+    <Column content="group-toc" maxWidth="25%"/>
     <Column content="body"/>
   </PageLayout>
 
