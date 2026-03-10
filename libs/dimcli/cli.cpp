@@ -135,7 +135,7 @@ struct OptKey {
 // Option name filters for opts that are externally bool
 enum NameListType {
     kNameEnable,     // include names that enable the opt
-    kNameDisable,    // include names that disable
+    kNameDisable,    // include names that disable the opt
     kNameAll,        // include all names
     kNameNonDefault, // include names that change from the default
 };
