@@ -204,9 +204,9 @@ public:
     template <typename T> struct ValueVec;
 
     // Names of internally defined commands and groups.
-    static const std::string kInternalAllCmds;
-    static const std::string kInternalAllSubcmds;
-    static const std::string kInternalOptGrp;
+    static const char kInternalAllCmds[];
+    static const char kInternalAllSubcmds[];
+    static const char kInternalOptGrp[];
 
 public:
     // Creates a handle to the shared command line configuration, this
@@ -986,7 +986,7 @@ private:
         const std::string & val
     );
 
-    static const std::string & allCmdsName(bool includeTopLevel);
+    static const char * allCmdsName(bool includeTopLevel);
     static bool allCmds(const std::string & name);
 
     static std::string fixCmdName(const std::string & name);

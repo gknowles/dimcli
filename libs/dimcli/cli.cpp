@@ -74,13 +74,13 @@ const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
 ***/
 
 // Command with options available to all commands including the top level.
-const string Cli::kInternalAllCmds = "-allWithTop";
+const char Cli::kInternalAllCmds[] = "-allWithTop";
 
 // Command with options available with all commands except the top level.
-const string Cli::kInternalAllSubcmds = "-allNoTop";
+const char Cli::kInternalAllSubcmds[] = "-allNoTop";
 
 // Name of group containing --help, --version, etc.
-const string Cli::kInternalOptGrp = "~";
+const char Cli::kInternalOptGrp[] = "~";
 
 namespace {
 
@@ -1302,7 +1302,7 @@ Cli & Cli::operator=(Cli && from) noexcept {
 
 //===========================================================================
 // private static
-const std::string & Cli::allCmdsName(bool includeTopLevel) {
+const char * Cli::allCmdsName(bool includeTopLevel) {
     return includeTopLevel ? kInternalAllCmds : kInternalAllSubcmds;
 }
 
@@ -3141,7 +3141,7 @@ void Cli::printCommands(string * outPtr) {
             out += '\n';
             auto title = key.grp->title;
             if (title.empty()
-                && strcmp(gname, kInternalOptGrp.c_str()) == 0
+                && strcmp(gname, kInternalOptGrp) == 0
                 && &key == keys.data()
             ) {
                 // First group and it's the internal group, give it a title.
@@ -3284,7 +3284,7 @@ void Cli::printOptions(string * outPtr, const string & cmdName) {
             auto & grp = Cli::Config::findGrpAlways(cmd, key.opt->group());
             auto title = grp.title;
             if (title.empty()
-                && strcmp(gname, kInternalOptGrp.c_str()) == 0
+                && strcmp(gname, kInternalOptGrp) == 0
                 && &key == namedOpts.data()
             ) {
                 // First group and it's the internal group, give it a title
