@@ -508,7 +508,7 @@ template<>
 bool Cli::Convert::toString_impl<std::wstring>(
     std::string & out,
     const std::wstring & src,
-    int, int
+    int, int, long
 ) const {
     out.resize(MB_LEN_MAX * src.size() + 1);
     auto dst = out.data();

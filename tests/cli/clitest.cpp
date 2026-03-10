@@ -2090,6 +2090,10 @@ static void filesystemTests() {
     {
         cli = {};
         fs::path path = "path";
+        Dim::Cli::Convert cvt;
+        string def;
+        (void) cvt.toString(def, path);
+        EXPECT_EQUAL(def, "path");
         cli.opt(&path, "path", path)
             .desc("std::filesystem::path");
         EXPECT_PARSE(cli, "--path one");
@@ -2098,7 +2102,8 @@ static void filesystemTests() {
 Usage: test [OPTIONS]
 
 Options:
-  --path=FILE  std::filesystem::path (default: path)
+  --path=FILE  std::filesystem::path (default: )"
+    + def + R"()
 
   --help       Show this message and exit.
 )");

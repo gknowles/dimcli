@@ -1220,10 +1220,13 @@ protected:
     std::string badValue() const;
 
 private:
+    //-----------------------------------------------------------------------
+    // Assign from string
     template <typename T>
     auto fromString_impl(T & out, const std::string & src, int, int, int) const
         -> decltype(out = src, bool());
 
+    // Construct from string
     template <typename T, typename = typename
         std::enable_if<std::is_constructible<T, std::string>::value>::type>
     bool fromString_impl(
@@ -1232,6 +1235,7 @@ private:
         int, int, long
     ) const;
 
+    // Extract from istream
     template <typename T>
     auto fromString_impl(
         T & out,
@@ -1239,6 +1243,7 @@ private:
         int, long, long
     ) const -> decltype(std::declval<std::istream &>() >> out, bool());
 
+    // No conversion from string available
     template <typename T>
     bool fromString_impl(
         T & out,
@@ -1246,17 +1251,43 @@ private:
         long, long, long
     ) const;
 
+    //-----------------------------------------------------------------------
+    // Construct into string
+    template <typename T, typename = typename
+        std::enable_if<std::is_constructible<std::string, T>::value>::type>
+    bool toString_impl(
+        std::string & out,
+        const T & src,
+        int, int, int
+    ) const;
+
+    // Construct into wstring
     template <typename T, typename = typename
         std::enable_if<std::is_constructible<std::wstring, T>::value>::type>
-    bool toString_impl(std::string & out, const T & src, int, int) const;
+    bool toString_impl(
+        std::string & out,
+        const T & src,
+        int, int, long
+    ) const;
 
+    // Insert into ostream
     template <typename T>
-    auto toString_impl(std::string & out, const T & src, int, long) const
+    auto toString_impl(
+        std::string & out,
+        const T & src,
+        int, long, long
+    ) const
         -> decltype(std::declval<std::ostream &>() << src, bool());
 
+    // No conversion to string available
     template <typename T>
-    bool toString_impl(std::string & out, const T & src, long, long) const;
+    bool toString_impl(
+        std::string & out,
+        const T & src,
+        long, long, long
+    ) const;
 
+    //-----------------------------------------------------------------------
     mutable std::stringstream m_interpreter;
 };
 
@@ -1341,7 +1372,7 @@ template <typename T>
     std::string & out,
     const T & src
 ) const {
-    return toString_impl(out, src, 0, 0);
+    return toString_impl(out, src, 0, 0, 0);
 }
 
 //===========================================================================
@@ -1349,7 +1380,18 @@ template <typename T, typename>
 bool Cli::Convert::toString_impl(
     std::string & out,
     const T & src,
-    int, int
+    int, int, int
+) const {
+    out = std::string{src};
+    return true;
+}
+
+//===========================================================================
+template <typename T, typename>
+bool Cli::Convert::toString_impl(
+    std::string & out,
+    const T & src,
+    int, int, long
 ) const {
     return toString<std::wstring>(out, src);
 }
@@ -1359,7 +1401,7 @@ template <>
 bool Cli::Convert::toString_impl<std::wstring>(
     std::string & out,
     const std::wstring & src,
-    int, int
+    int, int, long
 ) const;
 
 //===========================================================================
@@ -1367,7 +1409,7 @@ template <typename T>
 auto Cli::Convert::toString_impl(
     std::string & out,
     const T & src,
-    int, long
+    int, long, long
 ) const
 -> decltype(std::declval<std::ostream &>() << src, bool())
 {
@@ -1387,7 +1429,7 @@ template <typename T>
 bool Cli::Convert::toString_impl(
     std::string & out,
     const T & src,
-    long, long
+    long, long, long
 ) const {
     m_interpreter.str(std::string((const char *) &src, sizeof src));
     out.clear();
