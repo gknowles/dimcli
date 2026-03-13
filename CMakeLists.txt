@@ -1,4 +1,4 @@
-# Copyright Glen Knowles 2016 - 2025.
+# Copyright Glen Knowles 2016 - 2026.
 # Distributed under the Boost Software License, Version 1.0.
 #
 # CMakeLists.txt - general project generator
@@ -81,7 +81,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 option(BUILD_PROJECT_NAME "Override name of project to build" OFF)
-option(LINK_STATIC_RUNTIME "Link with static c++ runtime" ON)
+option(LINK_STATIC_RUNTIME "Link with static C++ runtime" ON)
 option(BUILD_SHARED_LIBS "Build DLLs instead of static libs" OFF)
 option(BUILD_UNICODE "Build with Unicode charset" OFF)
 option(BUILD_TESTING "Enable test generation for ctest" ON)
@@ -170,7 +170,7 @@ if(NOT OUT_OF_TREE)
 endif()
 
 if(MSVC)
-    # "/EHsc" - exceptions from c++ only (not from structured or "C")
+    # "/EHsc" - exceptions from C++ only (not from structured or "C")
     # "/GF" - string pooling
     # "/GR-" (UNUSED) - disable RTTI
     # "/guard:cf" (UNUSED) - control flow guard
