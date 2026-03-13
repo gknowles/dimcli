@@ -23,6 +23,7 @@ jobs:
       matrix:
         platform: [Win32, x64]
         configuration: [Debug, Release]
+        dll: [OFF, ON]
         toolset: [v142, v143]
         include:
           - toolset: v142
@@ -48,8 +49,11 @@ jobs:
         if "${{matrix.toolset}}" == "v142" set generator=Visual Studio 17 2022
         if "${{matrix.toolset}}" == "v143" set generator=Visual Studio 17 2022
         if "${{matrix.toolset}}" == "v145" set generator=Visual Studio 18 2026
+        if "${{matrix.dll}}" == "ON" (
+          set args=-DBUILD_SHARED_LIBS:BOOL=ON -DLINK_STATIC_RUNTIME=OFF
+        )
         cmake .. -G "%generator%" -A ${{matrix.platform}}^
-          -T ${{matrix.toolset}}
+          -T ${{matrix.toolset}} %args%
         cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}}^
           -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
         cmake --build . --target install --config ${{matrix.configuration}}

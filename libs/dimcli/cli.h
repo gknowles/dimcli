@@ -192,6 +192,7 @@ class DIMCLI_LIB_DECL Cli {
 public:
     struct Config;
     class Convert;
+    struct ArgPackState;
 
     class OptBase;
     template <typename A, typename T> class OptShim;
@@ -1012,7 +1013,6 @@ private:
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
 
-    struct ArgPackState;
     template <typename T> std::string toString(ArgPackState & st, T && val);
     void badUsage(const ArgPackState & st);
 
@@ -1398,7 +1398,7 @@ bool Cli::Convert::toString_impl(
 
 //===========================================================================
 template <>
-bool Cli::Convert::toString_impl<std::wstring>(
+bool DIMCLI_LIB_DECL Cli::Convert::toString_impl<std::wstring>(
     std::string & out,
     const std::wstring & src,
     int, int, long
@@ -1445,7 +1445,7 @@ bool Cli::Convert::toString_impl(
 *
 ***/
 
-struct DIMCLI_LIB_DECL Cli::ArgPackState : Cli::Convert {
+struct Cli::ArgPackState : Cli::Convert {
     int errpos = 0;
     int next = 0;
 
@@ -2285,7 +2285,7 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
 ***/
 
 struct Cli::ArgMatch {
-    // Name of the argument that populated the value, or an empty
+    // optName of option or operand rule that populated the value, or an empty
     // string if it wasn't populated.
     std::string name;
 
