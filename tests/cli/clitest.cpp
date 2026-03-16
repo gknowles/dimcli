@@ -283,7 +283,7 @@ static void assertTests() {
 
     // Bad arguments
     cli = {};
-    cli.before([](auto &, auto & args) {
+    cli.before([](auto &, vector<string> & args) {
         args.erase(args.begin()); // remove command name
         return true;
     });
