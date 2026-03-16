@@ -193,6 +193,8 @@ public:
     struct Config;
     class Convert;
     struct ArgPackState;
+    struct ArgSrc;
+    struct Arg;
 
     class OptBase;
     template <typename A, typename T> class OptShim;
@@ -353,7 +355,8 @@ public:
         const std::string & group = {}
     ) &&;
 
-    // Function signature of actions that are tied to commands.
+    // Function signature of actions that are tied to the selected command or
+    // the CLI as a whole.
     using ActionFn = void(Cli & cli);
 
     // Action that should be taken when the currently selected command is run,
@@ -374,6 +377,12 @@ public:
     // handling in main to wait for that work to complete.
     Cli & action(std::function<ActionFn> fn) &;
     Cli && action(std::function<ActionFn> fn) &&;
+
+    // Makes all arguments following the command appear in cli.unknownArgs()
+    // instead of populating any defined options/operands. At the top level it
+    // also supersedes subcommands.
+    Cli & unknownArgs(bool enable) &;
+    Cli && unknownArgs(bool enable) &&;
 
     // Arbitrary text can be added to the help text for each command, this text
     // can come before the usage (header), immediately after the usage (desc),
@@ -396,29 +405,6 @@ public:
     const std::string & header() const;
     const std::string & desc() const;
     const std::string & footer() const;
-
-    // Makes all arguments following the command appear in cli.unknownArgs()
-    // instead of populating any defined options/operands. At the top level it
-    // also supersedes subcommands.
-    Cli & unknownArgs(bool enable) &;
-    Cli && unknownArgs(bool enable) &&;
-
-    // Add "help" command that shows the help text for other commands. Allows
-    // users to run "prog help command" instead of the slightly more awkward
-    // "prog command --help".
-    Cli & helpCmd() &;
-    Cli && helpCmd() &&;
-
-    // Allows unknown subcommands, and sets either a default action, which
-    // errors out, or a custom action to run when there is an unknown command.
-    // Use cli.commandMatched() and cli.unknownArgs() to determine the command
-    // and it's arguments.
-    Cli & unknownCmd(std::function<ActionFn> fn = {}) &;
-    Cli && unknownCmd(std::function<ActionFn> fn = {}) &&;
-
-    // Adds before action that replaces empty command lines with "--help".
-    Cli & helpNoArgs() &;
-    Cli && helpNoArgs() &&;
 
     //-----------------------------------------------------------------------
     // A command group collects commands into sections in the help text, in the
@@ -448,52 +434,43 @@ public:
     const std::string & cmdSortKey() const;
 
     //-----------------------------------------------------------------------
+    // Actions that are scoped to the parsing process as a whole rather than
+    // any specific command, option, or operand.
+
+    struct ArgSrc {
+        enum Type {
+            kNone,
+            kArgv,
+            kFile,
+            kEnv,
+            kConsole,
+        };
+        Type type = kNone;
+        std::string name;
+    };
+    struct Arg {
+        std::string value;
+        std::shared_ptr<ArgSrc> src;
+    };
+
     // Function signature of actions that run before options are populated.
     using BeforeFn = void(Cli & cli, std::vector<std::string> & args);
+    using ArgsFn = void(Cli & cli, std::vector<Arg> & args);
 
-    // Actions to run after environment variable and response file expansion
-    // but before any individual arguments are parsed. They are run in order of
-    // highest (largest number) priority first, and order added second. Each
-    // before action function should:
+    // Before actions run after environment variable and response file
+    // expansion but before any individual arguments are parsed. They are run
+    // in order of highest (largest number) priority first, and order added
+    // second. Each before action function should:
     //  - Inspect and possibly modify the raw arguments coming in.
     //  - Call cli.badUsage() for errors.
     //  - Call cli.parseExit() if parsing should stop, but there was no error.
+    //
+    // If a vector<string> action modifies args it is implied that the src of
+    // all args are being set to {kArgv, ""}.
     Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
     Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
-
-#if !defined(DIMCLI_LIB_NO_ENV)
-    // Environment variable to get initial options from. Defaults to the empty
-    // string, but when set the content of the named variable is parsed into
-    // args which are then inserted into the argument list right after arg0.
-    Cli & envOpts(const std::string & envVar) &;
-    Cli && envOpts(const std::string & envVar) &&;
-#endif
-
-    // Change the column at which errors and help text wraps. When there is a
-    // second column for descriptions (the first being argument, command, or
-    // option names) it's position is equal to the length needed for the
-    // longest name clamped to within the given description column min/max.
-    //
-    // The width cannot be set to less than 20, and out of range values of
-    // min(max)DescCol are ignored.
-    //
-    // By default min(max)DescCol are derived from width, and width defaults to
-    // the width of the console clamped to be within 50 to 80 columns.
-    Cli & maxWidth(int width, int minDescCol = 0, int maxDescCol = 0) &;
-    Cli && maxWidth(int width, int minDescCol = 0, int maxDescCol = 0) &&;
-
-    // Enabled by default, response file expansion replaces arguments of the
-    // form "@file" with the contents of the named file.
-    Cli & responseFiles(bool enable = true) &;
-    Cli && responseFiles(bool enable = true) &&;
-
-    // Changes the streams used for prompting, printing help messages, etc.
-    // Mainly intended for testing. Setting to null restores the defaults
-    // which are cin and cout respectively.
-    Cli & iostreams(std::istream * in, std::ostream * out) &;
-    Cli && iostreams(std::istream * in, std::ostream * out) &&;
-    std::istream & conin();
-    std::ostream & conout();
+    Cli & before(std::function<ArgsFn> fn, int priority = 1) &;
+    Cli && before(std::function<ArgsFn> fn, int priority = 1) &&;
 
     // Actions to run after parsing has completed and immediately before the
     // command action is executed. They are run in order of highest (largest
@@ -514,6 +491,58 @@ public:
     //  - Do something useful.
     Cli & afterExec(std::function<ActionFn> fn, int priority = 1) &;
     Cli && afterExec(std::function<ActionFn> fn, int priority = 1) &&;
+
+    //-----------------------------------------------------------------------
+    // Change the column at which errors and help text wraps. When there is a
+    // second column for descriptions (the first being argument, command, or
+    // option names) it's position is equal to the length needed for the
+    // longest name clamped to within the given description column min/max.
+    //
+    // The width cannot be set to less than 20, and out of range values of
+    // min(max)DescCol are ignored.
+    //
+    // By default min(max)DescCol are derived from width, and width defaults to
+    // the width of the console clamped to be within 50 to 80 columns.
+    Cli & maxWidth(int width, int minDescCol = 0, int maxDescCol = 0) &;
+    Cli && maxWidth(int width, int minDescCol = 0, int maxDescCol = 0) &&;
+
+    // Changes the streams used for prompting, printing help messages, etc.
+    // Mainly intended for testing. Setting to null restores the defaults
+    // which are cin and cout respectively.
+    Cli & iostreams(std::istream * in, std::ostream * out) &;
+    Cli && iostreams(std::istream * in, std::ostream * out) &&;
+    std::istream & conin();
+    std::ostream & conout();
+
+    // Adds before action that replaces empty command lines with "--help".
+    Cli & helpNoArgs() &;
+    Cli && helpNoArgs() &&;
+
+    // Add "help" command that shows the help text for other commands. Allows
+    // users to run "prog help command" instead of the slightly more awkward
+    // "prog command --help".
+    Cli & helpCmd() &;
+    Cli && helpCmd() &&;
+
+    // Allows unknown subcommands, and sets either a default action, which
+    // errors out, or a custom action to run when there is an unknown command.
+    // Use cli.commandMatched() and cli.unknownArgs() to determine the command
+    // and it's arguments.
+    Cli & unknownCmd(std::function<ActionFn> fn = {}) &;
+    Cli && unknownCmd(std::function<ActionFn> fn = {}) &&;
+
+#if !defined(DIMCLI_LIB_NO_ENV)
+    // Environment variable to get initial options from. Defaults to the empty
+    // string, but when set the content of the named variable is parsed into
+    // args which are then inserted into the argument list right after arg0.
+    Cli & envOpts(const std::string & envVar) &;
+    Cli && envOpts(const std::string & envVar) &&;
+#endif
+
+    // Enabled by default, response file expansion replaces arguments of the
+    // form "@file" with the contents of the named file.
+    Cli & responseFiles(bool enable = true) &;
+    Cli && responseFiles(bool enable = true) &&;
 
     //-----------------------------------------------------------------------
     // PARSING
@@ -577,10 +606,18 @@ public:
     // standard parsing logic. Since it causes the parse and check actions to
     // be called care must be taken to avoid infinite recursion if used from
     // those actions.
+    [[nodiscard, deprecated]] bool parseValue(
+        OptBase & out,
+        const std::string & name,
+        size_t pos,
+        const char src[]
+    );
     [[nodiscard]] bool parseValue(
         OptBase & out,
         const std::string & name,
         size_t pos,
+        ArgSrc::Type srcType,
+        const std::string & srcName,
         const char src[]
     );
 
@@ -1522,6 +1559,28 @@ std::string Cli::toWindowsCmdlineL(Args &&... args) {
 
 /****************************************************************************
 *
+*   Cli::ArgMatch
+*
+*   Reference to the command line argument that was used to populate a value
+*
+***/
+
+struct Cli::ArgMatch {
+    // optName of option or operand rule that populated the value, or an empty
+    // string if it wasn't populated.
+    std::string name;
+
+    // Member of argv[] that populated the value or 0 if it wasn't.
+    int pos = {};
+
+    // Type and name of the source the argument came from (kArgv, kFile, ...)
+    ArgSrc::Type srcType = ArgSrc::kNone;
+    std::string srcName;
+};
+
+
+/****************************************************************************
+*
 *   Cli::OptBase
 *
 *   Common base class for all options, has no information about the derived
@@ -1558,7 +1617,7 @@ public:
 
     // Name of the last argument to populated the value, or an empty string if
     // it wasn't populated. For vectors, it's what populated the last value.
-    virtual const std::string & from() const = 0;
+    const std::string & from() const { return match().name; }
 
     // Absolute position in argv[] of last the argument that populated the
     // value. For vectors, it refers to where the value on the back came from.
@@ -1571,7 +1630,10 @@ public:
     //
     // Note that this is the position in argv[] after environment variable and
     // response file expansion.
-    virtual int pos() const = 0;
+    int pos() const { return match().pos; }
+
+    ArgSrc::Type srcType() const { return match().srcType; }
+    const std::string & srcName() const { return match().srcName; }
 
     // Number of values, non-vectors are always 1.
     virtual size_t size() const { return 1; }
@@ -1609,9 +1671,16 @@ protected:
     virtual void doCheckActions(Cli & cli, const std::string & value) = 0;
     virtual void doAfterActions(Cli & cli) = 0;
 
-    // Record the command line argument that this opt matched with.
-    virtual bool match(const std::string & name, size_t pos) = 0;
+    // Record/query the command line argument this opt matched with.
+    virtual bool match(
+        const std::string & name,
+        size_t pos,
+        ArgSrc::Type srcType,
+        const std::string & srcName
+    ) = 0;
     virtual bool matched() const = 0;
+    virtual const ArgMatch & match(size_t index) const = 0;
+    const ArgMatch & match() const { return match(size() - 1); }
 
     // Assign the implicit value to the value. Used when an option, with an
     // optional value, is specified without one. The default implicit value is
@@ -2278,24 +2347,6 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
 
 /****************************************************************************
 *
-*   Cli::ArgMatch
-*
-*   Reference to the command line argument that was used to populate a value
-*
-***/
-
-struct Cli::ArgMatch {
-    // optName of option or operand rule that populated the value, or an empty
-    // string if it wasn't populated.
-    std::string name;
-
-    // Member of argv[] that populated the value or 0 if it wasn't.
-    int pos = {};
-};
-
-
-/****************************************************************************
-*
 *   Cli::Value
 *
 ***/
@@ -2335,10 +2386,6 @@ public:
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
 
-    // Inherited via OptBase
-    const std::string & from() const final { return m_proxy->m_match.name; }
-    int pos() const final { return m_proxy->m_match.pos; }
-
     //-----------------------------------------------------------------------
     // UPDATE VALUE
 
@@ -2349,8 +2396,14 @@ public:
 private:
     friend class Cli;
     bool defaultValueToString(std::string & out) const final;
-    bool match(const std::string & name, size_t pos) final;
+    bool match(
+        const std::string & name,
+        size_t pos,
+        ArgSrc::Type srcType,
+        const std::string & srcName
+    ) final;
     bool matched() const final { return m_proxy->m_explicit; }
+    const ArgMatch & match(size_t) const final { return m_proxy->m_match; }
     void assignImplicit() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_value;
@@ -2412,9 +2465,17 @@ inline bool Cli::Opt<T>::defaultValueToString(std::string & out) const {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Opt<T>::match(const std::string & name, size_t pos) {
-    m_proxy->m_match.name = name;
-    m_proxy->m_match.pos = (int)pos;
+inline bool Cli::Opt<T>::match(
+    const std::string & name,
+    size_t pos,
+    ArgSrc::Type srcType,
+    const std::string & srcName
+) {
+    auto & match = m_proxy->m_match;
+    match.name = name;
+    match.pos = (int)pos;
+    match.srcType = srcType;
+    match.srcName = srcName;
     m_proxy->m_explicit = true;
     return true;
 }
@@ -2481,15 +2542,21 @@ public:
 
     // Name of argument that populated the value at the index. Returns empty
     // string if the index is out of bounds.
-    const std::string & from(size_t index) const;
+    const std::string & from(size_t index) const { return match(index).from; }
     // Position in argv[], after its environment variable and response file
     // expansion, of argument that populated the value. Returns 0 if index is
     // out of bounds.
-    int pos(size_t index) const;
+    int pos(size_t index) const { return match(index).pos; }
+    ArgSrc::Type srcType(size_t index) const { return match(index).srcType; }
+    const std::string & srcName(size_t index) const {
+        return match(index).srcName;
+    }
 
     // Inherited via OptBase
-    const std::string & from() const final { return from(size() - 1); }
-    int pos() const final { return pos(size() - 1); }
+    using OptBase::from;
+    using OptBase::pos;
+    using OptBase::srcType;
+    using OptBase::srcName;
     size_t size() const final { return m_proxy->m_values->size(); }
     int minSize() const final { return m_minVec; }
     int maxSize() const final { return m_maxVec; }
@@ -2504,15 +2571,21 @@ public:
 private:
     friend class Cli;
     bool defaultValueToString(std::string & out) const final;
-    bool match(const std::string & name, size_t pos) final;
+    bool match(
+        const std::string & name,
+        size_t pos,
+        ArgSrc::Type srcType,
+        const std::string & srcName
+    ) final;
     bool matched() const final { return !m_proxy->m_values->empty(); }
+    const ArgMatch & match(size_t index) const final;
     void assignImplicit() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_values;
     }
 
     std::shared_ptr<ValueVec<T>> m_proxy;
-    std::string m_empty;
+    ArgMatch m_empty;
 
     // Minimum and maximum number of values allowed in vector.
     int m_minVec = 1;
@@ -2609,7 +2682,12 @@ inline void Cli::OptVec<T>::reset() {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::OptVec<T>::match(const std::string & name, size_t pos) {
+inline bool Cli::OptVec<T>::match(
+    const std::string & name,
+    size_t pos,
+    ArgSrc::Type srcType,
+    const std::string & srcName
+) {
     if (this->m_maxVec != -1
         && (size_t) this->m_maxVec == m_proxy->m_matches.size()
     ) {
@@ -2619,6 +2697,8 @@ inline bool Cli::OptVec<T>::match(const std::string & name, size_t pos) {
     ArgMatch match;
     match.name = name;
     match.pos = (int)pos;
+    match.srcType = srcType;
+    match.srcName = srcName;
     m_proxy->m_matches.push_back(match);
     m_proxy->m_values->resize(m_proxy->m_matches.size());
     return true;
@@ -2626,24 +2706,14 @@ inline bool Cli::OptVec<T>::match(const std::string & name, size_t pos) {
 
 //===========================================================================
 template <typename T>
+inline const Cli::ArgMatch & Cli::OptVec<T>::match(size_t index) const {
+    return index >= size() ? m_empty : m_proxy->m_matches[index];
+}
+
+//===========================================================================
+template <typename T>
 inline void Cli::OptVec<T>::assignImplicit() {
     m_proxy->m_values->back() = this->implicitValue();
-}
-
-//===========================================================================
-template <typename T>
-inline const std::string & Cli::OptVec<T>::from(size_t index) const {
-    if (index >= size()) {
-        return m_empty;
-    } else {
-        return m_proxy->m_matches[index].name;
-    }
-}
-
-//===========================================================================
-template <typename T>
-inline int Cli::OptVec<T>::pos(size_t index) const {
-    return index >= size() ? 0 : m_proxy->m_matches[index].pos;
 }
 
 } // namespace

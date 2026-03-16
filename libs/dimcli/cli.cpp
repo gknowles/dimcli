@@ -169,12 +169,13 @@ struct RawValue {
     string name;
     size_t pos;
     const char * ptr;
+    Cli::ArgSrc src;
 };
 
 } // namespace
 
 struct Cli::Config {
-    vector<pair<function<BeforeFn>, int>> befores;
+    vector<pair<function<ArgsFn>, int>> befores;
     vector<pair<function<ActionFn>, int>> execBefores;
     vector<pair<function<ActionFn>, int>> execAfters;
     bool allowUnknown = false;
@@ -278,7 +279,7 @@ struct Cli::OptIndex {
     // Will completely rebuild index for new command if one is found.
     bool parseToRawValues(
         vector<RawValue> * out,
-        const vector<string> & args,
+        const vector<Cli::Arg> & args,
         Cli & cli
     );
 
@@ -308,13 +309,14 @@ private:
     bool parseOperandValue(
         vector<RawValue> * out,
         ParseState & st,
-        Cli & cli
+        Cli & cli,
+        const vector<Cli::Arg> & args
     );
     bool parseOptionValue(
         vector<RawValue> * out,
         ParseState & st,
         Cli & cli,
-        const vector<string> & args
+        const vector<Cli::Arg> & args
     );
 
     string nameDescList(
@@ -413,6 +415,38 @@ static void replace(
     auto i = out.begin() + pos;
     for (auto && val : src)
         *i++ = move(val);
+}
+
+//===========================================================================
+static vector<Cli::Arg> toCliArgs(
+    const vector<string> & args,
+    Cli::ArgSrc::Type srcType,
+    const string & srcName = {}
+) {
+    vector<Cli::Arg> out;
+    if (!args.empty()) {
+        auto src = make_shared<Cli::ArgSrc>();
+        src->type = srcType;
+        src->name = srcName;
+        out.reserve(args.size());
+        for (auto&& arg : args)
+            out.push_back({arg, src});
+    }
+    return out;
+}
+
+//===========================================================================
+static bool equal(
+    const vector<Cli::Arg> & args,
+    const vector<string> & sargs
+) {
+    if (args.size() != sargs.size())
+        return false;
+    for (auto i = 0u; i < args.size(); ++i) {
+        if (args[i].value != sargs[i])
+            return false;
+    }
+    return true;
 }
 
 //===========================================================================
@@ -1620,13 +1654,41 @@ const string & Cli::cmdSortKey() const {
 }
 
 //===========================================================================
+static void callBefore(
+    Cli & cli,
+    vector<Cli::Arg> & args,
+    const function<Cli::BeforeFn> & fn
+) {
+    vector<string> sargs;
+    for (auto&& arg : args)
+        sargs.push_back(arg.value);
+    fn(cli, sargs);
+    if (!equal(args, sargs))
+        args = toCliArgs(sargs, Cli::ArgSrc::kArgv);
+}
+
+//===========================================================================
 Cli & Cli::before(function<BeforeFn> fn, int priority) & {
-    Cli::addAction(m_cfg->befores, move(fn), priority);
+    function<ArgsFn> afn = [fn](Cli & cli, vector<Arg> & args) {
+        callBefore(cli, args, fn);
+    };
+    Cli::addAction(m_cfg->befores, move(afn), priority);
     return *this;
 }
 
 //===========================================================================
 Cli && Cli::before(function<BeforeFn> fn, int priority) && {
+    return move(before(move(fn), priority));
+}
+
+//===========================================================================
+Cli & Cli::before(function<ArgsFn> fn, int priority) & {
+    Cli::addAction(m_cfg->befores, move(fn), priority);
+    return *this;
+}
+
+//===========================================================================
+Cli && Cli::before(function<ArgsFn> fn, int priority) && {
     return move(before(move(fn), priority));
 }
 
@@ -1806,7 +1868,7 @@ vector<pair<string, double>> Cli::siUnitMapping(
 // forward declarations
 static bool expandResponseFiles(
     Cli & cli,
-    vector<string> & args,
+    vector<Cli::Arg> & args,
     vector<string> & ancestors
 );
 
@@ -1861,13 +1923,13 @@ static bool loadFileUtf8(string & content, const fs::path & fn) {
 //===========================================================================
 static bool expandResponseFile(
     Cli & cli,
-    vector<string> & args,
+    vector<Cli::Arg> & args,
     size_t & pos,
     vector<string> & ancestors
 ) {
     string content;
     error_code ec;
-    auto fn = args[pos].substr(1);
+    auto fn = args[pos].value.substr(1);
     auto cfn = ancestors.empty()
         ? (fs::path) fn
         : fs::path(ancestors.back()).parent_path() / fn;
@@ -1876,8 +1938,9 @@ static bool expandResponseFile(
         cli.badUsage("Invalid response file", fn);
         return false;
     }
+    auto sfn = cfn.string();
     for (auto && a : ancestors) {
-        if (a == cfn.string()) {
+        if (a == sfn) {
             cli.badUsage("Recursive response file", fn);
             return false;
         }
@@ -1888,7 +1951,7 @@ static bool expandResponseFile(
         cli.badUsage(desc, fn);
         return false;
     }
-    auto rargs = cli.toArgv(content);
+    auto rargs = toCliArgs(cli.toArgv(content), Cli::ArgSrc::kFile, sfn);
     if (!expandResponseFiles(cli, rargs, ancestors))
         return false;
     auto rargLen = rargs.size();
@@ -1903,11 +1966,11 @@ static bool expandResponseFile(
 // directly or indirectly, and is used to detect recursive response files.
 static bool expandResponseFiles(
     Cli & cli,
-    vector<string> & args,
+    vector<Cli::Arg> & args,
     vector<string> & ancestors
 ) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
-        if (!args[pos].empty() && args[pos][0] == '@') {
+        if (!args[pos].value.empty() && args[pos].value.front() == '@') {
             if (!expandResponseFile(cli, args, pos, ancestors))
                 return false;
         }
@@ -2028,7 +2091,8 @@ static bool matchOperands(
 bool Cli::OptIndex::parseOperandValue(
     vector<RawValue> * out,
     ParseState & st,
-    Cli & cli
+    Cli & cli,
+    const vector<Cli::Arg> & args
 ) {
     if (st.cmdMode == ParseState::kPending && st.numOprs == m_minOprs) {
         // We've been expecting a subcommand name and, after any other
@@ -2089,14 +2153,15 @@ bool Cli::OptIndex::parseOperandValue(
     }
 
     // Record operand, it will be assigned and named later by assignOperands().
+    st.numOprs += 1;
     out->push_back({
         RawValue::kOperand,
         nullptr,
         string{},
         st.argPos,
-        st.ptr
+        st.ptr,
+        *args[st.argPos].src
     });
-    st.numOprs += 1;
 
     return true;
 }
@@ -2105,15 +2170,19 @@ bool Cli::OptIndex::parseOperandValue(
 static void addOptionMatch(
     vector<RawValue> * out,
     ParseState & st,
-    const char * ptr
+    const char * ptr,
+    const vector<Cli::Arg> & args
 ) {
     st.optMatches[st.optName.opt] += 1;
+    Cli::ArgSrc src;
+    src.type = Cli::ArgSrc::kNone;
     out->push_back({
         RawValue::kOption,
         st.optName.opt,
         st.name,
         st.argPos,
-        ptr
+        ptr,
+        ptr ? *args[st.argPos].src : src
     });
 }
 
@@ -2122,17 +2191,17 @@ bool Cli::OptIndex::parseOptionValue(
     vector<RawValue> * out,
     ParseState & st,
     Cli & cli,
-    const vector<string> & args
+    const vector<Cli::Arg> & args
 ) {
     if (st.ptr) {
         // Option with attached value (in the same argument).
-        addOptionMatch(out, st, st.ptr);
+        addOptionMatch(out, st, st.ptr, args);
         return true;
     }
     if (st.optName.flags & fNameOptional) {
         // Option allows optional value and has no value attached. Treat the
         // value as not present.
-        addOptionMatch(out, st, nullptr);
+        addOptionMatch(out, st, nullptr, args);
         return true;
     }
 
@@ -2143,14 +2212,15 @@ bool Cli::OptIndex::parseOptionValue(
         cli.badUsage("No value given for " + st.name);
         return false;
     }
-    addOptionMatch(out, st, args[st.argPos].c_str());
+    auto ptr = args[st.argPos].value.c_str();
+    addOptionMatch(out, st, ptr, args);
 
     // Option has value list, use following arguments up to the next option as
     // values.
     if (st.optName.flags & fNameList) {
         while (st.argPos + 1 < args.size()) {
-            auto val = args[st.argPos + 1].c_str();
-            if (*val == '-') {
+            ptr = args[st.argPos + 1].value.c_str();
+            if (*ptr == '-') {
                 // The next argument looks like an option, so stop taking
                 // arguments.
                 break;
@@ -2164,7 +2234,7 @@ bool Cli::OptIndex::parseOptionValue(
                 break;
             }
             st.argPos += 1;
-            addOptionMatch(out, st, val);
+            addOptionMatch(out, st, ptr, args);
         }
     }
     return true;
@@ -2178,10 +2248,10 @@ static bool commandRequired(const Cli::Config & cfg) {
 //===========================================================================
 bool Cli::OptIndex::parseToRawValues(
     vector<RawValue> * out,
-    const vector<string> & args,
+    const vector<Cli::Arg> & args,
     Cli & cli
 ) {
-    cli.m_cfg->progName = args[0];
+    cli.m_cfg->progName = args[0].value;
     ParseState st;
     if (cli.m_cfg->cmds[""].unknownArgs) {
         st.cmdMode = ParseState::kUnknown;
@@ -2191,7 +2261,7 @@ bool Cli::OptIndex::parseToRawValues(
     }
 
     for (; st.argPos < args.size(); ++st.argPos) {
-        st.ptr = args[st.argPos].c_str();
+        st.ptr = args[st.argPos].value.c_str();
         if (*st.ptr == '-' && st.ptr[1] && st.moreOpts) {
             // Argument contains one or more options.
             st.ptr += 1;
@@ -2228,7 +2298,8 @@ bool Cli::OptIndex::parseToRawValues(
                 addOptionMatch(
                     out,
                     st,
-                    (st.optName.flags & fNameInvert) ? "0" : "1"
+                    (st.optName.flags & fNameInvert) ? "0" : "1",
+                    args
                 );
             }
             if (!*st.ptr) {
@@ -2287,13 +2358,14 @@ bool Cli::OptIndex::parseToRawValues(
             addOptionMatch(
                 out,
                 st,
-                val == bool(st.optName.flags & fNameInvert) ? "0" : "1"
+                val == bool(st.optName.flags & fNameInvert) ? "0" : "1",
+                args
             );
             continue;
         }
 
         // Positional value
-        if (!parseOperandValue(out, st, cli))
+        if (!parseOperandValue(out, st, cli, args))
             return false;
     }
 
@@ -2352,14 +2424,13 @@ void Cli::OptIndex::doAfters(OptBase & opt, Cli & cli) {
 }
 
 //===========================================================================
-static bool parse(Cli & cli, vector<string> & args) {
+static bool parse(Cli & cli, vector<string> & rawArgs) {
     Cli::Config::touchAllCmds(cli);
     cli.resetValues();
 
     Cli::OptIndex ndx;
     ndx.index(cli, "", false);
     auto & cfg = Cli::Config::get(cli);
-    cfg.rawArgs = args;
 
     if (commandRequired(cfg) && !ndx.m_allowCommands) {
         // Command processing requires that the command be unambiguously
@@ -2370,12 +2441,18 @@ static bool parse(Cli & cli, vector<string> & args) {
     }
 
     // Preprocess arguments and verify that at least one exists.
+    cfg.rawArgs = rawArgs;
+    auto args = toCliArgs(rawArgs, Cli::ArgSrc::kArgv);
+
     if (!args.empty()) {
 #if !defined(DIMCLI_LIB_NO_ENV)
         // Insert environment options
         if (cfg.envOpts.size()) {
-            if (auto val = getenv(cfg.envOpts.c_str()))
-                replace(args, 1, 0, Cli::toArgv(val));
+            if (auto val = getenv(cfg.envOpts.c_str())) {
+                auto rargs = Cli::toArgv(val);
+                auto vals = toCliArgs(rargs, Cli::ArgSrc::kEnv, cfg.envOpts);
+                replace(args, 1, 0, move(vals));
+            }
         }
 #endif
 #ifdef DIMCLI_LIB_FILESYSTEM
@@ -2420,8 +2497,16 @@ static bool parse(Cli & cli, vector<string> & args) {
         default:
             break;
         }
-        if (!cli.parseValue(*val.opt, val.name, val.pos, val.ptr))
+        if (!cli.parseValue(
+            *val.opt,
+            val.name,
+            val.pos,
+            val.src.type,
+            val.src.name,
+            val.ptr
+        )) {
             return false;
+        }
     }
 
     // Report operands and options with too few values.
@@ -2580,7 +2665,19 @@ bool Cli::parseValue(
     size_t pos,
     const char ptr[]
 ) {
-    if (!opt.match(name, pos)) {
+    return parseValue(opt, name, pos, ArgSrc::kArgv, {}, ptr);
+}
+
+//===========================================================================
+bool Cli::parseValue(
+    OptBase & opt,
+    const string & name,
+    size_t pos,
+    ArgSrc::Type srcType,
+    const string & srcName,
+    const char ptr[]
+) {
+    if (!opt.match(name, pos, srcType, srcName)) {
         string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
             + intToString(opt, opt.maxSize()) + ".";
@@ -2660,7 +2757,14 @@ void Cli::prompt(OptBase & opt, const string & msg, int flags) {
         // with either "0" or "1".
         val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
     }
-    (void) parseValue(opt, opt.defaultFrom(), 0, val.c_str());
+    (void) parseValue(
+        opt,
+        opt.defaultFrom(),
+        0,
+        ArgSrc::kConsole,
+        {},
+        val.c_str()
+    );
 }
 
 

@@ -2887,7 +2887,7 @@ Options:
 static void beforeTests() {
     int line = 0;
     CliTest cli;
-    CliTest(cli).before([](auto & cli, auto & args) {
+    CliTest(cli).before([](auto & cli, vector<string> & args) {
         if (args.size() > 1)
             cli.badUsage("Too many args");
     });
@@ -2897,8 +2897,8 @@ static void beforeTests() {
     {
         cli = {};
         auto & vals = cli.optVec<string>("[val]");
-        cli.before([](auto &, auto & args) { args.push_back("a"); });
-        cli.before([](auto &, auto & args) { args.push_back("b"); });
+        cli.before([](auto &, vector<string> & args) { args.push_back("a"); });
+        cli.before([](auto &, vector<string> & args) { args.push_back("b"); });
         vector<string> expected = { "a", "b" };
         EXPECT_PARSE(cli);
         EXPECT_EQUAL(*vals, expected);
@@ -2907,10 +2907,10 @@ static void beforeTests() {
     {
         cli = {};
         auto & vals = cli.optVec<string>("[val]");
-        cli.before([](auto &, auto & args) { args.push_back("a"); });
-        cli.before([](auto &, auto & args) { args.push_back("b"); }, 3);
-        cli.before([](auto &, auto & args) { args.push_back("c"); }, 2);
-        cli.before([](auto &, auto & args) { args.push_back("d"); }, 2);
+        cli.before([](auto &, vector<string> & args) { args.push_back("a"); });
+        cli.before([](auto &, vector<string> & args) { args.push_back("b"); }, 3);
+        cli.before([](auto &, vector<string> & args) { args.push_back("c"); }, 2);
+        cli.before([](auto &, vector<string> & args) { args.push_back("d"); }, 2);
         vector<string> expected = { "b", "c", "d", "a" };
         EXPECT_PARSE(cli);
         EXPECT_EQUAL(*vals, expected);
