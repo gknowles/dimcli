@@ -1672,8 +1672,7 @@ Cli & Cli::before(function<BeforeFn> fn, int priority) & {
     function<ArgsFn> afn = [fn](Cli & cli, vector<Arg> & args) {
         callBefore(cli, args, fn);
     };
-    Cli::addAction(m_cfg->befores, move(afn), priority);
-    return *this;
+    return beforeEx(afn, priority);
 }
 
 //===========================================================================
@@ -1682,14 +1681,14 @@ Cli && Cli::before(function<BeforeFn> fn, int priority) && {
 }
 
 //===========================================================================
-Cli & Cli::before(function<ArgsFn> fn, int priority) & {
+Cli & Cli::beforeEx(function<ArgsFn> fn, int priority) & {
     Cli::addAction(m_cfg->befores, move(fn), priority);
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::before(function<ArgsFn> fn, int priority) && {
-    return move(before(move(fn), priority));
+Cli && Cli::beforeEx(function<ArgsFn> fn, int priority) && {
+    return move(beforeEx(move(fn), priority));
 }
 
 #if !defined(DIMCLI_LIB_NO_ENV)
@@ -2671,6 +2670,16 @@ bool Cli::parseValue(
 //===========================================================================
 bool Cli::parseValue(
     OptBase & opt,
+    ArgSrc::Type srcType,           // use kArgv if unsure (not kNone!)
+    const std::string & srcName,    // use {} if unsure
+    const char ptr[]
+) {
+    return parseValue(opt, opt.defaultFrom(), 0, srcType, srcName, ptr);
+}
+
+//===========================================================================
+bool Cli::parseValue(
+    OptBase & opt,
     const string & name,
     size_t pos,
     ArgSrc::Type srcType,
@@ -2757,14 +2766,7 @@ void Cli::prompt(OptBase & opt, const string & msg, int flags) {
         // with either "0" or "1".
         val = val.size() && (val[0] == 'y' || val[0] == 'Y') ? "1" : "0";
     }
-    (void) parseValue(
-        opt,
-        opt.defaultFrom(),
-        0,
-        ArgSrc::kConsole,
-        {},
-        val.c_str()
-    );
+    (void) parseValue(opt, ArgSrc::kConsole, {}, val.c_str());
 }
 
 

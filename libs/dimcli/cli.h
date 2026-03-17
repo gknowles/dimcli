@@ -439,11 +439,11 @@ public:
 
     struct ArgSrc {
         enum Type {
-            kNone,
-            kArgv,
-            kFile,
-            kEnv,
-            kConsole,
+            kNone,      // No value recorded, so there is no source.
+            kArgv,      // From the args passed to cli.parse().
+            kFile,      // Loaded from a response file.
+            kEnv,       // Loaded from an environment variable.
+            kConsole,   // User input, such as response to password prompt.
         };
         Type type = kNone;
         std::string name;
@@ -469,8 +469,8 @@ public:
     // all args are being set to {kArgv, ""}.
     Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
     Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
-    Cli & before(std::function<ArgsFn> fn, int priority = 1) &;
-    Cli && before(std::function<ArgsFn> fn, int priority = 1) &&;
+    Cli & beforeEx(std::function<ArgsFn> fn, int priority = 1) &;
+    Cli && beforeEx(std::function<ArgsFn> fn, int priority = 1) &&;
 
     // Actions to run after parsing has completed and immediately before the
     // command action is executed. They are run in order of highest (largest
@@ -610,15 +610,21 @@ public:
         OptBase & out,
         const std::string & name,
         size_t pos,
-        const char src[]
+        const char val[]
     );
     [[nodiscard]] bool parseValue(
         OptBase & out,
-        const std::string & name,
-        size_t pos,
-        ArgSrc::Type srcType,
-        const std::string & srcName,
-        const char src[]
+        ArgSrc::Type srcType,           // use kArgv if unsure (not kNone!)
+        const std::string & srcName,    // use {} if unsure
+        const char val[]
+    );
+    [[nodiscard]] bool parseValue(
+        OptBase & out,
+        const std::string & name,       // use opt.defaultFrom() if unsure
+        size_t pos,                     // use 0 if unsure
+        ArgSrc::Type srcType,           // use kArgv if unsure (not kNone!)
+        const std::string & srcName,    // use {} if unsure
+        const char val[]
     );
 
     // fUnit* flags modify how unit suffixes are interpreted by opt.siUnits(),

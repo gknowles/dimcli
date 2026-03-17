@@ -18,8 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Convert configuration options: cvt.imbue() and cvt.getloc()
 - Fixed - toCmdline*() drops blank (empty string) arguments
 - Fixed - Static init order can disorder options/operands in help text
-- Added - cli.before() overload that includes arg sources
+- Added - cli.beforeEx() action overload that includes arg sources
 - Added - opt.srcType() and opt.srcName() to report source of arg
+- Added - cli.parseValue() overloads that include arg source
+- Deprecated - cli.parseValue() overload w/o arg source
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
