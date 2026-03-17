@@ -566,6 +566,17 @@ static void valueTests() {
         EXPECT_EQUAL(*sum, 6);
     }
 
+    // parse manufactured argument
+    {
+        cli = {};
+        auto & opt = cli.opt<int>("v");
+        EXPECT_PARSE(cli, "");
+        EXPECT_EQUAL(*opt, 0);
+        auto rc = cli.parseValue(opt, opt.defaultFrom(), 0, "9");
+        EXPECT_EQUAL(rc, true);
+        EXPECT_EQUAL(*opt, 9);
+    }
+
     // parsing failure
     {
         cli = {};
@@ -2888,11 +2899,29 @@ static void beforeTests() {
     int line = 0;
     CliTest cli;
     CliTest(cli).before([](auto & cli, const vector<string> & args) {
+        if (args.size() > 2)
+            cli.badUsage("Way too many args");
+    }).beforeEx([](auto & cli, const auto & args) {
         if (args.size() > 1)
             cli.badUsage("Too many args");
     });
-    EXPECT_PARSE(cli, "one two", false);
+    EXPECT_PARSE(cli, "one", false);
     EXPECT_ERR(cli, "Error: Too many args\n");
+    EXPECT_PARSE(cli, "one two", false);
+    EXPECT_ERR(cli, "Error: Way too many args\n");
+
+    // Change string args without changing number of args
+    {
+        cli = {};
+        auto & vals = cli.optVec<string>("[val]");
+        cli.before([](auto &, auto & args) {
+            if (args.size() >= 3)
+                swap(args[1], args[2]);
+        });
+        vector<string> expected = { "b", "a", "c" };
+        EXPECT_PARSE(cli, "a b c");
+        EXPECT_EQUAL(*vals, expected);
+    }
 
     {
         cli = {};

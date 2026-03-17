@@ -1226,9 +1226,12 @@ void Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
 }
 
 //===========================================================================
-static void helpBeforeAction(Cli &, vector<string> & args) {
-    if (args.size() == 1)
-        args.push_back("--help");
+static void helpBeforeAction(Cli &, vector<Cli::Arg> & args) {
+    if (args.size() == 1) {
+        auto src = make_shared<Cli::ArgSrc>();
+        src->type = Cli::ArgSrc::kArgv;
+        args.push_back({"--help", src});
+    }
 }
 
 //===========================================================================
@@ -1596,7 +1599,7 @@ Cli && Cli::unknownCmd(function<ActionFn> fn) && {
 
 //===========================================================================
 Cli & Cli::helpNoArgs() & {
-    return before(helpBeforeAction);
+    return beforeEx(helpBeforeAction);
 }
 
 //===========================================================================
