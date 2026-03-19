@@ -1657,7 +1657,7 @@ const string & Cli::cmdSortKey() const {
 }
 
 //===========================================================================
-static void callBefore(
+static void doBefore(
     Cli & cli,
     vector<Cli::Arg> & args,
     const function<Cli::BeforeFn> & fn
@@ -1666,14 +1666,19 @@ static void callBefore(
     for (auto&& arg : args)
         sargs.push_back(arg.value);
     fn(cli, sargs);
-    if (!equal(args, sargs))
+    if (!equal(args, sargs)) {
+        // String vector was changed, create new vector of args and completely
+        // replace existing one.
+        //
+        // NOTE: This removes all preexisting data about sources.
         args = toCliArgs(sargs, Cli::ArgSrc::kArgv);
+    }
 }
 
 //===========================================================================
 Cli & Cli::before(function<BeforeFn> fn, int priority) & {
     function<ArgsFn> afn = [fn](Cli & cli, vector<Arg> & args) {
-        callBefore(cli, args, fn);
+        doBefore(cli, args, fn);
     };
     return beforeEx(afn, priority);
 }
@@ -1838,15 +1843,17 @@ vector<pair<string, double>> Cli::siUnitMapping(
         units.insert(units.end(), s_siBin.begin(), s_siBin.end());
     } else {
         units.insert(units.end(), s_siDec.begin(), s_siDec.end());
-        if (~flags & fUnitInsensitive) {
+        if (~flags & fUnitInsensitive)
             units.insert(units.end(), s_siSmall.begin(), s_siSmall.end());
-        }
     }
     if (!symbol.empty()) {
         if (flags & fUnitRequire) {
+            // Unit symbol required, modify list of suffixes to include it.
             for (auto && kv : units)
                 kv.first += symbol;
         } else {
+            // Unit symbol optional, add copy of each suffix with symbol
+            // appended.
             units.reserve(2 * units.size());
             for (auto i = units.size(); i-- > 0;) {
                 auto & kv = units[i];

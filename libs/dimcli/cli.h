@@ -465,10 +465,11 @@ public:
     //  - Call cli.badUsage() for errors.
     //  - Call cli.parseExit() if parsing should stop, but there was no error.
     //
-    // If a vector<string> action modifies args it is implied that the src of
-    // all args are being set to {kArgv, ""}.
+    // If a vector<string> action modifies args it is implied that all args are
+    // having their sources set to {kArgv, ""}.
     Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
     Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
+    // Like cli.before but also allows manipulation of the arg sources.
     Cli & beforeEx(std::function<ArgsFn> fn, int priority = 1) &;
     Cli && beforeEx(std::function<ArgsFn> fn, int priority = 1) &&;
 

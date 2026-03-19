@@ -40,6 +40,9 @@ Cli::OptVec&lt;T>.
 | Add action to run after environment variable and response file expansion but
 before any individual arguments are parsed.
 
+| cli.beforeEx
+| Like cli.before but also includes argument source (argv, file, env, ...)
+
 | cli.conin
 | Get console input stream that will be used for prompting.
 
