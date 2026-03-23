@@ -541,7 +541,9 @@ public:
 #endif
 
     // Enabled by default, response file expansion replaces arguments of the
-    // form "@file" with the contents of the named file.
+    // form "@file" with the contents of the named file. This continues
+    // recursively until no more expanable arguments are found or an infinite
+    // cycle is detected.
     Cli & responseFiles(bool enable = true) &;
     Cli && responseFiles(bool enable = true) &&;
 
@@ -606,7 +608,8 @@ public:
     // Used to populate an option with an arbitrary input string through the
     // standard parsing logic. Since it causes the parse and check actions to
     // be called care must be taken to avoid infinite recursion if used from
-    // those actions.
+    // those actions. A nullptr val indicates that the option has an optional
+    // value and it was not specified.
     [[nodiscard, deprecated]] bool parseValue(
         OptBase & out,
         const std::string & name,
@@ -1150,7 +1153,7 @@ void Cli::badRange(
 template <typename A>
 A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
-    opt.parse(&Cli::defParseAction).command(command()).group(group());
+    opt.parse(Cli::defParseAction).command(command()).group(group());
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
@@ -2188,7 +2191,7 @@ A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn, int priority) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::require() {
-    return after(&Cli::requireAction);
+    return after(Cli::requireAction);
 }
 
 //===========================================================================
