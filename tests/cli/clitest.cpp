@@ -577,6 +577,17 @@ static void valueTests() {
         EXPECT_EQUAL(*opt, 9);
     }
 
+    // parse manufactured relative file argument
+    {
+        cli = {};
+        auto & opt = cli.opt<string>("v").argSrcRelative();
+        EXPECT_PARSE(cli, "");
+        EXPECT_EQUAL(*opt, "");
+        auto rc = cli.parseValue(opt, Dim::Cli::ArgSrc::kFile, "a/b.rsp", "c");
+        EXPECT_EQUAL(rc, true);
+        EXPECT_EQUAL(*opt, "a/c");
+    }
+
     // parsing failure
     {
         cli = {};

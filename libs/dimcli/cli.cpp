@@ -1215,6 +1215,19 @@ void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
 
 //===========================================================================
 // static
+void Cli::argSrcResolveAction(Cli & cli, OptBase & opt, const string & rel) {
+    string val = rel;
+#ifdef DIMCLI_LIB_FILESYSTEM
+    if (opt.srcType() == ArgSrc::kFile) {
+        auto p = fs::u8path(opt.srcName()).parent_path() / rel;
+        val = (char *) p.generic_u8string().c_str();
+    }
+#endif
+    defParseAction(cli, opt, val);
+}
+
+//===========================================================================
+// static
 void Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
     if (opt)
         return;

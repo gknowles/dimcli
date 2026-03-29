@@ -1029,6 +1029,11 @@ private:
         OptBase & opt,
         const std::string & val
     );
+    static void argSrcResolveAction(
+        Cli & cli,
+        OptBase & opt,
+        const std::string & val
+    );
     static void requireAction(
         Cli & cli,
         OptBase & opt,
@@ -1891,6 +1896,8 @@ public:
         int flags = 0            // Cli::fPrompt* flags
     );
 
+    A & argSrcRelative();
+
     // Function signature of actions that are tied to options.
     using ActionFn = void(Cli & cli, A & opt, const std::string & val);
 
@@ -2361,6 +2368,12 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
     });
 }
 
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::argSrcRelative() {
+    return parse(Cli::argSrcResolveAction).valueDesc("FILE");
+}
+
 
 /****************************************************************************
 *
@@ -2483,7 +2496,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
 template <>
 inline // static
 void Cli::Opt<DIMCLI_LIB_FILESYSTEM_PATH>::initConfig(Cli &) {
-    valueDesc("FILE");
+    argSrcRelative();
 }
 #endif
 
@@ -2702,7 +2715,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
 template <>
 inline // static
 void Cli::OptVec<DIMCLI_LIB_FILESYSTEM_PATH>::initConfig(Cli &) {
-    valueDesc("FILE");
+    argSrcRelative();
 }
 #endif
 
