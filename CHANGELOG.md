@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - opt.srcType() and opt.srcName() to report source of arg
 - Added - cli.parseValue() overloads that include arg source
 - Deprecated - cli.parseValue() overload w/o arg source
+- Added - opt.initConfig() customization point
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code

@@ -217,6 +217,11 @@ one flagged as the default.
 | opt.fromString<T>
 | Inherited from <<string-conversions, Convert>>.
 
+| opt.initConfig
+| Called internally when an Opt<T> or OptVec<T> is created. The unspecialized
+version does nothing, but the function is allowed to call the rest of these
+configuration methods. Can be specialized for new types.
+
 | opt.imbue
 | Inherited from <<string-conversions, Convert>>.
 
@@ -535,7 +540,8 @@ Only valid for columns in rows that are marked with '\f' (new table).
 !===
 
 | Cli::<<guide.adoc#value-description, valueDesc>><T>
-| Default friendly name for type, such as NUM, FLOAT, or STRING.
+| Default friendly name for type, such as NUM, FLOAT, or STRING. Can be
+specialized for new types.
 |===
 
 == Argv Conversions

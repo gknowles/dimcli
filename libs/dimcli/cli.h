@@ -804,6 +804,7 @@ public:
 
     //-----------------------------------------------------------------------
     // Friendly name for type used in help text, such as NUM, VALUE, or FILE.
+    // Intended to be specialized for new types.
     template <typename T>
     static std::string valueDesc();
 
@@ -1154,6 +1155,7 @@ template <typename A>
 A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
     opt.parse(Cli::defParseAction).command(command()).group(group());
+    opt.initConfig(*this);
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
 }
@@ -1254,12 +1256,13 @@ public:
     //-----------------------------------------------------------------------
     // CONVERSIONS
 
-    // Converts from string to T.
+    // Converts from string to T. Intended to be specialized for new types.
     template <typename T>
     [[nodiscard]] bool fromString(T & out, const std::string & value) const;
 
     // Converts to string from T. Sets to empty string and returns false if
-    // conversion fails or no conversion available.
+    // conversion fails or no conversion available. Intended to be specialized
+    // for new types.
     template <typename T>
     [[nodiscard]] bool toString(std::string & out, const T & src) const;
 
@@ -1674,6 +1677,10 @@ public:
     [[nodiscard]] virtual bool parseValue(const std::string & value) = 0;
 
 protected:
+    // Set default configuration settings for options/operands of this type.
+    // Intended to be specialized for new types.
+    virtual void initConfig(Cli & cli) = 0;
+
     virtual bool defaultValueToString(std::string & out) const = 0;
     virtual std::string defaultValueDesc() const = 0;
 
@@ -2388,6 +2395,9 @@ struct Cli::Value {
 template <typename T>
 class Cli::Opt : public OptShim<Opt<T>, T> {
 public:
+    using value_type = T;
+
+public:
     Opt(std::shared_ptr<Value<T>> value, const std::string & names);
 
     //-----------------------------------------------------------------------
@@ -2405,6 +2415,7 @@ public:
 
 private:
     friend class Cli;
+    void initConfig(Cli &) final {};
     bool defaultValueToString(std::string & out) const final;
     bool match(
         const std::string & name,
@@ -2466,6 +2477,15 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
     }
     return this->fromString(tmp, value);
 }
+
+#ifdef DIMCLI_LIB_FILESYSTEM
+//===========================================================================
+template <>
+inline // static
+void Cli::Opt<DIMCLI_LIB_FILESYSTEM_PATH>::initConfig(Cli &) {
+    valueDesc("FILE");
+}
+#endif
 
 //===========================================================================
 template <typename T>
@@ -2580,6 +2600,7 @@ public:
 
 private:
     friend class Cli;
+    void initConfig(Cli &) final {}
     bool defaultValueToString(std::string & out) const final;
     bool match(
         const std::string & name,
@@ -2675,6 +2696,15 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
     *back = std::move(tmp);
     return result;
 }
+
+#ifdef DIMCLI_LIB_FILESYSTEM
+//===========================================================================
+template <>
+inline // static
+void Cli::OptVec<DIMCLI_LIB_FILESYSTEM_PATH>::initConfig(Cli &) {
+    valueDesc("FILE");
+}
+#endif
 
 //===========================================================================
 template <typename T>
