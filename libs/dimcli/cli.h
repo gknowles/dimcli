@@ -1029,7 +1029,7 @@ private:
         OptBase & opt,
         const std::string & val
     );
-    static void argSrcResolveAction(
+    static void argSrcFileRelAction(
         Cli & cli,
         OptBase & opt,
         const std::string & val
@@ -1896,7 +1896,10 @@ public:
         int flags = 0            // Cli::fPrompt* flags
     );
 
-    A & argSrcRelative();
+    // When srcType is ArgSrc::kFile values are interpreted as file paths and,
+    // if the argument also has kFile srcType, resolved relative to the file
+    // source of the argument. Other source types are not supported.
+    A & resolve(ArgSrc::Type srcType);
 
     // Function signature of actions that are tied to options.
     using ActionFn = void(Cli & cli, A & opt, const std::string & val);
@@ -2370,8 +2373,10 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::argSrcRelative() {
-    return parse(Cli::argSrcResolveAction).valueDesc("FILE");
+A & Cli::OptShim<A, T>::resolve(ArgSrc::Type srcType) {
+    if (srcType == ArgSrc::kFile)
+        parse(Cli::argSrcFileRelAction).valueDesc("FILE");
+    return static_cast<A &>(*this);
 }
 
 
@@ -2496,7 +2501,7 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
 template <>
 inline // static
 void Cli::Opt<DIMCLI_LIB_FILESYSTEM_PATH>::initConfig(Cli &) {
-    argSrcRelative();
+    resolve(ArgSrc::kFile);
 }
 #endif
 
@@ -2715,7 +2720,7 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
 template <>
 inline // static
 void Cli::OptVec<DIMCLI_LIB_FILESYSTEM_PATH>::initConfig(Cli &) {
-    argSrcRelative();
+    resolve(ArgSrc::kFile);
 }
 #endif
 

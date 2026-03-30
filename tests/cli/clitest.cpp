@@ -580,10 +580,12 @@ static void valueTests() {
     // parse manufactured relative file argument
     {
         cli = {};
-        auto & opt = cli.opt<string>("v").argSrcRelative();
+        auto stype = Dim::Cli::ArgSrc::kFile;
+        auto & opt = cli.opt<string>("v").resolve(stype);
+        cli.optVec<string>("x").resolve(stype);
         EXPECT_PARSE(cli, "");
         EXPECT_EQUAL(*opt, "");
-        auto rc = cli.parseValue(opt, Dim::Cli::ArgSrc::kFile, "a/b.rsp", "c");
+        auto rc = cli.parseValue(opt, stype, "a/b.rsp", "c");
         EXPECT_EQUAL(rc, true);
         EXPECT_EQUAL(*opt, "a/c");
     }
@@ -2117,6 +2119,7 @@ static void filesystemTests() {
         (void) cvt.toString(def, path);
         EXPECT_EQUAL(def, "path");
         cli.opt(&path, "path", path)
+            .valueDesc(cli.valueDesc<fs::path>())
             .desc("std::filesystem::path");
         EXPECT_PARSE(cli, "--path one");
         EXPECT_EQUAL(path, "one");

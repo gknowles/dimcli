@@ -1215,7 +1215,7 @@ void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
 
 //===========================================================================
 // static
-void Cli::argSrcResolveAction(Cli & cli, OptBase & opt, const string & rel) {
+void Cli::argSrcFileRelAction(Cli & cli, OptBase & opt, const string & rel) {
     string val = rel;
 #ifdef DIMCLI_LIB_FILESYSTEM
     if (opt.srcType() == ArgSrc::kFile) {

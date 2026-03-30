@@ -244,6 +244,11 @@ the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.
 | Causes a check that the option value was set during parsing, and reports
 badUsage() if it wasn't.
 
+| opt.resolve
+| When srcType is ArgSrc::kFile values are interpreted as file paths and, if
+the argument also has kFile srcType, resolved relative to the file source of
+the argument. Other source types are not supported.
+
 | opt.<<guide.adoc#si-units, siUnits>>
 | Removes the symbol and, if SI unit prefixes (m, k, ki, M, Mi, etc) are
 present, multiplies by the corresponding factor.
