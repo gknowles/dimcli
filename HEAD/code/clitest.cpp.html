@@ -430,7 +430,7 @@ static void assertTests() {
 
     // Bad arguments
     cli = {};
-    cli.before([](auto &amp;, auto &amp; args) {
+    cli.before([](auto &amp;, vector&lt;string> &amp; args) {
         args.erase(args.begin()); // remove command name
         return true;
     });
@@ -711,6 +711,30 @@ static void valueTests() {
             });
         EXPECT_PARSE(cli, "-n2 -n3");
         EXPECT_EQUAL(*sum, 6);
+    }
+
+    // parse manufactured argument
+    {
+        cli = {};
+        auto &amp; opt = cli.opt&lt;int>("v");
+        EXPECT_PARSE(cli, "");
+        EXPECT_EQUAL(*opt, 0);
+        auto rc = cli.parseValue(opt, opt.defaultFrom(), 0, "9");
+        EXPECT_EQUAL(rc, true);
+        EXPECT_EQUAL(*opt, 9);
+    }
+
+    // parse manufactured relative file argument
+    {
+        cli = {};
+        auto stype = Dim::Cli::ArgSrc::kFile;
+        auto &amp; opt = cli.opt&lt;string>("v").resolve(stype);
+        cli.optVec&lt;string>("x").resolve(stype);
+        EXPECT_PARSE(cli, "");
+        EXPECT_EQUAL(*opt, "");
+        auto rc = cli.parseValue(opt, stype, "a/b.rsp", "c");
+        EXPECT_EQUAL(rc, true);
+        EXPECT_EQUAL(*opt, "a/c");
     }
 
     // parsing failure
@@ -2242,6 +2266,7 @@ static void filesystemTests() {
         (void) cvt.toString(def, path);
         EXPECT_EQUAL(def, "path");
         cli.opt(&amp;path, "path", path)
+            .valueDesc(cli.valueDesc&lt;fs::path>())
             .desc("std::filesystem::path");
         EXPECT_PARSE(cli, "--path one");
         EXPECT_EQUAL(path, "one");
@@ -3034,17 +3059,35 @@ Options:
 static void beforeTests() {
     int line = 0;
     CliTest cli;
-    CliTest(cli).before([](auto &amp; cli, auto &amp; args) {
+    CliTest(cli).before([](auto &amp; cli, const vector&lt;string> &amp; args) {
+        if (args.size() > 2)
+            cli.badUsage("Way too many args");
+    }).beforeEx([](auto &amp; cli, const auto &amp; args) {
         if (args.size() > 1)
             cli.badUsage("Too many args");
     });
-    EXPECT_PARSE(cli, "one two", false);
+    EXPECT_PARSE(cli, "one", false);
     EXPECT_ERR(cli, "Error: Too many args\n");
+    EXPECT_PARSE(cli, "one two", false);
+    EXPECT_ERR(cli, "Error: Way too many args\n");
+
+    // Change string args without changing number of args
+    {
+        cli = {};
+        auto &amp; vals = cli.optVec&lt;string>("[val]");
+        cli.before([](auto &amp;, auto &amp; args) {
+            if (args.size() >= 3)
+                swap(args[1], args[2]);
+        });
+        vector&lt;string> expected = { "b", "a", "c" };
+        EXPECT_PARSE(cli, "a b c");
+        EXPECT_EQUAL(*vals, expected);
+    }
 
     {
         cli = {};
         auto &amp; vals = cli.optVec&lt;string>("[val]");
-        cli.before([](auto &amp;, auto &amp; args) { args.push_back("a"); });
+        cli.before([](auto &amp;, vector&lt;string> &amp; args) { args.push_back("a"); });
         cli.before([](auto &amp;, auto &amp; args) { args.push_back("b"); });
         vector&lt;string> expected = { "a", "b" };
         EXPECT_PARSE(cli);

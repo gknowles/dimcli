@@ -201,6 +201,10 @@ Cli::OptVec&lt;T&gt;.</p></td>
 before any individual arguments are parsed.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.beforeEx</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Like cli.before but also includes argument source (argv, file, env, &#8230;&#8203;)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.conin</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Get console input stream that will be used for prompting.</p></td>
 </tr>
@@ -471,6 +475,12 @@ one flagged as the default.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Inherited from <a href="#string-conversions">Convert</a>.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.initConfig</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Called internally when an Opt&lt;T&gt; or OptVec&lt;T&gt; is created. The unspecialized
+version does nothing, but the function is allowed to call the rest of these
+configuration methods. Can be specialized for new types.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.imbue</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Inherited from <a href="#string-conversions">Convert</a>.</p></td>
 </tr>
@@ -497,6 +507,12 @@ the user will be prompted for it. Use Cli::fPrompt* flags to adjust behavior.</p
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#require">require</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Causes a check that the option value was set during parsing, and reports
 badUsage() if it wasn&#8217;t.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.resolve</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">When srcType is ArgSrc::kFile values are interpreted as file paths and, if
+the argument also has kFile srcType, resolved relative to the file source of
+the argument. Other source types are not supported.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#si-units">siUnits</a></p></td>
@@ -927,7 +943,8 @@ Only valid for columns in rows that are marked with '\f' (new table).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cli::<a href="guide.html#value-description">valueDesc</a>&lt;T&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default friendly name for type, such as NUM, FLOAT, or STRING.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default friendly name for type, such as NUM, FLOAT, or STRING. Can be
+specialized for new types.</p></td>
 </tr>
 </tbody>
 </table>
