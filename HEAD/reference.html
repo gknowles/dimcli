@@ -529,6 +529,11 @@ present, multiplies by the corresponding factor.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Inherited from <a href="#string-conversions">Convert</a>.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#transform-actions">transform</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add action to transform value string before it is parsed, any number of
+transform actions can be added.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optVec.<a href="guide.html#vector-options">size</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Change the number of values that can be assigned to a vector option. Defaults
 to a minimum of 1 and a maximum of -1 (unlimited).</p></td>
@@ -552,6 +557,11 @@ message and flags the in progress parse() to return false.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if the named command has been defined; used by the help command
 implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cli.newValue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by transform action callbacks to modify the current value string about
+to be parsed.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cli.parseExit</p></td>
