@@ -260,6 +260,10 @@ present, multiplies by the corresponding factor.
 | opt.toString<T>
 | Inherited from <<string-conversions, Convert>>.
 
+| opt.transform
+| Add action to transform value string before it is parsed, any number of
+transform actions can be added.
+
 | optVec.<<guide.adoc#vector-options, size>>
 | Change the number of values that can be assigned to a vector option. Defaults
 to a minimum of 1 and a maximum of -1 (unlimited).
@@ -279,6 +283,10 @@ message and flags the in progress parse() to return false.
 | Returns true if the named command has been defined; used by the help command
 implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.
+
+| cli.newValue
+| Used by transform action callbacks to modify the current value string about
+to be parsed.
 
 | cli.parseExit
 | Intended for use in action callbacks. Sets exit code to EX_OK, and causes an

@@ -191,10 +191,12 @@ struct Cli::Config {
     shared_ptr<locale> defLoc = make_shared<locale>();
     shared_ptr<locale> numLoc = make_shared<locale>("");
 
-    bool parseExit = false;
+    Cli::OptBase * curOpt = {};
+    string newValue;
     int exitCode = kExitOk;
     string errMsg;
     string errDetail;
+    bool parseExit = false;
     vector<string> rawArgs;
     string progName;
     string command;
@@ -443,7 +445,7 @@ static bool equal(
     if (args.size() != sargs.size())
         return false;
     for (auto i = 0u; i < args.size(); ++i) {
-        if (args[i].value != sargs[i])
+        if (args[i].text != sargs[i])
             return false;
     }
     return true;
@@ -550,7 +552,8 @@ bool Cli::Convert::toString_impl<std::wstring>(
     size_t mblen = 0;
 
     for (auto&& w : src) {
-        assert(out.data() + out.size() - dst > MB_LEN_MAX);
+        assert(out.data() + out.size() - dst > MB_LEN_MAX   // LCOV_EXCL_LINE
+            && "Internal dimcli error: char encoding exceeds MB_LEN_MAX.");
         mblen = wcrtomb(dst, w, &state);
         if (mblen == -1) {
             auto bytes = src.size() * sizeof src[0];
@@ -761,6 +764,25 @@ string Cli::OptBase::defaultPrompt() const {
         name.erase(0, 1);
     }
     return name;
+}
+
+//===========================================================================
+void Cli::newValue(const string & value) {
+    if (!m_cfg->curOpt) {
+        assert(!"cli.newValue only allowed from transform action callbacks.");
+        return;
+    }
+    auto & opt = *m_cfg->curOpt;
+    if (!opt.m_bool) {
+        m_cfg->newValue = value;
+    } else {
+        bool v;
+        if (parseBool(v, value)) {
+            m_cfg->newValue = v ? "1" : "0";
+        } else {
+            badUsage(opt, value);
+        }
+    }
 }
 
 //===========================================================================
@@ -1402,6 +1424,12 @@ Cli::OptBase * Cli::findOpt(const void * value) {
 }
 
 //===========================================================================
+// private
+const string & Cli::newValue() const {
+    return m_cfg->newValue;
+}
+
+//===========================================================================
 Cli::Opt<bool> & Cli::confirmOpt(const string & prompt) {
     auto & ask = opt<bool>("y yes.")
         .desc("Suppress prompting to allow execution.")
@@ -1677,7 +1705,7 @@ static void doBefore(
 ) {
     vector<string> sargs;
     for (auto&& arg : args)
-        sargs.push_back(arg.value);
+        sargs.push_back(arg.text);
     fn(cli, sargs);
     if (!equal(args, sargs)) {
         // String vector was changed, create new vector of args and completely
@@ -1951,7 +1979,7 @@ static bool expandResponseFile(
 ) {
     string content;
     error_code ec;
-    auto fn = args[pos].value.substr(1);
+    auto fn = args[pos].text.substr(1);
     auto cfn = ancestors.empty()
         ? (fs::path) fn
         : fs::path(ancestors.back()).parent_path() / fn;
@@ -1992,7 +2020,7 @@ static bool expandResponseFiles(
     vector<string> & ancestors
 ) {
     for (size_t pos = 0; pos < args.size(); ++pos) {
-        if (!args[pos].value.empty() && args[pos].value.front() == '@') {
+        if (!args[pos].text.empty() && args[pos].text.front() == '@') {
             if (!expandResponseFile(cli, args, pos, ancestors))
                 return false;
         }
@@ -2234,14 +2262,14 @@ bool Cli::OptIndex::parseOptionValue(
         cli.badUsage("No value given for " + st.name);
         return false;
     }
-    auto ptr = args[st.argPos].value.c_str();
+    auto ptr = args[st.argPos].text.c_str();
     addOptionMatch(out, st, ptr, args);
 
     // Option has value list, use following arguments up to the next option as
     // values.
     if (st.optName.flags & fNameList) {
         while (st.argPos + 1 < args.size()) {
-            ptr = args[st.argPos + 1].value.c_str();
+            ptr = args[st.argPos + 1].text.c_str();
             if (*ptr == '-') {
                 // The next argument looks like an option, so stop taking
                 // arguments.
@@ -2273,7 +2301,7 @@ bool Cli::OptIndex::parseToRawValues(
     const vector<Cli::Arg> & args,
     Cli & cli
 ) {
-    cli.m_cfg->progName = args[0].value;
+    cli.m_cfg->progName = args[0].text;
     ParseState st;
     if (cli.m_cfg->cmds[""].unknownArgs) {
         st.cmdMode = ParseState::kUnknown;
@@ -2283,7 +2311,7 @@ bool Cli::OptIndex::parseToRawValues(
     }
 
     for (; st.argPos < args.size(); ++st.argPos) {
-        st.ptr = args[st.argPos].value.c_str();
+        st.ptr = args[st.argPos].text.c_str();
         if (*st.ptr == '-' && st.ptr[1] && st.moreOpts) {
             // Argument contains one or more options.
             st.ptr += 1;
@@ -2442,7 +2470,7 @@ static bool badMinMatched(
 //===========================================================================
 // static
 void Cli::OptIndex::doAfters(OptBase & opt, Cli & cli) {
-    opt.doAfterActions(cli);
+    opt.doAfters(cli);
 }
 
 //===========================================================================
@@ -2595,6 +2623,8 @@ bool Cli::parse(const vector<string> & args) {
 Cli & Cli::resetValues() & {
     for (auto && opt : m_cfg->opts)
         opt->reset();
+    m_cfg->curOpt = {};
+    m_cfg->newValue.clear();
     m_cfg->parseExit = false;
     m_cfg->exitCode = kExitOk;
     m_cfg->errMsg.clear();
@@ -2716,16 +2746,21 @@ bool Cli::parseValue(
         badUsage(prefix, ptr, detail);
         return false;
     }
-    string val;
     if (ptr) {
-        val = ptr;
-        opt.doParseAction(*this, val);
-        if (parseAborted())
-            return false;
+        m_cfg->newValue = ptr;
+        m_cfg->curOpt = &opt;
+        opt.doTransforms(*this);
+        m_cfg->curOpt = {};
+        if (!parseAborted())
+            opt.doParse(*this);
+        if (!parseAborted())
+            opt.doChecks(*this);
     } else {
+        m_cfg->newValue.clear();
         opt.assignImplicit();
+        opt.doChecks(*this);
     }
-    opt.doCheckActions(*this, val);
+    m_cfg->newValue.clear();
     return !parseAborted();
 }
 
@@ -3735,7 +3770,8 @@ static void calcColumns(
             auto & col = cols[icol];
             if (raw.newTable && col.minPct != -1) {
                 // Use min/max widths from preamble of this table cell.
-                assert(col.maxPct != -1);
+                assert(col.maxPct != -1 // LCOV_EXCL_LINE
+                    && "Internal dimcli error: column min width w/o max");
                 tcol.minWidth =
                     (int) round(col.minPct * cfg.maxLineWidth / 100);
                 tcol.maxWidth =

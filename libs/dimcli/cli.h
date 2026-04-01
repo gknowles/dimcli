@@ -439,17 +439,17 @@ public:
 
     struct ArgSrc {
         enum Type {
-            kNone,      // No value recorded, so there is no source.
+            kNone,      // No value recorded, so there is no source argument.
             kArgv,      // From the args passed to cli.parse().
             kFile,      // Loaded from a response file.
             kEnv,       // Loaded from an environment variable.
             kConsole,   // User input, such as response to password prompt.
         };
         Type type = kNone;
-        std::string name;
+        std::string name;   // For kFile, the filename
     };
     struct Arg {
-        std::string value;
+        std::string text;
         std::shared_ptr<ArgSrc> src;
     };
 
@@ -469,7 +469,7 @@ public:
     // having their sources set to {kArgv, ""}.
     Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
     Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
-    // Like cli.before but also allows manipulation of the arg sources.
+    // Like cli.before but also allows manipulation of the argument sources.
     Cli & beforeEx(std::function<ArgsFn> fn, int priority = 1) &;
     Cli && beforeEx(std::function<ArgsFn> fn, int priority = 1) &&;
 
@@ -572,6 +572,10 @@ public:
     //-----------------------------------------------------------------------
     // Support functions for use from parsing actions
 
+    // Used by transform action callbacks to modify the current value string
+    // about to be parsed.
+    void newValue(const std::string & value);
+
     // Intended for use in action callbacks. Sets exitCode (to EX_USAGE),
     // errMsg, and errDetail. errMsg is set to "<prefix>: <value>" or
     // "<prefix>" if value.empty(), with an additional leading prefix of
@@ -606,10 +610,10 @@ public:
     void parseExit();
 
     // Used to populate an option with an arbitrary input string through the
-    // standard parsing logic. Since it causes the parse and check actions to
-    // be called care must be taken to avoid infinite recursion if used from
-    // those actions. A nullptr val indicates that the option has an optional
-    // value and it was not specified.
+    // standard parsing logic. Since it causes the transform, parse, and check
+    // actions to be called care must be taken to avoid infinite recursion if
+    // used from those actions. A nullptr val indicates that the option has an
+    // optional value and it was not specified.
     [[nodiscard, deprecated]] bool parseValue(
         OptBase & out,
         const std::string & name,
@@ -1066,6 +1070,7 @@ private:
     // Find an option (from any subcommand) that targets the value.
     OptBase * findOpt(const void * value);
 
+    const std::string & newValue() const;
     template <typename T> std::string toString(ArgPackState & st, T && val);
     void badUsage(const ArgPackState & st);
 
@@ -1415,7 +1420,7 @@ bool Cli::Convert::fromString_impl(
     //  - Specialization of Cli::Convert::fromString template for T, such as:
     //      template<> bool Cli::Convert::fromString<MyType>(
     //          MyType & out, const std::string & src) const { ... }
-    //  - Parse action attached to the Opt<T> instance that does NOT call
+    //  - Parse action attached to the Opt*<T> instance that does NOT call
     //    opt.parseValue(), such as how opt.choice() works.
     assert(!"Unusable type, no conversion from string exists.");
     return false;
@@ -1650,6 +1655,8 @@ public:
     // response file expansion.
     int pos() const { return match().pos; }
 
+    // Information about the source of the argument that was last used to
+    // populate the value.
     ArgSrc::Type srcType() const { return match().srcType; }
     const std::string & srcName() const { return match().srcName; }
 
@@ -1686,12 +1693,15 @@ protected:
     // Intended to be specialized for new types.
     virtual void initConfig(Cli & cli) = 0;
 
-    virtual bool defaultValueToString(std::string & out) const = 0;
+    [[nodiscard]] virtual bool defaultValueToString(
+        std::string & out
+    ) const = 0;
     virtual std::string defaultValueDesc() const = 0;
 
-    virtual void doParseAction(Cli & cli, const std::string & value) = 0;
-    virtual void doCheckActions(Cli & cli, const std::string & value) = 0;
-    virtual void doAfterActions(Cli & cli) = 0;
+    virtual void doTransforms(Cli & cli) = 0;
+    virtual void doParse(Cli & cli) = 0;
+    virtual void doChecks(Cli & cli) = 0;
+    virtual void doAfters(Cli & cli) = 0;
 
     // Record/query the command line argument this opt matched with.
     virtual bool match(
@@ -1758,6 +1768,7 @@ private:
 
     std::string m_names;
     std::string m_fromName;
+    std::string m_newValue;
 };
 
 
@@ -1904,19 +1915,40 @@ public:
     // Function signature of actions that are tied to options.
     using ActionFn = void(Cli & cli, A & opt, const std::string & val);
 
-    // Change the action to take when parsing this argument. The function
-    // should:
+    // Action to take immediately before each value string is parsed. Any
+    // number of transform actions can be added.
+    //
+    // The function should:
+    //  - Inspect, and/or change the raw value via cli.newValue().
+    //  - Call cli.badUsage() with an error message if there's a problem.
+    //  - Call cli.parseExit() if the program should stop without an error.
+    //    This could be due to an early out like "--version" and "--help".
+    //
+    // The argument is set, so you can use opt.from() and opt.pos() to get the
+    // option name that the value was matched with on the command line and its
+    // position in argv[]. For bool arguments the val string will always be
+    // either "0" or "1".
+    A & transform(std::function<ActionFn> fn, int priority = 1);
+
+    // Action to update the option value from a string taken from the
+    // arguments.
+    //
+    // The function should:
     //  - Parse the val string and use the result to set the value (or, for
     //    vectors, push_back the new value).
     //  - Call cli.badUsage() with an error message if there's a problem.
     //  - Call cli.parseExit() if the program should stop without an error.
     //    This could be due to an early out like "--version" and "--help".
     //
-    // You can use opt.from() and opt.pos() to get the option name that the
-    // value was matched with on the command line and its position in argv[].
+    // All opt.from(), opt.pos(), opt.srcType(), opt.srcName() are available.
     // For bool arguments the val string will always be either "0" or "1".
     //
-    // If you just need support for a new type you can provide an istream
+    // You could use this action to combined values into the final result, such
+    // as via addition or appending to a string, instead of replacing it by
+    // assignment.
+    //
+    // It can also be an alternative to specializing cvt.fromString<T>(). But,
+    // if you just need support for a new type you can provide an istream
     // extraction (>>) or constructor (or assignment operator) from string and
     // the default parse action will pick it up.
     A & parse(std::function<ActionFn> fn);
@@ -1936,7 +1968,7 @@ public:
     // The opt is fully populated so *opt, opt.from(), etc are all available.
     A & check(std::function<ActionFn> fn, int priority = 1);
 
-    // Action to run after all arguments have been parsed, any number of after
+    // Action to run after all values have been parsed, any number of after
     // actions can be added and will, for each option, be called in order of
     // highest (largest number) priority first, and order added second. When
     // using subcommands, the after actions bound to unmatched subcommands are
@@ -1957,14 +1989,14 @@ public:
 
 protected:
     std::string defaultValueDesc() const final;
-    void doParseAction(Cli & cli, const std::string & value) final;
-    void doCheckActions(Cli & cli, const std::string & value) final;
-    void doAfterActions(Cli & cli) final;
     void act(
         Cli & cli,
-        const std::string & value,
         const std::vector<std::pair<std::function<ActionFn>, int>> & actions
     );
+    void doTransforms(Cli & cli) final { act(cli, m_transforms); }
+    void doParse(Cli & cli) final;
+    void doChecks(Cli & cli) final { act(cli, m_checks); }
+    void doAfters(Cli & cli) final { act(cli, m_afters); }
     bool inverted() const final;
 
     // If numeric_limits<T>::min & max are defined and 'x' is outside of
@@ -1975,6 +2007,7 @@ protected:
     template <typename U>
     bool checkLimits(Cli & cli, const std::string & val, const U & x, long);
 
+    std::vector<std::pair<std::function<ActionFn>, int>> m_transforms;
     std::function<ActionFn> m_parse;
     std::vector<std::pair<std::function<ActionFn>, int>> m_checks;
     std::vector<std::pair<std::function<ActionFn>, int>> m_afters;
@@ -2001,39 +2034,20 @@ inline std::string Cli::OptShim<A, T>::defaultValueDesc() const {
 
 //===========================================================================
 template <typename A, typename T>
-inline void Cli::OptShim<A, T>::doParseAction(
-    Cli & cli,
-    const std::string & val
-) {
+inline void Cli::OptShim<A, T>::doParse(Cli & cli) {
     auto self = static_cast<A *>(this);
-    m_parse(cli, *self, val);
-}
-
-//===========================================================================
-template <typename A, typename T>
-inline void Cli::OptShim<A, T>::doCheckActions(
-    Cli & cli,
-    const std::string & val
-) {
-    act(cli, val, m_checks);
-}
-
-//===========================================================================
-template <typename A, typename T>
-inline void Cli::OptShim<A, T>::doAfterActions(Cli & cli) {
-    act(cli, {}, m_afters);
+    m_parse(cli, *self, cli.newValue());
 }
 
 //===========================================================================
 template <typename A, typename T>
 inline void Cli::OptShim<A, T>::act(
     Cli & cli,
-    const std::string & val,
     const std::vector<std::pair<std::function<ActionFn>, int>> & actions
 ) {
     auto self = static_cast<A *>(this);
     for (auto && fn : actions) {
-        fn.first(cli, *self, val);
+        fn.first(cli, *self, cli.newValue());
         if (cli.parseAborted())
             break;
     }
@@ -2181,6 +2195,13 @@ A & Cli::OptShim<A, T>::choice(
     cd.sortKey = sortKey;
     cd.def = (!this->m_vector && val == this->defaultValue());
     m_choices.push_back(val);
+    return static_cast<A &>(*this);
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::transform(std::function<ActionFn> fn, int priority) {
+    Cli::addAction(m_transforms, std::move(fn), priority);
     return static_cast<A &>(*this);
 }
 

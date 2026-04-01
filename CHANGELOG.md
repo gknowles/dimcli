@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - cli.parseValue() overloads that include arg source
 - Deprecated - cli.parseValue() overload w/o arg source
 - Added - opt.initConfig() customization point
+- Added - Transform actions to modify source arg before parsing
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
