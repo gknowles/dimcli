@@ -570,10 +570,11 @@ public:
     Cli && resetValues() &&;
 
     //-----------------------------------------------------------------------
-    // Support functions for use from parsing actions
+    // Support functions for use from parsing (before, transform, parse, check,
+    // or after) actions.
 
-    // Used by transform action callbacks to modify the current value string
-    // about to be parsed.
+    // Used only from transform action callbacks, modifies the current value
+    // string about to be parsed.
     void newValue(const std::string & value);
 
     // Intended for use in action callbacks. Sets exitCode (to EX_USAGE),
@@ -644,6 +645,20 @@ public:
         const char val[]
     );
 
+    // Prompt sends a prompt message to cout and read a response from cin
+    // (unless cli.iostreams() changed the streams to use), the response is
+    // then passed to cli.parseValue() to set the value and run any actions.
+    enum {
+        fPromptHide = 1,      // Hide user input as they type
+        fPromptConfirm = 2,   // Make the user enter it twice
+        fPromptNoDefault = 4, // Don't include default value in prompt
+    };
+    void prompt(
+        OptBase & opt,
+        const std::string & msg,
+        int flags // fPrompt* flags
+    );
+
     // fUnit* flags modify how unit suffixes are interpreted by opt.siUnits(),
     // opt.timeUnits(), and opt.anyUnits().
     enum {
@@ -660,20 +675,6 @@ public:
         // unit prefixes (milli, micro, etc) are prohibited.
         fUnitBinaryPrefix = 4,
     };
-
-    // Prompt sends a prompt message to cout and read a response from cin
-    // (unless cli.iostreams() changed the streams to use), the response is
-    // then passed to cli.parseValue() to set the value and run any actions.
-    enum {
-        fPromptHide = 1,      // Hide user input as they type
-        fPromptConfirm = 2,   // Make the user enter it twice
-        fPromptNoDefault = 4, // Don't include default value in prompt
-    };
-    void prompt(
-        OptBase & opt,
-        const std::string & msg,
-        int flags // fPrompt* flags
-    );
 
     //-----------------------------------------------------------------------
     // AFTER PARSING
@@ -1899,14 +1900,6 @@ public:
     // it's set to the low, if higher than high it's made merely high.
     A & clamp(const T & low, const T & high);
 
-    // Fail if the value given for this option is not in within the range
-    // (inclusive) of low to high.
-    A & range(const T & low, const T & high);
-
-    // Causes a check that the option value was set during parsing, and reports
-    // cli.badUsage() if it wasn't.
-    A & require();
-
     // Enables prompting. When the option hasn't been provided on the command
     // line the user will be prompted for it. Use Cli::fPrompt* flags to
     // adjust behavior.
@@ -1915,6 +1908,14 @@ public:
         const std::string & msg, // custom prompt message
         int flags = 0            // Cli::fPrompt* flags
     );
+
+    // Fail if the value given for this option is not in within the range
+    // (inclusive) of low to high.
+    A & range(const T & low, const T & high);
+
+    // Causes a check that the option value was set during parsing, and reports
+    // cli.badUsage() if it wasn't.
+    A & require();
 
     // When srcType is ArgSrc::kFile values are interpreted as file paths and,
     // if the argument also has kFile srcType, resolved relative to the file
@@ -2374,18 +2375,6 @@ A & Cli::OptShim<A, T>::clamp(const T & low, const T & high) {
 
 //===========================================================================
 template <typename A, typename T>
-A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
-    if (high < low)
-        assert(!"Bad range, low greater than high.");
-    return check([low, high](auto & cli, auto & opt, auto & val) {
-        if (*opt >= low && *opt <= high)
-            return;
-        cli.badRange(opt, val, low, high);
-    });
-}
-
-//===========================================================================
-template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(int flags) {
     return prompt({}, flags);
 }
@@ -2395,6 +2384,18 @@ template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
     return after([=](auto & cli, auto & opt, auto & /* val */) {
         cli.prompt(opt, msg, flags);
+    });
+}
+
+//===========================================================================
+template <typename A, typename T>
+A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
+    if (high < low)
+        assert(!"Bad range, low greater than high.");
+    return check([low, high](auto & cli, auto & opt, auto & val) {
+        if (*opt >= low && *opt <= high)
+            return;
+        cli.badRange(opt, val, low, high);
     });
 }
 
