@@ -285,8 +285,8 @@ implementation. Not reliable before cli.parse() has been called and had a
 chance to update the internal data structures.
 
 | cli.newValue
-| Used by transform action callbacks to modify the current value string about
-to be parsed.
+| Used only from transform action callbacks, modifies the current value string
+about to be parsed.
 
 | cli.parseExit
 | Intended for use in action callbacks. Sets exit code to EX_OK, and causes an

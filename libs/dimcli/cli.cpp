@@ -773,7 +773,7 @@ string Cli::OptBase::defaultPrompt() const {
 //===========================================================================
 void Cli::newValue(const string & value) {
     if (!m_cfg->curOpt) {
-        assert(!"cli.newValue only allowed from transform action callbacks.");
+        assert(!"Bad context, not called from transform action callback.");
         return;
     }
     auto & opt = *m_cfg->curOpt;
@@ -784,7 +784,7 @@ void Cli::newValue(const string & value) {
         if (parseBool(v, value)) {
             m_cfg->newValue = v ? "1" : "0";
         } else {
-            badUsage(opt);
+             badUsage(opt);
         }
     }
 }

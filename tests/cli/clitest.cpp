@@ -423,6 +423,18 @@ Usage: test [--help] [B]
 )RAW");
     }
 
+    // Bad context.
+    {
+        cli = {};
+        cli.opt<string>("a").check([](auto & cli, auto & opt, auto & value) {
+            cli.newValue("y");
+        });
+        EXPECT_PARSE(cli, "x");
+        EXPECT_ASSERT(1 + R"(
+!"Bad context, not called from transform action callback."
+)");
+    }
+
     // Bad exec usage
     {
         cli = {};
@@ -2929,19 +2941,25 @@ Options:
 static void beforeTests() {
     int line = 0;
     CliTest cli;
-    CliTest(cli).before([](auto & cli, const vector<string> & args) {
-        if (args.size() > 2)
-            cli.badUsage("Way too many args");
-    }).beforeEx([](auto & cli, const auto & args) {
-        if (args.size() > 1)
-            cli.badUsage("Too many args");
-    });
-    EXPECT_PARSE(cli, "one", false);
-    EXPECT_ERR(cli, "Error: Too many args\n");
-    EXPECT_PARSE(cli, "one two", false);
-    EXPECT_ERR(cli, "Error: Way too many args\n");
 
-    // Change string args without changing number of args
+    // Use rvalue cli.
+    // Multiple with same priority in order of registration.
+    // beforeEx action.
+    {
+        CliTest(cli).before([](auto & cli, const vector<string> & args) {
+            if (args.size() > 2)
+                cli.badUsage("Way too many args");
+        }).beforeEx([](auto & cli, const auto & args) {
+            if (args.size() > 1)
+                cli.badUsage("Too many args");
+        });
+        EXPECT_PARSE(cli, "one", false);
+        EXPECT_ERR(cli, "Error: Too many args\n");
+        EXPECT_PARSE(cli, "one two", false);
+        EXPECT_ERR(cli, "Error: Way too many args\n");
+    }
+
+    // Change string args without changing number of args.
     {
         cli = {};
         auto & vals = cli.optVec<string>("[val]");
@@ -2954,6 +2972,7 @@ static void beforeTests() {
         EXPECT_EQUAL(*vals, expected);
     }
 
+    // Add string args.
     {
         cli = {};
         auto & vals = cli.optVec<string>("[val]");
@@ -2964,6 +2983,7 @@ static void beforeTests() {
         EXPECT_EQUAL(*vals, expected);
     }
 
+    // Out of order action priorities.
     {
         cli = {};
         auto & vals = cli.optVec<string>("[val]");
@@ -2974,6 +2994,54 @@ static void beforeTests() {
         vector<string> expected = { "b", "c", "d", "a" };
         EXPECT_PARSE(cli);
         EXPECT_EQUAL(*vals, expected);
+    }
+}
+
+
+/****************************************************************************
+*
+*   Transform action
+*
+***/
+
+//===========================================================================
+static void transformTests() {
+    int line = 0;
+    CliTest cli;
+
+    // non-bool option.
+    {
+        cli = {};
+        auto & val = cli.opt<string>("[val]");
+        val.transform([](auto & cli, auto &, auto & val) {
+            cli.newValue(val + "y");
+        });
+        EXPECT_PARSE(cli, "x");
+        EXPECT_EQUAL(*val, "xy");
+    }
+
+    // newValue convertable to bool.
+    {
+        cli = {};
+        auto & val = cli.opt<bool>("[val]");
+        val.transform([](auto & cli, auto &, auto &) {
+            cli.newValue("true");
+        });
+        EXPECT_PARSE(cli, "off");
+        EXPECT_EQUAL(*val, true);
+    }
+
+    // newValue not convertible to bool.
+    {
+        cli = {};
+        auto & val = cli.opt<bool>("[val]");
+        val.transform([](auto & cli, auto &, auto &) {
+            cli.newValue("bad");
+        });
+        EXPECT_PARSE(cli, "off", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Invalid 'val' value: off
+)");
     }
 }
 
@@ -3100,6 +3168,7 @@ static int runTests(const string & progName, bool prompt) {
     beforeTests();
     envTests();
     finalOptTests();
+    transformTests();
 
     if (s_errors) {
         cerr << "*** TESTS FAILED ***" << endl;
