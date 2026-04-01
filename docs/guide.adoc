@@ -987,7 +987,7 @@ int main(int argc, char * argv[]) {
         .parse([](auto & cli, auto & opt, const string & val) {
             int tmp = *opt; // save the old value
             if (!opt.parseValue(val)) // parse the new value into opt
-                return cli.badUsage(opt, val);
+                return cli.badUsage(opt);
             *opt *= tmp; // multiply old and new together
         });
     if (!cli.parse(argc, argv))

@@ -191,8 +191,12 @@ struct Cli::Config {
     shared_ptr<locale> defLoc = make_shared<locale>();
     shared_ptr<locale> numLoc = make_shared<locale>("");
 
+    // Opt* and value actively being parsed, referenced servicing action
+    // callbacks.
     Cli::OptBase * curOpt = {};
+    string originalValue;
     string newValue;
+
     int exitCode = kExitOk;
     string errMsg;
     string errDetail;
@@ -780,7 +784,7 @@ void Cli::newValue(const string & value) {
         if (parseBool(v, value)) {
             m_cfg->newValue = v ? "1" : "0";
         } else {
-            badUsage(opt, value);
+            badUsage(opt);
         }
     }
 }
@@ -1232,20 +1236,19 @@ void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
 
     string desc;
     writeChoicesDetail(&desc, opt.m_choiceDescs);
-    cli.badUsage(opt, val, desc);
+    cli.badUsage(opt, nullptr, desc);
 }
 
 //===========================================================================
 // static
 void Cli::argSrcFileRelAction(Cli & cli, OptBase & opt, const string & rel) {
-    string val = rel;
 #ifdef DIMCLI_LIB_FILESYSTEM
     if (opt.srcType() == ArgSrc::kFile) {
         auto p = fs::u8path(opt.srcName()).parent_path() / rel;
-        val = (char *) p.generic_u8string().c_str();
+        string val = (char *) p.generic_u8string().c_str();
+        cli.newValue(val);
     }
 #endif
-    defParseAction(cli, opt, val);
 }
 
 //===========================================================================
@@ -2624,6 +2627,7 @@ Cli & Cli::resetValues() & {
     for (auto && opt : m_cfg->opts)
         opt->reset();
     m_cfg->curOpt = {};
+    m_cfg->originalValue.clear();
     m_cfg->newValue.clear();
     m_cfg->parseExit = false;
     m_cfg->exitCode = kExitOk;
@@ -2674,7 +2678,17 @@ void Cli::badUsage(
     const string & detail
 ) {
     string prefix = "Invalid '" + opt.from() + "' value";
-    return badUsage(prefix, value, detail);
+    badUsage(prefix, value, detail);
+}
+
+//===========================================================================
+void Cli::badUsage(
+    const OptBase & opt,
+    nullptr_t,
+    const string & detail
+) {
+    string prefix = "Invalid '" + opt.from() + "' value";
+    badUsage(prefix, m_cfg->originalValue, detail);
 }
 
 //===========================================================================
@@ -2747,6 +2761,7 @@ bool Cli::parseValue(
         return false;
     }
     if (ptr) {
+        m_cfg->originalValue = ptr;
         m_cfg->newValue = ptr;
         m_cfg->curOpt = &opt;
         opt.doTransforms(*this);
@@ -2756,10 +2771,12 @@ bool Cli::parseValue(
         if (!parseAborted())
             opt.doChecks(*this);
     } else {
+        m_cfg->originalValue.clear();
         m_cfg->newValue.clear();
         opt.assignImplicit();
         opt.doChecks(*this);
     }
+    m_cfg->originalValue.clear();
     m_cfg->newValue.clear();
     return !parseAborted();
 }

@@ -2617,7 +2617,11 @@ static void unitsTests() {
             "Error: Invalid 'V' value: 1B\n"
             "Units symbol 'B' not recognized.\n"
         );
+    }
 
+    {
+        cli = {};
+        auto & dbls = cli.optVec<double>("[V]");
         dbls.siUnits("b", cli.fUnitBinaryPrefix);
         EXPECT_PARSE(cli, "1k 1ki");
         EXPECT_EQUAL(dbls[0], 1024);
@@ -2627,7 +2631,11 @@ static void unitsTests() {
 Error: Invalid 'V' value: 1000m
 Units symbol 'm' not recognized.
 )");
+    }
 
+    {
+        cli = {};
+        auto & dbls = cli.optVec<double>("[V]");
         dbls.siUnits("b", cli.fUnitInsensitive);
         EXPECT_PARSE(cli, "1 1b 1B 1kB 1Kb");
         EXPECT_EQUAL(dbls[0], 1);
@@ -2640,8 +2648,12 @@ Units symbol 'm' not recognized.
 Error: Invalid 'V' value: 1000u
 Units symbol 'u' not recognized.
 )");
+    }
 
-        // with fUnitRequire
+    // with fUnitRequire
+    {
+        cli = {};
+        auto & dbls = cli.optVec<double>("[V]");
         dbls.siUnits("b", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1b 1kb");
         EXPECT_EQUAL(dbls[0], 1);
@@ -2664,6 +2676,11 @@ Units symbol 'k' not recognized.
         EXPECT_ERR(cli, "Error: Invalid 'V' value: kb\n");
         EXPECT_PARSE(cli, "1x23kb", false);
         EXPECT_ERR(cli, "Error: Invalid 'V' value: 1x23kb\n");
+    }
+
+    {
+        cli = {};
+        auto & dbls = cli.optVec<double>("[V]");
         dbls.siUnits("", cli.fUnitRequire);
         EXPECT_PARSE(cli, "1k");
         EXPECT_EQUAL(dbls[0], 1000);

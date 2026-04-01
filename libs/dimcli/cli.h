@@ -594,6 +594,15 @@ public:
         const std::string & detail = {}
     );
 
+    // Intended for use from transform, parse, and check actions. Calls
+    // cli.badUsage(opt, value, detail) with value set to the string value
+    // being parsed. Outside of parsing an empty string is used for the value.
+    void badUsage(
+        const OptBase & opt,
+        std::nullptr_t value = nullptr,
+        const std::string & detail = {}
+    );
+
     // Calls cli.badUsage with "Out of range" message and the low and high in
     // the detail.
     template <typename A, typename T>
@@ -2324,7 +2333,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
     } else {
         units.insert(first, last);
     }
-    return parse([units, flags](auto & cli, auto & opt, auto & val) {
+    return transform([units, flags](auto & cli, auto & opt, auto & val) {
         long double dval;
         bool success = true;
         if (!opt.withUnits(dval, cli, val, units, flags))
@@ -2344,10 +2353,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
             assert(success // LCOV_EXCL_LINE
                 && "Internal dimcli error: convert double to string failed.");
         }
-        if (!opt.parseValue(sval)) {
-            success = false;
-            cli.badUsage(opt, val);
-        }
+        cli.newValue(sval);
     });
 }
 
@@ -2396,7 +2402,7 @@ A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::resolve(ArgSrc::Type srcType) {
     if (srcType == ArgSrc::kFile)
-        parse(Cli::argSrcFileRelAction).valueDesc("FILE");
+        transform(Cli::argSrcFileRelAction).valueDesc("FILE");
     return static_cast<A &>(*this);
 }
 
