@@ -884,7 +884,9 @@ Level 2 selected.
 ----
 
 
-=== Before Actions
+=== Parsing Actions
+
+==== Before Actions
 Before actions operate on the entire argument list, after environment variable
 and response file expansion, but before any individual arguments are parsed.
 The before action should:
@@ -954,7 +956,23 @@ That isn't too complicated, but since this case is so common cli.helpNoArgs()
 is available to do the same thing.
 
 
-=== Parse Actions
+==== Transform Actions
+Action to take immediately before each source value is parsed. Any
+number of transform actions can be added.
+
+The function should:
+* Inspect, and/or change the source value via cli.newValue().
+* Call cli.badUsage() with an error message if there's a problem.
+* Call cli.parseExit() if the program should stop without an error. This could
+  be due to an early out like "--version" and "--help".
+
+The argument is set, so you can use opt.from() and opt.pos() to get the
+option name that the value was matched with on the command line and its
+position in argv[]. For bool arguments the val string will always be
+either "0" or "1".
+
+
+==== Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For
 instance, to provide more detailed errors about badly formatted arguments. Or
 to make "--version" print some crazy ASCII artwork and exit the program (for
@@ -964,8 +982,8 @@ Parsing actions are bound to options and get invoked when a value becomes
 available for it. Any std::function compatible object that accepts references
 to cli, opt, and string as parameters can be used. The function should:
 
-* Parse the source string and use the result to set the option value (or
-  push back the additional value for vector arguments).
+* Parse the source string and use the result to update the option value (or
+  value vector).
 * Call cli.badUsage() with an error message if there's a problem.
 * Call cli.parseExit() if the program should stop. This could be due to an
   early out like "--version" and "--help".
@@ -1017,7 +1035,7 @@ Error: Invalid '-n' value: x
 ----
 
 
-=== Check Actions
+==== Check Actions
 Check actions run for each value that is successfully parsed and are a good
 place for additional work. For example, opt.range() and opt.clamp() are
 implemented as check actions. Just like parse actions the callback is any
@@ -1074,7 +1092,7 @@ $ a.out --socks 3
 ----
 
 
-=== After Actions
+==== After Actions
 After actions run after all arguments have been parsed. For example,
 opt.prompt() and opt.require() are both implemented as after actions. Any
 number of after actions can be added and will, for every (not just the ones

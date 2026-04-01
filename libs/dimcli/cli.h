@@ -364,7 +364,7 @@ public:
     // command's action function should:
     //  - For parsing errors not caught by cli.parse(), such as complex
     //    interactions between arguments; call cli.badUsage() and return. Also
-    //    consider an after action instead.
+    //    consider after actions instead.
     //  - If no action was really attempted, as when only printing help text or
     //    a version string; call cli.parseExit() and return.
     //  - Do something useful.
@@ -1924,11 +1924,11 @@ public:
     // Function signature of actions that are tied to options.
     using ActionFn = void(Cli & cli, A & opt, const std::string & val);
 
-    // Action to take immediately before each value string is parsed. Any
+    // Action to take immediately before each source value is parsed. Any
     // number of transform actions can be added.
     //
     // The function should:
-    //  - Inspect, and/or change the raw value via cli.newValue().
+    //  - Inspect, and/or change the val string via cli.newValue().
     //  - Call cli.badUsage() with an error message if there's a problem.
     //  - Call cli.parseExit() if the program should stop without an error.
     //    This could be due to an early out like "--version" and "--help".

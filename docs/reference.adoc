@@ -260,7 +260,7 @@ present, multiplies by the corresponding factor.
 | opt.toString<T>
 | Inherited from <<string-conversions, Convert>>.
 
-| opt.transform
+| opt.<<guide.adoc#transform-actions, transform>>
 | Add action to transform value string before it is parsed, any number of
 transform actions can be added.
 
