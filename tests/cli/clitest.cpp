@@ -426,7 +426,7 @@ Usage: test [--help] [B]
     // Bad context.
     {
         cli = {};
-        cli.opt<string>("a").check([](auto & cli, auto & opt, auto & value) {
+        cli.opt<string>("[a]").check([](auto & cli, auto &, auto &) {
             cli.newValue("y");
         });
         EXPECT_PARSE(cli, "x");
