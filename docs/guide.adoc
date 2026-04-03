@@ -884,7 +884,173 @@ Level 2 selected.
 ----
 
 
-=== Parsing Actions
+=== How Parsing Works
+The parsing process goes through 3 phases shown below and allows registered
+application code (actions) to be invoked at various points in the process.
+
+Parsing phase 1 (extract values from args):
+
+  --> Expand      --> Expand -----> Before --> Map Args to -->
+      Environment     Response  .-> Actions    Opt Values
+      Variable        Files     |      |
+                                '--<---'
+
+Parsing phase 2 (parse values into opts):
+
+       .----> Transform --> Parse  --+----> Check  --+-->
+       |  .-> Actions       Action   ^  .-> Actions  |
+       |  |      |                   |  |      |     |
+  --+--+  '--<---'                   |  '--<---'     |
+    ^  |                             |               |
+    |  '----> Implicit Value --------'               |
+    |     (When optional value not present)          |
+    |                                                |
+    '-------------------------<----------------------'
+            For each value found
+
+Parsing phase 3 (after actions):
+
+  --+----> After  --+-->
+    ^  .-> Actions  |
+    |  |      |     |
+    |  '------'     |
+    '-------<-------'
+    For each opt defined
+
+
+=== Environment Variable
+You can specify an environment variable that will have its contents
+prepended to the command line. This happens before response file expansion
+and any before actions.
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & words = cli.optVec<string>("[WORDS]");
+    cli.envOpts("AOUT_OPTS");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Words:";
+    for (auto && word : *words)
+        cout << " '" << word << "'";
+    return EX_OK;
+}
+----
+The same can also be done manually, as shown below. This is a good starting
+point if you need something slightly different:
+
+[source, C++, test repl 3 3, test alt]
+----
+vector<string> args = cli.toArgv(argc, argv);
+if (const char * eopts = getenv("AOUT_OPTS")) {
+    vector<string> eargs = cli.toArgv(eopts);
+    // Insert the environment args after arg0 (program name) but before
+    // the rest of the command line.
+    args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+}
+if (!cli.parse(args))
+    return cli.printError(cerr);
+----
+
+Or as a before action (after response file expansion):
+[source, C++, test repl 3 9, test alt]
+----
+cli.before([](Dim::Cli & cli, vector<string> & args) {
+    if (const char * eopts = getenv("AOUT_OPTS")) {
+        vector<string> eargs = cli.toArgv(eopts);
+        args.insert(args.begin() + 1, eargs.begin(), eargs.end());
+    }
+    return true;
+});
+if (!cli.parse(argc, argv))
+    return cli.printError(cerr);
+----
+
+How this works:
+
+[source, shell session]
+----
+$ export AOUT_OPTS=
+$ a.out c d
+Words: 'c' 'd'
+$ export "AOUT_OPTS=a b"
+$ a.out c d
+Words: 'a' 'b' 'c' 'd'
+----
+
+
+=== Response Files
+A response file is a collection of frequently used or generated arguments
+saved as text, often with a ".rsp" extension, that is substituted into the
+command line when referenced.
+
+What you write:
+
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & words = cli.optVec<string>("[WORDS]").desc("Things you say.");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Words:";
+    for (auto & w : *words)
+        cout << " " << w;
+    return EX_OK;
+}
+----
+What happens later:
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS] [WORDS...]
+  WORDS     Things you say.
+
+Options:
+  --help    Show this message and exit.
+
+$ a.out a b
+Words: a b
+$ echo c >one.rsp
+$ a.out a b @one.rsp d
+Words: a b c d
+----
+Response files can be used multiple times and the arguments in them can be
+broken into multiple lines:
+
+[source, shell session]
+----
+$ echo d >one.rsp
+$ echo e >>one.rsp
+$ a.out x @one.rsp y @one.rsp
+Words: x d e y d e
+----
+Response files also can be nested, when a response file contains a reference
+to another response file the path is relative to the parent response file,
+not to the working directory.
+
+[source, shell session]
+----
+$ md rsp
+$ echo one @more.rsp >rsp/one.rsp
+$ echo two three >rsp/more.rsp
+$ a.out @rsp/one.rsp
+Words: one two three
+----
+
+Recursive response files will fail, don't worry!
+[source, shell session]
+----
+$ echo "@one.rsp" >one.rsp
+$ a.out @one.rsp
+Error: Recursive response file: one.rsp
+----
+
+While generally useful response file processing can be disabled via
+cli.responseFiles(false).
+
 
 ==== Before Actions
 Before actions operate on the entire argument list, after environment variable
@@ -1392,10 +1558,10 @@ Options:
 ==== Exec Actions
 If you have some code that you want to run for all commands that makes sense to
 separate from the code making the cli.exec() call, you can use cli.execBefore()
-and cli.execAfter() to register exec actions to run them.
+and cli.execAfter() to register exec actions to it.
 
-Let's add this source file to the "in seperate file" example to time how long
-commands take to finish.
+Let's add this source file to the "In Seperate File" example above to time how
+long commands take to finish.
 [source, C++, test file timer]
 ----
 // timer.cpp
@@ -1527,140 +1693,6 @@ int main(int argc, char * argv[]) {
 $ a.out
 Usage: first [--one=STRING] [--help]
 Usage: second [--two=STRING] [--help]
-----
-
-
-=== Response Files
-A response file is a collection of frequently used or generated arguments
-saved as text, often with a ".rsp" extension, that is substituted into the
-command line when referenced.
-
-What you write:
-
-[source, C++]
-----
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    auto & words = cli.optVec<string>("[WORDS]").desc("Things you say.");
-    if (!cli.parse(argc, argv))
-        return cli.printError(cerr);
-    cout << "Words:";
-    for (auto & w : *words)
-        cout << " " << w;
-    return EX_OK;
-}
-----
-What happens later:
-
-[source, shell session]
-----
-$ a.out --help
-Usage: a.out [OPTIONS] [WORDS...]
-  WORDS     Things you say.
-
-Options:
-  --help    Show this message and exit.
-
-$ a.out a b
-Words: a b
-$ echo c >one.rsp
-$ a.out a b @one.rsp d
-Words: a b c d
-----
-Response files can be used multiple times and the arguments in them can be
-broken into multiple lines:
-
-[source, shell session]
-----
-$ echo d >one.rsp
-$ echo e >>one.rsp
-$ a.out x @one.rsp y @one.rsp
-Words: x d e y d e
-----
-Response files also can be nested, when a response file contains a reference
-to another response file the path is relative to the parent response file,
-not to the working directory.
-
-[source, shell session]
-----
-$ md rsp
-$ echo one @more.rsp >rsp/one.rsp
-$ echo two three >rsp/more.rsp
-$ a.out @rsp/one.rsp
-Words: one two three
-----
-
-Recursive response files will fail, don't worry!
-[source, shell session]
-----
-$ echo "@one.rsp" >one.rsp
-$ a.out @one.rsp
-Error: Recursive response file: one.rsp
-----
-
-While generally useful response file processing can be disabled via
-cli.responseFiles(false).
-
-
-=== Environment Variable
-You can specify an environment variable that will have its contents
-prepended to the command line. This happens before response file expansion
-and any before actions.
-
-[source, C++]
-----
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    auto & words = cli.optVec<string>("[WORDS]");
-    cli.envOpts("AOUT_OPTS");
-    if (!cli.parse(argc, argv))
-        return cli.printError(cerr);
-    cout << "Words:";
-    for (auto && word : *words)
-        cout << " '" << word << "'";
-    return EX_OK;
-}
-----
-The same can also be done manually, as shown below. This is a good starting
-point if you need something slightly different:
-
-[source, C++, test repl 3 3, test alt]
-----
-vector<string> args = cli.toArgv(argc, argv);
-if (const char * eopts = getenv("AOUT_OPTS")) {
-    vector<string> eargs = cli.toArgv(eopts);
-    // Insert the environment args after arg0 (program name) but before
-    // the rest of the command line.
-    args.insert(args.begin() + 1, eargs.begin(), eargs.end());
-}
-if (!cli.parse(args))
-    return cli.printError(cerr);
-----
-
-Or as a before action (after response file expansion):
-[source, C++, test repl 3 9, test alt]
-----
-cli.before([](Dim::Cli & cli, vector<string> & args) {
-    if (const char * eopts = getenv("AOUT_OPTS")) {
-        vector<string> eargs = cli.toArgv(eopts);
-        args.insert(args.begin() + 1, eargs.begin(), eargs.end());
-    }
-    return true;
-});
-if (!cli.parse(argc, argv))
-    return cli.printError(cerr);
-----
-
-How this works:
-
-[source, shell session]
-----
-$ export AOUT_OPTS=
-$ a.out c d
-Words: 'c' 'd'
-$ export "AOUT_OPTS=a b"
-$ a.out c d
-Words: 'a' 'b' 'c' 'd'
 ----
 
 

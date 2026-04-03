@@ -658,7 +658,7 @@ GroupConfig & Cli::Config::findCmdGrpAlways(Cli & cli, const string & name) {
     if (name.empty()) {
         grp.title = "Commands";
     } else if (name == kInternalOptGrp) {
-        grp.title = "";
+        grp.title.clear();
     } else {
         grp.title = name;
     }
@@ -2541,7 +2541,7 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
         return false;
 
     // Parse values and copy them to defined opts.
-    cfg.command = "";
+    cfg.command.clear();
     for (auto && val : rawValues) {
         switch (val.type) {
         case RawValue::kCommand:

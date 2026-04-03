@@ -226,6 +226,7 @@ public:
     // Descriptions, new options, and other changes are applied to (or created
     // within) the selected command and group.
 
+    //-----------------------------------------------------------------------
     // The 'names' parameter is a whitespace separated list of option and
     // operand names, names take one of four forms and may have prefix/suffix
     // modifiers.
@@ -469,7 +470,7 @@ public:
     // having their sources set to {kArgv, ""}.
     Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
     Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
-    // Like cli.before but also allows manipulation of the argument sources.
+    // Like cli.before() but also allows manipulation of the argument sources.
     Cli & beforeEx(std::function<ArgsFn> fn, int priority = 1) &;
     Cli && beforeEx(std::function<ArgsFn> fn, int priority = 1) &&;
 
@@ -549,12 +550,46 @@ public:
 
     //-----------------------------------------------------------------------
     // PARSING
-
+    //
     // Parse the command line, populate the options, and set the error and
     // other miscellaneous state. Returns false if cli.parseAborted() is true.
     //
     // Error information can be extracted after cli.parse() completes, see
     // cli.errMsg() and friends.
+    //
+    // The parsing process goes through 3 phases shown below and allows
+    // registered application code (actions) to be invoked at various points
+    // in the process.
+    //
+    // Parsing phase 1 (extract values from args):
+    //
+    //   --> Expand      --> Expand -----> Before --> Map Args to -->
+    //       Environment     Response  .-> Actions    Opt Values
+    //       Variable        Files     |      |
+    //                                 '--<---'
+    //
+    // Parsing phase 2 (parse values into opts):
+    //
+    //        .----> Transform --> Parse  --+----> Check  --+-->
+    //        |  .-> Actions       Action   ^  .-> Actions  |
+    //        |  |      |                   |  |      |     |
+    //   --+--+  '--<---'                   |  '--<---'     |
+    //     ^  |                             |               |
+    //     |  '----> Implicit Value --------'               |
+    //     |     (When optional value not present)          |
+    //     |                                                |
+    //     '-------------------------<----------------------'
+    //             For each value found
+    //
+    // Parsing phase 3 (after actions):
+    //   --+----> After  --+-->
+    //     ^  .-> Actions  |
+    //     |  |      |     |
+    //     |  '------'     |
+    //     |               |
+    //     '-------<-------'
+    //     For each opt defined
+
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
     [[nodiscard]] bool parse(size_t argc, const char * argv[]);
     [[nodiscard]] bool parse(const std::vector<std::string> & args);
@@ -604,7 +639,7 @@ public:
         const std::string & detail = {}
     );
 
-    // Calls cli.badUsage with "Out of range" message and the low and high in
+    // Calls cli.badUsage() with "Out of range" message and the low and high in
     // the detail.
     template <typename A, typename T>
     void badRange(
@@ -1958,9 +1993,9 @@ public:
     // assignment.
     //
     // It can also be an alternative to specializing cvt.fromString<T>(). But,
-    // if you just need support for a new type you can provide an istream
-    // extraction (>>) or constructor (or assignment operator) from string and
-    // the default parse action will pick it up.
+    // if you just need support for a new type, you can provide an istream
+    // extraction (>>), constructor from string, or assignment operator from
+    // string and the default cvt.fromString() will figure it out.
     A & parse(std::function<ActionFn> fn);
 
     // Action to take immediately after each value is parsed, unlike parsing
