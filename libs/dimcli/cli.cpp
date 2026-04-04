@@ -185,7 +185,7 @@ struct Cli::Config {
     list<unique_ptr<OptBase>> opts;
     Cli::Opt<bool> * helpOpt = {};
     bool responseFiles = true;
-    string envOpts;
+    vector<string> envOpts;
     istream * conin = &cin;
     ostream * conout = &cout;
     shared_ptr<locale> defLoc = make_shared<locale>();
@@ -1746,13 +1746,26 @@ Cli && Cli::beforeEx(function<ArgsFn> fn, int priority) && {
 #if !defined(DIMCLI_LIB_NO_ENV)
 //===========================================================================
 Cli & Cli::envOpts(const string & var) & {
-    m_cfg->envOpts = var;
+    m_cfg->envOpts.clear();
+    if (!var.empty())
+        m_cfg->envOpts.push_back(var);
     return *this;
 }
 
 //===========================================================================
 Cli && Cli::envOpts(const string & var) && {
     return move(envOpts(var));
+}
+
+//===========================================================================
+Cli & Cli::envOpts(const vector<string> & vars) & {
+    m_cfg->envOpts = vars;
+    return *this;
+}
+
+//===========================================================================
+Cli && Cli::envOpts(const vector<string> & vars) && {
+    return move(envOpts(vars));
 }
 #endif
 
@@ -2499,12 +2512,23 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
 
     if (!args.empty()) {
 #if !defined(DIMCLI_LIB_NO_ENV)
-        // Insert environment options
+        // Insert arguments from environment.
         if (cfg.envOpts.size()) {
-            if (auto val = getenv(cfg.envOpts.c_str())) {
-                auto rargs = Cli::toArgv(val);
-                auto vals = toCliArgs(rargs, Cli::ArgSrc::kEnv, cfg.envOpts);
-                replace(args, 1, 0, move(vals));
+            vector<Dim::Cli::Arg> tmp(1, args.front());
+            for (auto&& var : cfg.envOpts) {
+                if (auto vval = getenv(var.c_str())) {
+                    auto rargs = Cli::toArgv(vval);
+                    auto vals = toCliArgs(rargs, Cli::ArgSrc::kEnv, var);
+                    for (auto&& val : vals)
+                        tmp.push_back(move(val));
+                }
+            }
+            if (tmp.size() == 1) {
+                // No additional arguments found.
+                tmp.clear();
+            } else {
+                tmp.insert(tmp.end(), args.begin() + 1, args.end());
+                args = move(tmp);
             }
         }
 #endif

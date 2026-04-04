@@ -885,14 +885,14 @@ Level 2 selected.
 
 
 === How Parsing Works
-The parsing process goes through 3 phases shown below and allows registered
+The parsing process goes through the 3 phases shown below and allows registered
 application code (actions) to be invoked at various points in the process.
 
 Parsing phase 1 (extract values from args):
 
   --> Expand      --> Expand -----> Before --> Map Args to -->
       Environment     Response  .-> Actions    Opt Values
-      Variable        Files     |      |
+      Variables       Files     |      |
                                 '--<---'
 
 Parsing phase 2 (parse values into opts):
@@ -914,6 +914,7 @@ Parsing phase 3 (after actions):
     ^  .-> Actions  |
     |  |      |     |
     |  '------'     |
+    |               |
     '-------<-------'
     For each opt defined
 

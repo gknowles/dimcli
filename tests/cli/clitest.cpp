@@ -3070,6 +3070,9 @@ static void envTests() {
     EXPECT(!result);
     EXPECT_PARSE(cli, "c d");
     EXPECT_EQUAL(*args, vector<string>{"a", "b", "c", "d"});
+    CliTest(cli).envOpts(vector<string>{"TEST_OPTS", "TEST2_OPTS"});
+    EXPECT_PARSE(cli, "");
+    EXPECT_EQUAL(*args, vector<string>{"a", "b"});
 #endif
 }
 

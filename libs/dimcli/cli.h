@@ -535,10 +535,12 @@ public:
 
 #if !defined(DIMCLI_LIB_NO_ENV)
     // Environment variable to get initial options from. Defaults to the empty
-    // string, but when set the content of the named variable is parsed into
+    // string, but when set the content of the named variables are parsed into
     // args which are then inserted into the argument list right after arg0.
     Cli & envOpts(const std::string & envVar) &;
     Cli && envOpts(const std::string & envVar) &&;
+    Cli & envOpts(const std::vector<std::string> & envVars) &;
+    Cli && envOpts(const std::vector<std::string> & envVars) &&;
 #endif
 
     // Enabled by default, response file expansion replaces arguments of the
@@ -565,7 +567,7 @@ public:
     //
     //   --> Expand      --> Expand -----> Before --> Map Args to -->
     //       Environment     Response  .-> Actions    Opt Values
-    //       Variable        Files     |      |
+    //       Variables       Files     |      |
     //                                 '--<---'
     //
     // Parsing phase 2 (parse values into opts):
