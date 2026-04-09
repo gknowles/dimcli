@@ -884,43 +884,117 @@ Level 2 selected.
 ----
 
 
-=== How Parsing Works
+=== Multiple Files
+Options don't have to be defined all in one source file. Separate source
+files can each define options of interest to that file and get them populated
+when the command line is processed.
+
+When you instantiate Dim::Cli you're creating a handle to the globally shared
+configuration. So multiple translation units can each create one and use it to
+update the shared configuration.
+
+The following example has a logMsg function in log.cpp with its own "-1"
+option while main.cpp registers "--version":
+
+[source, C++]
+----
+// main.cpp
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    cli.versionOpt("1.0");
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    // do stuff that might call logMsg()...
+    return EX_OK;
+}
+----
+
+[source, C++, test file log]
+----
+// log.cpp
+static Dim::Cli cli;
+static auto & failEarly = cli.opt<bool>("1").desc("Exit on first error");
+
+void logMsg(string & msg) {
+    cerr << msg << endl;
+    if (*failEarly)
+        exit(EX_SOFTWARE);
+}
+----
+
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  -1         Exit on first error
+
+  --help     Show this message and exit.
+  --version  Show version and exit.
+----
+
+Multiple files and commands go well togather, see the Subcommands section for
+<<#in-seperate-file, additional examples>>.
+
+
+=== Parsing
 The parsing process goes through the 3 phases shown below and allows registered
 application code (actions) to be invoked at various points in the process.
 
-Parsing phase 1 (extract values from args):
+[discrete]
+===== Phase 1: Values from Args
 
-  --> Expand      --> Expand -----> Before --> Map Args to -->
-      Environment     Response  .-> Actions    Opt Values
+  --> Expand      --> Expand   ---> Before  --> Map Args  -->
+      Environment     Response  .-> Actions     to Values
       Variables       Files     |      |
-                                '--<---'
+                                '---<--'
 
-Parsing phase 2 (parse values into opts):
+A single argument can map to multiple values but it may also take multiple
+arguments to get one value:
 
-       .----> Transform --> Parse  --+----> Check  --+-->
-       |  .-> Actions       Action   ^  .-> Actions  |
-       |  |      |                   |  |      |     |
-  --+--+  '--<---'                   |  '--<---'     |
-    ^  |                             |               |
-    |  '----> Implicit Value --------'               |
-    |     (When optional value not present)          |
-    |                                                |
-    '-------------------------<----------------------'
+[%autowidth]
+|===
+| 1 arg -> 3 values | -xvfone | extract=true, verbose=true, file=one
+| 2 args -> 1 value | -f one  | file=one
+|===
+
+
+[discrete]
+===== Phase 2: Values into Opts
+
+Each value is transformed, parsed into, and then checked by the actions
+registered to its target opt.
+
+       .----> Transform --> Parse  --+----> Check   --+-->
+       |  .-> Actions       Action   ^  .-> Actions   |
+       |  |      |                   |  |      |      |
+  --+--+  '---<--'                   |  '---<--'      |
+    ^  |                             |                |
+    |  '----> Implicit Value --------'                |
+    |     (When optional value not present)           |
+    |                                                 |
+    '-------------------------<-----------------------'
             For each value found
 
-Parsing phase 3 (after actions):
+
+[discrete]
+===== Phase 3: After Actions
+
+All the after actions of each eligible opt are run. Opts are eligible if they
+are top level or assigned to the command that was selected.
 
   --+----> After  --+-->
     ^  .-> Actions  |
     |  |      |     |
-    |  '------'     |
+    |  '---<--'     |
     |               |
     '-------<-------'
     For each opt defined
 
 
-=== Environment Variable
-You can specify an environment variable that will have its contents
+==== Environment Variables
+You can specify one or more environment variables that will have their contents
 prepended to the command line. This happens before response file expansion
 and any before actions.
 
@@ -981,7 +1055,7 @@ Words: 'a' 'b' 'c' 'd'
 ----
 
 
-=== Response Files
+==== Response Files
 A response file is a collection of frequently used or generated arguments
 saved as text, often with a ".rsp" extension, that is substituted into the
 command line when referenced.
@@ -1138,6 +1212,8 @@ option name that the value was matched with on the command line and its
 position in argv[]. For bool arguments the val string will always be
 either "0" or "1".
 
+allow
+deny
 
 ==== Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For
@@ -1147,7 +1223,7 @@ a non-crazy --version use <<#version-option, opt.versionOpt()>>).
 
 Parsing actions are bound to options and get invoked when a value becomes
 available for it. Any std::function compatible object that accepts references
-to cli, opt, and string as parameters can be used. The function should:
+to cli, opt, and const string as parameters can be used. The function should:
 
 * Parse the source string and use the result to update the option value (or
   value vector).
@@ -1319,61 +1395,21 @@ Range is from 2 to 5
 ----
 
 
-=== Multiple Files
-Options don't have to be defined all in one source file. Separate source
-files can each define options of interest to that file and get them populated
-when the command line is processed.
+=== Execution
+The cli.exec() method executes the action of the matched command. Used for
+subcommands, also an option when splitting the configuration, parsing, and/or
+execution code across multiple files (or libraries).
 
-When you instantiate Dim::Cli you're creating a handle to the globally shared
-configuration. So multiple translation units can each create one and use it to
-update the shared configuration.
+Registered application code (actions) is invoked at various points in the
+process.
 
-The following example has a logMsg function in log.cpp with its own "-1"
-option while main.cpp registers "--version":
-
-[source, C++]
-----
-// main.cpp
-int main(int argc, char * argv[]) {
-    Dim::Cli cli;
-    cli.versionOpt("1.0");
-    if (!cli.parse(argc, argv))
-        return cli.printError(cerr);
-    // do stuff that might call logMsg()...
-    return EX_OK;
-}
-----
-
-[source, C++, test file log]
-----
-// log.cpp
-static Dim::Cli cli;
-static auto & failEarly = cli.opt<bool>("1").desc("Exit on first error");
-
-void logMsg(string & msg) {
-    cerr << msg << endl;
-    if (*failEarly)
-        exit(EX_SOFTWARE);
-}
-----
-
-[source, shell session]
-----
-$ a.out --help
-Usage: a.out [OPTIONS]
-
-Options:
-  -1         Exit on first error
-
-  --help     Show this message and exit.
-  --version  Show version and exit.
-----
-
-Multiple files and commands go well togather, see the Subcommands section for
-<<#in-seperate-file, additional examples>>.
+  ---> Before Exec --> Command ---> After Exec -->
+   .-> Actions         Action   .-> Actions
+   |      |                     |      |
+   '---<--'                     '---<--'
 
 
-=== Subcommands
+==== Subcommands
 Git style subcommands are created by either cli.command("cmd"), which changes
 the cli objects context to the command, or with opt.command("cmd"), which
 changes the command that option is for. Once the cli object context has been

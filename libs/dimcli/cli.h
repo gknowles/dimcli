@@ -466,8 +466,8 @@ public:
     //  - Call cli.badUsage() for errors.
     //  - Call cli.parseExit() if parsing should stop, but there was no error.
     //
-    // If a vector<string> action modifies args it is implied that all args are
-    // having their sources set to {kArgv, ""}.
+    // If a vector<string> action modifies args is will reset all their sources
+    // set to {kArgv, ""} no matter what they might have been before.
     Cli & before(std::function<BeforeFn> fn, int priority = 1) &;
     Cli && before(std::function<BeforeFn> fn, int priority = 1) &&;
     // Like cli.before() but also allows manipulation of the argument sources.
@@ -554,28 +554,37 @@ public:
     // PARSING
     //
     // Parse the command line, populate the options, and set the error and
-    // other miscellaneous state. Returns false if cli.parseAborted() is true.
-    //
-    // Error information can be extracted after cli.parse() completes, see
-    // cli.errMsg() and friends.
+    // other miscellaneous state.
     //
     // The parsing process goes through 3 phases shown below and allows
-    // registered application code (actions) to be invoked at various points
-    // in the process.
+    // registered application code (actions) to be invoked at various points in
+    // the process.
     //
-    // Parsing phase 1 (extract values from args):
+    //
+    // Extract values from args:
     //
     //   --> Expand      --> Expand -----> Before --> Map Args to -->
     //       Environment     Response  .-> Actions    Opt Values
     //       Variables       Files     |      |
-    //                                 '--<---'
+    //                                 '---<--'
     //
-    // Parsing phase 2 (parse values into opts):
+    // It is both true that a single argument can map to multiple values and
+    // that it may take multiple arguments to get one value.
+    //
+    // Examples:
+    //  -xvfone     extract=true, verbose=true, file=one
+    //  -f one      file=one
+    //
+    //
+    // Parse values into opts:
+    //
+    // Each value is transformed, parsed into, and then checked by the actions
+    // registered to its target opt.
     //
     //        .----> Transform --> Parse  --+----> Check  --+-->
     //        |  .-> Actions       Action   ^  .-> Actions  |
     //        |  |      |                   |  |      |     |
-    //   --+--+  '--<---'                   |  '--<---'     |
+    //   --+--+  '---<--'                   |  '---<--'     |
     //     ^  |                             |               |
     //     |  '----> Implicit Value --------'               |
     //     |     (When optional value not present)          |
@@ -583,15 +592,22 @@ public:
     //     '-------------------------<----------------------'
     //             For each value found
     //
-    // Parsing phase 3 (after actions):
+    //
+    // Run after actions:
+    //
+    // All the after actions of each eligible opt are run. Opts are eligible if
+    // they are top level or assigned to the command that was selected.
+    //
     //   --+----> After  --+-->
     //     ^  .-> Actions  |
     //     |  |      |     |
-    //     |  '------'     |
+    //     |  '---<--'     |
     //     |               |
     //     '-------<-------'
     //     For each opt defined
 
+    // Returns false if cli.parseAborted() is true. Error information can be
+    // extracted after cli.parse() completes, see cli.errMsg() and friends.
     [[nodiscard]] bool parse(size_t argc, char * argv[]);
     [[nodiscard]] bool parse(size_t argc, const char * argv[]);
     [[nodiscard]] bool parse(const std::vector<std::string> & args);
@@ -748,11 +764,27 @@ public:
     // and had a chance to update the internal data structures.
     bool commandExists(const std::string & name) const;
 
-    // Executes the action of the matched command. Just like cli.parse(),
-    // cli.exec() returns false if cli.parseAborted() is true.
+    //-----------------------------------------------------------------------
+    // EXEC
     //
-    // It is assumed that a prior call to cli.parse() has already been made to
-    // set the matched command.
+    // Executes the action of the matched command. Used for subcommands, also
+    // an option when splitting the configuration, parsing, and execution code
+    // across multiple files (or libraries).
+    //
+    // Registered application code (actions) is invoked at various points in
+    // the process.
+    //
+    // ---> Before Exec --> Command ---> After Exec -->
+    //  .-> Actions         Action   .-> Actions
+    //  |      |                     |      |
+    //  '---<--'                     '---<--'
+    //
+    // NOTE: Unlike other actions, after exec actions are always run, even if
+    // another action has called cli.parseExit(), cli.badUsage(), etc.
+
+    // Just like cli.parse(), cli.exec() returns false if cli.parseAborted() is
+    // true. It is assumed that a prior call to cli.parse() has already been
+    // made to set the matched command.
     //
     // If no command was matched the action of the empty "" command is run,
     // which defaults to failing with "No command given." but can be set using
@@ -772,8 +804,8 @@ public:
         const std::string & detail = {}
     );
     // Sets cli.exitCode() to 0 and clears errMsg, errDetail. Intended to be
-    // called from actions to report success after, possibly, having set an
-    // error prematurely.
+    // called from command actions to report success after, possibly, having
+    // set an error prematurely.
     void success() { fail(kExitOk); }
 
     //-----------------------------------------------------------------------
@@ -1644,8 +1676,7 @@ struct Cli::ArgMatch {
     int pos = {};
 
     // Type and name of the source the argument came from (kArgv, kFile, ...)
-    ArgSrc::Type srcType = ArgSrc::kNone;
-    std::string srcName;
+    ArgSrc src = {};
 };
 
 
@@ -1704,8 +1735,8 @@ public:
 
     // Information about the source of the argument that was last used to
     // populate the value.
-    ArgSrc::Type srcType() const { return match().srcType; }
-    const std::string & srcName() const { return match().srcName; }
+    ArgSrc::Type srcType() const { return match().src.type; }
+    const std::string & srcName() const { return match().src.name; }
 
     // Number of values, non-vectors are always 1.
     virtual size_t size() const { return 1; }
@@ -1751,15 +1782,16 @@ protected:
     virtual void doAfters(Cli & cli) = 0;
 
     // Record/query the command line argument this opt matched with.
-    virtual bool match(
-        const std::string & name,
-        size_t pos,
-        ArgSrc::Type srcType,
-        const std::string & srcName
-    ) = 0;
+    virtual bool match(const ArgMatch & arg) = 0;
     virtual bool matched() const = 0;
     virtual const ArgMatch & match(size_t index) const = 0;
     const ArgMatch & match() const { return match(size() - 1); }
+
+    // Make adjustments to argument match report to align with arbitrary
+    // changes that could be made to the values by a custom parse action.
+    //
+    // NOTE: Just best effort, no guarantees.
+    virtual void fixMatch() {};
 
     // Assign the implicit value to the value. Used when an option, with an
     // optional value, is specified without one. The default implicit value is
@@ -2084,6 +2116,7 @@ template <typename A, typename T>
 inline void Cli::OptShim<A, T>::doParse(Cli & cli) {
     auto self = static_cast<A *>(this);
     m_parse(cli, *self, cli.newValue());
+    fixMatch();
 }
 
 //===========================================================================
@@ -2500,12 +2533,7 @@ private:
     friend class Cli;
     void initConfig(Cli &) final {};
     bool defaultValueToString(std::string & out) const final;
-    bool match(
-        const std::string & name,
-        size_t pos,
-        ArgSrc::Type srcType,
-        const std::string & srcName
-    ) final;
+    bool match(const ArgMatch & arg) final;
     bool matched() const final { return m_proxy->m_explicit; }
     const ArgMatch & match(size_t) const final { return m_proxy->m_match; }
     void assignImplicit() final;
@@ -2531,20 +2559,19 @@ template <typename T>
 inline void Cli::Opt<T>::reset() {
     if (!this->m_flagValue || this->m_flagDefault)
         *m_proxy->m_value = this->defaultValue();
-    m_proxy->m_match.name.clear();
-    m_proxy->m_match.pos = 0;
+    m_proxy->m_match = {};
     m_proxy->m_explicit = false;
 }
 
 //===========================================================================
 template <typename T>
 inline bool Cli::Opt<T>::parseValue(const std::string & value) {
-    auto & tmp = *m_proxy->m_value;
+    auto & val = *m_proxy->m_value;
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
         // internally and will be 0 or 1.
         if (value == "1") {
-            tmp = this->defaultValue();
+            val = this->defaultValue();
         } else {
             assert(value == "0" // LCOV_EXCL_LINE
                 && "Internal dimcli error: flagValue not parsed from 0 or 1.");
@@ -2555,10 +2582,10 @@ inline bool Cli::Opt<T>::parseValue(const std::string & value) {
         auto i = this->m_choiceDescs.find(value);
         if (i == this->m_choiceDescs.end())
             return false;
-        tmp = this->m_choices[i->second.pos];
+        val = this->m_choices[i->second.pos];
         return true;
     }
-    return this->fromString(tmp, value);
+    return this->fromString(val, value);
 }
 
 #ifdef DIMCLI_LIB_FILESYSTEM
@@ -2578,17 +2605,8 @@ inline bool Cli::Opt<T>::defaultValueToString(std::string & out) const {
 
 //===========================================================================
 template <typename T>
-inline bool Cli::Opt<T>::match(
-    const std::string & name,
-    size_t pos,
-    ArgSrc::Type srcType,
-    const std::string & srcName
-) {
-    auto & match = m_proxy->m_match;
-    match.name = name;
-    match.pos = (int)pos;
-    match.srcType = srcType;
-    match.srcName = srcName;
+inline bool Cli::Opt<T>::match(const ArgMatch & arg) {
+    m_proxy->m_match = arg;
     m_proxy->m_explicit = true;
     return true;
 }
@@ -2685,15 +2703,11 @@ private:
     friend class Cli;
     void initConfig(Cli &) final {}
     bool defaultValueToString(std::string & out) const final;
-    bool match(
-        const std::string & name,
-        size_t pos,
-        ArgSrc::Type srcType,
-        const std::string & srcName
-    ) final;
+    bool match(const ArgMatch & arg) final;
     bool matched() const final { return !m_proxy->m_values->empty(); }
     const ArgMatch & match(size_t index) const final;
     void assignImplicit() final;
+    void fixMatch() final;
     bool sameValue(const void * value) const final {
         return value == m_proxy->m_values;
     }
@@ -2749,13 +2763,20 @@ inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
 
 //===========================================================================
 template <typename T>
+inline void Cli::OptVec<T>::reset() {
+    m_proxy->m_values->clear();
+    m_proxy->m_matches.clear();
+}
+
+//===========================================================================
+template <typename T>
 inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
-    auto back = std::prev(m_proxy->m_values->end());
+    auto out = std::prev(m_proxy->m_values->end());
     if (this->m_flagValue) {
         // Value passed for flagValue (just like bools) is generated
         // internally and will be 0 or 1.
         if (value == "1") {
-            *back = this->defaultValue();
+            *out = this->defaultValue();
         } else {
             assert(value == "0" // LCOV_EXCL_LINE
                 && "Internal dimcli error: flagValue not parsed from 0 or 1.");
@@ -2768,15 +2789,15 @@ inline bool Cli::OptVec<T>::parseValue(const std::string & value) {
         auto i = this->m_choiceDescs.find(value);
         if (i == this->m_choiceDescs.end())
             return false;
-        *back = this->m_choices[i->second.pos];
+        *out = this->m_choices[i->second.pos];
         return true;
     }
 
     // Parsed indirectly through temporary for cases like vector<bool> where
-    // *back returns a proxy object instead of a reference to T.
+    // *out returns a proxy object instead of a reference to T.
     T tmp{};
     bool result = this->fromString(tmp, value);
-    *back = std::move(tmp);
+    *out = std::move(tmp);
     return result;
 }
 
@@ -2798,31 +2819,14 @@ inline bool Cli::OptVec<T>::defaultValueToString(std::string & out) const {
 
 //===========================================================================
 template <typename T>
-inline void Cli::OptVec<T>::reset() {
-    m_proxy->m_values->clear();
-    m_proxy->m_matches.clear();
-}
-
-//===========================================================================
-template <typename T>
-inline bool Cli::OptVec<T>::match(
-    const std::string & name,
-    size_t pos,
-    ArgSrc::Type srcType,
-    const std::string & srcName
-) {
+inline bool Cli::OptVec<T>::match(const ArgMatch & arg) {
     if (this->m_maxVec != -1
         && (size_t) this->m_maxVec == m_proxy->m_matches.size()
     ) {
         return false;
     }
 
-    ArgMatch match;
-    match.name = name;
-    match.pos = (int)pos;
-    match.srcType = srcType;
-    match.srcName = srcName;
-    m_proxy->m_matches.push_back(match);
+    m_proxy->m_matches.push_back(arg);
     m_proxy->m_values->resize(m_proxy->m_matches.size());
     return true;
 }
@@ -2837,6 +2841,15 @@ inline const Cli::ArgMatch & Cli::OptVec<T>::match(size_t index) const {
 template <typename T>
 inline void Cli::OptVec<T>::assignImplicit() {
     m_proxy->m_values->back() = this->implicitValue();
+}
+
+//===========================================================================
+template <typename T>
+inline void Cli::OptVec<T>::fixMatch() {
+    // Adjust ArgMatch vector to match the size of the value vector on the
+    // chance that a custom parse action has changed its size. This is flawed
+    // in that it may result in misalignment between the match and value data.
+    m_proxy->m_matches.resize(m_proxy->m_values->size());
 }
 
 } // namespace

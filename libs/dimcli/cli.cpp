@@ -863,7 +863,7 @@ bool Cli::OptIndex::includeOptAfter(
     Cli::OptBase & opt,
     const string & cmd
 ) {
-    // Should opt activate its after actions if cmd is selected?
+    // Include opt's after actions if top level or its cmd is selected.
     return opt.command().empty()
         || opt.command() == cmd
         || opt.allCmds();
@@ -2777,7 +2777,12 @@ bool Cli::parseValue(
     const string & srcName,
     const char ptr[]
 ) {
-    if (!opt.match(name, pos, srcType, srcName)) {
+    ArgMatch match;
+    match.name = name;
+    match.pos = (int) pos;
+    match.src.type = srcType;
+    match.src.name = srcName;
+    if (!opt.match(match)) {
         string prefix = "Too many '" + name + "' values";
         string detail = "The maximum number of values is "
             + intToString(opt, opt.maxSize()) + ".";
