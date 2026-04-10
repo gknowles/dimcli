@@ -1202,15 +1202,14 @@ Action to take immediately before each source value is parsed. Any
 number of transform actions can be added.
 
 The function should:
-* Inspect, and/or change the source value via cli.newValue().
+* Inspect, then optionally change the source value via cli.newValue().
 * Call cli.badUsage() with an error message if there's a problem.
 * Call cli.parseExit() if the program should stop without an error. This could
   be due to an early out like "--version" and "--help".
 
 The argument is set, so you can use opt.from() and opt.pos() to get the
 option name that the value was matched with on the command line and its
-position in argv[]. For bool arguments the val string will always be
-either "0" or "1".
+position in argv[].
 
 allow
 deny

@@ -692,6 +692,7 @@ public:
     [[nodiscard]] bool parseValue(
         OptBase & out,
         const std::string & name,       // use opt.defaultFrom() if unsure
+        unsigned nameFlags,             // use 0 if unsure
         size_t pos,                     // use 0 if unsure
         ArgSrc::Type srcType,           // use kArgv if unsure (not kNone!)
         const std::string & srcName,    // use {} if unsure
@@ -2005,8 +2006,7 @@ public:
     //
     // The argument is set, so you can use opt.from() and opt.pos() to get the
     // option name that the value was matched with on the command line and its
-    // position in argv[]. For bool arguments the val string will always be
-    // either "0" or "1".
+    // position in argv[].
     A & transform(std::function<ActionFn> fn, int priority = 1);
 
     // Action to update the option value from a string taken from the
@@ -2022,7 +2022,7 @@ public:
     // All opt.from(), opt.pos(), opt.srcType(), opt.srcName() are available.
     // For bool arguments the val string will always be either "0" or "1".
     //
-    // You could use this action to combined values into the final result, such
+    // You can use this action to combined values into the final result, such
     // as via addition or appending to a string, instead of replacing it by
     // assignment.
     //

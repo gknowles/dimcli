@@ -167,6 +167,7 @@ struct RawValue {
     enum Type { kOperand, kOption, kCommand } type;
     Cli::OptBase * opt;
     string name;
+    unsigned nameFlags;
     size_t pos;
     const char * ptr;
     Cli::ArgSrc src;
@@ -776,17 +777,7 @@ void Cli::newValue(const string & value) {
         assert(!"Bad context, not called from transform action callback.");
         return;
     }
-    auto & opt = *m_cfg->curOpt;
-    if (!opt.m_bool) {
-        m_cfg->newValue = value;
-    } else {
-        bool v;
-        if (parseBool(v, value)) {
-            m_cfg->newValue = v ? "1" : "0";
-        } else {
-             badUsage(opt);
-        }
-    }
+    m_cfg->newValue = value;
 }
 
 //===========================================================================
@@ -2147,6 +2138,7 @@ static bool matchOperands(
         }
         auto & oprName = ndx.m_oprNames[ipos];
         val->opt = oprName.opt;
+        val->nameFlags = oprName.flags;
         val->name = oprName.name;
         imatch += 1;
     }
@@ -2222,8 +2214,9 @@ bool Cli::OptIndex::parseOperandValue(
     st.numOprs += 1;
     out->push_back({
         RawValue::kOperand,
-        nullptr,
-        string{},
+        nullptr,    // opt
+        string{},   // opt name
+        0,          // opt name flags
         st.argPos,
         st.ptr,
         *args[st.argPos].src
@@ -2246,6 +2239,7 @@ static void addOptionMatch(
         RawValue::kOption,
         st.optName.opt,
         st.name,
+        st.optName.flags,
         st.argPos,
         ptr,
         ptr ? *args[st.argPos].src : src
@@ -2361,12 +2355,7 @@ bool Cli::OptIndex::parseToRawValues(
 
                 // Found bool short name, record and continue processing any
                 // additional short names in this same argument.
-                addOptionMatch(
-                    out,
-                    st,
-                    (st.optName.flags & fNameInvert) ? "0" : "1",
-                    args
-                );
+                addOptionMatch(out, st, "1", args);
             }
             if (!*st.ptr) {
             NEXT_ARG:
@@ -2411,22 +2400,13 @@ bool Cli::OptIndex::parseToRawValues(
             }
 
             // Found bool long name.
-            auto val = true;
-            if (st.ptr
-                && (st.optName.opt->m_flagValue || !parseBool(val, st.ptr))
-            ) {
-                // Only regular bool opts support values, and those values
-                // must be valid: true, false, 1, 0, y, n, etc.
+            if (st.ptr && st.optName.opt->m_flagValue) {
+                // Only regular bool opts support values.
                 cli.badUsage("Invalid '" + st.name + "' value", st.ptr);
                 return false;
             }
             // Record and advance to the next argument.
-            addOptionMatch(
-                out,
-                st,
-                val == bool(st.optName.flags & fNameInvert) ? "0" : "1",
-                args
-            );
+            addOptionMatch(out, st, st.ptr ? st.ptr : "1", args);
             continue;
         }
 
@@ -2577,6 +2557,7 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
         if (!cli.parseValue(
             *val.opt,
             val.name,
+            val.nameFlags,
             val.pos,
             val.src.type,
             val.src.name,
@@ -2755,7 +2736,7 @@ bool Cli::parseValue(
     size_t pos,
     const char ptr[]
 ) {
-    return parseValue(opt, name, pos, ArgSrc::kArgv, {}, ptr);
+    return parseValue(opt, name, 0, pos, ArgSrc::kArgv, {}, ptr);
 }
 
 //===========================================================================
@@ -2765,13 +2746,14 @@ bool Cli::parseValue(
     const std::string & srcName,    // use {} if unsure
     const char ptr[]
 ) {
-    return parseValue(opt, opt.defaultFrom(), 0, srcType, srcName, ptr);
+    return parseValue(opt, opt.defaultFrom(), 0, 0, srcType, srcName, ptr);
 }
 
 //===========================================================================
 bool Cli::parseValue(
     OptBase & opt,
     const string & name,
+    unsigned nameFlags,
     size_t pos,
     ArgSrc::Type srcType,
     const string & srcName,
@@ -2795,8 +2777,19 @@ bool Cli::parseValue(
         m_cfg->curOpt = &opt;
         opt.doTransforms(*this);
         m_cfg->curOpt = {};
-        if (!parseAborted())
+        if (!parseAborted()) {
+            if (opt.m_bool) {
+                bool val = false;
+                if (!parseBool(val, newValue())) {
+                    badUsage(opt);
+                    return false;
+                }
+                if (nameFlags & fNameInvert)
+                    val = !val;
+                m_cfg->newValue = val ? "1" : "0";
+            }
             opt.doParse(*this);
+        }
         if (!parseAborted())
             opt.doChecks(*this);
     } else {
