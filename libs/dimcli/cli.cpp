@@ -2775,7 +2775,7 @@ bool Cli::parseValue(
     val.opt = &opt;
     val.name = name;
     val.pos = pos;
-    val.src = { ArgSrc::kArgv, {} };
+    val.src.type = ArgSrc::kArgv;
     val.ptr = ptr;
     return Config::parseValue(*this, val);
 }
@@ -2790,7 +2790,8 @@ bool Cli::parseValue(
     PlanValue val = { PlanValue::kOperand };
     val.opt = &opt;
     val.name = opt.defaultFrom();
-    val.src = { srcType, srcName };
+    val.src.type = srcType;
+    val.src.name = srcName;
     val.ptr = ptr;
     return Config::parseValue(*this, val);
 }
