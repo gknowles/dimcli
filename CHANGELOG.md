@@ -20,11 +20,12 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed - Static init order can disorder options/operands in help text
 - Added - cli.beforeEx() action overload that includes arg sources
 - Added - opt.srcType() and opt.srcName() to report source of arg
-- Added - cli.parseValue() overloads that include arg source
+- Added - cli.parseValue() overload that includes arg source
 - Deprecated - cli.parseValue() overload w/o arg source
 - Added - opt.initConfig() customization point
 - Added - Transform actions to modify source arg before parsing
 - Added - Allow args from more than just one environment variable
+- Added - Allow flag value booleans an optional value (e.g. "=true")
 
 ## dimcli 7.5.0 (2025-11-20)
 - Added - cli.success() and cli.fail() overloads with just the exit code
@@ -95,7 +96,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Detail to errors parsing values with units
 - Added - Variable argument Cli::toArgvL() and Cli\::toCmdlineL()
 - Changed - Moved fromString() & toString() to new Convert class
-- Changed - Allowed long named booleans an optional value (e.g. "=true")
+- Added - Allow long named booleans an optional value (e.g. "=true")
 - Changed - Rename opt.unspecifiedValue() to opt.implicitValue()
 - Added - fromString() support for types constructible from string
 - Changed - Allow optional operands before required ones
