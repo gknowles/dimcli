@@ -163,7 +163,7 @@ struct ParseState {
     unordered_map<Cli::OptBase *, int> optMatches;
 };
 
-struct RawValue {
+struct PlanValue {
     enum Type { kOperand, kOption, kCommand } type;
     Cli::OptBase * opt;
     string name;
@@ -229,6 +229,8 @@ struct Cli::Config {
     );
     static const GroupConfig & findGrpOrDie(const Cli & cli);
 
+    static bool parseValue(Cli & cli, const PlanValue & val);
+
     Config();
     void updateWidth(size_t width);
 };
@@ -284,8 +286,8 @@ struct Cli::OptIndex {
     //-----------------------------------------------------------------------
     // Parsing
     // Will completely rebuild index for new command if one is found.
-    bool parseToRawValues(
-        vector<RawValue> * out,
+    bool parseToPlanValues(
+        vector<PlanValue> * out,
         const vector<Cli::Arg> & args,
         Cli & cli
     );
@@ -314,13 +316,13 @@ private:
     );
 
     bool parseOperandValue(
-        vector<RawValue> * out,
+        vector<PlanValue> * out,
         ParseState & st,
         Cli & cli,
         const vector<Cli::Arg> & args
     );
     bool parseOptionValue(
-        vector<RawValue> * out,
+        vector<PlanValue> * out,
         ParseState & st,
         Cli & cli,
         const vector<Cli::Arg> & args
@@ -738,6 +740,54 @@ void Cli::Config::updateWidth(size_t width) {
     this->minNameColPct = kDefaultMinNameColPct
         * (kDefaultConsoleWidth + width) / 2
         / width;
+}
+
+//===========================================================================
+// static
+bool Cli::Config::parseValue(Cli & cli, const PlanValue & val) {
+    auto & cfg = Cli::Config::get(cli);
+    auto & opt = *val.opt;
+    ArgMatch match;
+    match.name = val.name;
+    match.pos = (int) val.pos;
+    match.src = val.src;
+    if (!opt.match(match)) {
+        string prefix = "Too many '" + val.name + "' values";
+        string detail = "The maximum number of values is "
+            + intToString(opt, opt.maxSize()) + ".";
+        cli.badUsage(prefix, val.ptr, detail);
+        return false;
+    }
+    if (val.ptr) {
+        cfg.originalValue = val.ptr;
+        cfg.newValue = val.ptr;
+        cfg.curOpt = &opt;
+        opt.doTransforms(cli);
+        cfg.curOpt = {};
+        if (!cli.parseAborted()) {
+            if (opt.m_bool) {
+                bool bval = false;
+                if (!parseBool(bval, cli.newValue())) {
+                    cli.badUsage(opt);
+                    return false;
+                }
+                if (val.nameFlags & fNameInvert)
+                    bval = !bval;
+                cfg.newValue = bval ? "1" : "0";
+            }
+            opt.doParse(cli);
+        }
+        if (!cli.parseAborted())
+            opt.doChecks(cli);
+    } else {
+        cfg.originalValue.clear();
+        cfg.newValue.clear();
+        opt.assignImplicit();
+        opt.doChecks(cli);
+    }
+    cfg.originalValue.clear();
+    cfg.newValue.clear();
+    return !cli.parseAborted();
 }
 
 
@@ -2091,8 +2141,8 @@ static int numMatches(
 
 //===========================================================================
 static bool matchOperands(
-    RawValue * rawValues,
-    size_t numRawValues,
+    PlanValue * planValues,
+    size_t numPlanValues,
     Cli & cli,
     const Cli::OptIndex & ndx,
     int numOprs
@@ -2112,9 +2162,9 @@ static bool matchOperands(
     }
 
     if (usedOprs < numOprs) {
-        auto val = rawValues;
+        auto val = planValues;
         for (int ipos = -1;; ++val) {
-            if (val->type == RawValue::kOperand && ++ipos >= usedOprs)
+            if (val->type == PlanValue::kOperand && ++ipos >= usedOprs)
                 break;
         }
         cli.badUsage("Unexpected argument", val->ptr);
@@ -2125,8 +2175,8 @@ static bool matchOperands(
 
     int ipos = 0;       // Operand being matched.
     int imatch = 0;     // Values already been matched to this opt.
-    for (auto val = rawValues; val < rawValues + numRawValues; ++val) {
-        if (val->opt || val->type != RawValue::kOperand)
+    for (auto val = planValues; val < planValues + numPlanValues; ++val) {
+        if (val->opt || val->type != PlanValue::kOperand)
             continue;
         if (matched[ipos] <= imatch) {
             imatch = 0;
@@ -2147,7 +2197,7 @@ static bool matchOperands(
 
 //===========================================================================
 bool Cli::OptIndex::parseOperandValue(
-    vector<RawValue> * out,
+    vector<PlanValue> * out,
     ParseState & st,
     Cli & cli,
     const vector<Cli::Arg> & args
@@ -2173,7 +2223,7 @@ bool Cli::OptIndex::parseOperandValue(
 
         // Add command raw value and prepare for new set of opt rules
         // that are defined by the command.
-        out->push_back({ RawValue::kCommand, nullptr, cmd });
+        out->push_back({ PlanValue::kCommand, nullptr, cmd });
         st.precmdValues = out->size();
         st.numOprs = 0;
 
@@ -2213,7 +2263,7 @@ bool Cli::OptIndex::parseOperandValue(
     // Record operand, it will be assigned and named later by assignOperands().
     st.numOprs += 1;
     out->push_back({
-        RawValue::kOperand,
+        PlanValue::kOperand,
         nullptr,    // opt
         string{},   // opt name
         0,          // opt name flags
@@ -2227,7 +2277,7 @@ bool Cli::OptIndex::parseOperandValue(
 
 //===========================================================================
 static void addOptionMatch(
-    vector<RawValue> * out,
+    vector<PlanValue> * out,
     ParseState & st,
     const char * ptr,
     const vector<Cli::Arg> & args
@@ -2236,7 +2286,7 @@ static void addOptionMatch(
     Cli::ArgSrc src;
     src.type = Cli::ArgSrc::kNone;
     out->push_back({
-        RawValue::kOption,
+        PlanValue::kOption,
         st.optName.opt,
         st.name,
         st.optName.flags,
@@ -2248,7 +2298,7 @@ static void addOptionMatch(
 
 //===========================================================================
 bool Cli::OptIndex::parseOptionValue(
-    vector<RawValue> * out,
+    vector<PlanValue> * out,
     ParseState & st,
     Cli & cli,
     const vector<Cli::Arg> & args
@@ -2306,8 +2356,8 @@ static bool commandRequired(const Cli::Config & cfg) {
 }
 
 //===========================================================================
-bool Cli::OptIndex::parseToRawValues(
-    vector<RawValue> * out,
+bool Cli::OptIndex::parseToPlanValues(
+    vector<PlanValue> * out,
     const vector<Cli::Arg> & args,
     Cli & cli
 ) {
@@ -2540,31 +2590,22 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
     }
 
     // Extract raw values and match them to opts.
-    vector<RawValue> rawValues;
-    if (!ndx.parseToRawValues(&rawValues, args, cli))
+    vector<PlanValue> planValues;
+    if (!ndx.parseToPlanValues(&planValues, args, cli))
         return false;
 
     // Parse values and copy them to defined opts.
     cfg.command.clear();
-    for (auto && val : rawValues) {
+    for (auto && val : planValues) {
         switch (val.type) {
-        case RawValue::kCommand:
+        case PlanValue::kCommand:
             cfg.command = val.name;
             continue;
         default:
             break;
         }
-        if (!cli.parseValue(
-            *val.opt,
-            val.name,
-            val.nameFlags,
-            val.pos,
-            val.src.type,
-            val.src.name,
-            val.ptr
-        )) {
+        if (!Cli::Config::parseValue(cli, val))
             return false;
-        }
     }
 
     // Report operands and options with too few values.
@@ -2736,7 +2777,13 @@ bool Cli::parseValue(
     size_t pos,
     const char ptr[]
 ) {
-    return parseValue(opt, name, 0, pos, ArgSrc::kArgv, {}, ptr);
+    PlanValue val = { PlanValue::kOperand };
+    val.opt = &opt;
+    val.name = name;
+    val.pos = pos;
+    val.src = { ArgSrc::kArgv, {} };
+    val.ptr = ptr;
+    return Config::parseValue(*this, val);
 }
 
 //===========================================================================
@@ -2746,61 +2793,12 @@ bool Cli::parseValue(
     const std::string & srcName,    // use {} if unsure
     const char ptr[]
 ) {
-    return parseValue(opt, opt.defaultFrom(), 0, 0, srcType, srcName, ptr);
-}
-
-//===========================================================================
-bool Cli::parseValue(
-    OptBase & opt,
-    const string & name,
-    unsigned nameFlags,
-    size_t pos,
-    ArgSrc::Type srcType,
-    const string & srcName,
-    const char ptr[]
-) {
-    ArgMatch match;
-    match.name = name;
-    match.pos = (int) pos;
-    match.src.type = srcType;
-    match.src.name = srcName;
-    if (!opt.match(match)) {
-        string prefix = "Too many '" + name + "' values";
-        string detail = "The maximum number of values is "
-            + intToString(opt, opt.maxSize()) + ".";
-        badUsage(prefix, ptr, detail);
-        return false;
-    }
-    if (ptr) {
-        m_cfg->originalValue = ptr;
-        m_cfg->newValue = ptr;
-        m_cfg->curOpt = &opt;
-        opt.doTransforms(*this);
-        m_cfg->curOpt = {};
-        if (!parseAborted()) {
-            if (opt.m_bool) {
-                bool val = false;
-                if (!parseBool(val, newValue())) {
-                    badUsage(opt);
-                    return false;
-                }
-                if (nameFlags & fNameInvert)
-                    val = !val;
-                m_cfg->newValue = val ? "1" : "0";
-            }
-            opt.doParse(*this);
-        }
-        if (!parseAborted())
-            opt.doChecks(*this);
-    } else {
-        m_cfg->originalValue.clear();
-        m_cfg->newValue.clear();
-        opt.assignImplicit();
-        opt.doChecks(*this);
-    }
-    m_cfg->originalValue.clear();
-    m_cfg->newValue.clear();
-    return !parseAborted();
+    PlanValue val = { PlanValue::kOperand };
+    val.opt = &opt;
+    val.name = opt.defaultFrom();
+    val.src = { srcType, srcName };
+    val.ptr = ptr;
+    return Config::parseValue(*this, val);
 }
 
 //===========================================================================

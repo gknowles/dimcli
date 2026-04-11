@@ -689,15 +689,6 @@ public:
         const std::string & srcName,    // use {} if unsure
         const char val[]
     );
-    [[nodiscard]] bool parseValue(
-        OptBase & out,
-        const std::string & name,       // use opt.defaultFrom() if unsure
-        unsigned nameFlags,             // use 0 if unsure
-        size_t pos,                     // use 0 if unsure
-        ArgSrc::Type srcType,           // use kArgv if unsure (not kNone!)
-        const std::string & srcName,    // use {} if unsure
-        const char val[]
-    );
 
     // Prompt sends a prompt message to cout and read a response from cin
     // (unless cli.iostreams() changed the streams to use), the response is
@@ -1999,7 +1990,7 @@ public:
     // number of transform actions can be added.
     //
     // The function should:
-    //  - Inspect, and/or change the val string via cli.newValue().
+    //  - Inspect, then optionally change the val string via cli.newValue().
     //  - Call cli.badUsage() with an error message if there's a problem.
     //  - Call cli.parseExit() if the program should stop without an error.
     //    This could be due to an early out like "--version" and "--help".
