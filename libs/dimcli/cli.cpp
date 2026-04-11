@@ -286,7 +286,7 @@ struct Cli::OptIndex {
     //-----------------------------------------------------------------------
     // Parsing
     // Will completely rebuild index for new command if one is found.
-    bool parseToPlanValues(
+    bool planValues(
         vector<PlanValue> * out,
         const vector<Cli::Arg> & args,
         Cli & cli
@@ -315,13 +315,13 @@ private:
         int pos
     );
 
-    bool parseOperandValue(
+    bool planOperandValue(
         vector<PlanValue> * out,
         ParseState & st,
         Cli & cli,
         const vector<Cli::Arg> & args
     );
-    bool parseOptionValue(
+    bool planOptionValue(
         vector<PlanValue> * out,
         ParseState & st,
         Cli & cli,
@@ -2196,7 +2196,7 @@ static bool matchOperands(
 }
 
 //===========================================================================
-bool Cli::OptIndex::parseOperandValue(
+bool Cli::OptIndex::planOperandValue(
     vector<PlanValue> * out,
     ParseState & st,
     Cli & cli,
@@ -2297,7 +2297,7 @@ static void addOptionMatch(
 }
 
 //===========================================================================
-bool Cli::OptIndex::parseOptionValue(
+bool Cli::OptIndex::planOptionValue(
     vector<PlanValue> * out,
     ParseState & st,
     Cli & cli,
@@ -2356,7 +2356,7 @@ static bool commandRequired(const Cli::Config & cfg) {
 }
 
 //===========================================================================
-bool Cli::OptIndex::parseToPlanValues(
+bool Cli::OptIndex::planValues(
     vector<PlanValue> * out,
     const vector<Cli::Arg> & args,
     Cli & cli
@@ -2398,7 +2398,7 @@ bool Cli::OptIndex::parseToPlanValues(
                         st.ptr = nullptr;
                     // Since that value consumes the rest of the argument,
                     // process it and then advance to next argument.
-                    if (!parseOptionValue(out, st, cli, args))
+                    if (!planOptionValue(out, st, cli, args))
                         return false;
                     goto NEXT_ARG;
                 }
@@ -2441,27 +2441,21 @@ bool Cli::OptIndex::parseToPlanValues(
             if (st.optName.flags & fNameFinal)
                 st.moreOpts = false;
 
-            if (!st.optName.opt->m_bool) {
+            if (st.optName.opt->m_bool) {
+                // Found bool long name with value that is explicit or
+                // defaulted to "1", record and advance to the next argument.
+                addOptionMatch(out, st, st.ptr ? st.ptr : "1", args);
+            } else {
                 // Long option with (possibly empty) value, process it and
                 // advance to next argument.
-                if (!parseOptionValue(out, st, cli, args))
+                if (!planOptionValue(out, st, cli, args))
                     return false;
-                continue;
             }
-
-            // Found bool long name.
-            if (st.ptr && st.optName.opt->m_flagValue) {
-                // Only regular bool opts support values.
-                cli.badUsage("Invalid '" + st.name + "' value", st.ptr);
-                return false;
-            }
-            // Record and advance to the next argument.
-            addOptionMatch(out, st, st.ptr ? st.ptr : "1", args);
             continue;
         }
 
         // Positional value
-        if (!parseOperandValue(out, st, cli, args))
+        if (!planOperandValue(out, st, cli, args))
             return false;
     }
 
@@ -2591,7 +2585,7 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
 
     // Extract raw values and match them to opts.
     vector<PlanValue> planValues;
-    if (!ndx.parseToPlanValues(&planValues, args, cli))
+    if (!ndx.planValues(&planValues, args, cli))
         return false;
 
     // Parse values and copy them to defined opts.
