@@ -186,11 +186,12 @@ cvt.toString() failures.</li>
 <li>Fixed - Static init order can disorder options/operands in help text</li>
 <li>Added - cli.beforeEx() action overload that includes arg sources</li>
 <li>Added - opt.srcType() and opt.srcName() to report source of arg</li>
-<li>Added - cli.parseValue() overloads that include arg source</li>
+<li>Added - cli.parseValue() overload that includes arg source</li>
 <li>Deprecated - cli.parseValue() overload w/o arg source</li>
 <li>Added - opt.initConfig() customization point</li>
 <li>Added - Transform actions to modify source arg before parsing</li>
 <li>Added - Allow args from more than just one environment variable</li>
+<li>Added - Allow flag value booleans an optional value (e.g. &quot;=true&quot;)</li>
 </ul>
 <h2 id="dimcli-7-5-0-2025-11-20-">dimcli 7.5.0 (2025-11-20)</h2>
 <ul>
@@ -272,7 +273,7 @@ with cli.printError() instead.</li>
 <li>Added - Detail to errors parsing values with units</li>
 <li>Added - Variable argument Cli::toArgvL() and Cli::toCmdlineL()</li>
 <li>Changed - Moved fromString() &amp; toString() to new Convert class</li>
-<li>Changed - Allowed long named booleans an optional value (e.g. &quot;=true&quot;)</li>
+<li>Added - Allow long named booleans an optional value (e.g. &quot;=true&quot;)</li>
 <li>Changed - Rename opt.unspecifiedValue() to opt.implicitValue()</li>
 <li>Added - fromString() support for types constructible from string</li>
 <li>Changed - Allow optional operands before required ones</li>
