@@ -570,6 +570,18 @@ Usage: test [--help] [B]
 )RAW");
     }
 
+    // Bad context.
+    {
+        cli = {};
+        cli.opt&lt;string>("[a]").check([](auto &amp; cli, auto &amp;, auto &amp;) {
+            cli.newValue("y");
+        });
+        EXPECT_PARSE(cli, "x");
+        EXPECT_ASSERT(1 + R"(
+!"Bad context, not called from transform action callback."
+)");
+    }
+
     // Bad exec usage
     {
         cli = {};
@@ -3076,19 +3088,25 @@ Options:
 static void beforeTests() {
     int line = 0;
     CliTest cli;
-    CliTest(cli).before([](auto &amp; cli, const vector&lt;string> &amp; args) {
-        if (args.size() > 2)
-            cli.badUsage("Way too many args");
-    }).beforeEx([](auto &amp; cli, const auto &amp; args) {
-        if (args.size() > 1)
-            cli.badUsage("Too many args");
-    });
-    EXPECT_PARSE(cli, "one", false);
-    EXPECT_ERR(cli, "Error: Too many args\n");
-    EXPECT_PARSE(cli, "one two", false);
-    EXPECT_ERR(cli, "Error: Way too many args\n");
 
-    // Change string args without changing number of args
+    // Use rvalue cli.
+    // Multiple with same priority in order of registration.
+    // beforeEx action.
+    {
+        CliTest(cli).before([](auto &amp; cli, const vector&lt;string> &amp; args) {
+            if (args.size() > 2)
+                cli.badUsage("Way too many args");
+        }).beforeEx([](auto &amp; cli, const auto &amp; args) {
+            if (args.size() > 1)
+                cli.badUsage("Too many args");
+        });
+        EXPECT_PARSE(cli, "one", false);
+        EXPECT_ERR(cli, "Error: Too many args\n");
+        EXPECT_PARSE(cli, "one two", false);
+        EXPECT_ERR(cli, "Error: Way too many args\n");
+    }
+
+    // Change string args without changing number of args.
     {
         cli = {};
         auto &amp; vals = cli.optVec&lt;string>("[val]");
@@ -3101,6 +3119,7 @@ static void beforeTests() {
         EXPECT_EQUAL(*vals, expected);
     }
 
+    // Add string args.
     {
         cli = {};
         auto &amp; vals = cli.optVec&lt;string>("[val]");
@@ -3111,6 +3130,7 @@ static void beforeTests() {
         EXPECT_EQUAL(*vals, expected);
     }
 
+    // Out of order action priorities.
     {
         cli = {};
         auto &amp; vals = cli.optVec&lt;string>("[val]");
@@ -3121,6 +3141,54 @@ static void beforeTests() {
         vector&lt;string> expected = { "b", "c", "d", "a" };
         EXPECT_PARSE(cli);
         EXPECT_EQUAL(*vals, expected);
+    }
+}
+
+
+/****************************************************************************
+*
+*   Transform action
+*
+***/
+
+//===========================================================================
+static void transformTests() {
+    int line = 0;
+    CliTest cli;
+
+    // non-bool option.
+    {
+        cli = {};
+        auto &amp; val = cli.opt&lt;string>("[val]");
+        val.transform([](auto &amp; cli, auto &amp;, auto &amp; val) {
+            cli.newValue(val + "y");
+        });
+        EXPECT_PARSE(cli, "x");
+        EXPECT_EQUAL(*val, "xy");
+    }
+
+    // newValue convertable to bool.
+    {
+        cli = {};
+        auto &amp; val = cli.opt&lt;bool>("[val]");
+        val.transform([](auto &amp; cli, auto &amp;, auto &amp;) {
+            cli.newValue("true");
+        });
+        EXPECT_PARSE(cli, "off");
+        EXPECT_EQUAL(*val, true);
+    }
+
+    // newValue not convertible to bool.
+    {
+        cli = {};
+        auto &amp; val = cli.opt&lt;bool>("[val]");
+        val.transform([](auto &amp; cli, auto &amp;, auto &amp;) {
+            cli.newValue("bad");
+        });
+        EXPECT_PARSE(cli, "off", false);
+        EXPECT_ERR(cli, 1 + R"(
+Error: Invalid 'val' value: off
+)");
     }
 }
 
@@ -3149,6 +3217,9 @@ static void envTests() {
     EXPECT(!result);
     EXPECT_PARSE(cli, "c d");
     EXPECT_EQUAL(*args, vector&lt;string>{"a", "b", "c", "d"});
+    CliTest(cli).envOpts(vector&lt;string>{"TEST_OPTS", "TEST2_OPTS"});
+    EXPECT_PARSE(cli, "");
+    EXPECT_EQUAL(*args, vector&lt;string>{"a", "b"});
 #endif
 }
 
@@ -3247,6 +3318,7 @@ static int runTests(const string &amp; progName, bool prompt) {
     beforeTests();
     envTests();
     finalOptTests();
+    transformTests();
 
     if (s_errors) {
         cerr &lt;&lt; "*** TESTS FAILED ***" &lt;&lt; endl;
