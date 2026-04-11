@@ -1946,12 +1946,12 @@ vector<pair<string, double>> Cli::siUnitMapping(
     }
     if (!symbol.empty()) {
         if (flags & fUnitRequire) {
-            // Unit symbol required, modify list of suffixes to include it.
+            // Unit symbol required, append it to each suffix in list.
             for (auto && kv : units)
                 kv.first += symbol;
         } else {
-            // Unit symbol optional, add copy of each suffix with symbol
-            // appended.
+            // Unit symbol optional, add additional copy of each suffix with
+            // symbol appended.
             units.reserve(2 * units.size());
             for (auto i = units.size(); i-- > 0;) {
                 auto & kv = units[i];

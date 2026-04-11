@@ -1202,17 +1202,64 @@ Action to take immediately before each source value is parsed. Any
 number of transform actions can be added.
 
 The function should:
+
 * Inspect, then optionally change the source value via cli.newValue().
 * Call cli.badUsage() with an error message if there's a problem.
 * Call cli.parseExit() if the program should stop without an error. This could
   be due to an early out like "--version" and "--help".
 
-The argument is set, so you can use opt.from() and opt.pos() to get the
+The argument is bound, so you can use opt.from() and opt.pos() to get the
 option name that the value was matched with on the command line and its
 position in argv[].
 
-allow
-deny
+Enable "allow" and "deny" to be used to set an access bool:
+[source, C++]
+----
+int main(int argc, char * argv[]) {
+    Dim::Cli cli;
+    auto & write = cli.opt<bool>("write.")
+        .desc("Grants write access to stuff.")
+        .transform([](auto & cli, auto & opt, auto & val) {
+            // Replace allow/deny with strings convertible to bool.
+            if (val == "allow")
+                return cli.newValue("1");
+            if (val == "deny")
+                return cli.newValue("0");
+        });
+    if (!cli.parse(argc, argv))
+        return cli.printError(cerr);
+    cout << "Running " << (*write ? "with" : "without")
+        << " write access." << endl;
+    return EX_OK;
+}
+----
+
+See it in action:
+[source, shell session]
+----
+$ a.out --help
+Usage: a.out [OPTIONS]
+
+Options:
+  --write   Grants write access to stuff.
+
+  --help    Show this message and exit.
+
+$ a.out
+Running without write access.
+$ a.out --write
+Running with write access.
+$ # 'true' parsed to true
+$ a.out --write=true
+Running with write access.
+$ # 'deny' transformed to '0' parsed to false
+$ a.out --write=deny
+Running without write access.
+$ # 'disallow' not parsable to bool
+$ a.out --write=disallow
+Error: Invalid '--write' value: disallow
+----
+
 
 ==== Parse Actions
 Sometimes, you want an argument to completely change the execution flow. For
@@ -1289,9 +1336,9 @@ of priority (largest first) with the order added as the tie breaker.
 
 The function should:
 
-* Check the options new value. Beware that options are process in the order
-  they appear on the command line, so comparing with another option is
-  usually better done in an <<#after-actions, after action>>.
+* Check, perhaps modify, the options new value. Beware that options are
+  processed in the order they appear on the command line, so comparing with
+  another option is usually better done in an <<#after-actions, after action>>.
 * Call cli.badUsage() with an error message if there's a problem.
 * Call cli.parseExit() if the program should stop without an error.
 
