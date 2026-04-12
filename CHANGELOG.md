@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 7.6.0 (2026-04-11)
 - Fixed - Use of std::wstring_convert class (deprecated C++17, removed C\++26)
 - Added - cvt.toString() support for wchar_t and wstring
 - Added - cli.toArgv*() and cli.toCmdline*() variants that record error on
