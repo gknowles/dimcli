@@ -604,7 +604,7 @@ public:
     //     |  '---<--'     |
     //     |               |
     //     '-------<-------'
-    //     For each opt defined
+    //     For each eligible opt
 
     // Returns false if cli.parseAborted() is true. Error information can be
     // extracted after cli.parse() completes, see cli.errMsg() and friends.

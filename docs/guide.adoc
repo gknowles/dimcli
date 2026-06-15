@@ -990,7 +990,7 @@ are top level or assigned to the command that was selected.
     |  '---<--'     |
     |               |
     '-------<-------'
-    For each opt defined
+    For each eligible opt
 
 
 ==== Environment Variables
