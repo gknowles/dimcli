@@ -24,12 +24,8 @@ jobs:
         platform: [Win32, x64]
         configuration: [Debug, Release]
         dll: [OFF, ON]
-        toolset: [v142, v143]
-        include:
-          - toolset: v142
-            image: windows-2025
-          - toolset: v143
-            image: windows-2025
+        toolset: [v142, v143, v145]
+        image: windows-2025-vs2026
     runs-on: ${{matrix.image}}
     defaults:
       run:
@@ -46,8 +42,8 @@ jobs:
         md build
         cd build
         set generator=Visual Studio 16 2019
-        if "${{matrix.toolset}}" == "v142" set generator=Visual Studio 17 2022
-        if "${{matrix.toolset}}" == "v143" set generator=Visual Studio 17 2022
+        if "${{matrix.toolset}}" == "v142" set generator=Visual Studio 18 2026
+        if "${{matrix.toolset}}" == "v143" set generator=Visual Studio 18 2026
         if "${{matrix.toolset}}" == "v145" set generator=Visual Studio 18 2026
         if "${{matrix.dll}}" == "ON" (
           set args=-DBUILD_SHARED_LIBS:BOOL=ON -DLINK_STATIC_RUNTIME=OFF
@@ -164,7 +160,7 @@ jobs:
 
     - name: Report Coverage
       if: matrix.coverage
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         fail_ci_if_error: true
