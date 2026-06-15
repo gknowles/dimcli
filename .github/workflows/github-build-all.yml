@@ -25,7 +25,7 @@ jobs:
         configuration: [Debug, Release]
         dll: [OFF, ON]
         toolset: [v142, v143, v145]
-        image: windows-2025-vs2026
+        image: [windows-2025-vs2026]
     runs-on: ${{matrix.image}}
     defaults:
       run:
