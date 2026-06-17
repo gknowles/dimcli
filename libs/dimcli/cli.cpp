@@ -39,15 +39,6 @@ namespace fs = DIMCLI_LIB_FILESYSTEM;
 #pragma clang diagnostic ignored "-Wunqualified-std-cast-call"
 #endif
 
-#ifdef __has_cpp_attribute
-#if __has_cpp_attribute(fallthrough)
-#define FALLTHROUGH [[fallthrough]]
-#endif
-#endif
-#ifndef FALLTHROUGH
-#define FALLTHROUGH
-#endif
-
 
 /****************************************************************************
 *
