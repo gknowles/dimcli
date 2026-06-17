@@ -11,10 +11,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## dimcli 7.6.0 (2026-04-11)
-- Fixed - Use of std::wstring_convert class (deprecated C++17, removed C\++26)
+- Fixed - Remove uses of std::wstring_convert class (deprecated C++17,
+          removed C\++26)
 - Added - cvt.toString() support for wchar_t and wstring
 - Added - cli.toArgv*() and cli.toCmdline*() variants that record error on
-          cvt.toString() failures.
+          cvt.toString() failures
 - Added - Convert configuration options: cvt.imbue() and cvt.getloc()
 - Fixed - toCmdline*() drops blank (empty string) arguments
 - Fixed - Static init order can disorder options/operands in help text
