@@ -88,7 +88,7 @@ for:
             if [ "$INSTALL_COMPILER" = "ON" ]; then
                 sudo apt-get update
                 sudo apt-get remove -y ${UNINSTALL_BEFORE}
-                sudo apt-get install -y ${INSTALL_BEFORE} ${CC}
+                sudo apt-get install -y ${INSTALL_BEFORE} ${CC} ${CXX}
             fi
     build_script:
       - mkdir -p build && cd build
