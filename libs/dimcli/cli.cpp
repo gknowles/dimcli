@@ -319,6 +319,17 @@ private:
         const vector<Cli::Arg> & args
     );
 
+    template<typename T>
+    void addDescNames(
+        string * list,
+        unsigned * flags,
+        bool * found,   // optional (may be nullptr)
+        const unordered_map<T, OptName> & names,
+        const Cli::OptBase & opt,
+        NameListType type,
+        const string & prefix
+    ) const;
+
     string nameDescList(
         const Cli & cli,
         const OptBase & opt,
@@ -2963,8 +2974,8 @@ bool Cli::commandExists(const string & name) const {
 //===========================================================================
 static bool includeName(
     const OptName & name,
-    NameListType type,
     const Cli::OptBase & opt,
+    NameListType type,
     bool flag,
     bool inverted
 ) {
@@ -2982,6 +2993,40 @@ static bool includeName(
         return inverted == bool(name.flags & fNameInvert);
     }
     return true;
+}
+
+//===========================================================================
+template <typename T>
+void Cli::OptIndex::addDescNames(
+    string * list,      // required
+    unsigned * flags,   // required
+    bool * found,       // optional (may be nullptr)
+    const unordered_map<T, OptName> & names,
+    const Cli::OptBase & opt,
+    NameListType type,
+    const string & prefix
+) const {
+    vector<const pair<const T, OptName> *> matched;
+    for (auto & n : names) {
+        if (!includeName(n.second, opt, type, opt.m_bool, opt.inverted()))
+            continue;
+        matched.push_back(&n);
+    }
+    if (matched.empty())
+        return;
+
+    sort(matched.begin(), matched.end(), [](auto & a, auto & b) {
+        return a->second.pos < b->second.pos;
+    });
+    for (auto && n : matched) {
+        if (!list->empty())
+            *list += ", ";
+        *list += prefix;
+        *list += n->first;
+    }
+    *flags = matched.back()->second.flags;
+    if (found)
+        *found = true;
 }
 
 //===========================================================================
@@ -3013,37 +3058,8 @@ string Cli::OptIndex::nameDescList(
     unsigned flags = 0;
 
     // Names
-    vector<const decltype(m_shortNames)::value_type *> snames;
-    for (auto & sn : m_shortNames)
-        snames.push_back(&sn);
-    sort(snames.begin(), snames.end(), [](auto & a, auto & b) {
-        return a->second.pos < b->second.pos;
-    });
-    for (auto && sn : snames) {
-        if (!includeName(sn->second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        flags = sn->second.flags;
-        if (!list.empty())
-            list += ", ";
-        list += '-';
-        list += sn->first;
-    }
-    vector<const decltype(m_longNames)::value_type *> lnames;
-    for (auto & ln : m_longNames)
-        lnames.push_back(&ln);
-    sort(lnames.begin(), lnames.end(), [](auto & a, auto & b) {
-        return a->second.pos < b->second.pos;
-    });
-    for (auto && ln : lnames) {
-        if (!includeName(ln->second, type, opt, opt.m_bool, opt.inverted()))
-            continue;
-        flags = ln->second.flags;
-        if (!list.empty())
-            list += ", ";
-        foundLong = true;
-        list += "--";
-        list += ln->first;
-    }
+    addDescNames(&list, &flags, nullptr, m_shortNames, opt, type, "-");
+    addDescNames(&list, &flags, &foundLong, m_longNames, opt, type, "--");
     if (opt.m_bool || list.empty())
         return list;
 

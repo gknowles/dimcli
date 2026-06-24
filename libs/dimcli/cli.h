@@ -672,11 +672,11 @@ public:
     // of an in progress cli.parse() or cli.exec() to false.
     void parseExit();
 
-    // Used to populate an option with an arbitrary input string through the
-    // standard parsing logic. Since it causes the transform, parse, and check
-    // actions to be called care must be taken to avoid infinite recursion if
-    // used from those actions. A nullptr val indicates that the option has an
-    // optional value and it was not specified.
+    // Populates an option with an arbitrary input string through the standard
+    // parsing logic. Since it causes the transform, parse, and check actions
+    // to be called care must be taken to avoid infinite recursion if used from
+    // those actions. A nullptr val indicates that the option has an optional
+    // value and it was not specified.
     [[nodiscard, deprecated]] bool parseValue(
         OptBase & out,
         const std::string & name,
@@ -1572,7 +1572,8 @@ bool Cli::Convert::toString_impl(
 *
 *   Cli
 *
-*   Additional members that must come after Cli::Convert is fully declared.
+*   Additional members that couldn't be defined until after Cli::Convert was
+*   fully declared.
 *
 ***/
 
