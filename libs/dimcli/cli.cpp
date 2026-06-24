@@ -60,9 +60,13 @@ const size_t kDefaultMaxLineWidth = kDefaultConsoleWidth - 1;
 
 /****************************************************************************
 *
-*   Declarations
+*   Cli - Constants
 *
 ***/
+
+// NOTE: These are char arrays because std::string would be at the mercy of
+// static init order or require the more recently standardized 'constinit'
+// keyword.
 
 // Command with options available to all commands including the top level.
 const char Cli::kInternalAllCmds[] = "-allWithTop";
@@ -72,6 +76,13 @@ const char Cli::kInternalAllSubcmds[] = "-allNoTop";
 
 // Name of group containing --help, --version, etc.
 const char Cli::kInternalOptGrp[] = "~";
+
+
+/****************************************************************************
+*
+*   Declarations
+*
+***/
 
 namespace {
 
