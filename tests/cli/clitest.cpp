@@ -1484,7 +1484,6 @@ Usage: test unknown [ARGS...]
     // Exclude options of unselected commands
     {
         cli = {};
-        cli.helpOpt().show(false);
         auto & n1 = cli.opt<bool>("1").desc("top level text");
         auto & o2 = cli.command("one").opt<bool>("2").desc("one text");
         auto & n3 = cli.command("").opt<bool>("3").desc("top level text");
@@ -1509,6 +1508,8 @@ Commands:
 Options:
   -1        top level text
   -3        top level text
+
+  --help    Show this message and exit.
 )");
 
         EXPECT_HELP(cli, "two", 1 + R"(
@@ -1517,6 +1518,8 @@ Usage: test two [OPTIONS]
 Options:
   -a        two text
   -c        two text
+
+  --help    Show this message and exit.
 )");
     }
 
