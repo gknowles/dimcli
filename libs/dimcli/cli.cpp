@@ -2292,7 +2292,7 @@ bool Cli::OptIndex::planOperandValue(
 static void addOptionMatch(
     vector<PlanValue> * out,
     ParseState & st,
-    const char * ptr,
+    const char ptr[],
     const vector<Cli::Arg> & args
 ) {
     st.optMatches[st.optName.opt] += 1;
@@ -4330,7 +4330,7 @@ string Cli::toGlibCmdline(size_t, char * argv[]) {
 // static
 string Cli::toGlibCmdline(const vector<string> & args) {
     auto ptrs = toPtrArgv(args);
-    return toGlibCmdline(ptrs.size(), (char**)ptrs.data());
+    return toGlibCmdline(ptrs.size(), (char **) ptrs.data());
 }
 
 
@@ -4622,7 +4622,7 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
 // static
 string Cli::toWindowsCmdline(const vector<string> & args) {
     auto ptrs = toPtrArgv(args);
-    return toWindowsCmdline(ptrs.size(), (char **)ptrs.data());
+    return toWindowsCmdline(ptrs.size(), (char **) ptrs.data());
 }
 
 
