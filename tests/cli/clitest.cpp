@@ -1481,13 +1481,51 @@ Usage: test unknown [ARGS...]
 )");
     }
 
+    // Exclude options of unselected commands
+    {
+        cli = {};
+        cli.helpOpt().show(false);
+        auto & n1 = cli.opt<bool>("1").desc("top level text");
+        auto & o2 = cli.command("one").opt<bool>("2").desc("one text");
+        auto & n3 = cli.command("").opt<bool>("3").desc("top level text");
+        auto & o3 = cli.command("one").opt<bool>("3").desc("one text");
+        auto & ta = cli.command("two").opt<bool>("a").desc("two text");
+        auto & tc = cli.command("two").opt<bool>("c").desc("two text");
+
+        EXPECT_PARSE(cli, "-1");
+        EXPECT(*n1 && !*o2 && !*n3 && !*o3);
+        EXPECT_PARSE(cli, "two -a -c");
+        EXPECT(*ta && *tc);
+        EXPECT_PARSE(cli, "-a", false);
+        EXPECT_ERR(cli, "Error: Unknown option: -a\n");
+
+        EXPECT_HELP(cli, "", 1 + R"(
+Usage: test [OPTIONS] COMMAND [ARGS...]
+
+Commands:
+  one
+  two
+
+Options:
+  -1        top level text
+  -3        top level text
+)");
+
+        EXPECT_HELP(cli, "two", 1 + R"(
+Usage: test two [OPTIONS]
+
+Options:
+  -a        two text
+  -c        two text
+)");
+    }
+
     // allCmd
     {
         cli = {};
+        cli.helpOpt().show(false);
         auto & n1 = cli.opt<bool>("1").desc("top level text");
         auto & n2 = cli.command("one").opt<bool>("2").desc("one text");
-        auto & n3 = cli.command("").opt<bool>("3").desc("top level text");
-        auto & n3b = cli.command("one").opt<bool>("3").desc("one text");
         auto & aa = cli.opt<bool>("a").allCmds(false).desc("all but top text");
         auto & ab = cli.opt<bool>("b").allCmds(false).desc("all but top text");
         auto & ac = cli.opt<bool>("c").allCmds(true).desc("all text");
@@ -1496,7 +1534,7 @@ Usage: test unknown [ARGS...]
         auto & tc = cli.command("two").opt<bool>("c").desc("two text");
 
         EXPECT_PARSE(cli, "-1");
-        EXPECT(*n1 && !*n2 && !*n3 && !*n3b);
+        EXPECT(*n1 && !*n2);
         EXPECT_PARSE(cli, "two -a -b -c -d");
         EXPECT(!*aa && *ab && !*ac && *ad && *ta && *tc);
         EXPECT_PARSE(cli, "-a", false);
@@ -1511,24 +1549,18 @@ Commands:
 
 Options:
   -1        top level text
-  -3        top level text
   -c        all text
   -d        all text
-
-  --help    Show this message and exit.
 )");
         EXPECT_HELP(cli, "one", 1 + R"(
 Usage: test one [OPTIONS]
 
 Options:
   -2        one text
-  -3        one text
   -a        all but top text
   -b        all but top text
   -c        all text
   -d        all text
-
-  --help    Show this message and exit.
 )");
     }
 
