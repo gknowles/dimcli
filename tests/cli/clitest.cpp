@@ -1213,7 +1213,6 @@ Options:
     }
 
     // implicit value
-    // helpOpt override
     {
         cli = {};
         int count;
@@ -1224,7 +1223,10 @@ Options:
         EXPECT_EQUAL(count, 2);
         EXPECT_PARSE(cli, "--count");
         EXPECT_EQUAL(count, 3);
+    }
 
+    // helpOpt override
+    {
         cli = {};
         cli.opt("help. ?", false)
             .check([](auto & cli, auto & opt, auto &) {
@@ -1369,11 +1371,13 @@ static void cmdTests() {
         EXPECT_EQUAL(c1.cmdTitle(), "Primary");
         c1.desc("First sentence of description. Rest of one's description.");
         Dim::Cli c2;
-        auto & a2 = c2.command("two").cmdGroup("Additional").opt("a", 2);
+        c2.command("two", "Misc");
+        EXPECT(c2.title() == "Misc");
+        c2.group({});
+        auto & a2 = c2.cmdGroup("Additional").opt("a", 2);
 
         // create option and hide it underneath an undefined command
         c2.opt("b", 99).command("three");
-
         EXPECT_PARSE(c1, "one -a3");
         EXPECT_EQUAL(*a1, 3);
         EXPECT_EQUAL(*a2, 2);
