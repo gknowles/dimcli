@@ -2338,8 +2338,8 @@ bool Cli::OptIndex::planOptionValue(
     auto ptr = args[st.argPos].text.c_str();
     addOptionMatch(out, st, ptr, args);
 
-    // Option has value list, use following arguments up to the next option as
-    // values.
+    // Option has value list, use following arguments up to the next option
+    // shaped argument as values.
     if (st.optName.flags & fNameList) {
         while (st.argPos + 1 < args.size()) {
             ptr = args[st.argPos + 1].text.c_str();
