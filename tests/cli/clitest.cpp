@@ -1684,6 +1684,9 @@ void argvTests() {
         // casting from Dim::Cli::toWindowsCmdline as a workaround. This
         // doesn't happen unless it's overloaded. Reported as
         // https://github.com/llvm/llvm-project/issues/62388
+        //
+        // Ultimately resolved by clang as not a bug with the understanding
+        // that it should also fail when not overloaded... :P
         auto fn = static_cast<CmdFnPtr>(Dim::Cli::toWindowsCmdline);
 
         auto fnv = cli.toWindowsArgv;
