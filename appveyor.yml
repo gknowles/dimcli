@@ -1,0 +1,105 @@
+# Copyright Glen Knowles 2016 - 2026.
+# Distributed under the Boost Software License, Version 1.0.
+#
+# appveyor.yml
+
+version: "{build}"
+environment:
+  matrix:
+    - TOOLSET: v140
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+      WINDOWS_SDK: 8.1
+    - TOOLSET: v141
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+      WINDOWS_SDK: 10.0.19041.0
+
+    - CXX: clang++-6.0
+      CC: clang-6.0
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      INSTALL_COMPILER: ON
+
+    - CXX: clang++-10
+      CC: clang-10
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-11
+      CC: clang-11
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - CXX: clang++-12
+      CC: clang-12
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+
+    - CXX: g++-7
+      CC: gcc-7
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      INSTALL_COMPILER: ON
+    - CXX: g++-8
+      CC: gcc-8
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      INSTALL_COMPILER: ON
+    - CXX: g++-9
+      CC: gcc-9
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+matrix:
+  exclude:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+      platform: Win32
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      platform: Win32
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      platform: Win32
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+      platform: Win32
+    - BUILD_COVERAGE: ON
+      configuration: Release
+
+platform:
+  - Win32
+  - x64
+configuration:
+  - Debug
+  - Release
+
+for:
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    build_script:
+      - md build
+      - cd build
+      - cmake -G "%GENERATOR%" -A %PLATFORM% -T %TOOLSET%
+          -DCMAKE_SYSTEM_VERSION=%WINDOWS_SDK% ..
+      - cmake . -DCMAKE_BUILD_TYPE=%CONFIGURATION%
+          -DCMAKE_INSTALL_PREFIX=publish
+          -DINSTALL_LIBS:BOOL=ON
+      - cmake --build . --target install --config %CONFIGURATION%
+      - cd ..
+  - matrix:
+      only:
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+    install:
+      - sh: |
+            if [ "$INSTALL_COMPILER" = "ON" ]; then
+                sudo apt-get update
+                sudo apt-get remove -y ${UNINSTALL_BEFORE}
+                sudo apt-get install -y ${INSTALL_BEFORE} ${CC} ${CXX}
+            fi
+    build_script:
+      - mkdir -p build && cd build
+      - cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+      - cmake --build . --config ${CONFIGURATION}
+      - cd ..
+    after_test:
+      - sh: |
+            if [ "$BUILD_COVERAGE" = "ON" ]; then
+                bash <(curl -s https://codecov.io/bash)
+            fi
+
+test_script:
+  - '"bin/cli" --test --locale=en_US.utf8'

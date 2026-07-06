@@ -5,16 +5,33 @@ Distributed under the Boost Software License, Version 1.0.
 
 # dimcli
 
-| MSVC 2015, 2017, 2019, 2022 / CLANG 6, 11, 12, 13 / GCC 7, 10, 11 | Test Coverage |
-| :---------------------------------------------------------------: | :-----------: |
-| [![Build][gh-image]][gh-link] | [![Codecov][cc-image]][cc-link] |
+| Branch | MSVC 2015-2017<br> CLANG 6, 10-12<br> GCC 7-9 | MSVC 2019-2026<br> CLANG 13-21<br> GCC 10-14 | Test Coverage |
+| :----: | :----------------: | :----------------: | :-------------------: |
+| dev    | [![Build][11]][22] | [![Build][13]][24] | [![Coverage][15]][26] |
+| master | [![Build][21]][12] | [![Build][23]][14] | [![Coverage][25]][16] |
+| 6.2.x  | [![Build][31]][32] | [![Build][33]][34] | [![Coverage][35]][36] |
 
-[gh-image]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml/badge.svg "GitHub Actions"
-[gh-link]: https://github.com/gknowles/dimcli/actions/workflows/github-build.yml
-[av-image]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
-[av-link]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
-[cc-image]: https://img.shields.io/badge/dynamic/json?color=success&label=codecov&logo=codecov&query=%24.commit.totals.c&suffix=%25&url=https%3A%2F%2Fcodecov.io%2Fapi%2Fgh%2Fgknowles%2Fdimcli%2Fbranch%2Fmaster "Codecov"
-[cc-link]: https://codecov.io/gh/gknowles/dimcli
+[11]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/dev?svg=true "AppVeyor"
+[12]: https://ci.appveyor.com/project/gknowles/dimcli/branch/dev
+[13]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Adev "GitHub"
+[14]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Adev
+[15]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
+[16]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
+
+[21]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
+[22]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
+[23]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Amaster "GitHub"
+[24]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Amaster
+[25]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
+[26]: https://app.codecov.io/gh/gknowles/dimcli/tree/master
+
+[31]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/6.2.x?svg=true "AppVeyor"
+[32]: https://ci.appveyor.com/project/gknowles/dimcli/branch/6.2.x
+[33]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3A6.2.x "GitHub"
+[34]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3A6.2.x
+[35]: https://codecov.io/gh/gknowles/dimcli/branch/6.2.x/graph/badge.svg "Codecov"
+[36]: https://app.codecov.io/gh/gknowles/dimcli/tree/6.2.x
+
 
 C++ command line parser toolkit for kids of all ages.
 
@@ -51,7 +68,7 @@ int main(int argc, char * argv[]) {
     cli.opt(&count, "c n count", 1).desc("Times to say hello.");
 
     // Or, define option without referencing an existing variable. The variable
-    // to populate is then implicitly allocated and the returned object is used 
+    // to populate is then implicitly allocated and the returned object is used
     // like a smart pointer to access it.
     auto & name = cli.opt<string>("name", "Unknown")
         .desc("Who to greet.");

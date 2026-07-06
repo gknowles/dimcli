@@ -11,19 +11,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unmerged
+- x Fixed (Since 4.0.1) - Unqualified call to std::move() in some opt methods
+- x Fixed (Since 1.0.0) - Compile error in Clang 16 casting from cli.toWindowsCmdline
+- x Fixed (Since 6.0.0) - Divide by zero when cli.maxWidth() set to out of range value
+- x Fixed (Since 6.1.0) - vcpkg build fails for x64-windows-static
+- x Fixed (Since 4.0.1) - Assert calling cli.title() immediately after creating new option
+          group via cli.command(...)
+- x Fixed (Since 6.0.0) - No error when too few values for option named after optional operand,
+          like "[FILES] files"
+- x Fixed (Since 6.0.0) - Wrong argument sometimes reported by "Unexpected argument" error
+- x Fixed (Since 3.0.0) - opt.defaultDesc("") doesn't suppress a flag value's (default) clause
+- x Fixed (Since 6.1.0) - Crash in cli.printText() processing some custom tables
+- x Fixed (Since 2.0.0) - Remove uses of std::wstring_convert class (deprecated C++17,
+          removed C\++26)
+- x Fixed (Since 4.0.1) - toCmdline*() drops blank (empty string) arguments
+
 ## dimcli 6.2.1 (2022-02-07)
-- Fixed - minWidth of 0 rejected in text columns
+- Fixed (Since 6.1.0) - minWidth of 0 rejected in text columns
 
 ## dimcli 6.2.0 (2021-09-06)
 - Cosmetic - Stop using cmake recursively
-- Added - More cli.toArgv() and cli.toCmdline() overloads
-- Fixed - cli.toArgvL() and cli.toCmdlineL() not using std::forward()
-- Fixed - Methods of temporaries returning Cli& can be bound to references
+- Added - More Cli::toArgv() and Cli\::toCmdline() overloads
+- Fixed (Since 6.0.0) - Cli::toArgvL() and Cli\::toCmdlineL() not using std\::forward()
+- Fixed (Since 1.0.0) - Methods of temporaries returning Cli& can be bound to references
 - Added - Allow chaining of more cli methods
 
 ## dimcli 6.1.0 (2021-06-04)
 - Added - cli.printText()
 - Added - Render Name/Desc style tables in header and footer
+- Added - cli.parse() overloads with args as rvalue reference
 
 ## dimcli 6.0.0 (2020-12-21)
 - Cosmetic - Converted docs from Markdown to AsciiDoc
@@ -39,18 +56,18 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Removed - Argument 'nargs' of cli.optVec(), use optVec.size(...) instead
 - Added - Allow unambiguous positionals before subcommands
 - Added - Optionally capture arbitrary arguments of unknown subcommands
-- Added - Option to change column at which errors and help text wraps
+- Added - cli.maxWidth() to change column at which errors and help text wraps
 - Changed - Default text columns reduced on narrow console windows
 - Changed - Moved opt.toValueDesc() to cli.valueDesc()
-- Fixed - Compile fails with OptVec&lt;bool> due to vector&lt;bool> weirdness
+- Fixed (Since 1.0.0) - Compile fails with OptVec&lt;bool> due to vector&lt;bool> weirdness
 - Changed - cli.exec() returns exit code instead of just whether it's 0
 - Changed - Command handlers now return void
-- Fixed - Meaningless and ignored "--no" version appears for flag values
-- Added - opt.finalOpt() makes all following arguments positional
+- Fixed (Since 1.0.0) - Meaningless and ignored "--no" version appears for flag values
+- Added - opt.finalOpt() makes all following arguments operands
 - Changed - Renamed cli.printPositionals() to cli.printOperands()
 
 ## dimcli 5.0.2 (2020-01-14)
-- Fixed - Name conflict with c++20 std::boolean
+- Fixed (Since 1.0.0) - Name conflict with C++20 std::boolean
 
 ## dimcli 5.0.1 (2019-08-26)
 - Added - Support and automated testing for VS2019
@@ -61,7 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Renamed cli.runCommand() to cli.commandMatched()
 - Added - Optional error detail argument to cli.badUsage()
 - Changed - Replaced opt.setValueDesc() with opt.toValueDesc()
-- Fixed - Invalid array access using optVec.from() from parse action
+- Fixed (Since 1.0.0) - Invalid array access using optVec.from() from parse action
 - Changed - Default constructed T added to optVec&lt;T> before parse action
 - Added - cli.badRange() helper
 - Added - opt.siUnits(), opt.timeUnits(), and opt.anyUnits()
@@ -70,13 +87,13 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - locale now set per option instead of for entire cli
 
 ## dimcli 4.1.0 (2018-12-05)
-- Fixed - Order of keys in help text of multi-keyed options non-deterministic
-- Fixed - optVec flag values with inverted keys aren't ignored
-- Fixed - Nested response files not resolved relative to parent
-- Fixed - Not all response files expanded when multiple appear
-- Added - Trim spaces around positional argument names
-- Fixed - Error detail for options with two choices missing "or"
-- Fixed - Subcommand help summary terminated by '.' instead of "[.!?] "
+- Fixed (Since 1.0.0) - Order of keys in help text of multi-keyed options non-deterministic
+- Fixed (Since 4.0.1) - optVec flag values with inverted keys aren't ignored
+- Fixed (Since 1.0.0) - Nested response files not resolved relative to parent
+- Fixed (Since 1.0.0) - Not all response files expanded when multiple appear
+- Added - Trim spaces around operand argument names
+- Fixed (Since 1.0.0) - Error detail for options with two choices missing "or"
+- Fixed (Since 1.0.0) - Subcommand help summary terminated by '.' instead of "[.!?] "
 - Added - Allow non-bool options to be inverted ('!' name prefix)
 - Fixed - Failure loading wchar_t response files on linux
 
@@ -87,9 +104,9 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Conditionally use &lt;filesystem> instead of
           &lt;experimental/filesystem>
 - Added - Allow limited operation when &lt;filesystem> not available
-- Fixed - "--opt=" should use "" as value instead of the next arg
+- Fixed (Since 1.0.0) - "--opt=" should use "" as value instead of the next arg
 - Added - Word wrap list of choices in error detail
-- Fixed - Parse errors for optVec report an empty string for the opt name
+- Fixed (Since 1.0.0) - Parse errors for optVec report an empty string for the opt name
 - Added - Command groups for grouping subcommands in help text
 - Added - cli.toCmdline() static method
 
@@ -101,17 +118,17 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Relax clamp and range to allow the low and high to be equal
 
 ## dimcli 3.0.0 (2017-10-17)
-- Added - Support for clang >= 3.6
-- Added - Support for gcc >= 6.2
+- Added - Support for clang (starting at 3.6)
+- Added - Support for gcc (starting at 6.2)
 - Added - Show default option values in help text
 - Added - Cli() copy constructor
-- Fixed - cli.toPtrArgv() trailing nullptr improperly added
+- Fixed (Since 1.0.0) - cli.toPtrArgv() trailing nullptr improperly added
 - Changed - Rename cli.run() to cli.exec() and invert the return value
-- Fixed - Internal group name relies on static init order
+- Fixed (Since 1.0.0) - Internal group name relies on static init order
 - Added - opt.require()
-- Fixed - After actions of unselected commands should not be run
+- Fixed (Since 1.0.0) - After parse actions of unselected commands should not be run
 - Added - opt.defaultDesc() to modify "(default: )" clause
-- Fixed - "No command given." should return kExitUsage
+- Fixed (Since 1.0.0) - "No command given." should return kExitUsage
 - Changed - Command header and footer default to the top level values
 - Changed - cli.print*() functions now non-const
 - Added - cli.helpCmd()
@@ -121,9 +138,9 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Rename opt.write*() functions to opt.print*()
 - Added - Reduce footprint to just two files (cli.h & cli.cpp)
 - Added - opt.writeUsageEx() includes option names in usage text
-- Fixed - opt.choice() should be usable when no string conversion exists
-- Fixed - Help text for choices not aligned
-- Fixed - Option groups sorted by name instead of sort key
+- Fixed (Since 1.0.0) - opt.choice() should be usable when no string conversion exists
+- Fixed (Since 1.0.0) - Help text for choices not aligned
+- Fixed (Since 1.0.0) - Option groups sorted by name instead of sort key
 
 ## dimcli 1.0.3 (2016-12-03)
 First public release

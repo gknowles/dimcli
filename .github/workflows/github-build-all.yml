@@ -1,0 +1,167 @@
+# Copyright Glen Knowles 2021 - 2026.
+# Distributed under the Boost Software License, Version 1.0.
+#
+# github-build.yml
+#
+# Configuration for GitHub Actions
+# https://docs.github.com/en/actions/writing-workflows
+#   /workflow-syntax-for-github-actions
+
+name: build-all
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+  workflow_dispatch: {}
+
+jobs:
+  build-win:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [Win32, x64]
+        configuration: [Debug, Release]
+        dll: [OFF, ON]
+        toolset: [v142, v143, v145]
+        image: [windows-2025-vs2026]
+    runs-on: ${{matrix.image}}
+    defaults:
+      run:
+        shell: cmd
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: true
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: |
+        md build
+        cd build
+        set generator=Visual Studio 16 2019
+        if "${{matrix.toolset}}" == "v142" set generator=Visual Studio 18 2026
+        if "${{matrix.toolset}}" == "v143" set generator=Visual Studio 18 2026
+        if "${{matrix.toolset}}" == "v145" set generator=Visual Studio 18 2026
+        if "${{matrix.dll}}" == "ON" (
+          set args=-DBUILD_SHARED_LIBS:BOOL=ON -DLINK_STATIC_RUNTIME=OFF
+        )
+        cmake .. -G "%generator%" -A ${{matrix.platform}}^
+          -T ${{matrix.toolset}} %args%
+        cmake . -DCMAKE_BUILD_TYPE=${{matrix.configuration}}^
+          -DCMAKE_INSTALL_PREFIX=publish -DINSTALL_LIBS:BOOL=ON
+        cmake --build . --target install --config ${{matrix.configuration}}
+        cd publish
+        :: 7z a dimcli-latest.zip include lib
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: '"bin/cli" --test'
+
+  build-unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+        env:
+          - CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+          - CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
+          - CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
+          - CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
+          - CXX=clang++-17 CC=clang-17 INSTALL_LLVM=17
+          - CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
+          - CXX=clang++-19 CC=clang-19 INSTALL_LLVM=19
+          - CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
+          - CXX=clang++-21 CC=clang-21 INSTALL_LLVM=21
+          - CXX=g++-10 CC=gcc-10
+          - CXX=g++-11 CC=gcc-11
+          - CXX=g++-12 CC=gcc-12
+          - CXX=g++-13 CC=gcc-13
+          - CXX=g++-14 CC=gcc-14
+        include:
+          - env: CXX=clang++-13 CC=clang-13 INSTALL_LLVM=13
+            image: ubuntu-22.04
+          - env: CXX=clang++-14 CC=clang-14 INSTALL_LLVM=14
+            image: ubuntu-22.04
+          - env: CXX=clang++-15 CC=clang-15 INSTALL_LLVM=15
+            image: ubuntu-22.04
+          - env: CXX=clang++-16 CC=clang-16 INSTALL_LLVM=16
+            image: ubuntu-22.04
+          - env: CXX=clang++-17 CC=clang-17 INSTALL_LLVM=17
+            image: ubuntu-22.04
+          - env: CXX=clang++-18 CC=clang-18 INSTALL_LLVM=18
+            image: ubuntu-24.04
+          - env: CXX=clang++-19 CC=clang-19 INSTALL_LLVM=19
+            image: ubuntu-24.04
+          - env: CXX=clang++-20 CC=clang-20 INSTALL_LLVM=20
+            image: ubuntu-24.04
+          - env: CXX=clang++-21 CC=clang-21 INSTALL_LLVM=21
+            image: ubuntu-24.04
+          - env: CXX=g++-10 CC=gcc-10
+            image: ubuntu-22.04
+          - env: CXX=g++-11 CC=gcc-11
+            image: ubuntu-22.04
+          - env: CXX=g++-12 CC=gcc-12
+            image: ubuntu-24.04
+          - env: CXX=g++-13 CC=gcc-13
+            image: ubuntu-24.04
+          - env: CXX=g++-14 CC=gcc-14
+            image: ubuntu-24.04
+
+    runs-on: ${{matrix.image}}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: true
+
+    - name: Install
+      run: |
+        export ${{matrix.env}}
+        if [ -n "$INSTALL_LLVM_BIONIC" ]; then
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | \
+                sudo apt-key add -
+            sudo add-apt-repository "deb  http://apt.llvm.org/bionic/  \
+                llvm-toolchain-bionic-$INSTALL_LLVM_BIONIC  main"
+            export INSTALL_APT=${INSTALL_LLVM_BIONIC}
+        fi
+        if [ -n "$INSTALL_LLVM" ]; then
+            wget https://apt.llvm.org/llvm.sh
+            chmod +x llvm.sh
+            sudo ./llvm.sh $INSTALL_LLVM
+        elif [ -n "$INSTALL_APT" ]; then
+            sudo apt-get update
+            sudo apt-get install software-properties-common
+            sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+            sudo apt-get update
+            sudo apt-get install -y ${CC} ${CXX} ${{matrix.apt-get}}
+        else
+            sudo apt-get update
+        fi
+        sudo apt-get install -y locales-all
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: |
+        export ${{matrix.env}}
+        mkdir -p build && cd build
+        cmake .. -DBUILD_COVERAGE:BOOL=${BUILD_COVERAGE}
+        cmake --build . --config ${{matrix.configuration}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: |
+        export ${{matrix.env}}
+        export LANG=en_US.UTF-8
+        export COLUMNS=80
+        bin/cli --test
+
+    - name: Report Coverage
+      if: matrix.coverage
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{secrets.CODECOV_TOKEN}}
+        fail_ci_if_error: true
+        flags: ${{github.ref_name}}
