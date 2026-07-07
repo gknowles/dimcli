@@ -1,5 +1,5 @@
 ﻿<!--
-Copyright Glen Knowles 2016 - 2021.
+Copyright Glen Knowles 2016 - 2026.
 Distributed under the Boost Software License, Version 1.0.
 -->
 
@@ -7,23 +7,23 @@ Distributed under the Boost Software License, Version 1.0.
 
 | Branch | MSVC 2015-2017<br> CLANG 6, 10-12<br> GCC 7-9 | MSVC 2019-2026<br> CLANG 13-21<br> GCC 10-14 | Test Coverage |
 | :----: | :----------------: | :----------------: | :-------------------: |
-| dev    | [![Build][11]][22] | [![Build][13]][24] | [![Coverage][15]][26] |
-| master | [![Build][21]][12] | [![Build][23]][14] | [![Coverage][25]][16] |
+| master | [![Build][11]][22] | [![Build][13]][24] | [![Coverage][15]][26] |
+| dev    | [![Build][21]][12] | [![Build][23]][14] | [![Coverage][25]][16] |
 | 6.2.x  | [![Build][31]][32] | [![Build][33]][34] | [![Coverage][35]][36] |
 
-[11]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/dev?svg=true "AppVeyor"
-[12]: https://ci.appveyor.com/project/gknowles/dimcli/branch/dev
-[13]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Adev "GitHub"
-[14]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Adev
-[15]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
-[16]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
+[11]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
+[12]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
+[13]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Amaster "GitHub"
+[14]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Amaster
+[15]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
+[16]: https://app.codecov.io/gh/gknowles/dimcli/tree/master
 
-[21]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
-[22]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
-[23]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Amaster "GitHub"
-[24]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Amaster
-[25]: https://codecov.io/gh/gknowles/dimcli/branch/master/graph/badge.svg "Codecov"
-[26]: https://app.codecov.io/gh/gknowles/dimcli/tree/master
+[21]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/dev?svg=true "AppVeyor"
+[22]: https://ci.appveyor.com/project/gknowles/dimcli/branch/dev
+[23]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3Adev "GitHub"
+[24]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3Adev
+[25]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
+[26]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
 
 [31]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/6.2.x?svg=true "AppVeyor"
 [32]: https://ci.appveyor.com/project/gknowles/dimcli/branch/6.2.x
