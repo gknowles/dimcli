@@ -2350,7 +2350,7 @@ static bool assignOperands(
         return cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
     if (usedPos != numPos) {
         assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
-            "not all operands mapped to variables"); 
+            "not all operands mapped to variables");
     }
 
     int ipos = 0;       // Operand being matched.
@@ -2403,7 +2403,7 @@ static bool badMinMatched(
 //===========================================================================
 bool Cli::parse(vector<string> & args) {
     // The 0th (name of this program) opt must always be present.
-    assert(!args.empty() 
+    assert(!args.empty()
         && "at least one argument (the program name) required");
 
     Config::touchAllCmds(*this);
@@ -3605,12 +3605,11 @@ void Cli::consoleEnableEcho(bool enable) {
 unsigned Cli::consoleWidth(bool queryWidth) {
     winsize w;
     if (queryWidth) {
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1
-            || ioctl(STDIN_FILENO, TIOCGWINSZ, &w) != -1
-            || ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1
-        ) {
-            if (w.ws_col)
-                return w.ws_col;
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1) {
+            // Some CI platforms (Github Actions) run unix test scripts without
+            // a console attached, making it impossible to get coverage for
+            // this line in those environments.
+            if (w.ws_col) return w.ws_col;  // LCOV_EXCL_LINE
         }
 #if !defined(DIMCLI_LIB_NO_ENV)
         if (auto val = getenv("COLUMNS")) {
