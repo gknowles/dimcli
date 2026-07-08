@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed (Since 6.1.0) - vcpkg build fails for x64-windows-static
 - Fixed (Since 4.0.1) - Assert calling cli.title() immediately after creating new option
           group via cli.command(...)
-- x Fixed (Since 6.0.0) - No error when too few values for option named after optional operand,
+- Fixed (Since 6.0.0) - No error when too few values for option named after optional operand,
           like "[FILES] files"
 - x Fixed (Since 6.0.0) - Wrong argument sometimes reported by "Unexpected argument" error
 - x Fixed (Since 3.0.0) - opt.defaultDesc("") doesn't suppress a flag value's (default) clause
