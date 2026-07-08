@@ -1383,18 +1383,32 @@ ostream & Cli::conout() {
 }
 
 //===========================================================================
-Cli & Cli::maxWidth(int maxWidth, int minDescCol, int maxDescCol) & {
-    m_cfg->updateWidth(maxWidth);
-    if (minDescCol)
-        m_cfg->minKeyWidth = 100.0f * minDescCol / maxWidth;
-    if (maxDescCol)
-        m_cfg->maxKeyWidth = 100.0f * maxDescCol / maxWidth;
+Cli & Cli::maxWidth(int width, int minDescCol, int maxDescCol) & {
+    // Make sure the width is at least 20 characters.
+    if (width < 20)
+        width = 20;
+
+    // Set default values for min/max key width.
+    m_cfg->updateWidth(width);
+
+    if (minDescCol && minDescCol < width) {
+        // Update minNameColPct if minDescCol is set and valid.
+        m_cfg->minKeyWidth = 100.0f * minDescCol / width;
+    }
+    if (maxDescCol
+        && (!minDescCol || maxDescCol >= minDescCol)
+        && maxDescCol < width
+        ) {
+        // Update maxNameColPct if maxDescCol is set and valid.
+        m_cfg->maxKeyWidth = 100.0f * maxDescCol / width;
+    }
+
     return *this;
 }
 
 //===========================================================================
-Cli && Cli::maxWidth(int maxW, int minDescCol, int maxDescCol) && {
-    return move(maxWidth(maxW, minDescCol, maxDescCol));
+Cli && Cli::maxWidth(int width, int minDescCol, int maxDescCol) && {
+    return move(maxWidth(width, minDescCol, maxDescCol));
 }
 
 //===========================================================================
