@@ -1240,10 +1240,16 @@ Usage: test help [-u, --usage] [--help] [COMMAND]
 void argvTests() {
     int line = 0;
     CliTest cli;
+    using CmdFnPtr = string(*)(size_t, char**);
 
     // windows style argument parsing
     {
-        auto fn = cli.toWindowsCmdline;
+        // Clang gives a compile error for casting from f.toWindowsCmdline,
+        // casting from Dim::Cli::toWindowsCmdline as a workaround. This
+        // doesn't happen unless it's overloaded. Reported as
+        // https://github.com/llvm/llvm-project/issues/62388
+        auto fn = static_cast<CmdFnPtr>(Dim::Cli::toWindowsCmdline);
+
         auto fnv = cli.toWindowsArgv;
         EXPECT_ARGV(fnv, R"( a "" "c )", {"a", "", "c "});
         EXPECT_ARGV(fnv, R"(a"" b ")", {"a", "b", ""});
@@ -1262,7 +1268,7 @@ void argvTests() {
 
     // gnu style
     {
-        auto fn = cli.toGnuCmdline;
+        auto fn = static_cast<CmdFnPtr>(Dim::Cli::toGnuCmdline);
         auto fnv = cli.toGnuArgv;
         EXPECT_ARGV(fnv, R"(\a'\b'  'c')", {"ab", "c"});
         EXPECT_ARGV(fnv, "a 'b", {"a", "b"});
@@ -1274,7 +1280,7 @@ void argvTests() {
 
     // glib style
     {
-        auto fn = cli.toGlibCmdline;
+        auto fn = static_cast<CmdFnPtr>(Dim::Cli::toGlibCmdline);
         auto fnv = cli.toGlibArgv;
         EXPECT_ARGV(fnv, 1 + R"(
 \a\
