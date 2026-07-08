@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed (Since 4.0.1) - Unqualified call to std::move() in some opt methods
 - Fixed (Since 1.0.0) - Compile error in Clang 16 casting from cli.toWindowsCmdline
 - x Fixed (Since 6.0.0) - Divide by zero when cli.maxWidth() set to out of range value
-- x Fixed (Since 6.1.0) - vcpkg build fails for x64-windows-static
+- Fixed (Since 6.1.0) - vcpkg build fails for x64-windows-static
 - x Fixed (Since 4.0.1) - Assert calling cli.title() immediately after creating new option
           group via cli.command(...)
 - x Fixed (Since 6.0.0) - No error when too few values for option named after optional operand,
