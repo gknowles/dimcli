@@ -1038,6 +1038,13 @@ void cmdTests() {
     istringstream in;
     ostringstream out;
 
+    // setting command must also initialize option group
+    {
+        cli = {};
+        cli.command({}, "Basic options");
+        EXPECT(cli.sortKey() == "Basic options");
+    }
+
     // subcommands - multiple handles to shared configuration
     {
         Dim::Cli c1;
