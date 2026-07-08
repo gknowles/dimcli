@@ -2359,8 +2359,14 @@ static bool assignOperands(
         }
     }
 
-    if (usedPos < numPos)
-        return cli.badUsage("Unexpected argument", rawValues[usedPos].ptr);
+    if (usedPos < numPos) {
+        auto val = rawValues;
+        for (int ipos = 0;; ++val, ++ipos) {
+            if (val->type == RawValue::kOperand && ipos >= usedPos)
+                break;
+        }
+        return cli.badUsage("Unexpected argument", val->ptr);
+    }
     if (usedPos != numPos) {
         assert(!"internal dimcli error: "   // LCOV_EXCL_LINE
             "not all operands mapped to variables");

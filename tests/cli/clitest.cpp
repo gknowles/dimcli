@@ -482,9 +482,13 @@ void parseTests() {
     EXPECT_ERR(cli, "Error: Unknown command: x\n");
 
     cli = {};
+    cli.opt("f", true);
     EXPECT_PARSE(cli, "x", false);
     EXPECT_ERR(cli, "Error: Unexpected argument: x\n");
+    EXPECT_PARSE(cli, "-f y", false);
+    EXPECT_ERR(cli, "Error: Unexpected argument: y\n");
 
+    cli = {};
     cli.opt("n", 1);
     cli.opt("?o", 2).check([](auto & cli, auto & opt, auto & val) {
         return cli.badUsage("Malformed '"s + opt.from() + "' value: " + val);
