@@ -2176,8 +2176,8 @@ static bool matchOperands(
 
     if (usedOprs < numOprs) {
         auto val = planValues;
-        for (int ipos = -1;; ++val) {
-            if (val->type == PlanValue::kOperand && ++ipos >= usedOprs)
+        for (int ipos = 0;; ++val, ++ipos) {
+            if (val->type == PlanValue::kOperand && ipos >= usedOprs)
                 break;
         }
         cli.badUsage("Unexpected argument", val->ptr);
