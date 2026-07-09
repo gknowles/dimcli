@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed (Since 6.0.0) - No error when too few values for option named after optional operand,
           like "[FILES] files"
 - Fixed (Since 6.0.0) - Wrong argument sometimes reported by "Unexpected argument" error
-- x Fixed (Since 3.0.0) - opt.defaultDesc("") doesn't suppress a flag value's (default) clause
+- Fixed (Since 3.0.0) - opt.defaultDesc("") doesn't suppress a flag value's (default) clause
 - x Fixed (Since 6.1.0) - Crash in cli.printText() processing some custom tables
 - x Fixed (Since 2.0.0) - Remove uses of std::wstring_convert class (deprecated C++17,
           removed C\++26)

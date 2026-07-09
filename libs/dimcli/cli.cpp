@@ -3114,7 +3114,11 @@ string Cli::OptIndex::desc(
     } else if (!opt.m_choiceDescs.empty()) {
         // "default" tag is added to individual choices later.
     } else if (opt.m_flagValue && opt.m_flagDefault) {
-        suffix += "(default)";
+        if (!opt.m_defaultDesc.empty() && !opt.m_defaultDesc[0]) {
+            // Explicit and null default description, suppress the clause.
+        } else {
+            suffix += "(default)";
+        }
     } else if (opt.m_vector) {
         auto minVec = opt.minSize();
         auto maxVec = opt.maxSize();
@@ -3134,8 +3138,10 @@ string Cli::OptIndex::desc(
                 tmp.clear();
         } else {
             tmp = opt.m_defaultDesc;
-            if (!tmp[0])
+            if (!tmp[0]) {
+                // Explicit and null default description, suppress the clause.
                 tmp.clear();
+            }
         }
         if (!tmp.empty())
             suffix += "(default: " + tmp + ")";
