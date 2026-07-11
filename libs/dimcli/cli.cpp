@@ -4300,25 +4300,23 @@ string Cli::toGlibCmdline(size_t, char * argv[]) {
         return out;
     for (;;) {
         auto ptr = *argv;
-        if (!*ptr) {
-            out.append(2, '\'');
-        } else {
-            for (;;) {
-                switch (*ptr) {
-                    // Must escape
-                case '|': case '&': case ';': case '<': case '>': case '(':
-                case ')': case '$': case '`': case '\\': case '"': case '\'':
-                case ' ': case '\t': case '\r': case '\n': case '\f':
-                case '\v':
-                    // Should escape
-                case '*': case '?': case '[': case '#': case '~': case '=':
-                case '%':
-                    out += '\\';
-                }
-                out += *ptr;
-                if (!*++ptr)
-                    break;
+        for (; *ptr; ++ptr) {
+            switch (*ptr) {
+                // Must escape
+            case '|': case '&': case ';': case '<': case '>': case '(':
+            case ')': case '$': case '`': case '\\': case '"': case '\'':
+            case ' ': case '\t': case '\r': case '\n': case '\f':
+            case '\v':
+                // Should escape
+            case '*': case '?': case '[': case '#': case '~': case '=':
+            case '%':
+                out += '\\';
             }
+            out += *ptr;
+        }
+        if (ptr == *argv) {
+            // Zero length string operand.
+            out.append(2, '\'');
         }
         if (!*++argv)
             return out;
@@ -4425,19 +4423,17 @@ string Cli::toGnuCmdline(size_t, char * argv[]) {
         return out;
     for (;;) {
         auto ptr = *argv;
-        if (!*ptr) {
-            out.append(2, '"');
-        } else {
-            for (;;) {
-                switch (*ptr) {
-                case ' ': case '\t': case '\r': case '\n': case '\f':
-                case '\v': case '\\': case '\'': case '"':
-                    out += '\\';
-                }
-                out += *ptr;
-                if (!*++ptr)
-                    break;
+        for (; *ptr; ++ptr) {
+            switch (*ptr) {
+            case ' ': case '\t': case '\r': case '\n': case '\f':
+            case '\v': case '\\': case '\'': case '"':
+                out += '\\';
             }
+            out += *ptr;
+        }
+        if (ptr == *argv) {
+            // Zero length string operand.
+            out.append(2, '"');
         }
         if (!*++argv)
             return out;
@@ -4458,8 +4454,11 @@ string Cli::toGnuCmdline(const vector<string> & args) {
 *   Windows command line and argv conversions
 *
 *   Rules defined in the "Parsing C++ Command-Line Arguments" article on MSDN.
+*   Except that in addition to SP and TAB, CR and LF are also considered
+*   whitespace.
 *
-*   Arguments are split on whitespace (" \t") unless the whitespace is quoted.
+*   Arguments are split on whitespace (" \t\r\n") unless the whitespace is
+*   quoted.
 *   - double quotes: preserves whitespace that would otherwise end the
 *     argument, can occur in the midst of an argument.
 *   - backslashes:
@@ -4472,6 +4471,14 @@ string Cli::toGnuCmdline(const vector<string> & args) {
 ***/
 
 //===========================================================================
+static void appendBackslashes(string & out, int & backslashes) {
+    if (backslashes) {
+        out.append(backslashes, '\\');
+        backslashes = 0;
+    }
+}
+
+//===========================================================================
 // static
 vector<string> Cli::toWindowsArgv(const string & cmdline) {
     vector<string> out;
@@ -4480,13 +4487,6 @@ vector<string> Cli::toWindowsArgv(const string & cmdline) {
 
     string arg;
     int backslashes = 0;
-
-    auto appendBackslashes = [&arg, &backslashes]() {
-        if (backslashes) {
-            arg.append(backslashes, '\\');
-            backslashes = 0;
-        }
-    };
 
 IN_GAP:
     while (cur < last) {
@@ -4522,17 +4522,17 @@ IN_UNQUOTED:
         case '\t':
         case '\r':
         case '\n':
-            appendBackslashes();
+            appendBackslashes(arg, backslashes);
             out.push_back(move(arg));
             arg.clear();
             goto IN_GAP;
         default:
-            appendBackslashes();
+            appendBackslashes(arg, backslashes);
             arg += ch;
             break;
         }
     }
-    appendBackslashes();
+    appendBackslashes(arg, backslashes);
     out.push_back(move(arg));
     return out;
 
@@ -4552,12 +4552,12 @@ IN_QUOTED:
             }
             goto IN_UNQUOTED;
         default:
-            appendBackslashes();
+            appendBackslashes(arg, backslashes);
             arg += ch;
             break;
         }
     }
-    appendBackslashes();
+    appendBackslashes(arg, backslashes);
     out.push_back(move(arg));
     return out;
 }
@@ -4569,53 +4569,51 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
     if (!*argv)
         return out;
 
-    for (;;) {
-        auto base = out.size();
-        size_t backslashes = 0;
-        auto ptr = *argv;
-        if (!*ptr) {
-            out.append(2, '"');
-        } else {
-            for (;;) {
-                switch (*ptr) {
-                case '\\': backslashes += 1; break;
-                case ' ':
-                case '\t': goto QUOTE;
-                case '"':
-                    out.append(backslashes + 1, '\\');
-                    backslashes = 0;
-                    break;
-                default: backslashes = 0; break;
-                }
-                out += *ptr;
-                if (!*++ptr)
-                    break;
-            }
+UNQUOTED:
+    auto base = out.size();
+    size_t backslashes = 0;
+    auto ptr = *argv;
+    for (; *ptr; ++ptr) {
+        switch (*ptr) {
+        case '\\': backslashes += 1; break;
+        case ' ':
+        case '\t': goto QUOTED;
+        case '"':
+            out.append(backslashes + 1, '\\');
+            backslashes = 0;
+            break;
+        default: backslashes = 0; break;
         }
-        goto NEXT;
-
-    QUOTE:
-        backslashes = 0;
-        out.insert(base, 1, '"');
-        out += *ptr++;
-        for (; *ptr; ++ptr) {
-            switch (*ptr) {
-            case '\\': backslashes += 1; break;
-            case '"':
-                out.append(backslashes + 1, '\\');
-                backslashes = 0;
-                break;
-            default: backslashes = 0; break;
-            }
-            out += *ptr;
-        }
-        out += '"';
-
-    NEXT:
-        if (!*++argv)
-            return out;
-        out += ' ';
+        out += *ptr;
     }
+    if (ptr == *argv) {
+        // Zero length string operand.
+        out.append(2, '"');
+    }
+    goto NEXT;
+
+QUOTED:
+    backslashes = 0;
+    out.insert(base, 1, '"');
+    out += *ptr++;
+    for (; *ptr; ++ptr) {
+        switch (*ptr) {
+        case '\\': backslashes += 1; break;
+        case '"':
+            out.append(backslashes + 1, '\\');
+            backslashes = 0;
+            break;
+        default: backslashes = 0; break;
+        }
+        out += *ptr;
+    }
+    out += '"';
+
+NEXT:
+    if (!*++argv)
+        return out;
+    out += ' ';
+    goto UNQUOTED;
 }
 
 //===========================================================================
