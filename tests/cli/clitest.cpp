@@ -1286,6 +1286,7 @@ void argvTests() {
         EXPECT_CMDLINE(fn, fnv, {}, "");
         EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
         EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a \"b c\" d");
+        EXPECT_CMDLINE(fn, fnv, {"a", "", "c"}, "a \"\" c");
         EXPECT_CMDLINE(fn, fnv, {R"(\a)"}, R"(\a)");
         EXPECT_CMDLINE(fn, fnv, {R"(" \ " \")"}, R"("\" \ \" \\\"")");
     }
@@ -1300,6 +1301,7 @@ void argvTests() {
         EXPECT_CMDLINE(fn, fnv, {}, "");
         EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
         EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a b\\ c d");
+        EXPECT_CMDLINE(fn, fnv, {"a", "", "c"}, "a \"\" c");
     }
 
     // glib style
@@ -1318,6 +1320,7 @@ c\d)", {"ab$c\\d"});
         EXPECT_CMDLINE(fn, fnv, {}, "");
         EXPECT_CMDLINE(fn, fnv, {"a", "b", "c"}, "a b c");
         EXPECT_CMDLINE(fn, fnv, {"a", "b c", "d"}, "a b\\ c d");
+        EXPECT_CMDLINE(fn, fnv, {"a", "", "c"}, "a '' c");
     }
 
     // argv to/from cmdline

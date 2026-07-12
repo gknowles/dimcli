@@ -1854,7 +1854,8 @@ string Cli::toGlibCmdline(size_t, char * argv[]) {
     if (!*argv)
         return out;
     for (;;) {
-        for (auto ptr = *argv; *ptr; ++ptr) {
+        auto ptr = *argv;
+        for (; *ptr; ++ptr) {
             switch (*ptr) {
             // Must escape
             case '|': case '&': case ';': case '<': case '>': case '(':
@@ -1866,6 +1867,10 @@ string Cli::toGlibCmdline(size_t, char * argv[]) {
                 out += '\\';
             }
             out += *ptr;
+        }
+        if (ptr == *argv) {
+            // Zero length string operand.
+            out.append(2, '\'');
         }
         if (!*++argv)
             return out;
@@ -1880,13 +1885,18 @@ string Cli::toGnuCmdline(size_t, char * argv[]) {
     if (!*argv)
         return out;
     for (;;) {
-        for (auto ptr = *argv; *ptr; ++ptr) {
+        auto ptr = *argv;
+        for (; *ptr; ++ptr) {
             switch (*ptr) {
             case ' ': case '\t': case '\r': case '\n': case '\f': case '\v':
             case '\\': case '\'': case '"':
                 out += '\\';
             }
             out += *ptr;
+        }
+        if (ptr == *argv) {
+            // Zero length string operand.
+            out.append(2, '"');
         }
         if (!*++argv)
             return out;
@@ -1901,47 +1911,51 @@ string Cli::toWindowsCmdline(size_t, char * argv[]) {
     if (!*argv)
         return out;
 
-    for (;;) {
-        auto base = out.size();
-        size_t backslashes = 0;
-        auto ptr = *argv;
-        for (; *ptr; ++ptr) {
-            switch (*ptr) {
-            case '\\': backslashes += 1; break;
-            case ' ':
-            case '\t': goto QUOTE;
-            case '"':
-                out.append(backslashes + 1, '\\');
-                backslashes = 0;
-                break;
-            default: backslashes = 0; break;
-            }
-            out += *ptr;
+UNQUOTED:
+    auto base = out.size();
+    size_t backslashes = 0;
+    auto ptr = *argv;
+    for (; *ptr; ++ptr) {
+        switch (*ptr) {
+        case '\\': backslashes += 1; break;
+        case ' ':
+        case '\t': goto QUOTE;
+        case '"':
+            out.append(backslashes + 1, '\\');
+            backslashes = 0;
+            break;
+        default: backslashes = 0; break;
         }
-        goto NEXT;
-
-    QUOTE:
-        backslashes = 0;
-        out.insert(base, 1, '"');
-        out += *ptr++;
-        for (; *ptr; ++ptr) {
-            switch (*ptr) {
-            case '\\': backslashes += 1; break;
-            case '"':
-                out.append(backslashes + 1, '\\');
-                backslashes = 0;
-                break;
-            default: backslashes = 0; break;
-            }
-            out += *ptr;
-        }
-        out += '"';
-
-    NEXT:
-        if (!*++argv)
-            return out;
-        out += ' ';
+        out += *ptr;
     }
+    if (ptr == *argv) {
+        // Zero length string operand.
+        out.append(2, '"');
+    }
+    goto NEXT;
+
+QUOTE:
+    backslashes = 0;
+    out.insert(base, 1, '"');
+    out += *ptr++;
+    for (; *ptr; ++ptr) {
+        switch (*ptr) {
+        case '\\': backslashes += 1; break;
+        case '"':
+            out.append(backslashes + 1, '\\');
+            backslashes = 0;
+            break;
+        default: backslashes = 0; break;
+        }
+        out += *ptr;
+    }
+    out += '"';
+
+NEXT:
+    if (!*++argv)
+        return out;
+    out += ' ';
+    goto UNQUOTED;
 }
 
 
