@@ -10,6 +10,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unreleased 6.2.x
+- Fixed (Since 4.0.1) - Unqualified call to std::move() in some opt methods
+- Fixed (Since 1.0.0) - Compile error in Clang 16 casting from cli.toWindowsCmdline
+- Fixed (Since 6.0.0) - Divide by zero when cli.maxWidth() set to out of range value
+- Fixed (Since 6.1.0) - vcpkg build fails for x64-windows-static
+- Fixed (Since 4.0.1) - Assert calling cli.title() immediately after creating new option
+          group via cli.command(...)
+- Fixed (Since 6.0.0) - No error when too few values for option named after optional operand,
+          like "[FILES] files"
+- Fixed (Since 6.0.0) - Wrong argument sometimes reported by "Unexpected argument" error
+- Fixed (Since 3.0.0) - opt.defaultDesc("") doesn't suppress a flag value's (default) clause
+- Fixed (Since 6.1.0) - Crash in cli.printText() processing some custom tables
+- Fixed (Since 4.0.1) - toCmdline*() drops blank (empty string) arguments
+
 ## dimcli 7.6.0 (2026-04-11)
 - Fixed (Since 2.0.0) - Remove uses of std::wstring_convert class (deprecated C++17,
           removed C\++26)
