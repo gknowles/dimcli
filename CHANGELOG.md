@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 6.2.2 (2026-07-14)
 - Fixed - Unqualified call to std::move() in some opt methods
 - Fixed - Compile error in Clang 16 casting from cli.toWindowsCmdline
 - Fixed - Divide by zero when cli.maxWidth() set to out of range value
