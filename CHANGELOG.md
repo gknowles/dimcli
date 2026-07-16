@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Fixed - Remove uses of std::wstring_convert class (deprecated C++17,
           removed C\++26)
 - Added - cvt.toString() support for wchar_t and wstring
-- Added - cli.toArgv*() and cli.toCmdline*() variants that set cli.errMsg() and friends on
-          cvt.toString() failures
+- Added - cli.toArgv*() and cli.toCmdline*() overloads that set cli.errMsg()
+          and friends on cvt.toString() failures
 - Added - Convert configuration options: cvt.imbue() and cvt.getloc()
 - Fixed - toCmdline*() drops blank (empty string) arguments
 - Fixed - Option/operand order in help text relies on static init order
@@ -70,8 +70,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## dimcli 7.0.0 (2022-11-17)
 - Changed - cli.exec() returns was work attempted, instead of exit code
-- Removed - cli.parse() and cli.exec() variants taking an ostream. Use
-            with cli.printError() instead.
+- Removed - cli.parse() and cli.exec() variants taking an ostream. Use with
+            cli.printError() instead.
 - Changed - cli.fail() and cli.badUsage() now return void instead of false
 - Added - cli.parseExit() for aborting parsing w/o error (e.g. --help)
 - Changed - All types of application actions now return void
@@ -167,7 +167,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - Conditionally use &lt;filesystem> instead of
           &lt;experimental/filesystem>
 - Added - Allow limited operation when &lt;filesystem> not available
-- Fixed - "--opt=" should use "" as value instead of the next arg
+- Fixed - "--opt=" uses the next arg as the value instead of ""
 - Added - Word wrap list of choices in error detail
 - Fixed - Parse errors for optVec report an empty string for the opt name
 - Added - Command groups for grouping subcommands in help text
@@ -189,9 +189,9 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Rename cli.run() to cli.exec() and invert the return value
 - Fixed - Internal group name relies on static init order
 - Added - opt.require()
-- Fixed - After parse actions of unselected commands should not be run
+- Fixed - After actions of unselected commands are run
 - Added - opt.defaultDesc() to modify "(default: )" clause
-- Fixed - "No command given." should return kExitUsage
+- Fixed - "No command given." does not return kExitUsage
 - Changed - Command header and footer default to the top level values
 - Changed - cli.print*() functions now non-const
 - Added - cli.helpCmd()
@@ -201,7 +201,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - Rename opt.write*() functions to opt.print*()
 - Added - Reduce footprint to just two files (cli.h and cli.cpp)
 - Added - opt.writeUsageEx() includes option names in usage text
-- Fixed - opt.choice() should be usable when no string conversion exists
+- Fixed - opt.choice() not usable when no string conversion exists
 - Fixed - Help text for choices not aligned
 - Fixed - Option groups sorted by name instead of sort key
 

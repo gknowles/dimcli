@@ -17,6 +17,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Version tag="v7.1.1" layout="default"/>
     <Version tag="v7.1.0" layout="default"/>
     <Version tag="v7.0.0" layout="default"/>
+    <Version tag="v6.2.2" layout="adoc"/>  <!-- layout missing in v6.2.2 -->
     <Version tag="v6.2.1" layout="adoc"/>  <!-- layout missing in v6.2.1 -->
     <Version tag="v6.2.0" layout="adoc"/>
     <Version tag="v6.1.0" layout="adoc"/>

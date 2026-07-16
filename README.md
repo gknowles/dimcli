@@ -7,8 +7,9 @@ Distributed under the Boost Software License, Version 1.0.
 
 | Branch | MSVC 2015-2017<br> CLANG 6, 10-12<br> GCC 7-9 | MSVC 2019-2026<br> CLANG 13-21<br> GCC 10-14 | Test Coverage |
 | :----: | :----------------: | :----------------: | :-------------------: |
-| master | [![Build][11]][12] | [![Build][13]][14] | [![Coverage][15]][16] |
-| dev    | [![Build][21]][22] | [![Build][23]][24] | [![Coverage][25]][26] |
+| master | [![Build][11]][22] | [![Build][13]][14] | [![Coverage][15]][16] |
+| dev    | [![Build][21]][12] | [![Build][23]][24] | [![Coverage][25]][26] |
+| 6.2.x  | [![Build][31]][32] | [![Build][33]][34] | [![Coverage][35]][36] |
 
 [11]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/master?svg=true "AppVeyor"
 [12]: https://ci.appveyor.com/project/gknowles/dimcli/branch/master
@@ -24,6 +25,13 @@ Distributed under the Boost Software License, Version 1.0.
 [25]: https://codecov.io/gh/gknowles/dimcli/branch/dev/graph/badge.svg "Codecov"
 [26]: https://app.codecov.io/gh/gknowles/dimcli/tree/dev
 
+[31]: https://ci.appveyor.com/api/projects/status/02i9uq9asqlb6opy/branch/6.2.x?svg=true "AppVeyor"
+[32]: https://ci.appveyor.com/project/gknowles/dimcli/branch/6.2.x
+[33]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml/badge.svg?query=branch%3A6.2.x "GitHub"
+[34]: https://github.com/gknowles/dimcli/actions/workflows/github-build-all.yml?query=branch%3A6.2.x
+[35]: https://codecov.io/gh/gknowles/dimcli/branch/6.2.x/graph/badge.svg "Codecov"
+[36]: https://app.codecov.io/gh/gknowles/dimcli/tree/6.2.x
+
 
 C++ command line parser toolkit for kids of all ages.
 
@@ -31,8 +39,9 @@ C++ command line parser toolkit for kids of all ages.
 - Parses to any supplied (or implicitly created) variable whose type is:
   - Default constructible
   - Copyable
-  - Either assignable or constructible from string, has an istream extraction
-    operator, or has a specialization of Cli&#58;:Convert::fromString&lt;T>().
+  - Either assignable from string, constructible from string, has an istream
+    extraction operator, or has a specialization of
+    Cli&#58;:Convert::fromString&lt;T>().
 - Renders help text and usage errors.
 - Option definitions can be scattered across multiple files.
 - Git style subcommands.
