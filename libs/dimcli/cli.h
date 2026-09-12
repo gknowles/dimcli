@@ -2078,6 +2078,13 @@ protected:
     template <typename U>
     bool checkLimits(Cli & cli, const std::string & val, const U & x, long);
 
+    void doAnyUnits(
+        Cli & cli,
+        const std::string & val,
+        const std::unordered_map<std::string, long double> & units,
+        int flags
+    );
+
     std::vector<std::pair<std::function<ActionFn>, int>> m_transforms;
     std::function<ActionFn> m_parse;
     std::vector<std::pair<std::function<ActionFn>, int>> m_checks;
@@ -2377,6 +2384,36 @@ bool Cli::OptShim<A, T>::checkLimits(
 
 //===========================================================================
 template <typename A, typename T>
+void Cli::OptShim<A, T>::doAnyUnits(
+    Cli & cli,
+    const std::string & val,
+    const std::unordered_map<std::string, long double> & units,
+    int flags
+) {
+    long double dval;
+    bool success = true;
+    if (!withUnits(dval, cli, val, units, flags))
+        return;
+    if (!checkLimits(cli, val, dval, 0))
+        return;
+    std::string sval;
+    if (std::is_integral<T>::value)
+        dval = std::round(dval);
+    auto ival = (int64_t) dval;
+    if (ival == dval) {
+        success = toString(sval, ival);
+        assert(success // LCOV_EXCL_LINE
+            && "Internal dimcli error: convert int64_t to string failed.");
+    } else {
+        success = toString(sval, dval);
+        assert(success // LCOV_EXCL_LINE
+            && "Internal dimcli error: convert double to string failed.");
+    }
+    cli.newValue(sval);
+};
+
+//===========================================================================
+template <typename A, typename T>
 template <typename InputIt>
 A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
     if (!m_valueDesc) {
@@ -2397,26 +2434,7 @@ A & Cli::OptShim<A, T>::anyUnits(InputIt first, InputIt last, int flags) {
         units.insert(first, last);
     }
     return transform([units, flags](auto & cli, auto & opt, auto & val) {
-        long double dval;
-        bool success = true;
-        if (!opt.withUnits(dval, cli, val, units, flags))
-            return;
-        if (!opt.checkLimits(cli, val, dval, 0))
-            return;
-        std::string sval;
-        if (std::is_integral<T>::value)
-            dval = std::round(dval);
-        auto ival = (int64_t) dval;
-        if (ival == dval) {
-            success = opt.toString(sval, ival);
-            assert(success // LCOV_EXCL_LINE
-                && "Internal dimcli error: convert int64_t to string failed.");
-        } else {
-            success = opt.toString(sval, dval);
-            assert(success // LCOV_EXCL_LINE
-                && "Internal dimcli error: convert double to string failed.");
-        }
-        cli.newValue(sval);
+        opt.doAnyUnits(cli, val, units, flags);
     });
 }
 
@@ -2444,9 +2462,10 @@ A & Cli::OptShim<A, T>::prompt(int flags) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
-    return after([=](auto & cli, auto & opt, auto & /* val */) {
+    auto fn = [=](auto & cli, auto & opt, auto & /* val */) {
         cli.prompt(opt, msg, flags);
-    });
+    };
+    return after(fn);
 }
 
 //===========================================================================
