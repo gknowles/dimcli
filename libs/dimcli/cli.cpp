@@ -1298,7 +1298,12 @@ void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
 void Cli::argSrcFileRelAction(Cli & cli, OptBase & opt, const string & rel) {
 #ifdef DIMCLI_LIB_FILESYSTEM
     if (opt.srcType() == ArgSrc::kFile) {
+    #ifdef __cpp_lib_char8_t
+        auto p = fs::path((const char8_t *)opt.srcName().c_str());
+        p = p.parent_path() / rel;
+    #else
         auto p = fs::u8path(opt.srcName()).parent_path() / rel;
+    #endif
         string val = (char *) p.generic_u8string().c_str();
         cli.newValue(val);
     }
