@@ -700,7 +700,7 @@ static void parseTests() {
         vector<string> args = { arg0, arg1 };
         rc = cli.parse(const_cast<const vector<string> &>(args));
         EXPECT(rc);
-        rc = cli.parse(move(args));
+        rc = cli.parse(std::move(args));
         EXPECT(rc);
         args = { arg0, arg1 };
         rc = cli.parse(args);
