@@ -378,8 +378,8 @@ void Dim::doAssert(const char expr[], unsigned line) {
 ***/
 
 // forward declarations
-static void helpOptAction(Cli & cli, Cli::Opt<bool> & opt, const string & val);
-static void defCmdAction(Cli & cli);
+static void helpOptAct(Cli & cli, Cli::Opt<bool> & opt, const string & val);
+static void defCmdAct(Cli & cli);
 static void writeChoicesDetail(
     string * outPtr,
     const unordered_map<string, Cli::OptBase::ChoiceDesc> & choices
@@ -636,7 +636,7 @@ CommandConfig & Cli::Config::findCmdAlways(
 
     auto & cmd = cmds[name];
     cmd.name = name;
-    cmd.action = defCmdAction;
+    cmd.action = defCmdAct;
     cmd.cmdGroup = cli.cmdGroup();
     auto & defGrp = findGrpAlways(cmd, "");
     defGrp.title = "Options";
@@ -1284,7 +1284,7 @@ bool Cli::OptIndex::indexLongName(
 
 //===========================================================================
 // static
-void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
+void Cli::defParseAct(Cli & cli, OptBase & opt, const string & val) {
     if (opt.parseValue(val))
         return;
 
@@ -1295,7 +1295,7 @@ void Cli::defParseAction(Cli & cli, OptBase & opt, const string & val) {
 
 //===========================================================================
 // static
-void Cli::argSrcFileRelAction(Cli & cli, OptBase & opt, const string & rel) {
+void Cli::argSrcFileRelAct(Cli & cli, OptBase & opt, const string & rel) {
 #ifdef DIMCLI_LIB_FILESYSTEM
     if (opt.srcType() == ArgSrc::kFile) {
     #ifdef __cpp_lib_char8_t
@@ -1312,7 +1312,7 @@ void Cli::argSrcFileRelAction(Cli & cli, OptBase & opt, const string & rel) {
 
 //===========================================================================
 // static
-void Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
+void Cli::requireAct(Cli & cli, OptBase & opt, const string &) {
     if (opt)
         return;
 
@@ -1323,7 +1323,7 @@ void Cli::requireAction(Cli & cli, OptBase & opt, const string &) {
 }
 
 //===========================================================================
-static void helpBeforeAction(Cli &, vector<Cli::Arg> & args) {
+static void helpBeforeAct(Cli &, vector<Cli::Arg> & args) {
     if (args.size() == 1) {
         auto src = make_shared<Cli::ArgSrc>();
         src->type = Cli::ArgSrc::kArgv;
@@ -1332,7 +1332,7 @@ static void helpBeforeAction(Cli &, vector<Cli::Arg> & args) {
 }
 
 //===========================================================================
-static void helpOptAction(
+static void helpOptAct(
     Cli & cli,
     Cli::Opt<bool> & opt,
     const string & // val
@@ -1344,7 +1344,7 @@ static void helpOptAction(
 }
 
 //===========================================================================
-static void defCmdAction(Cli & cli) {
+static void defCmdAct(Cli & cli) {
     if (cli.commandMatched().empty()) {
         cli.badUsage("No command given.");
     } else {
@@ -1356,7 +1356,7 @@ static void defCmdAction(Cli & cli) {
 }
 
 //===========================================================================
-static void helpCmdAction(Cli & cli) {
+static void helpCmdAct(Cli & cli) {
     Cli::OptIndex ndx;
     ndx.index(cli, cli.commandMatched(), false);
     auto & cmd = *static_cast<Cli::Opt<string> &>(*ndx.m_oprNames[0].opt);
@@ -1405,7 +1405,7 @@ Cli::Cli(shared_ptr<Config> cfg)
     Config::findCmdAlways(*this, {});
     auto & hlp = opt<bool>("help.")
         .desc("Show this message and exit.")
-        .check(helpOptAction)
+        .check(helpOptAct)
         .allCmds(true)
         .group(kInternalOptGrp);
     m_cfg->helpOpt = &hlp;
@@ -1675,7 +1675,7 @@ Cli & Cli::helpCmd() & {
         .cmdGroup(kInternalOptGrp)
         .desc("Show help for individual commands and exit. If no command is "
             "given the list of commands and general options are shown.")
-        .action(helpCmdAction);
+        .action(helpCmdAct);
     cli.opt<string>("[COMMAND]")
         .desc("Command to show help information about.");
     cli.opt<bool>("u usage")
@@ -1702,7 +1702,7 @@ Cli && Cli::unknownCmd(function<ActionFn> fn) && {
 
 //===========================================================================
 Cli & Cli::helpNoArgs() & {
-    return beforeEx(helpBeforeAction);
+    return beforeEx(helpBeforeAct);
 }
 
 //===========================================================================
@@ -1793,7 +1793,7 @@ Cli && Cli::before(function<BeforeFn> fn, int priority) && {
 
 //===========================================================================
 Cli & Cli::beforeEx(function<ArgsFn> fn, int priority) & {
-    Cli::addAction(m_cfg->befores, move(fn), priority);
+    Cli::addAct(m_cfg->befores, move(fn), priority);
     return *this;
 }
 
@@ -1892,7 +1892,7 @@ ostream & Cli::conout() {
 
 //===========================================================================
 Cli & Cli::beforeExec(function<ActionFn> fn, int priority) & {
-    addAction(m_cfg->execBefores, move(fn), priority);
+    addAct(m_cfg->execBefores, move(fn), priority);
     return *this;
 }
 
@@ -1903,7 +1903,7 @@ Cli && Cli::beforeExec(function<ActionFn> fn, int priority) && {
 
 //===========================================================================
 Cli & Cli::afterExec(function<ActionFn> fn, int priority) & {
-    Cli::addAction(m_cfg->execAfters, move(fn), priority);
+    Cli::addAct(m_cfg->execAfters, move(fn), priority);
     return *this;
 }
 

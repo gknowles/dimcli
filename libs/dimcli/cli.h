@@ -1099,17 +1099,17 @@ protected:
     Cli(std::shared_ptr<Config> cfg);
 
 private:
-    static void defParseAction(
+    static void defParseAct(
         Cli & cli,
         OptBase & opt,
         const std::string & val
     );
-    static void argSrcFileRelAction(
+    static void argSrcFileRelAct(
         Cli & cli,
         OptBase & opt,
         const std::string & val
     );
-    static void requireAction(
+    static void requireAct(
         Cli & cli,
         OptBase & opt,
         const std::string & val
@@ -1126,7 +1126,7 @@ private:
     );
 
     template <typename Fn>
-    static void addAction(
+    static void addAct(
         std::vector<std::pair<std::function<Fn>, int>> & actions,
         std::function<Fn> && fn,
         int priority
@@ -1233,7 +1233,7 @@ void Cli::badRange(
 template <typename A>
 A & Cli::addOpt(std::unique_ptr<A> ptr) {
     auto & opt = *ptr;
-    opt.parse(Cli::defParseAction).command(command()).group(group());
+    opt.parse(Cli::defParseAct).command(command()).group(group());
     opt.initConfig(*this);
     addOpt(std::unique_ptr<OptBase>(ptr.release()));
     return opt;
@@ -1254,7 +1254,7 @@ std::shared_ptr<V> Cli::getProxy(T * ptr) {
 //===========================================================================
 template <typename Fn>
 // static
-void Cli::addAction(
+void Cli::addAct(
     std::vector<std::pair<std::function<Fn>, int>> & actions,
     std::function<Fn> && fn,
     int priority
@@ -2283,7 +2283,7 @@ A & Cli::OptShim<A, T>::choice(
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::transform(std::function<ActionFn> fn, int priority) {
-    Cli::addAction(m_transforms, std::move(fn), priority);
+    Cli::addAct(m_transforms, std::move(fn), priority);
     return static_cast<A &>(*this);
 }
 
@@ -2297,21 +2297,21 @@ A & Cli::OptShim<A, T>::parse(std::function<ActionFn> fn) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::check(std::function<ActionFn> fn, int priority) {
-    Cli::addAction(m_checks, std::move(fn), priority);
+    Cli::addAct(m_checks, std::move(fn), priority);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::after(std::function<ActionFn> fn, int priority) {
-    Cli::addAction(m_afters, std::move(fn), priority);
+    Cli::addAct(m_afters, std::move(fn), priority);
     return static_cast<A &>(*this);
 }
 
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::require() {
-    return after(Cli::requireAction);
+    return after(Cli::requireAct);
 }
 
 //===========================================================================
@@ -2486,7 +2486,7 @@ A & Cli::OptShim<A, T>::range(const T & low, const T & high) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::resolve(ArgSrc::Type srcType) {
     if (srcType == ArgSrc::kFile)
-        transform(Cli::argSrcFileRelAction).valueDesc("FILE");
+        transform(Cli::argSrcFileRelAct).valueDesc("FILE");
     return static_cast<A &>(*this);
 }
 
