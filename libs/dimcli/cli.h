@@ -1224,10 +1224,8 @@ void Cli::badRange(
 ) {
     auto prefix = "Out of range '" + opt.from() + "' value";
     std::string detail, lstr, hstr;
-    if (opt.toString(lstr, low)) {
-        if (opt.toString(hstr, high))
-            detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
-    }
+    if (opt.toString(lstr, low) && opt.toString(hstr, high))
+        detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
     badUsage(prefix, val, detail);
 }
 
@@ -1470,7 +1468,11 @@ auto Cli::Convert::fromString_impl(
 {
     m_interpreter.clear();
     m_interpreter.str(src);
-    if (!(m_interpreter >> out) || !(m_interpreter >> std::ws).eof()) {
+    if (!(m_interpreter >> out)) {
+        out = {};
+        return false;
+    }
+    if (!(m_interpreter >> std::ws).eof()) {
         out = {};
         return false;
     }
@@ -1783,7 +1785,8 @@ protected:
     // Make adjustments to argument match report to align with arbitrary
     // changes that could be made to the values by a custom parse action.
     //
-    // NOTE: Just best effort, no guarantees.
+    // NOTE: Just best effort, no guarantees. The OptVec<> version ensures that
+    // the *number* of reports matches the number of values.
     virtual void fixMatch() {};
 
     // Assign the implicit value to the value. Used when an option, with an
@@ -2462,10 +2465,9 @@ A & Cli::OptShim<A, T>::prompt(int flags) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
-    auto fn = [=](auto & cli, auto & opt, auto & /* val */) {
+    return after([=](auto & cli, auto & opt, auto & /* val */) {
         cli.prompt(opt, msg, flags);
-    };
-    return after(fn);
+    });
 }
 
 //===========================================================================
