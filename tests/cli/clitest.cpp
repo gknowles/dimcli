@@ -8,8 +8,12 @@
 
 using namespace std;
 
-#if defined(_MSC_VER) && defined(__clang__)
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wstring-plus-int"
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 
