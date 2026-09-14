@@ -2465,7 +2465,7 @@ A & Cli::OptShim<A, T>::prompt(int flags) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
-    return after([msg, flags](auto & cli, auto & opt, auto & /* val */) {
+    return after([msg, flags](auto & cli, auto & opt, auto & val) {
         cli.prompt(opt, msg, flags);
     });
 }
