@@ -1810,11 +1810,6 @@ protected:
         const std::unordered_map<std::string, long double> & units,
         int flags
     ) const;
-    void doPrompt(
-        Cli & cli,
-        const std::string & msg,
-        int flags
-    );
 
     std::string m_command;
     std::string m_group;
@@ -2471,7 +2466,7 @@ A & Cli::OptShim<A, T>::prompt(int flags) {
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
     return after([msg, flags](auto & cli, auto & opt, auto & /* val */) {
-        opt.doPrompt(cli, msg, flags);
+        cli.prompt(opt, msg, flags);
     });
 }
 

@@ -904,17 +904,6 @@ bool Cli::OptBase::withUnits(
     }
 }
 
-//===========================================================================
-// This function exists only to make gcov realize that the code in
-// Cli::OptShim<A, T>::prompt is executed. Why is gcov so fickle?
-void Cli::OptBase::doPrompt(
-    Cli & cli,
-    const std::string & msg,
-    int flags
-) {
-    cli.prompt(*this, msg, flags);
-}
-
 
 /****************************************************************************
 *
