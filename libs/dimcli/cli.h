@@ -2465,8 +2465,8 @@ A & Cli::OptShim<A, T>::prompt(int flags) {
 //===========================================================================
 template <typename A, typename T>
 A & Cli::OptShim<A, T>::prompt(const std::string & msg, int flags) {
-    return after( // LCOV_EXCL_LINE - gcov refuses to admit this is covered.
-        [msg, flags](auto & cli, auto & opt, auto & /* val */) {
+    return after( // gcov refuses to admit this is covered.
+        [=](auto & cli, auto & opt, auto & /* val */) { // LCOV_EXCL_LINE
             cli.prompt(opt, msg, flags);
         }
     );
