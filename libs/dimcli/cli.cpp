@@ -153,7 +153,11 @@ struct ParseState {
     string name; // Name that was found, includes leading dashes.
     bool moreOpts = true; // Remaining arguments may contain named options?
     int numOprs = 0; // Number of operands (positional arguments)
+
+    // Number of plan values generated before subcommand found.
     size_t precmdValues = 0;
+
+    // Ordinal position of current arg being parsed.
     size_t argPos = 1;
 
     // Next value to process, usually within current arg.
@@ -290,8 +294,8 @@ struct Cli::OptIndex {
     // Will completely rebuild index for new command if one is found.
     bool planValues(
         vector<PlanValue> * out,
-        const vector<Cli::Arg> & args,
-        Cli & cli
+        Cli & cli,
+        const vector<Cli::Arg> & args
     );
 
     // Members just to get access to protected members of OptBase.
@@ -324,6 +328,12 @@ private:
         const vector<Cli::Arg> & args
     );
     bool planOptionValue(
+        vector<PlanValue> * out,
+        ParseState & st,
+        Cli & cli,
+        const vector<Cli::Arg> & args
+    );
+    bool planGnuOptionValues(
         vector<PlanValue> * out,
         ParseState & st,
         Cli & cli,
@@ -2159,8 +2169,8 @@ static int numMatches(
 
 //===========================================================================
 static bool matchOperands(
-    PlanValue * planValues,
-    size_t numPlanValues,
+    PlanValue * planVals,
+    size_t numPlanVals,
     Cli & cli,
     const Cli::OptIndex & ndx,
     int numOprs
@@ -2180,7 +2190,7 @@ static bool matchOperands(
     }
 
     if (usedOprs < numOprs) {
-        auto val = planValues;
+        auto val = planVals;
         for (int ipos = 0;; ++val, ++ipos) {
             if (val->type == PlanValue::kOperand && ipos >= usedOprs)
                 break;
@@ -2193,7 +2203,7 @@ static bool matchOperands(
 
     int ipos = 0;       // Operand being matched.
     int imatch = 0;     // Values already been matched to this opt.
-    for (auto val = planValues; val < planValues + numPlanValues; ++val) {
+    for (auto val = planVals; val < planVals + numPlanVals; ++val) {
         if (val->opt || val->type != PlanValue::kOperand)
             continue;
         if (matched[ipos] <= imatch) {
@@ -2369,6 +2379,90 @@ bool Cli::OptIndex::planOptionValue(
 }
 
 //===========================================================================
+bool Cli::OptIndex::planGnuOptionValues(
+    vector<PlanValue> * out,
+    ParseState & st,
+    Cli & cli,
+    const vector<Cli::Arg> & args
+) {
+    // Argument contains one or more options.
+    assert(*st.ptr == '-');
+    st.ptr += 1;
+    // Process all options with short names contained in the argument.
+    for (; *st.ptr && *st.ptr != '-'; ++st.ptr) {
+        // Found short name in argument.
+        st.name = '-';
+        st.name += *st.ptr;
+        auto it = m_shortNames.find(*st.ptr);
+        if (it == m_shortNames.end()) {
+            cli.badUsage("Unknown option", st.name);
+            return false;
+        }
+        st.optName = it->second;
+        if (st.optName.flags & fNameFinal)
+            st.moreOpts = false;
+
+        if (!st.optName.opt->m_bool) {
+            // Short name option that takes a value, which might be
+            // attached as the rest of the argument. Adjust pointer to
+            // the attached value, or set it to null if none.
+            st.ptr += 1;
+            if (!*st.ptr)
+                st.ptr = nullptr;
+            // Since that value consumes the rest of the argument,
+            // process it and then advance to next argument.
+            return planOptionValue(out, st, cli, args);
+        }
+
+        // Found bool short name, record and continue processing any
+        // additional short names in this same argument.
+        addOptionMatch(out, st, "1", args);
+    }
+    if (!*st.ptr) {
+        // Reached end of this argument, continue to next argument.
+        return true;
+    }
+
+    // Rest of the argument is a long name option, possibly including
+    // an "=value" clause.
+    st.ptr += 1;
+    if (!*st.ptr) {
+        // Bare "--" found, all remaining args are operands.
+        st.moreOpts = false;
+        return true;
+    }
+    if (auto equal = strchr(st.ptr, '=')) {
+        // Name is everything up to the equal sign, value is rest of
+        // the arg after it.
+        st.name.assign(st.ptr, equal - st.ptr);
+        st.ptr = equal + 1;
+    } else {
+        // No equal sign, everything is name, there is no value.
+        st.name = st.ptr;
+        st.ptr = nullptr;
+    }
+    auto it = m_longNames.find(st.name);
+    st.name.insert(0, "--");
+    if (it == m_longNames.end()) {
+        cli.badUsage("Unknown option", st.name);
+        return false;
+    }
+    st.optName = it->second;
+    if (st.optName.flags & fNameFinal)
+        st.moreOpts = false;
+
+    if (!st.optName.opt->m_bool) {
+        // Long option with (possibly empty) value, process it and
+        // advance to next argument.
+        return planOptionValue(out, st, cli, args);
+    }
+    // Found bool long name with value that is explicit or
+    // defaulted to "1", record and advance to the next argument.
+    addOptionMatch(out, st, st.ptr ? st.ptr : "1", args);
+    return true;
+}
+
+//===========================================================================
 static bool commandRequired(const Cli::Config & cfg) {
     return cfg.allowUnknown || cfg.cmds.size() > 1;
 }
@@ -2376,8 +2470,8 @@ static bool commandRequired(const Cli::Config & cfg) {
 //===========================================================================
 bool Cli::OptIndex::planValues(
     vector<PlanValue> * out,
-    const vector<Cli::Arg> & args,
-    Cli & cli
+    Cli & cli,
+    const vector<Cli::Arg> & args
 ) {
     cli.m_cfg->progName = args[0].text;
     ParseState st;
@@ -2391,90 +2485,13 @@ bool Cli::OptIndex::planValues(
     for (; st.argPos < args.size(); ++st.argPos) {
         st.ptr = args[st.argPos].text.c_str();
         if (*st.ptr == '-' && st.ptr[1] && st.moreOpts) {
-            // Argument contains one or more options.
-            st.ptr += 1;
-            // Process all options with short names contained in the argument.
-            for (; *st.ptr && *st.ptr != '-'; ++st.ptr) {
-                // Found short name in argument.
-                st.name = '-';
-                st.name += *st.ptr;
-                auto it = m_shortNames.find(*st.ptr);
-                if (it == m_shortNames.end()) {
-                    cli.badUsage("Unknown option", st.name);
-                    return false;
-                }
-                st.optName = it->second;
-                if (st.optName.flags & fNameFinal)
-                    st.moreOpts = false;
-
-                if (!st.optName.opt->m_bool) {
-                    // Short name option that takes a value, which might be
-                    // attached as the rest of the argument. Adjust pointer to
-                    // the attached value, or set it to null if none.
-                    st.ptr += 1;
-                    if (!*st.ptr)
-                        st.ptr = nullptr;
-                    // Since that value consumes the rest of the argument,
-                    // process it and then advance to next argument.
-                    if (!planOptionValue(out, st, cli, args))
-                        return false;
-                    goto NEXT_ARG;
-                }
-
-                // Found bool short name, record and continue processing any
-                // additional short names in this same argument.
-                addOptionMatch(out, st, "1", args);
-            }
-            if (!*st.ptr) {
-            NEXT_ARG:
-                // Reached end of this argument, continue to next argument.
-                continue;
-            }
-
-            // Rest of the argument is a long name option, possibly including
-            // an "=value" clause.
-            st.ptr += 1;
-            if (!*st.ptr) {
-                // Bare "--" found, all remaining args are operands.
-                st.moreOpts = false;
-                continue;
-            }
-            if (auto equal = strchr(st.ptr, '=')) {
-                // Name is everything up to the equal sign, value is rest of
-                // the arg after it.
-                st.name.assign(st.ptr, equal - st.ptr);
-                st.ptr = equal + 1;
-            } else {
-                // No equal sign, everything is name, there is no value.
-                st.name = st.ptr;
-                st.ptr = nullptr;
-            }
-            auto it = m_longNames.find(st.name);
-            st.name.insert(0, "--");
-            if (it == m_longNames.end()) {
-                cli.badUsage("Unknown option", st.name);
+            if (!planGnuOptionValues(out, st, cli, args))
                 return false;
-            }
-            st.optName = it->second;
-            if (st.optName.flags & fNameFinal)
-                st.moreOpts = false;
-
-            if (st.optName.opt->m_bool) {
-                // Found bool long name with value that is explicit or
-                // defaulted to "1", record and advance to the next argument.
-                addOptionMatch(out, st, st.ptr ? st.ptr : "1", args);
-            } else {
-                // Long option with (possibly empty) value, process it and
-                // advance to next argument.
-                if (!planOptionValue(out, st, cli, args))
-                    return false;
-            }
-            continue;
+        } else {
+            // Positional value
+            if (!planOperandValue(out, st, cli, args))
+                return false;
         }
-
-        // Positional value
-        if (!planOperandValue(out, st, cli, args))
-            return false;
     }
 
     if (st.cmdMode == ParseState::kUnknown) {
@@ -2602,13 +2619,13 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
     }
 
     // Extract raw values and match them to opts.
-    vector<PlanValue> planValues;
-    if (!ndx.planValues(&planValues, args, cli))
+    vector<PlanValue> planVals;
+    if (!ndx.planValues(&planVals, cli, args))
         return false;
 
     // Parse values and copy them to defined opts.
     cfg.command.clear();
-    for (auto && val : planValues) {
+    for (auto && val : planVals) {
         switch (val.type) {
         case PlanValue::kCommand:
             cfg.command = val.name;
