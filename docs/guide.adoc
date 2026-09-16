@@ -317,8 +317,7 @@ version.
 * Within parentheses a ')' pair is treated as a literal ')' and doesn't close
 the parenthetical. Likewise for ']' and '>' within square and angled brackets
 respectively.
-* Long names for boolean options get a second "no-" version implicitly created
-for them.
+* Long names for boolean options get a second "no-" version by default.
 
 [%autowidth]
 |===
