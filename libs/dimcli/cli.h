@@ -259,8 +259,7 @@ public:
     // - Within parentheses a ')' pair is treated as a literal ')' and doesn't
     //   close the parenthetical. Within angled and square brackets the closing
     //   char (']' or '>') can be escaped in the same way.
-    // - Long names for boolean options get a second "no-" version implicitly
-    //   created for them.
+    // - Long names for boolean options get a second "no-" version by default.
     //
     // Examples
     //  "f file"    Short name 'f' and long name "file"

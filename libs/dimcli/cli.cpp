@@ -2631,7 +2631,8 @@ static bool parse(Cli & cli, vector<string> & rawArgs) {
         case PlanValue::kCommand:
             cfg.command = val.name;
             continue;
-        default:
+        case PlanValue::kOperand:
+        case PlanValue::kOption:
             break;
         }
         if (!Cli::Config::parseValue(cli, val))
