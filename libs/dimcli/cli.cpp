@@ -2386,7 +2386,8 @@ bool Cli::OptIndex::planGnuOptionValues(
     const vector<Cli::Arg> & args
 ) {
     // Argument contains one or more options.
-    assert(*st.ptr == '-');
+    assert(*st.ptr == '-'   // LCOV_EXCL_LINE
+        && "Internal dimcli error: planning Gnu option without '-'.");
     st.ptr += 1;
     // Process all options with short names contained in the argument.
     for (; *st.ptr && *st.ptr != '-'; ++st.ptr) {
