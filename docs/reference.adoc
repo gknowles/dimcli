@@ -312,7 +312,8 @@ cli.parseValue() to set the value and run any actions.
 tied to a command line argument.
 
 | opt.defaultPrompt
-| Get default name to use in prompts when not tied to a command line.
+| Get default name to use in prompts when the msg argument passed to
+opt.prompt() is an empty string.
 
 | opt.getloc
 | Inherited from <<string-conversions, Convert>>.
