@@ -10,9 +10,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
+## Unreleased
+- Fixed - Use of std::u8path (deprecated C++20) when __cpp_lib_char8_t defined
+
 ## dimcli 7.6.0 (2026-04-11)
-- Fixed - Remove uses of std::wstring_convert class (deprecated C++17,
-          removed C\++26)
+- Fixed - Use of std::wstring_convert class (deprecated C++17, removed C\++26)
 - Added - cvt.toString() support for wchar_t and wstring
 - Added - cli.toArgv*() and cli.toCmdline*() overloads that set cli.errMsg()
           and friends on cvt.toString() failures
