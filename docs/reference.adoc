@@ -140,7 +140,8 @@ with optional prefix/suffix modifiers, take one of four forms:
 2+<h| Suffixes
 | . | For boolean options with long names, suppresses the addition of the "no-"
 version.
-| ! | Final option, all following arguments will be operands.
+| ! | For options and operands, final option, all following arguments will be
+operands.
 |===
 
 == Options
