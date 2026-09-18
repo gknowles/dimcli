@@ -226,7 +226,7 @@ template class Dim::Cli::Opt<int>;
 template class Dim::Cli::OptVec<int>;
 template struct Dim::Cli::Value<int>;
 template struct Dim::Cli::ValueVec<int>;
-#ifdef DIMCLI_LIB_FILESYSTEM
+#ifdef FILESYSTEM
 template class Dim::Cli::OptVec<DIMCLI_LIB_FILESYSTEM_PATH>;
 #endif
 
@@ -2207,6 +2207,15 @@ Options:
   --help       Show this message and exit.
 )");
     }
+
+    // Call optVec<fs::path>.initConfig(...) specialization.
+    {
+        cli = {};
+        vector<fs::path> paths;
+        cli.optVec(&paths, "[path]");
+        EXPECT_PARSE(cli, "one two three");
+        EXPECT_EQUAL(paths.size(), 3);
+    }
 #endif
 }
 
@@ -2316,6 +2325,12 @@ static void vectorTests() {
         EXPECT_EQUAL(empty(strs), strs->empty());
         EXPECT_EQUAL(data(strs), strs->data());
 #endif
+        auto & cstrs = const_cast<Dim::Cli::OptVec<string> &>(strs);
+        EXPECT_EQUAL(cstrs[0], strs[0]);
+        EXPECT_EQUAL(cstrs.from(0), "-s");
+        EXPECT_EQUAL(strs.srcType(2), Dim::Cli::ArgSrc::kArgv);
+        EXPECT_EQUAL(strs.srcName(2).empty(), true);
+        EXPECT_EQUAL(cstrs.data(), strs.data());
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -2614,6 +2629,15 @@ static void basicTests() {
 
         EXPECT_EQUAL(*special, name.empty());
         EXPECT_EQUAL(&*num, num.data());
+    }
+
+    {
+        cli = {};
+        auto & name = cli.opt<string>("name");
+        name->clear();
+        name.data()->clear();
+        auto len = const_cast<Dim::Cli::Opt<string> &>(name).data()->size();
+        EXPECT_EQUAL(len, name->size());
     }
 
     {
