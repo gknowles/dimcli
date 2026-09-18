@@ -2294,6 +2294,12 @@ static void vectorTests() {
         EXPECT_EQUAL(strs.pos(2), 4);
         EXPECT_EQUAL(strs.pos(), 5);
         EXPECT_EQUAL(*strs, vector<string>({"1"s, "a"s, "2"s, "3"s}));
+        EXPECT_EQUAL(strs.empty(), strs->empty());
+        EXPECT_EQUAL(strs.data(), strs->data());
+#ifdef __cpp_lib_nonmember_container_access
+        EXPECT_EQUAL(empty(strs), strs->empty());
+        EXPECT_EQUAL(data(strs), strs->data());
+#endif
         EXPECT_HELP(cli, "", 1 + R"(
 Usage: test [OPTIONS]
 
@@ -2550,7 +2556,7 @@ static void basicTests() {
     {
         cli = {};
         auto & num = cli.opt(" n number ", 1);
-        cli.opt(num, "c");
+        cli.opt(num, "c");  // default of 0 overrides prior rule default of 1
         cli.opt("n2", 2);
         cli.opt("n3", 3);
         auto & special = cli.opt("s special !S", false).desc("snowflake");
@@ -2589,6 +2595,9 @@ static void basicTests() {
         EXPECT_EQUAL(*num, 2);
         *special = name->empty();
         EXPECT(*special);
+
+        EXPECT_EQUAL(*special, name.empty());
+        EXPECT_EQUAL(&*num, num.data());
     }
 
     {

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
 - Fixed - Use of std::u8path (deprecated C++20) when __cpp_lib_char8_t defined
+- Added - opt methods to enable std::data(opt) and std\::empty(opt)
 
 ## dimcli 7.6.0 (2026-04-11)
 - Fixed - Use of std::wstring_convert class (deprecated C++17, removed C\++26)

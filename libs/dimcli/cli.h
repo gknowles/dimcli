@@ -1732,8 +1732,9 @@ public:
     ArgSrc::Type srcType() const { return match().src.type; }
     const std::string & srcName() const { return match().src.name; }
 
-    // Number of values, non-vectors are always 1.
+    // Non-vectors are always non-empty with a size of 1.
     virtual size_t size() const { return 1; }
+    virtual bool empty() const { return size() == 0; }
 
     // Number of allowed values, maxSize of -1 for unlimited. Both minSize and
     // maxSize are always 1 for non-vectors.
@@ -1743,6 +1744,9 @@ public:
     // Defaults to use when populating the option from an action that's not
     // tied to a command line argument.
     const std::string & defaultFrom() const { return m_fromName; }
+
+    // String used to prompt user for the value when the msg argument passed to
+    // prompt() is an empty string.
     std::string defaultPrompt() const;
 
     // Command and group this option belongs to.
@@ -2536,6 +2540,9 @@ public:
     T & operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
 
+    T * data() { return m_proxy->m_value; }
+    const T * data() const { return const_cast<Opt *>(this)->data(); }
+
     //-----------------------------------------------------------------------
     // UPDATE VALUE
 
@@ -2696,6 +2703,9 @@ public:
     const std::string & srcName(size_t index) const {
         return match(index).srcName;
     }
+
+    T * data() { return m_proxy->m_values->data(); }
+    const T * data() const { return const_cast<OptVec *>(this)->data(); }
 
     // Inherited via OptBase
     using OptBase::from;

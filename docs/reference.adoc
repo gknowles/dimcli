@@ -336,6 +336,13 @@ happens to be the same as the default.
 | opt.<<guide.adoc#life-after-parsing, operator -{gt}>>
 | Pointer to underlying value or value vector.
 
+| opt.data
+| Pointer to value assigned to opt, first value for vectors. Enables use of
+std::data(opt).
+
+| opt.empty
+| Returns true if opt.size() is 0. Enables use of std::empty(opt).
+
 | opt.<<guide.adoc#life-after-parsing, from>>
 | Name of the last argument to populate the value, or an empty string if it
 wasn't populated.
