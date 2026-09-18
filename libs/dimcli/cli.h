@@ -1543,7 +1543,7 @@ auto Cli::Convert::toString_impl(
     const T & src,
     int, long, long
 ) const
--> decltype(std::declval<std::ostream &>() << src, bool())
+    -> decltype(std::declval<std::ostream &>() << src, bool())
 {
     m_interpreter.clear();
     m_interpreter.str({});

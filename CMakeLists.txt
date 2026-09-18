@@ -267,7 +267,8 @@ if(BUILD_COVERAGE)
             OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
             -fprofile-arcs -ftest-coverage -fcondition-coverage \
-            -fsanitize=address")
+            -fsanitize=address \
+            -fno-early-inlining")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
             -fprofile-arcs")
     endif()
