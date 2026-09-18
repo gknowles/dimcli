@@ -372,7 +372,8 @@ version.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">!</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Final option, all following arguments will be operands.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">For options and operands, final option, all following arguments will be
+operands.</p></td>
 </tr>
 </tbody>
 </table>
@@ -596,7 +597,8 @@ tied to a command line argument.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.defaultPrompt</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Get default name to use in prompts when not tied to a command line.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get default name to use in prompts when the msg argument passed to
+opt.prompt() is an empty string.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.getloc</p></td>
@@ -625,6 +627,15 @@ happens to be the same as the default.</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">operator -></a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Pointer to underlying value or value vector.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pointer to value assigned to opt, first value for vectors. Enables use of
+std::data(opt).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">opt.empty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returns true if opt.size() is 0. Enables use of std::empty(opt).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">opt.<a href="guide.html#life-after-parsing">from</a></p></td>

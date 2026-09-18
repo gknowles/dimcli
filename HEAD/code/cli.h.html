@@ -410,8 +410,7 @@ public:
     // - Within parentheses a ')' pair is treated as a literal ')' and doesn't
     //   close the parenthetical. Within angled and square brackets the closing
     //   char (']' or '>') can be escaped in the same way.
-    // - Long names for boolean options get a second "no-" version implicitly
-    //   created for them.
+    // - Long names for boolean options get a second "no-" version by default.
     //
     // Examples
     //  "f file"    Short name 'f' and long name "file"
@@ -1250,17 +1249,17 @@ protected:
     Cli(std::shared_ptr&lt;Config> cfg);
 
 private:
-    static void defParseAction(
+    static void defParseAct(
         Cli &amp; cli,
         OptBase &amp; opt,
         const std::string &amp; val
     );
-    static void argSrcFileRelAction(
+    static void argSrcFileRelAct(
         Cli &amp; cli,
         OptBase &amp; opt,
         const std::string &amp; val
     );
-    static void requireAction(
+    static void requireAct(
         Cli &amp; cli,
         OptBase &amp; opt,
         const std::string &amp; val
@@ -1277,7 +1276,7 @@ private:
     );
 
     template &lt;typename Fn>
-    static void addAction(
+    static void addAct(
         std::vector&lt;std::pair&lt;std::function&lt;Fn>, int>> &amp; actions,
         std::function&lt;Fn> &amp;&amp; fn,
         int priority
@@ -1375,10 +1374,8 @@ void Cli::badRange(
 ) {
     auto prefix = "Out of range '" + opt.from() + "' value";
     std::string detail, lstr, hstr;
-    if (opt.toString(lstr, low)) {
-        if (opt.toString(hstr, high))
-            detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
-    }
+    if (opt.toString(lstr, low) &amp;&amp; opt.toString(hstr, high))
+        detail = "Must be between '" + lstr + "' and '" + hstr + "'.";
     badUsage(prefix, val, detail);
 }
 
@@ -1386,7 +1383,7 @@ void Cli::badRange(
 template &lt;typename A>
 A &amp; Cli::addOpt(std::unique_ptr&lt;A> ptr) {
     auto &amp; opt = *ptr;
-    opt.parse(Cli::defParseAction).command(command()).group(group());
+    opt.parse(Cli::defParseAct).command(command()).group(group());
     opt.initConfig(*this);
     addOpt(std::unique_ptr&lt;OptBase>(ptr.release()));
     return opt;
@@ -1407,7 +1404,7 @@ std::shared_ptr&lt;V> Cli::getProxy(T * ptr) {
 //===========================================================================
 template &lt;typename Fn>
 // static
-void Cli::addAction(
+void Cli::addAct(
     std::vector&lt;std::pair&lt;std::function&lt;Fn>, int>> &amp; actions,
     std::function&lt;Fn> &amp;&amp; fn,
     int priority
@@ -1621,7 +1618,11 @@ auto Cli::Convert::fromString_impl(
 {
     m_interpreter.clear();
     m_interpreter.str(src);
-    if (!(m_interpreter >> out) || !(m_interpreter >> std::ws).eof()) {
+    if (!(m_interpreter >> out)) {
+        out = {};
+        return false;
+    }
+    if (!(m_interpreter >> std::ws).eof()) {
         out = {};
         return false;
     }
@@ -1882,8 +1883,9 @@ public:
     ArgSrc::Type srcType() const { return match().src.type; }
     const std::string &amp; srcName() const { return match().src.name; }
 
-    // Number of values, non-vectors are always 1.
+    // Non-vectors are always non-empty with a size of 1.
     virtual size_t size() const { return 1; }
+    virtual bool empty() const { return size() == 0; }
 
     // Number of allowed values, maxSize of -1 for unlimited. Both minSize and
     // maxSize are always 1 for non-vectors.
@@ -1893,6 +1895,9 @@ public:
     // Defaults to use when populating the option from an action that's not
     // tied to a command line argument.
     const std::string &amp; defaultFrom() const { return m_fromName; }
+
+    // String used to prompt user for the value when the msg argument passed to
+    // prompt() is an empty string.
     std::string defaultPrompt() const;
 
     // Command and group this option belongs to.
@@ -1934,7 +1939,8 @@ protected:
     // Make adjustments to argument match report to align with arbitrary
     // changes that could be made to the values by a custom parse action.
     //
-    // NOTE: Just best effort, no guarantees.
+    // NOTE: Just best effort, no guarantees. The OptVec&lt;> version ensures that
+    // the *number* of reports matches the number of values.
     virtual void fixMatch() {};
 
     // Assign the implicit value to the value. Used when an option, with an
@@ -2229,6 +2235,13 @@ protected:
     template &lt;typename U>
     bool checkLimits(Cli &amp; cli, const std::string &amp; val, const U &amp; x, long);
 
+    void doAnyUnits(
+        Cli &amp; cli,
+        const std::string &amp; val,
+        const std::unordered_map&lt;std::string, long double> &amp; units,
+        int flags
+    );
+
     std::vector&lt;std::pair&lt;std::function&lt;ActionFn>, int>> m_transforms;
     std::function&lt;ActionFn> m_parse;
     std::vector&lt;std::pair&lt;std::function&lt;ActionFn>, int>> m_checks;
@@ -2424,7 +2437,7 @@ A &amp; Cli::OptShim&lt;A, T>::choice(
 //===========================================================================
 template &lt;typename A, typename T>
 A &amp; Cli::OptShim&lt;A, T>::transform(std::function&lt;ActionFn> fn, int priority) {
-    Cli::addAction(m_transforms, std::move(fn), priority);
+    Cli::addAct(m_transforms, std::move(fn), priority);
     return static_cast&lt;A &amp;>(*this);
 }
 
@@ -2438,21 +2451,21 @@ A &amp; Cli::OptShim&lt;A, T>::parse(std::function&lt;ActionFn> fn) {
 //===========================================================================
 template &lt;typename A, typename T>
 A &amp; Cli::OptShim&lt;A, T>::check(std::function&lt;ActionFn> fn, int priority) {
-    Cli::addAction(m_checks, std::move(fn), priority);
+    Cli::addAct(m_checks, std::move(fn), priority);
     return static_cast&lt;A &amp;>(*this);
 }
 
 //===========================================================================
 template &lt;typename A, typename T>
 A &amp; Cli::OptShim&lt;A, T>::after(std::function&lt;ActionFn> fn, int priority) {
-    Cli::addAction(m_afters, std::move(fn), priority);
+    Cli::addAct(m_afters, std::move(fn), priority);
     return static_cast&lt;A &amp;>(*this);
 }
 
 //===========================================================================
 template &lt;typename A, typename T>
 A &amp; Cli::OptShim&lt;A, T>::require() {
-    return after(Cli::requireAction);
+    return after(Cli::requireAct);
 }
 
 //===========================================================================
@@ -2528,6 +2541,36 @@ bool Cli::OptShim&lt;A, T>::checkLimits(
 
 //===========================================================================
 template &lt;typename A, typename T>
+void Cli::OptShim&lt;A, T>::doAnyUnits(
+    Cli &amp; cli,
+    const std::string &amp; val,
+    const std::unordered_map&lt;std::string, long double> &amp; units,
+    int flags
+) {
+    long double dval;
+    bool success = true;
+    if (!withUnits(dval, cli, val, units, flags))
+        return;
+    if (!checkLimits(cli, val, dval, 0))
+        return;
+    std::string sval;
+    if (std::is_integral&lt;T>::value)
+        dval = std::round(dval);
+    auto ival = (int64_t) dval;
+    if (ival == dval) {
+        success = toString(sval, ival);
+        assert(success // LCOV_EXCL_LINE
+            &amp;&amp; "Internal dimcli error: convert int64_t to string failed.");
+    } else {
+        success = toString(sval, dval);
+        assert(success // LCOV_EXCL_LINE
+            &amp;&amp; "Internal dimcli error: convert double to string failed.");
+    }
+    cli.newValue(sval);
+};
+
+//===========================================================================
+template &lt;typename A, typename T>
 template &lt;typename InputIt>
 A &amp; Cli::OptShim&lt;A, T>::anyUnits(InputIt first, InputIt last, int flags) {
     if (!m_valueDesc) {
@@ -2548,26 +2591,7 @@ A &amp; Cli::OptShim&lt;A, T>::anyUnits(InputIt first, InputIt last, int flags) 
         units.insert(first, last);
     }
     return transform([units, flags](auto &amp; cli, auto &amp; opt, auto &amp; val) {
-        long double dval;
-        bool success = true;
-        if (!opt.withUnits(dval, cli, val, units, flags))
-            return;
-        if (!opt.checkLimits(cli, val, dval, 0))
-            return;
-        std::string sval;
-        if (std::is_integral&lt;T>::value)
-            dval = std::round(dval);
-        auto ival = (int64_t) dval;
-        if (ival == dval) {
-            success = opt.toString(sval, ival);
-            assert(success // LCOV_EXCL_LINE
-                &amp;&amp; "Internal dimcli error: convert int64_t to string failed.");
-        } else {
-            success = opt.toString(sval, dval);
-            assert(success // LCOV_EXCL_LINE
-                &amp;&amp; "Internal dimcli error: convert double to string failed.");
-        }
-        cli.newValue(sval);
+        opt.doAnyUnits(cli, val, units, flags);
     });
 }
 
@@ -2595,9 +2619,11 @@ A &amp; Cli::OptShim&lt;A, T>::prompt(int flags) {
 //===========================================================================
 template &lt;typename A, typename T>
 A &amp; Cli::OptShim&lt;A, T>::prompt(const std::string &amp; msg, int flags) {
-    return after([=](auto &amp; cli, auto &amp; opt, auto &amp; /* val */) {
-        cli.prompt(opt, msg, flags);
-    });
+    return after( // g++-15 + gcov refuses to admit this is covered.
+        [=](auto &amp; cli, auto &amp; opt, auto &amp; /* val */) { // LCOV_EXCL_LINE
+            cli.prompt(opt, msg, flags);
+        }
+    );
 }
 
 //===========================================================================
@@ -2616,7 +2642,7 @@ A &amp; Cli::OptShim&lt;A, T>::range(const T &amp; low, const T &amp; high) {
 template &lt;typename A, typename T>
 A &amp; Cli::OptShim&lt;A, T>::resolve(ArgSrc::Type srcType) {
     if (srcType == ArgSrc::kFile)
-        transform(Cli::argSrcFileRelAction).valueDesc("FILE");
+        transform(Cli::argSrcFileRelAct).valueDesc("FILE");
     return static_cast&lt;A &amp;>(*this);
 }
 
@@ -2664,6 +2690,9 @@ public:
 
     T &amp; operator*() { return *m_proxy->m_value; }
     T * operator->() { return m_proxy->m_value; }
+
+    T * data() { return m_proxy->m_value; }
+    const T * data() const { return const_cast&lt;Opt *>(this)->data(); }
 
     //-----------------------------------------------------------------------
     // UPDATE VALUE
@@ -2825,6 +2854,9 @@ public:
     const std::string &amp; srcName(size_t index) const {
         return match(index).srcName;
     }
+
+    T * data() { return m_proxy->m_values->data(); }
+    const T * data() const { return const_cast&lt;OptVec *>(this)->data(); }
 
     // Inherited via OptBase
     using OptBase::from;
