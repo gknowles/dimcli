@@ -1263,7 +1263,8 @@ void Cli::addAct(
         actions.end(),
         priority,
         [](int priority, auto && iter) {
-            // stable sort, numerically highest priority first
+            // Stable sort, numerically highest priority first.
+            // NOTE: g++-15 + gcov refuses to admit this is covered.
             return priority > iter.second;
         }
     );
@@ -2689,19 +2690,19 @@ public:
 
     T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
     const T & operator[](size_t index) const {
-        return const_cast<T *>(this)[index];
+        return const_cast<OptVec *>(this)->operator[](index);
     }
 
     // Name of argument that populated the value at the index. Returns empty
     // string if the index is out of bounds.
-    const std::string & from(size_t index) const { return match(index).from; }
+    const std::string & from(size_t index) const { return match(index).name; }
     // Position in argv[], after its environment variable and response file
     // expansion, of argument that populated the value. Returns 0 if index is
     // out of bounds.
     int pos(size_t index) const { return match(index).pos; }
-    ArgSrc::Type srcType(size_t index) const { return match(index).srcType; }
+    ArgSrc::Type srcType(size_t index) const { return match(index).src.type; }
     const std::string & srcName(size_t index) const {
-        return match(index).srcName;
+        return match(index).src.name;
     }
 
     T * data() { return m_proxy->m_values->data(); }

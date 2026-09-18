@@ -217,6 +217,22 @@ public:
 
 /****************************************************************************
 *
+*   Explicit instantiation
+*
+***/
+
+// Force code generation for all member functions of specific instantiations.
+template class Dim::Cli::Opt<int>;
+template class Dim::Cli::OptVec<int>;
+template struct Dim::Cli::Value<int>;
+template struct Dim::Cli::ValueVec<int>;
+#ifdef DIMCLI_LIB_FILESYSTEM
+template class Dim::Cli::OptVec<DIMCLI_LIB_FILESYSTEM_PATH>;
+#endif
+
+
+/****************************************************************************
+*
 *   Improper usage assertions
 *
 ***/
