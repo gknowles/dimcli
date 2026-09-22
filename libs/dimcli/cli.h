@@ -1735,7 +1735,7 @@ public:
 
     // Non-vectors are always non-empty with a size of 1.
     virtual size_t size() const { return 1; }
-    virtual bool empty() const { return size() == 0; }
+    bool empty() const { return !matched(); }
 
     // Number of allowed values, maxSize of -1 for unlimited. Both minSize and
     // maxSize are always 1 for non-vectors.
@@ -2119,14 +2119,6 @@ inline std::string Cli::OptShim<A, T>::defaultValueDesc() const {
 
 //===========================================================================
 template <typename A, typename T>
-inline void Cli::OptShim<A, T>::doParse(Cli & cli) {
-    auto self = static_cast<A *>(this);
-    m_parse(cli, *self, cli.newValue());
-    fixMatch();
-}
-
-//===========================================================================
-template <typename A, typename T>
 inline void Cli::OptShim<A, T>::act(
     Cli & cli,
     const std::vector<std::pair<std::function<ActionFn>, int>> & actions
@@ -2137,6 +2129,14 @@ inline void Cli::OptShim<A, T>::act(
         if (cli.parseAborted())
             break;
     }
+}
+
+//===========================================================================
+template <typename A, typename T>
+inline void Cli::OptShim<A, T>::doParse(Cli & cli) {
+    auto self = static_cast<A *>(this);
+    m_parse(cli, *self, cli.newValue());
+    fixMatch();
 }
 
 //===========================================================================
@@ -2542,7 +2542,7 @@ public:
     T * operator->() { return m_proxy->m_value; }
 
     T * data() { return m_proxy->m_value; }
-    const T * data() const { return const_cast<Opt *>(this)->data(); }
+    const T * data() const { return const_cast<Opt &>(*this).data(); }
 
     //-----------------------------------------------------------------------
     // UPDATE VALUE
@@ -2559,9 +2559,7 @@ private:
     bool matched() const final { return m_proxy->m_explicit; }
     const ArgMatch & match(size_t) const final { return m_proxy->m_match; }
     void assignImplicit() final;
-    bool sameValue(const void * value) const final {
-        return value == m_proxy->m_value;
-    }
+    bool sameValue(const void * value) const final;
 
     std::shared_ptr<Value<T>> m_proxy;
 };
@@ -2639,6 +2637,12 @@ inline void Cli::Opt<T>::assignImplicit() {
     *m_proxy->m_value = this->implicitValue();
 }
 
+//===========================================================================
+template <typename T>
+inline bool Cli::Opt<T>::sameValue(const void * value) const {
+    return value == m_proxy->m_value;
+}
+
 
 /****************************************************************************
 *
@@ -2690,7 +2694,7 @@ public:
 
     T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
     const T & operator[](size_t index) const {
-        return const_cast<OptVec *>(this)->operator[](index);
+        return const_cast<OptVec &>(*this)[index];
     }
 
     // Name of argument that populated the value at the index. Returns empty
@@ -2706,7 +2710,7 @@ public:
     }
 
     T * data() { return m_proxy->m_values->data(); }
-    const T * data() const { return const_cast<OptVec *>(this)->data(); }
+    const T * data() const { return const_cast<OptVec &>(*this).data(); }
 
     // Inherited via OptBase
     using OptBase::from;
@@ -2733,9 +2737,7 @@ private:
     const ArgMatch & match(size_t index) const final;
     void assignImplicit() final;
     void fixMatch() final;
-    bool sameValue(const void * value) const final {
-        return value == m_proxy->m_values;
-    }
+    bool sameValue(const void * value) const final;
 
     std::shared_ptr<ValueVec<T>> m_proxy;
     ArgMatch m_empty;
@@ -2744,6 +2746,22 @@ private:
     int m_minVec = 1;
     int m_maxVec = 1;
 };
+
+//===========================================================================
+template <>
+inline bool & Cli::OptVec<bool>::operator[](size_t index) = delete;
+
+//===========================================================================
+template <>
+inline const bool & Cli::OptVec<bool>::operator[](size_t index) const = delete;
+
+//===========================================================================
+template <>
+inline bool * Cli::OptVec<bool>::data() = delete;
+
+//===========================================================================
+template <>
+inline const bool * Cli::OptVec<bool>::data() const = delete;
 
 //===========================================================================
 template <typename T>
@@ -2875,6 +2893,12 @@ inline void Cli::OptVec<T>::fixMatch() {
     // chance that a custom parse action has changed its size. This is flawed
     // in that it may result in misalignment between the match and value data.
     m_proxy->m_matches.resize(m_proxy->m_values->size());
+}
+
+//===========================================================================
+template <typename T>
+inline bool Cli::OptVec<T>::sameValue(const void * value) const {
+    return value == m_proxy->m_values;
 }
 
 } // namespace

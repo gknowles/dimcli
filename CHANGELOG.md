@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 ## Unreleased
 - Fixed - Use of std::u8path (deprecated C++20) when __cpp_lib_char8_t defined
 - Added - opt methods to enable std::data(opt) and std\::empty(opt)
+- Fixed - Compile error using optVec.from(i), .srcType(i), .srcName(i)
+- Fixed - Compile error using optVec subscript operator
 
 ## dimcli 7.6.0 (2026-04-11)
 - Fixed - Use of std::wstring_convert class (deprecated C++17, removed C\++26)
@@ -78,6 +80,9 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Changed - cli.fail() and cli.badUsage() now return void instead of false
 - Added - cli.parseExit() for aborting parsing w/o error (e.g. --help)
 - Changed - All types of application actions now return void
+
+## Unreleased 6.2.x
+- Fixed - Compile error using optVec subscript operator
 
 ## dimcli 6.2.2 (2026-07-14)
 - Fixed - Unqualified call to std::move() in some opt methods
