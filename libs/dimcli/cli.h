@@ -2147,7 +2147,7 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 
 //===========================================================================
 template <>
-bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const;
+bool DIMCLI_LIB_DECL Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const;
 
 //===========================================================================
 template <typename A, typename T>
