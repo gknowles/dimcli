@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
 ## Unreleased
+- Cosmetic - Better test coverage via --no-inline and explicit instantiation
 - Fixed - Use of std::u8path (deprecated C++20) when __cpp_lib_char8_t defined
 - Added - opt methods to enable std::data(opt) and std\::empty(opt)
 - Fixed - Compile error using optVec.from(i), .srcType(i), .srcName(i)
