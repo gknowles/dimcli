@@ -917,6 +917,24 @@ bool Cli::OptBase::withUnits(
 
 /****************************************************************************
 *
+*   Cli::OptShim<bool>
+*
+***/
+
+//===========================================================================
+template <>
+bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
+    // bool options are always marked as bool
+    assert(this->m_bool // LCOV_EXCL_LINE
+        && "Internal dimcli error: bool option not marked bool.");
+    if (this->m_flagValue)
+        return this->m_flagDefault;
+    return this->defaultValue();
+}
+
+
+/****************************************************************************
+*
 *   Cli::OptIndex (Build index)
 *
 ***/

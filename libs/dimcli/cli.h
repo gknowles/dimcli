@@ -2146,15 +2146,8 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 }
 
 //===========================================================================
-template <>
-inline bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const {
-    // bool options are always marked as bool
-    assert(this->m_bool // LCOV_EXCL_LINE
-        && "Internal dimcli error: bool option not marked bool.");
-    if (this->m_flagValue)
-        return this->m_flagDefault;
-    return this->defaultValue();
-}
+template DIMCLI_LIB_DECL <>
+bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const;
 
 //===========================================================================
 template <typename A, typename T>
@@ -2692,10 +2685,8 @@ public:
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
-    T & operator[](size_t index) { return (*m_proxy->m_values)[index]; }
-    const T & operator[](size_t index) const {
-        return const_cast<OptVec &>(*this)[index];
-    }
+    T & operator[](size_t index);
+    const T & operator[](size_t index) const;
 
     // Name of argument that populated the value at the index. Returns empty
     // string if the index is out of bounds.
@@ -2748,22 +2739,6 @@ private:
 };
 
 //===========================================================================
-template <>
-inline bool & Cli::OptVec<bool>::operator[](size_t index) = delete;
-
-//===========================================================================
-template <>
-inline const bool & Cli::OptVec<bool>::operator[](size_t index) const = delete;
-
-//===========================================================================
-template <>
-inline bool * Cli::OptVec<bool>::data() = delete;
-
-//===========================================================================
-template <>
-inline const bool * Cli::OptVec<bool>::data() const = delete;
-
-//===========================================================================
 template <typename T>
 Cli::OptVec<T>::OptVec(
     std::shared_ptr<ValueVec<T>> values,
@@ -2803,6 +2778,34 @@ inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
     }
     return *this;
 }
+
+//===========================================================================
+template <typename T>
+inline T & Cli::OptVec<T>::operator[](size_t index) {
+    return (*m_proxy->m_values)[index];
+}
+
+//===========================================================================
+template <typename T>
+const T & Cli::OptVec<T>::operator[](size_t index) const {
+    return const_cast<OptVec &>(*this)[index];
+}
+
+//===========================================================================
+template <>
+inline bool & Cli::OptVec<bool>::operator[](size_t index) = delete;
+
+//===========================================================================
+template <>
+inline const bool & Cli::OptVec<bool>::operator[](size_t index) const = delete;
+
+//===========================================================================
+template <>
+inline bool * Cli::OptVec<bool>::data() = delete;
+
+//===========================================================================
+template <>
+inline const bool * Cli::OptVec<bool>::data() const = delete;
 
 //===========================================================================
 template <typename T>
