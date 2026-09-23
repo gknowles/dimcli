@@ -268,7 +268,7 @@ if(BUILD_COVERAGE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
             -fprofile-arcs -ftest-coverage -fcondition-coverage \
             -fsanitize=address \
-            -fno-early-inlining")
+            -fno-inline")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
             -fprofile-arcs")
     endif()
