@@ -2146,7 +2146,7 @@ inline bool Cli::OptShim<A, T>::inverted() const {
 }
 
 //===========================================================================
-template DIMCLI_LIB_DECL <>
+template <>
 bool Cli::OptShim<Cli::Opt<bool>, bool>::inverted() const;
 
 //===========================================================================
