@@ -222,6 +222,9 @@ public:
 ***/
 
 // Force code generation for all member functions of specific instantiations.
+// Causes the code to be present in the executable which in turn lets the code
+// hooks detect it's coverage. Otherwise uncalled template methods go unnoticed
+// code coverage testing the same as if they were comments.
 template struct Dim::Cli::Value<int>;
 template struct Dim::Cli::ValueVec<int>;
 template class Dim::Cli::Opt<int>;
@@ -1824,12 +1827,42 @@ c\d)", {"ab$c\\d"});
 
 /****************************************************************************
 *
+*   String conversion tests
+*
+***/
+
+class StrConstruct {
+public:
+    explicit StrConstruct(const string & val) : m_value(val) {}
+    explicit operator string() const { return m_value; }
+
+    string m_value;
+};
+
+//===========================================================================
+void convertTests() {
+    int line = 0;
+    string str;
+    StrConstruct val("one");
+    Dim::Cli::Convert cvt;
+    auto success = cvt.toString(str, val);
+    EXPECT_EQUAL(success, true);
+    EXPECT_EQUAL(str, "one");
+    str = "two";
+    success = cvt.fromString(val, str);
+    EXPECT_EQUAL(success, true);
+    EXPECT_EQUAL(val.m_value, "two");
+}
+
+
+/****************************************************************************
+*
 *   Option validation helpers
 *
 ***/
 
 enum class Abc {
-    invalid,
+    invalid,    // Intentionally not stringizable.
     first,
     a,
     b,
@@ -3247,6 +3280,7 @@ static int runTests(const string & progName, bool prompt) {
     assertTests();
 #endif
 
+    convertTests();
     nameTests();
     parseTests();
     valueTests();
