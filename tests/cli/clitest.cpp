@@ -2359,7 +2359,7 @@ static void vectorTests() {
         EXPECT_EQUAL(empty(strs), strs->empty());
         EXPECT_EQUAL(data(strs), strs->data());
 #endif
-        auto & cstrs = const_cast<Dim::Cli::OptVec<string> &>(strs);
+        auto & cstrs = const_cast<const Dim::Cli::OptVec<string> &>(strs);
         EXPECT_EQUAL(cstrs[0], strs[0]);
         EXPECT_EQUAL(cstrs.from(0), "-s");
         EXPECT_EQUAL(strs.srcType(2), Dim::Cli::ArgSrc::kArgv);
@@ -2670,7 +2670,8 @@ static void basicTests() {
         auto & name = cli.opt<string>("name");
         name->clear();
         name.data()->clear();
-        auto len = const_cast<Dim::Cli::Opt<string> &>(name).data()->size();
+        auto len = const_cast<const Dim::Cli::Opt<string> &>(name)
+            .data()->size();
         EXPECT_EQUAL(len, name->size());
     }
 
