@@ -82,7 +82,7 @@ and this project adheres to [Semantic Versioning](http://semver.org).
 - Added - cli.parseExit() for aborting parsing w/o error (e.g. --help)
 - Changed - All types of application actions now return void
 
-## Unreleased 6.2.x
+## dimcli 6.2.3 (2026-09-24)
 - Fixed - Compile error using optVec subscript operator
 
 ## dimcli 6.2.2 (2026-07-14)
