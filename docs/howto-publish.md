@@ -24,9 +24,10 @@ Distributed under the Boost Software License, Version 1.0.
 10. Wait for CI to succeed.
 11. Draft a new release on github.
     1. Go to Releases, click on "Draft a new release"
-    2. Select "Choose a tag" and create the new tag "v{major}.{minor}.{patch}".
-    3. Set title to the same as the new tag.
-    4. Write brief description and publish the release.
+    2. Change target pull down to 6.2.x
+    3. Select "Select tag" and create the new tag "v{major}.{minor}.{patch}".
+    4. Set title to the same as the new tag.
+    5. Write brief description and publish the release.
 12. Publish the docs
     1. Run "git pull" to get the new tag created in 11.4.
     2. Run "docgen site".
