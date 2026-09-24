@@ -2093,8 +2093,8 @@ public:
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
-    auto operator[](size_t index) -> std::vector<T>::reference;
-    auto operator[](size_t index) const -> std::vector<T>::const_reference;
+    typename std::vector<T>::reference operator[](size_t index);
+    typename std::vector<T>::const_reference operator[](size_t index) const;
 
     // Information about a specific member of the vector of values at the
     // time it was parsed. If the value vector has been changed (sort, erase,
@@ -2249,17 +2249,17 @@ inline void Cli::OptVec<T>::assignImplicit() {
 
 //===========================================================================
 template <typename T>
-inline auto Cli::OptVec<T>::operator[](size_t index)
-    -> std::vector<T>::reference
-{
+inline typename std::vector<T>::reference Cli::OptVec<T>::operator[](
+    size_t index
+) {
     return (*m_proxy->m_values)[index];
 }
 
 //===========================================================================
 template <typename T>
-inline auto Cli::OptVec<T>::operator[](size_t index) const
-    -> std::vector<T>::const_reference
-{
+inline typename std::vector<T>::const_reference Cli::OptVec<T>::operator[](
+    size_t index
+) const {
     return const_cast<OptVec &>(*this)[index];
 }
 
