@@ -9,6 +9,7 @@
 # configure.bat
 # docs/docgen.xml
 # docs/guide.adoc
+# docs/howto-publish.md
 # docs/reference.adoc
 # libs/dimcli/cli.cpp
 # libs/dimcli/cli.h
