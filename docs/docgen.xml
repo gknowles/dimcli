@@ -1,5 +1,5 @@
 ﻿<!--
-Copyright Glen Knowles 2020 - 2022.
+Copyright Glen Knowles 2020 - 2026.
 Distributed under the Boost Software License, Version 1.0.
 
 docgen config file
@@ -9,7 +9,10 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
   <Site name="DIMCLI" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
     <Version tag="HEAD"/>
-    <Version tag="v6.2.0" default="true"/>
+    <Version tag="v6.2.3" default="true"/>
+    <Version tag="v6.2.2"/>
+    <Version tag="v6.2.1"/>
+    <Version tag="v6.2.0"/>
     <Version tag="v6.1.0"/>
     <Version tag="v6.0.0" layout="v6"/>
     <Version tag="v5.0.2" layout="md +ref"/>
