@@ -21,8 +21,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [CXX=g++-10 CC=gcc-10 GCOV=gcov-10 BUILD_COVERAGE=ON]
-        image: [ubuntu-22.04]
+        env: [CXX=g++-15 CC=gcc-15 GCOV=gcov-15 BUILD_COVERAGE=ON]
+        image: [ubuntu-26.04]
         configuration: [Debug]
         coverage: [true]
 
