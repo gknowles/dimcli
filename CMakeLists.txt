@@ -238,6 +238,7 @@ if(MSVC)
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
     elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "11")
@@ -265,7 +266,9 @@ if(BUILD_COVERAGE)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU"
             OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-            -fprofile-arcs -ftest-coverage -fsanitize=address")
+            -fprofile-arcs -ftest-coverage -fcondition-coverage \
+            -fsanitize=address \
+            -fno-inline")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
             -fprofile-arcs")
     endif()
