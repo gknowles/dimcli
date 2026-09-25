@@ -2685,8 +2685,10 @@ public:
     std::vector<T> & operator*() { return *m_proxy->m_values; }
     std::vector<T> * operator->() { return m_proxy->m_values; }
 
-    T & operator[](size_t index);
-    const T & operator[](size_t index) const;
+    // Have to use reference and const_reference instead of T& and const T& for
+    // the std::vector<bool> specialization to work.
+    typename std::vector<T>::reference operator[](size_t index);
+    typename std::vector<T>::const_reference operator[](size_t index) const;
 
     // Name of argument that populated the value at the index. Returns empty
     // string if the index is out of bounds.
@@ -2781,23 +2783,19 @@ inline Cli::OptVec<T> & Cli::OptVec<T>::size(int min, int max) {
 
 //===========================================================================
 template <typename T>
-inline T & Cli::OptVec<T>::operator[](size_t index) {
+inline typename std::vector<T>::reference Cli::OptVec<T>::operator[](
+    size_t index
+) {
     return (*m_proxy->m_values)[index];
 }
 
 //===========================================================================
 template <typename T>
-const T & Cli::OptVec<T>::operator[](size_t index) const {
+inline typename std::vector<T>::const_reference Cli::OptVec<T>::operator[](
+    size_t index
+) const {
     return const_cast<OptVec &>(*this)[index];
 }
-
-//===========================================================================
-template <>
-inline bool & Cli::OptVec<bool>::operator[](size_t index) = delete;
-
-//===========================================================================
-template <>
-inline const bool & Cli::OptVec<bool>::operator[](size_t index) const = delete;
 
 //===========================================================================
 template <>

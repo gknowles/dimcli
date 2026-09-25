@@ -2392,11 +2392,16 @@ Options:
     {
         cli = {};
         vector<bool> v0;
-        cli.optVec<bool>(&v0, "[ZERO]").desc("External bool");
+        cli.optVec<bool>(&v0, "[ZERO]").desc("External bool").size(1);
         auto & v1 = cli.optVec<bool>("[ONE]").desc("Internal bool.");
         EXPECT_PARSE(cli, "0");
         EXPECT_EQUAL_IF((v0.size() == 1), v0[0], bool(0));
         EXPECT_EQUAL(v1.size(), 0);
+        EXPECT_PARSE(cli, "0 1");
+        EXPECT_EQUAL_IF((v0.size() == 1), v0[0], bool(0));
+        EXPECT_EQUAL_IF((v1.size() == 1), v1[0], bool(1));
+        auto & cv1 = const_cast<const Dim::Cli::OptVec<bool> &>(v1);
+        EXPECT_EQUAL(cv1[0], bool(1));
     }
 
     // vector option with size
