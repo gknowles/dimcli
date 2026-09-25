@@ -9,7 +9,8 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
   <Site name="DIMCLI" favicon="favicon.ico" outDir="../vendor/gh-pages">
     <GitHub repoUrl="https://github.com/gknowles/dimcli/"/>
     <Version tag="HEAD"   />
-    <Version tag="v7.6.0" layout="default" default="true"/>
+    <Version tag="v7.7.0" layout="default" default="true"/>
+    <Version tag="v7.6.0" layout="default"/>
     <Version tag="v7.5.0" layout="default"/>
     <Version tag="v7.4.0" layout="default"/>
     <Version tag="v7.3.0" layout="default"/>
@@ -17,6 +18,7 @@ https://github.com/gknowles/dimapp/tree/master/tools/docgen
     <Version tag="v7.1.1" layout="default"/>
     <Version tag="v7.1.0" layout="default"/>
     <Version tag="v7.0.0" layout="default"/>
+    <Version tag="v6.2.3" layout="adoc"/>  <!-- layout missing in v6.2.3 -->
     <Version tag="v6.2.2" layout="adoc"/>  <!-- layout missing in v6.2.2 -->
     <Version tag="v6.2.1" layout="adoc"/>  <!-- layout missing in v6.2.1 -->
     <Version tag="v6.2.0" layout="adoc"/>

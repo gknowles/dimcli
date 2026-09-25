@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com)
 and this project adheres to [Semantic Versioning](http://semver.org).
 
-## Unreleased
+## dimcli 7.7.0 (2026-09-24)
 - Cosmetic - Better test coverage via --no-inline and explicit instantiation
 - Fixed - Use of std::u8path (deprecated C++20) when __cpp_lib_char8_t defined
 - Added - opt methods to enable std::data(opt) and std\::empty(opt)
